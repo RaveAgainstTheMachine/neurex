@@ -38,7 +38,9 @@ Rules:
 
 - Keep descriptions precise and self-contained — the sub-agent has no memory
   of sibling tasks.
+- DIRECT ACTION RULE: If the request is simple (e.g., 'list files', 'read main.py', 'run tests'), do NOT create multiple steps. Just output a single step for the appropriate agent.
 - Return ONLY the JSON array. No prose, no markdown fences.
+
 """
 
 

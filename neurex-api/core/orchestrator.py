@@ -10,7 +10,9 @@ import uuid
 import structlog
 from typing import AsyncGenerator, List, Dict, Any
 
+from fastapi.encoders import jsonable_encoder
 from sqlmodel import select
+
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from core.task_graph import (
@@ -63,7 +65,8 @@ class Orchestrator:
             title="Plan",
             description=user_message,
         )
-        yield {"event": "task_created", "data": planner_node.model_dump()}
+        yield {"event": "task_created", "data": jsonable_encoder(planner_node)}
+
 
         planner = PlannerAgent(self.rules, self.ctx)
         plan: list[dict] = []
@@ -77,9 +80,10 @@ class Orchestrator:
             elif chunk["type"] == "result":
                 plan = chunk["plan"]
 
-        # Create all sub-tasks as PENDING
-        for step in plan:
+        log.info("orchestrator.plan_received", steps_count=len(plan))
+        for i, step in enumerate(plan):
             agent_type = step.get("agent", "coder")
+            log.info("orchestrator.creating_subtask", step=i, agent=agent_type, title=step.get("title"))
             await create_task(
                 self.session,
                 graph_id=graph_id,
@@ -88,6 +92,8 @@ class Orchestrator:
                 title=step.get("title", agent_type),
                 description=step.get("description", ""),
             )
+            await self.session.commit()
+
 
         # Set planner to AWAITING_APPROVAL
         await update_task(
@@ -99,8 +105,9 @@ class Orchestrator:
         graph = await get_graph(self.session, graph_id)
         yield {"event": "plan_ready", "data": {
             "graph_id": graph_id,
-            "tasks": [n.model_dump() for n in graph]
+            "tasks": [jsonable_encoder(n) for n in graph]
         }}
+
 
     async def resume(
         self,
@@ -150,5 +157,44 @@ class Orchestrator:
         graph = await get_graph(self.session, graph_id)
         yield {"event": "done", "data": {
             "graph_id": graph_id,
-            "tasks": [n.model_dump() for n in graph]
+            "tasks": [jsonable_encoder(n) for n in graph]
         }}
+
+    async def resume_shell(
+        self,
+        task_id: str,
+        approved: bool,
+        conversation_id: str,
+    ) -> AsyncGenerator[dict, None]:
+        """Phase 3: Resuming a task after a shell approval."""
+        node = await self.session.get(TaskNode, task_id)
+        if not node: return
+
+        log.info("orchestrator.resume_shell", task_id=task_id, approved=approved)
+
+        if not approved:
+            await update_task(self.session, node.id, TaskStatus.FAILED, error="User denied shell command")
+            yield {"event": "task_updated", "data": {"id": node.id, "status": TaskStatus.FAILED}}
+            return
+
+        # Clear the approval required flag in the result before resuming
+        node.result = ""
+        self.session.add(node)
+        await self.session.commit()
+
+        # Re-run execution with approved flag
+        AgentClass = AGENT_MAP.get(node.agent_type, CoderAgent)
+        agent = AgentClass(self.rules, self.ctx)
+        
+        # We pass approved=True to the task description or a context object
+        step = {"description": f"{node.description}\n[USER APPROVED SHELL EXECUTION]", "title": node.title}
+        
+        async for chunk in agent.execute(step, conversation_id):
+            if chunk["type"] == "status":
+                await update_task(self.session, node.id, chunk["status"])
+                yield {"event": "task_updated", "data": {"id": node.id, "status": chunk["status"]}}
+            elif chunk["type"] == "token":
+                yield {"event": "token", "data": chunk["text"]}
+            elif chunk["type"] == "result":
+                await update_task(self.session, node.id, TaskStatus.DONE, result=chunk.get("result", ""))
+                yield {"event": "task_updated", "data": {"id": node.id, "status": TaskStatus.DONE}}

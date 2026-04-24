@@ -11,10 +11,17 @@ interface Props {
 }
 
 export function AgentTerminal({ send, conversationId }: Props) {
-  const messages  = useStore((s) => s.messages);
-  const addMessage = useStore((s) => s.addMessage);
-  const wsStatus  = useStore((s) => s.wsStatus);
-  const tasks     = useStore((s) => s.tasks);
+  const { messages, addMessage, setMessages, wsStatus, tasks } = useStore();
+
+  useEffect(() => {
+    fetch(`http://localhost:8000/api/chat/${conversationId}`)
+      .then(r => r.json())
+      .then(data => {
+        setMessages(data);
+      })
+      .catch(console.error);
+  }, [conversationId, setMessages]);
+
 
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);

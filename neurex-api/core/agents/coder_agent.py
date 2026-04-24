@@ -41,21 +41,25 @@ CODER_TOOLS = [
             },
         },
     },
+
     {
         "type": "function",
         "function": {
-            "name": "list_directory",
-            "description": "List files in a workspace directory.",
+
+            "name": "run_command",
+            "description": "Execute a shell command in the workspace sandbox.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "path": {"type": "string", "description": "Directory path, default '.'"}
+                    "command": {"type": "string", "description": "The shell command to run"},
+                    "cwd":     {"type": "string", "description": "Working directory, default '.'"}
                 },
-                "required": [],
+                "required": ["command"],
             },
         },
     },
 ]
+
 
 CODER_SYSTEM = """\
 You are an expert software engineer inside Neurex IDE.
@@ -106,6 +110,11 @@ class CoderAgent(BaseAgent):
                         "role": "tool",
                         "content": tool_result,
                     })
+
+                    if "APPROVAL_REQUIRED" in tool_result:
+                        yield {"type": "result", "result": tool_result}
+                        return
+
 
                 elif chunk["type"] == "done":
                     # If no tool calls in last round, we're done

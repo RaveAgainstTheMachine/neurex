@@ -9,8 +9,12 @@ import structlog
 
 log = structlog.get_logger()
 
-OLLAMA_BASE = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
-EMBED_MODEL = os.getenv("EMBED_MODEL", "nomic-embed-text")
+def get_ollama_base():
+    return os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+
+def get_embed_model():
+    return os.getenv("EMBED_MODEL", "nomic-embed-text")
+
 
 
 class Embedder:
@@ -23,8 +27,9 @@ class Embedder:
         async with httpx.AsyncClient(timeout=60) as client:
             for text in texts:
                 r = await client.post(
-                    f"{OLLAMA_BASE}/api/embeddings",
-                    json={"model": EMBED_MODEL, "prompt": text},
+                    f"{get_ollama_base()}/api/embeddings",
+                    json={"model": get_embed_model(), "prompt": text},
+
                 )
                 r.raise_for_status()
                 embeddings.append(r.json()["embedding"])

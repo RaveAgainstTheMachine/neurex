@@ -20,8 +20,12 @@ from core.mcp.client import MCPClient
 
 log = structlog.get_logger()
 
-OLLAMA_BASE = os.getenv("OLLAMA_BASE_URL", "http://ollama:11434")
-DEFAULT_MODEL = os.getenv("DEFAULT_MODEL", "qwen2.5-coder:14b")
+def get_ollama_base():
+    return os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+
+def get_default_model():
+    return os.getenv("DEFAULT_MODEL", "qwen2.5-coder:14b")
+
 
 
 class BaseAgent(ABC):
@@ -79,11 +83,13 @@ class BaseAgent(ABC):
           {"type": "done",      "full_text": "..."}
         """
         payload: dict[str, Any] = {
-            "model": model or DEFAULT_MODEL,
+            "model": model or get_default_model(),
             "messages": messages,
             "stream": True,
-            "options": {"temperature": 0.2},
+            "options": {"temperature": 0.2, "num_gpu": 99},
+
         }
+
         if tools:
             payload["tools"] = tools
 
@@ -91,13 +97,16 @@ class BaseAgent(ABC):
         async with httpx.AsyncClient(timeout=300) as client:
             async with client.stream(
                 "POST",
-                f"{OLLAMA_BASE}/api/chat",
+                f"{get_ollama_base()}/api/chat",
+
                 json=payload,
             ) as resp:
                 resp.raise_for_status()
                 async for line in resp.aiter_lines():
                     if not line:
                         continue
+                    log.debug("ollama.stream_line", line=line[:100])
+
                     try:
                         import json
                         data = json.loads(line)

@@ -62,6 +62,8 @@ async def websocket_endpoint(
             while True:
                 raw = await websocket.receive_text()
                 msg = json.loads(raw)
+                log.info("ws.message_received", type=msg.get("type"), conversation_id=conversation_id)
+
 
                 if msg.get("type") == "cancel":
                     await websocket.send_json({"event": "cancelled"})
@@ -86,6 +88,17 @@ async def websocket_endpoint(
                     async for event in orch.resume(graph_id, conversation_id):
                         await websocket.send_json(event)
                         await asyncio.sleep(0)
+
+                if msg.get("type") == "approve_shell":
+                    task_id = msg.get("task_id")
+                    approved = msg.get("approved", False)
+                    if not task_id:
+                        continue
+                    
+                    async for event in orch.resume_shell(task_id, approved, conversation_id):
+                        await websocket.send_json(event)
+                        await asyncio.sleep(0)
+
 
 
         except WebSocketDisconnect:

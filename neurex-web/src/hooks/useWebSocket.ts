@@ -25,6 +25,12 @@ export function useWebSocket(conversationId: string) {
         upsertTask(event.data as TaskNode);
         break;
 
+      case "plan_ready":
+        const planData = event.data as { tasks: TaskNode[] };
+        planData.tasks.forEach((t) => upsertTask(t));
+        break;
+
+
       case "done":
         // graph complete — nothing extra needed, state already updated
         break;

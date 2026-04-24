@@ -50,8 +50,10 @@ export interface WsEvent {
 export interface NeurexStore {
   // Chat
   messages: ChatMessage[];
+  setMessages: (msgs: ChatMessage[]) => void;
   addMessage: (msg: Omit<ChatMessage, "id" | "timestamp">) => void;
   appendToken: (token: string) => void;
+
 
   // Tasks
   tasks: Record<string, TaskNode>;

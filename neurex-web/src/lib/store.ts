@@ -9,7 +9,13 @@ export const useStore = create<NeurexStore>()(
     // ── Chat ──────────────────────────────────────────────────────────────
     messages: [],
 
+    setMessages: (msgs) =>
+      set((s) => {
+        s.messages = msgs;
+      }),
+
     addMessage: (msg) =>
+
       set((s) => {
         s.messages.push({
           ...msg,

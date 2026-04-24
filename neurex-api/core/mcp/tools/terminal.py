@@ -30,6 +30,10 @@ ALLOWED_COMMANDS = {
 }
 
 
+SAFE_COMMANDS = {
+    "ls", "cat", "pwd", "git status", "git diff", "pytest", "npm test",
+}
+
 def _check_allowlist(command: str) -> None:
     parts = shlex.split(command)
     if not parts:
@@ -41,13 +45,25 @@ def _check_allowlist(command: str) -> None:
             f"Allowed: {', '.join(sorted(ALLOWED_COMMANDS))}"
         )
 
+def _check_safety(command: str) -> bool:
 
-async def run_command(command: str, cwd: str = ".") -> str:
+    """Returns True if the command is completely safe and doesn't need approval."""
+    parts = shlex.split(command)
+    if not parts: return True
+    binary = os.path.basename(parts[0])
+    # Very restrictive safe-list
+    return binary in {"ls", "pwd", "git"} and "rm" not in command and "mv" not in command
+
+async def run_command(command: str, cwd: str = ".", approved: bool = False) -> str:
     """
     Execute `command` inside a Docker sandbox container.
-    Returns combined stdout + stderr as a string.
+    If the command is unsafe and not pre-approved, returns an approval request.
     """
+    if not approved and not _check_safety(command):
+        return f"APPROVAL_REQUIRED: The command '{command}' is marked as potentially unsafe. Please approve or deny."
+
     _check_allowlist(command)
+
 
     docker_cmd = [
         "docker", "run", "--rm",

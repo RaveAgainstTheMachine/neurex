@@ -1,7 +1,9 @@
+import { useEffect } from "react";
 import { useStore } from "@/lib/store";
 import { useParams } from "next/navigation";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import type { TaskNode, TaskStatus } from "@/lib/types";
+
 
 
 const STATUS_COLORS: Record<TaskStatus, string> = {
@@ -40,15 +42,40 @@ const AGENT_ICON: Record<string, string> = {
 export function AgentDashboard() {
   const { conversationId } = useParams();
   const { send } = useWebSocket(conversationId as string);
-  const tasks = useStore((s) => s.tasks);
+  const { tasks, upsertTask } = useStore();
   const nodes = Object.values(tasks);
+
+  useEffect(() => {
+    fetch("http://localhost:8000/api/tasks/")
+      .then(r => r.json())
+      .then(data => {
+        data.forEach((t: TaskNode) => upsertTask(t));
+      })
+      .catch(console.error);
+  }, [upsertTask]);
+
 
   const approvePlan = (graphId: string) => {
     send({ type: "approve_plan", graph_id: graphId });
   };
 
-  return (
+  const approveShell = (taskId: string, approved: boolean) => {
+    send({ type: "approve_shell", task_id: taskId, approved });
+  };
 
+  const clearTasks = async () => {
+    if (!confirm("Are you sure you want to clear all tasks?")) return;
+    try {
+      await fetch("http://localhost:8000/api/tasks/", { method: "DELETE" });
+      window.location.reload(); // Hard refresh to clear store
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+
+
+  return (
     <div style={{
       flex: 1,
       overflow: "auto",
@@ -69,7 +96,24 @@ export function AgentDashboard() {
       }}>
         <span>Agent Team</span>
         <span style={{ color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 8 }}>
-          {nodes.filter(n => n.status === "done").length}/{nodes.length}
+          {nodes.filter(n => n.status === "DONE").length}/{nodes.length}
+          
+          <button 
+            style={{
+              padding: "2px 6px",
+              background: "var(--bg-elevated)",
+              border: "1px solid var(--border)",
+              borderRadius: 3,
+              color: "var(--accent-red)",
+              fontSize: 9,
+              cursor: "pointer",
+              marginLeft: 8
+            }}
+            onClick={clearTasks}
+          >
+            Clear
+          </button>
+
           <button 
             style={{
               padding: "2px 6px",
@@ -80,6 +124,7 @@ export function AgentDashboard() {
               fontSize: 9,
               cursor: "pointer"
             }}
+
             onClick={() => {
               const task = prompt("What should the agent do?");
               if (task) {
@@ -105,18 +150,26 @@ export function AgentDashboard() {
       )}
 
       {nodes.map((task) => (
-        <TaskCard key={task.id} task={task} onApprove={() => approvePlan(task.graph_id)} />
+        <TaskCard 
+          key={task.id} 
+          task={task} 
+          onApprove={() => approvePlan(task.graph_id)} 
+          onApproveShell={(taskId, approved) => approveShell(taskId, approved)}
+        />
       ))}
     </div>
   );
 }
 
+
 interface TaskCardProps {
   task: TaskNode;
   onApprove: () => void;
+  onApproveShell: (taskId: string, approved: boolean) => void;
 }
 
-function TaskCard({ task, onApprove }: TaskCardProps) {
+function TaskCard({ task, onApprove, onApproveShell }: TaskCardProps) {
+
 
   const isActive = ["thinking", "writing", "testing"].includes(task.status);
   const color    = STATUS_COLORS[task.status];
@@ -205,12 +258,11 @@ function TaskCard({ task, onApprove }: TaskCardProps) {
         </div>
       )}
 
-      {/* Approval Button */}
-      {task.status === "awaiting_approval" && (
+      {/* Approval Button (Plan) */}
+      {task.status === "AWAITING_APPROVAL" && (
         <button
           onClick={onApprove}
           style={{
-
             marginTop: 10,
             width: "100%",
             padding: "6px 0",
@@ -229,7 +281,36 @@ function TaskCard({ task, onApprove }: TaskCardProps) {
           Approve & Execute Plan
         </button>
       )}
+
+      {/* Shell Approval Request */}
+      {task.result?.includes("APPROVAL_REQUIRED") && (
+        <div style={{ marginTop: 10, display: "flex", gap: 8 }}>
+          <button
+            onClick={() => onApproveShell(task.id, true)}
+            style={{
+              flex: 1, padding: "6px",
+              background: "var(--accent-green)",
+              color: "white", border: "none", borderRadius: 4,
+              fontSize: 11, fontWeight: 600, cursor: "pointer"
+            }}
+          >
+            Approve
+          </button>
+          <button
+            onClick={() => onApproveShell(task.id, false)}
+            style={{
+              flex: 1, padding: "6px",
+              background: "var(--accent-red)",
+              color: "white", border: "none", borderRadius: 4,
+              fontSize: 11, fontWeight: 600, cursor: "pointer"
+            }}
+          >
+            Deny
+          </button>
+        </div>
+      )}
     </div>
   );
 }
+
 
