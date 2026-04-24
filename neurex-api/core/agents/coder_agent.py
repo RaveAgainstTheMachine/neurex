@@ -1,0 +1,116 @@
+"""
+core/agents/coder_agent.py
+Writes, edits, and refactors code files using MCP filesystem tools.
+"""
+from __future__ import annotations
+from typing import AsyncGenerator
+import structlog
+
+from core.agents.base_agent import BaseAgent
+from core.task_graph import TaskStatus
+
+log = structlog.get_logger()
+
+CODER_TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "read_file",
+            "description": "Read the contents of a file in the workspace.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "Relative path from workspace root"}
+                },
+                "required": ["path"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "write_file",
+            "description": "Write or overwrite a file in the workspace.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path":    {"type": "string"},
+                    "content": {"type": "string"},
+                },
+                "required": ["path", "content"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "list_directory",
+            "description": "List files in a workspace directory.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "Directory path, default '.'"}
+                },
+                "required": [],
+            },
+        },
+    },
+]
+
+CODER_SYSTEM = """\
+You are an expert software engineer inside Neurex IDE.
+You have access to filesystem tools to read and write files in the workspace.
+Always read a file before editing it. Write complete file contents, never partial diffs.
+Think step-by-step. After writing files, briefly summarize what you did.
+"""
+
+
+class CoderAgent(BaseAgent):
+    system_prompt = CODER_SYSTEM
+    agent_type = "coder"
+
+    async def execute(
+        self, task: dict, conversation_id: str
+    ) -> AsyncGenerator[dict, None]:
+        description = task.get("description", "")
+        rag = await self.rag_context(description, n=5)
+        system = self.build_system_prompt(rag)
+
+        messages = [
+            {"role": "system",  "content": system},
+            {"role": "user",    "content": description},
+        ]
+
+        yield {"type": "status", "status": TaskStatus.THINKING}
+
+        # Agentic tool loop
+        max_rounds = 8
+        for _ in range(max_rounds):
+            async for chunk in self.stream(messages, tools=CODER_TOOLS):
+                if chunk["type"] == "token":
+                    yield {"type": "token", "text": chunk["text"]}
+
+                elif chunk["type"] == "tool_call":
+                    yield {"type": "tool_call", "call": chunk["call"]}
+                    yield {"type": "status", "status": TaskStatus.WRITING}
+
+                    tool_result = await self.dispatch_tool(chunk["call"])
+
+                    # Append tool exchange to history
+                    messages.append({
+                        "role": "assistant",
+                        "content": None,
+                        "tool_calls": [chunk["call"]],
+                    })
+                    messages.append({
+                        "role": "tool",
+                        "content": tool_result,
+                    })
+
+                elif chunk["type"] == "done":
+                    # If no tool calls in last round, we're done
+                    if not any(m.get("role") == "tool" for m in messages[-2:]):
+                        yield {"type": "result", "result": chunk["full_text"]}
+                        return
+
+        yield {"type": "result", "result": "Max tool rounds reached."}

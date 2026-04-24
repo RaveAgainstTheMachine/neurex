@@ -1,0 +1,32 @@
+# ── Environment ───────────────────────────────────────────────────────────────
+.env
+.env.local
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+
+# ── SQLite databases ──────────────────────────────────────────────────────────
+neurex-api/neurex.db
+neurex-api/neurex.db-shm
+neurex-api/neurex.db-wal
+
+# ── Node ──────────────────────────────────────────────────────────────────────
+neurex-web/node_modules/
+neurex-web/.next/
+neurex-web/out/
+
+# ── Eval results ──────────────────────────────────────────────────────────────
+eval/results/
+
+# ── Workspace trash ───────────────────────────────────────────────────────────
+workspace/.neurex_trash/
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+*.log

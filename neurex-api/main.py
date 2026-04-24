@@ -1,0 +1,78 @@
+"""
+neurex-api — main.py
+Entry point: mounts routers, starts background workers, manages lifespan.
+"""
+from contextlib import asynccontextmanager
+import structlog
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+from core.memory.worker import MemoryWorker
+from core.context.rules_parser import RulesParser
+from api.routes import chat, tasks, files
+from api.websocket import router as ws_router
+from core.task_graph import init_db
+
+log = structlog.get_logger()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup / shutdown lifecycle."""
+    log.info("neurex.startup")
+
+    # Initialise SQLite task-graph DB
+    await init_db()
+
+    # Start file-watcher + indexing worker
+    memory_worker = MemoryWorker()
+    await memory_worker.start()
+    app.state.memory_worker = memory_worker
+
+    # Load .neurexrules on startup
+    rules = RulesParser()
+    app.state.rules = rules
+
+    log.info("neurex.ready")
+    yield
+
+    # Teardown
+    await memory_worker.stop()
+    log.info("neurex.shutdown")
+
+
+app = FastAPI(
+    title="Neurex API",
+    version="0.1.0",
+    lifespan=lifespan,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ── Routes ──────────────────────────────────────────────────────────────────
+app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
+app.include_router(tasks.router, prefix="/api/tasks", tags=["tasks"])
+app.include_router(files.router, prefix="/api/files", tags=["files"])
+app.include_router(ws_router, tags=["websocket"])
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok", "version": "0.1.0"}
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    log.error("unhandled_exception", path=request.url.path, error=str(exc))
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
