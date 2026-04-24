@@ -12,6 +12,8 @@ Always write complete file contents — never emit "..." or partial diffs.
 Read a file with read_file before editing it; never assume its current state.
 Preserve the module-level docstring at the top of every Python file you touch.
 USE BROWSER SUBAGENT ONLY WHEN TESTING UI/UX.
+GIT: always use git. commit every significant change with a descriptive message.
+
 
 
 # Imports
