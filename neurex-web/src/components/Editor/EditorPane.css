@@ -1,0 +1,117 @@
+/* src/components/Editor/EditorPane.css */
+.editor-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-panel);
+  overflow: hidden;
+}
+
+.editor-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: var(--bg-panel);
+}
+
+.editor-empty__content {
+  text-align: center;
+  opacity: 0.5;
+}
+
+.editor-empty__logo {
+  font-size: 48px;
+  margin-bottom: 12px;
+  color: var(--accent-purple);
+}
+
+.editor-empty__title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.editor-empty__subtitle {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  max-width: 320px;
+}
+
+/* Tabs */
+.editor-tabs {
+  display: flex;
+  align-items: stretch;
+  background: var(--bg-app);
+  border-bottom: 1px solid var(--border);
+  height: var(--tabbar-height);
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+.editor-tabs::-webkit-scrollbar { height: 2px; }
+
+.editor-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border-right: 1px solid var(--border);
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  background: var(--bg-app);
+  position: relative;
+  transition: color 0.1s;
+  min-width: 100px;
+}
+
+.editor-tab:hover { color: var(--text-secondary); background: var(--bg-hover); }
+
+.editor-tab--active {
+  color: var(--text-primary);
+  background: var(--bg-panel);
+  border-top: 1px solid var(--accent-blue);
+}
+
+.editor-tab__name { flex: 1; }
+
+.editor-tab__dirty {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent-yellow);
+  flex-shrink: 0;
+}
+
+.editor-tab__close {
+  background: none; border: none;
+  color: var(--text-muted);
+  display: flex; align-items: center;
+  padding: 2px; border-radius: 2px;
+  opacity: 0; transition: opacity 0.1s;
+}
+
+.editor-tab:hover .editor-tab__close { opacity: 1; }
+.editor-tab__close:hover { color: var(--text-primary); background: var(--bg-elevated); }
+
+/* Breadcrumb */
+.editor-breadcrumb {
+  padding: 4px 12px;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  background: var(--bg-panel);
+}
+
+.breadcrumb-seg { color: var(--text-muted); }
+.breadcrumb-sep { color: var(--border); }
+.breadcrumb-active { color: var(--text-secondary); }
+
+/* Monaco container */
+.editor-monaco {
+  flex: 1;
+  overflow: hidden;
+}

@@ -1,20 +1,13 @@
 """
 core/memory/worker.py
 Background worker that indexes the workspace into ChromaDB.
-Modified to support local PersistentClient when running without Docker.
+Gracefully degrades if ChromaDB is unavailable — logs once and disables indexing.
 """
 from __future__ import annotations
 import asyncio
 import os
 from pathlib import Path
 import structlog
-import chromadb
-from chromadb.config import Settings
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
-
-from core.memory.chunker import chunk_file
-from core.memory.embedder import Embedder
 
 log = structlog.get_logger()
 
@@ -33,37 +26,60 @@ IGNORED_DIRS = {
     "dist", "build", ".venv", "venv",
 }
 
+
 class MemoryWorker:
     def __init__(self):
-        self.embedder = Embedder()
-        self._observer: Observer | None = None
+        self._observer = None
         self._chroma = None
         self._collection = None
         self._queue: asyncio.Queue[Path] = asyncio.Queue()
         self._loop: asyncio.AbstractEventLoop | None = None
+        self._enabled = False  # start disabled, enable only if ChromaDB connects
 
     async def start(self):
         self._loop = asyncio.get_event_loop()
-        
-        # Rule: Use PersistentClient for local non-docker storage
-        log.info("memory_worker.init_chroma", path=CHROMA_DB_DIR)
-        
-        # PersistentClient is synchronous, wrap in thread to keep startup snappy
-        def init_sync():
-            client = chromadb.PersistentClient(path=CHROMA_DB_DIR)
-            collection = client.get_or_create_collection(
-                COLLECTION,
-                metadata={"hnsw:space": "cosine"},
-            )
-            return client, collection
 
-        self._chroma, self._collection = await asyncio.to_thread(init_sync)
+        # Try to connect to ChromaDB — gracefully degrade if unavailable
+        try:
+            import chromadb
+            from core.memory.embedder import Embedder
+
+            log.info("memory_worker.init_chroma", path=CHROMA_DB_DIR)
+
+            def init_sync():
+                client = chromadb.PersistentClient(path=CHROMA_DB_DIR)
+                collection = client.get_or_create_collection(
+                    COLLECTION,
+                    metadata={"hnsw:space": "cosine"},
+                )
+                return client, collection
+
+            self._chroma, self._collection = await asyncio.to_thread(init_sync)
+            self.embedder = Embedder()
+            self._enabled = True
+            log.info("memory_worker.chroma_connected")
+
+        except Exception as e:
+            log.warning(
+                "memory_worker.chroma_unavailable",
+                error=str(e),
+                hint="ChromaDB is not running. RAG context is disabled. "
+                     "Start ChromaDB or ignore this warning."
+            )
+            self._enabled = False
+            return  # Don't start watcher or indexing if ChromaDB is down
 
         # Start file watcher
-        handler = _ChangeHandler(self._queue, self._loop)
-        self._observer = Observer()
-        self._observer.schedule(handler, str(WORKSPACE_PATH), recursive=True)
-        self._observer.start()
+        try:
+            from watchdog.observers import Observer
+            from watchdog.events import FileSystemEventHandler
+
+            handler = _ChangeHandler(self._queue, self._loop)
+            self._observer = Observer()
+            self._observer.schedule(handler, str(WORKSPACE_PATH), recursive=True)
+            self._observer.start()
+        except Exception as e:
+            log.warning("memory_worker.watcher_failed", error=str(e))
 
         # Initial index in background
         asyncio.create_task(self._full_index())
@@ -78,6 +94,8 @@ class MemoryWorker:
         log.info("memory_worker.stopped")
 
     async def _full_index(self):
+        if not self._enabled:
+            return
         log.info("memory_worker.full_index.start")
         count = 0
         for path in WORKSPACE_PATH.rglob("*"):
@@ -90,12 +108,15 @@ class MemoryWorker:
     async def _process_queue(self):
         while True:
             path = await self._queue.get()
-            if self._should_index(path):
+            if self._enabled and self._should_index(path):
                 await self._index_file(path)
             self._queue.task_done()
 
     async def _index_file(self, path: Path):
+        if not self._enabled:
+            return
         try:
+            from core.memory.chunker import chunk_file
             chunks = chunk_file(path)
             if not chunks:
                 return
@@ -105,7 +126,6 @@ class MemoryWorker:
             documents = [c["text"] for c in chunks]
             metadatas = [c["metadata"] for c in chunks]
 
-            # Upsert is synchronous in PersistentClient, offload to thread
             def upsert_sync():
                 self._collection.upsert(
                     ids=ids,
@@ -128,7 +148,9 @@ class MemoryWorker:
                 return False
         return True
 
-class _ChangeHandler(FileSystemEventHandler):
+
+class _ChangeHandler:
+    """Watchdog event handler that enqueues changed files for re-indexing."""
     def __init__(self, queue: asyncio.Queue, loop: asyncio.AbstractEventLoop):
         self._queue = queue
         self._loop = loop

@@ -1,15 +1,16 @@
 // src/lib/types.ts
 
 export type TaskStatus =
-  | "pending"
-  | "thinking"
-  | "writing"
-  | "testing"
-  | "done"
-  | "failed"
-  | "cancelled";
+  | "PENDING"
+  | "THINKING"
+  | "WRITING"
+  | "TESTING"
+  | "DONE"
+  | "FAILED"
+  | "CANCELLED"
+  | "AWAITING_APPROVAL";
 
-export type AgentType = "planner" | "coder" | "tester";
+export type AgentType = "planner" | "coder" | "tester" | "researcher" | "reviewer";
 
 export interface TaskNode {
   id: string;
@@ -41,12 +42,13 @@ export interface ChatMessage {
   timestamp: Date;
 }
 
-export interface WsEvent {
-  event: "task_created" | "task_updated" | "token" | "done" | "error" | "cancelled";
-  data: unknown;
+export interface OpenFile {
+  path: string;
+  content: string;
+  language: string;
+  isDirty: boolean;
 }
 
-// Zustand store shape
 export interface NeurexStore {
   // Chat
   messages: ChatMessage[];
@@ -54,22 +56,20 @@ export interface NeurexStore {
   addMessage: (msg: Omit<ChatMessage, "id" | "timestamp">) => void;
   appendToken: (token: string) => void;
 
-
   // Tasks
   tasks: Record<string, TaskNode>;
   upsertTask: (task: TaskNode) => void;
+  clearTasks: () => void;
 
   // Editor
-  openFile: string | null;
-  setOpenFile: (path: string | null) => void;
-  fileContents: Record<string, string>;
+  openFiles: OpenFile[];
+  activeFile: string | null;
+  openFile: (path: string, content: string, language: string) => void;
+  closeFile: (path: string) => void;
+  setActiveFile: (path: string) => void;
   setFileContent: (path: string, content: string) => void;
 
-  // Scratchpad
-  scratchpad: string;
-  setScratchpad: (text: string) => void;
-
-  // Connection
+  // WS
   wsStatus: "connecting" | "connected" | "disconnected";
   setWsStatus: (s: NeurexStore["wsStatus"]) => void;
 }

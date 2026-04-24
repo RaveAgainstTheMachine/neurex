@@ -1,0 +1,233 @@
+/* src/App.css */
+.app {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg-app);
+}
+
+/* Activity bar */
+.activity-bar {
+  width: 48px;
+  flex-shrink: 0;
+  background: var(--bg-app);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0;
+  gap: 2px;
+  z-index: 10;
+}
+
+.activity-bar__top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+}
+
+.activity-bar__bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.activity-bar__logo {
+  font-size: 20px;
+  color: var(--accent-purple);
+  padding: 6px;
+  margin-bottom: 8px;
+}
+
+.activity-btn {
+  width: 36px; height: 36px;
+  background: none; border: none;
+  color: var(--text-muted);
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  transition: color 0.1s, background 0.1s;
+  position: relative;
+}
+
+.activity-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.activity-btn--active {
+  color: var(--text-primary);
+  background: var(--bg-active);
+}
+
+.activity-btn--active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 25%;
+  height: 50%;
+  width: 2px;
+  background: var(--accent-blue);
+  border-radius: 0 2px 2px 0;
+}
+
+/* Body */
+.app__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.app__panels {
+  flex: 1;
+  overflow: hidden;
+}
+
+.app__sidebar {
+  background: var(--bg-sidebar);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.app__editor {
+  overflow: hidden;
+}
+
+.app__ai {
+  background: var(--bg-sidebar);
+  overflow: hidden;
+  border-left: 1px solid var(--border);
+}
+
+.app__bottom {
+  overflow: hidden;
+  border-top: 1px solid var(--border);
+}
+
+/* Resize handles */
+.resize-handle {
+  background: transparent;
+  transition: background 0.15s;
+  position: relative;
+  z-index: 5;
+  flex-shrink: 0;
+}
+
+.resize-handle--horizontal {
+  width: 4px;
+  cursor: col-resize;
+}
+
+.resize-handle--vertical {
+  height: 4px;
+  cursor: row-resize;
+}
+
+.resize-handle:hover .resize-handle__inner,
+.resize-handle[data-resize-handle-active] .resize-handle__inner {
+  background: var(--accent-blue);
+}
+
+.resize-handle__inner {
+  position: absolute;
+  inset: 0;
+  background: var(--border);
+  transition: background 0.15s;
+}
+
+/* Status bar */
+.status-bar {
+  height: var(--statusbar-height);
+  background: var(--accent-blue);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  flex-shrink: 0;
+}
+
+.status-bar__left,
+.status-bar__right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: var(--font-size-xs);
+  color: rgba(255,255,255,0.85);
+}
+
+.status-ws {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.status-ws--connected    { color: rgba(255,255,255,0.9); }
+.status-ws--connecting   { color: rgba(255,255,140,0.9); }
+.status-ws--disconnected { color: rgba(255,150,150,0.9); }
+
+/* Placeholder */
+.placeholder-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--bg-sidebar);
+}
+
+.placeholder-panel__label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.placeholder-panel__hint {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+/* Bottom output panel */
+.bottom-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-app);
+  overflow: hidden;
+}
+
+.bottom-panel__header {
+  padding: 4px 12px;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.bottom-panel__content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 12px;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.bottom-panel__empty { color: var(--text-muted); }
+
+.bottom-panel__line {
+  padding: 1px 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+  line-height: 1.6;
+}

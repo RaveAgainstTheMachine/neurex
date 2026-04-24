@@ -1,0 +1,90 @@
+/* src/index.css — Neurex IDE Design System */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* Core palette */
+  --bg-app:       #0d0d0f;
+  --bg-sidebar:   #111114;
+  --bg-panel:     #131316;
+  --bg-elevated:  #1a1a1f;
+  --bg-hover:     #1e1e24;
+  --bg-active:    #252530;
+  --bg-input:     #16161b;
+
+  /* Borders */
+  --border:       #2a2a35;
+  --border-focus: #4c4cff;
+
+  /* Text */
+  --text-primary:   #e8e8f0;
+  --text-secondary: #9898b0;
+  --text-muted:     #55556a;
+  --text-inverse:   #0d0d0f;
+
+  /* Accents */
+  --accent-blue:   #4c8eff;
+  --accent-purple: #9c6fff;
+  --accent-green:  #3ddc84;
+  --accent-red:    #ff5c5c;
+  --accent-yellow: #ffc542;
+  --accent-cyan:   #3ddcdc;
+
+  /* Status */
+  --status-pending:  #55556a;
+  --status-thinking: #ffc542;
+  --status-writing:  #4c8eff;
+  --status-done:     #3ddc84;
+  --status-failed:   #ff5c5c;
+  --status-approval: #9c6fff;
+
+  /* Layout */
+  --sidebar-width:    240px;
+  --titlebar-height:  38px;
+  --tabbar-height:    36px;
+  --statusbar-height: 22px;
+
+  /* Typography */
+  --font-ui:   'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-size-xs:  10px;
+  --font-size-sm:  11px;
+  --font-size-md:  12px;
+  --font-size-base: 13px;
+}
+
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-app);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #3a3a4a; }
+
+button { font-family: var(--font-ui); cursor: pointer; }
+input, textarea { font-family: var(--font-ui); }
+
+/* Animations */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-up { animation: slide-up 0.15s ease; }
+.animate-spin { animation: spin 1s linear infinite; }
+.animate-pulse { animation: pulse-dot 1.2s ease-in-out infinite; }

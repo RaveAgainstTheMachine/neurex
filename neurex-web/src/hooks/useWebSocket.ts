@@ -1,90 +1,78 @@
 // src/hooks/useWebSocket.ts
-"use client";
 import { useEffect, useRef, useCallback } from "react";
-import { useStore } from "@/lib/store";
-import type { WsEvent, TaskNode } from "@/lib/types";
+import { useStore } from "../lib/store";
+import type { TaskNode } from "../lib/types";
 
-const WS_URL   = process.env.NEXT_PUBLIC_WS_URL   ?? "ws://localhost:8000";
-const API_TOKEN = process.env.NEXT_PUBLIC_API_TOKEN ?? "neurex-dev-token";
-const RECONNECT_DELAY = 2000;
+const API_BASE = "http://localhost:8000";
+const WS_TOKEN = "neurex-dev-token";
 
 export function useWebSocket(conversationId: string) {
-  const ws       = useRef<WebSocket | null>(null);
-  const reconnect = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const { appendToken, upsertTask, setWsStatus } = useStore();
-
-  const handleEvent = useCallback((event: WsEvent) => {
-    switch (event.event) {
-      case "token":
-        appendToken(event.data as string);
-        break;
-
-      case "task_created":
-      case "task_updated":
-        upsertTask(event.data as TaskNode);
-        break;
-
-      case "plan_ready":
-        const planData = event.data as { tasks: TaskNode[] };
-        planData.tasks.forEach((t) => upsertTask(t));
-        break;
-
-
-      case "done":
-        // graph complete — nothing extra needed, state already updated
-        break;
-
-      case "error":
-        console.error("[neurex ws]", event.data);
-        break;
-    }
-  }, [appendToken, upsertTask]);
-
-  const connect = useCallback(() => {
-    if (ws.current?.readyState === WebSocket.OPEN) return;
-
-    const url = `${WS_URL}/ws/${conversationId}?token=${API_TOKEN}`;
-    const socket = new WebSocket(url);
-    ws.current = socket;
-
-    socket.onopen = () => {
-      setWsStatus("connected");
-    };
-
-    socket.onmessage = (e) => {
-      try {
-        const event: WsEvent = JSON.parse(e.data);
-        handleEvent(event);
-      } catch {
-        console.warn("[neurex ws] unparseable message", e.data);
-      }
-    };
-
-    socket.onclose = () => {
-      setWsStatus("disconnected");
-      reconnect.current = setTimeout(connect, RECONNECT_DELAY);
-    };
-
-    socket.onerror = () => {
-      socket.close();
-    };
-
-    setWsStatus("connecting");
-  }, [conversationId, handleEvent, setWsStatus]);
-
-  useEffect(() => {
-    connect();
-    return () => {
-      reconnect.current && clearTimeout(reconnect.current);
-      ws.current?.close();
-    };
-  }, [connect]);
+  const ws = useRef<WebSocket | null>(null);
+  const { setWsStatus, upsertTask, addMessage, appendToken, clearTasks } = useStore();
 
   const send = useCallback((payload: object) => {
     if (ws.current?.readyState === WebSocket.OPEN) {
       ws.current.send(JSON.stringify(payload));
     }
+  }, []);
+
+  useEffect(() => {
+    if (!conversationId || conversationId === "undefined") return;
+
+    const url = `ws://localhost:8000/ws/${conversationId}?token=${WS_TOKEN}`;
+    const socket = new WebSocket(url);
+    ws.current = socket;
+    setWsStatus("connecting");
+
+    socket.onopen = () => setWsStatus("connected");
+    socket.onclose = () => setWsStatus("disconnected");
+    socket.onerror = () => setWsStatus("disconnected");
+
+    socket.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        const { event, data } = msg;
+
+        switch (event) {
+          case "task_created":
+          case "task_updated":
+            upsertTask(data as TaskNode);
+            break;
+          case "plan_ready":
+            (data.tasks as TaskNode[]).forEach(upsertTask);
+            break;
+          case "token":
+            appendToken(data as string);
+            break;
+          case "done":
+            (data.tasks as TaskNode[]).forEach(upsertTask);
+            break;
+          case "error":
+            addMessage({ role: "assistant", content: `❌ Error: ${data}` });
+            break;
+        }
+      } catch {}
+    };
+
+    return () => {
+      socket.close();
+    };
+  }, [conversationId]);
+
+  // Load history on mount
+  useEffect(() => {
+    fetch(`${API_BASE}/api/chat/${conversationId}`)
+      .then((r) => r.json())
+      .then((data) => useStore.getState().setMessages(data))
+      .catch(() => {});
+  }, [conversationId]);
+
+  // Load tasks on mount
+  useEffect(() => {
+    fetch(`${API_BASE}/api/tasks/`)
+      .then((r) => r.json())
+      .then((data: TaskNode[]) => data.forEach(upsertTask))
+      .catch(() => {});
   }, []);
 
   return { send };

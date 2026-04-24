@@ -1,66 +1,56 @@
 // src/lib/store.ts
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
-import { v4 as uuid } from "crypto";
-import type { NeurexStore, ChatMessage, TaskNode } from "./types";
+import type { NeurexStore, TaskNode } from "./types";
 
 export const useStore = create<NeurexStore>()(
   immer((set) => ({
-    // ── Chat ──────────────────────────────────────────────────────────────
+    // ── Chat ──────────────────────────────────────────────────────────
     messages: [],
+    setMessages: (msgs) => set((s) => { s.messages = msgs; }),
+    addMessage: (msg) => set((s) => {
+      s.messages.push({ ...msg, id: crypto.randomUUID(), timestamp: new Date() });
+    }),
+    appendToken: (token) => set((s) => {
+      const last = s.messages[s.messages.length - 1];
+      if (last?.role === "assistant") {
+        last.content += token;
+      } else {
+        s.messages.push({ id: crypto.randomUUID(), role: "assistant", content: token, timestamp: new Date() });
+      }
+    }),
 
-    setMessages: (msgs) =>
-      set((s) => {
-        s.messages = msgs;
-      }),
-
-    addMessage: (msg) =>
-
-      set((s) => {
-        s.messages.push({
-          ...msg,
-          id: Math.random().toString(36).slice(2),
-          timestamp: new Date(),
-        });
-      }),
-
-    appendToken: (token) =>
-      set((s) => {
-        const last = s.messages[s.messages.length - 1];
-        if (last && last.role === "assistant") {
-          last.content += token;
-        } else {
-          s.messages.push({
-            id: Math.random().toString(36).slice(2),
-            role: "assistant",
-            content: token,
-            timestamp: new Date(),
-          });
-        }
-      }),
-
-    // ── Tasks ─────────────────────────────────────────────────────────────
+    // ── Tasks ─────────────────────────────────────────────────────────
     tasks: {},
+    upsertTask: (task: TaskNode) => set((s) => {
+      s.tasks[task.id] = task;
+    }),
+    clearTasks: () => set((s) => { s.tasks = {}; }),
 
-    upsertTask: (task) =>
-      set((s) => {
-        s.tasks[task.id] = task;
-      }),
+    // ── Editor ────────────────────────────────────────────────────────
+    openFiles: [],
+    activeFile: null,
+    openFile: (path, content, language) => set((s) => {
+      const exists = s.openFiles.some(f => f.path === path);
+      if (!exists) {
+        s.openFiles.push({ path, content, language, isDirty: false });
+      }
+      s.activeFile = path;
+    }),
+    closeFile: (path) => set((s) => {
+      s.openFiles = s.openFiles.filter(f => f.path !== path);
+      if (s.activeFile === path) {
+        s.activeFile = s.openFiles[s.openFiles.length - 1]?.path ?? null;
+      }
+    }),
+    setActiveFile: (path) => set((s) => { s.activeFile = path; }),
+    setFileContent: (path, content) => set((s) => {
+      const f = s.openFiles.find(f => f.path === path);
+      if (f) { f.content = content; f.isDirty = true; }
+    }),
 
-    // ── Editor ────────────────────────────────────────────────────────────
-    openFile: null,
-    setOpenFile: (path) => set((s) => { s.openFile = path; }),
-
-    fileContents: {},
-    setFileContent: (path, content) =>
-      set((s) => { s.fileContents[path] = content; }),
-
-    // ── Scratchpad ────────────────────────────────────────────────────────
-    scratchpad: "",
-    setScratchpad: (text) => set((s) => { s.scratchpad = text; }),
-
-    // ── WebSocket ─────────────────────────────────────────────────────────
-    wsStatus: "disconnected",
+    // ── WS ────────────────────────────────────────────────────────────
+    wsStatus: "connecting",
     setWsStatus: (status) => set((s) => { s.wsStatus = status; }),
   }))
 );
