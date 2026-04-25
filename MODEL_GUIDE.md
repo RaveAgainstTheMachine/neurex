@@ -15,13 +15,13 @@ This guide ranks the best-performing Open Source models for local engineering ta
 | **Llama-3.1**          | 8B   | **~5.8 GB**   | General-purpose assistant.        | 8GB (RTX 4060)      |
 | **Gemma-2**            | 9B   | **~6.5 GB**   | Creative writing & instructions.  | 8GB (RTX 4060)      |
 | **Mistral NeMo**       | 12B  | **~8.1 GB**   | Balanced chat & context (128k).   | 12GB (RTX 3060)     |
-| **Qwen-2.5-Coder**     | 14B  | **~9.5 GB**   | **Neurex Sweet Spot**. Pro coding. | 12GB (RTX 4070)     |
+| **Qwen-2.5-Coder**     | 14B  | **~9.5 GB**   | **Neurex Sweet Spot**. Pro coding.| 12GB (RTX 4070)     |
 | **DeepSeek-R1 (Dist)** | 14B  | **~10.2 GB**  | Complex reasoning on mid-tier.    | 12GB (RTX 4070)     |
 | **Codestral-22B**      | 22B  | **~14.5 GB**  | Dedicated coding (FIM expert).    | 16GB (RTX 4080)     |
 | **Gemma-2**            | 27B  | **~17.8 GB**  | Elite-tier general instruction.   | 20GB+ (7900 XT)     |
-| **Qwen-2.5-Coder**     | 32B  | **~20.1 GB**  | **Single-GPU King**. Best overall. | 24GB (3090/4090)    |
+| **Qwen-2.5-Coder**     | 32B  | **~20.1 GB**  | **Single-GPU King**. Best overall.| 24GB (3090/4090)    |
 | **DeepSeek-R1 (Dist)** | 32B  | **~21.5 GB**  | Maximum reasoning (Single GPU).   | 24GB (3090/4090)    |
-| **Llama-3.1**          | 70B  | **~42.0 GB**  | **Federated Only**. Best for Mesh. | Multi-GPU / Mesh    |
+| **Llama-3.1**          | 70B  | **~42.0 GB**  | **Federated Only**. Best for Mesh.| Multi-GPU / Mesh    |
 | **DeepSeek-R1 (Full)** | 671B | **~400 GB+**  | **Apple Silicon Ultra / Mesh**.   | M3/M4 Max/Ultra     |
 
 ---
@@ -41,4 +41,22 @@ For tasks requiring deep logical chains (debugging complex race conditions or ar
 If you have pooled multiple GPUs across your network, **Llama-3.1 70B** is your target. It is the only model that truly feels like "GPT-4" while running locally on consumer hardware.
 
 ---
-*Last Updated: April 2025. Quantizations based on GGUF (Q4_K_M).*
+
+## ⚖️ Frontier Rivalry: Open vs. Proprietary (2026 Status)
+
+As of April 2026, the gap between "Cloud AI" and "Sovereign AI" has effectively closed for specialized tasks.
+
+| Category             | Proprietary King (Cloud) | Open Source Rival (Local) | Neurex Verdict                     |
+|:---------------------|:-------------------------|:--------------------------|:-----------------------------------|
+| **Agentic Planning** | **GPT-5.5**              | **Llama 4 (MoE)**         | **Parity**. Llama 4 is safer for OS. |
+| **Coding Precision** | **Claude Opus 4.7**      | **Qwen-3.5 (397B)**       | **OS Wins**. Qwen is FIM-superior. |
+| **Deep Reasoning**   | **OpenAI o3**            | **DeepSeek-R1 (Full)**    | **Tie**. R1 is the GOAT for logic. |
+| **Fast Interaction** | **Gemini 1.5 Flash**     | **Llama-3.2 3B / Phi-4**  | **Local Wins**. Zero latency.      |
+
+### Why stay Local in 2026?
+1.  **Zero-Latency Tool Use**: In Neurex, tool-calling (terminal, file ops) happens on the same machine/mesh as the model. Cloud models suffer from 500ms+ round-trip overhead for every single shell command.
+2.  **Context Sovereignty**: Your codebase stays on *your* mesh. No proprietary provider gets to train on your IP.
+3.  **Unlimited Token Budget**: Once you own the hardware, tokens are "free." No $20/month caps or per-million-token billing.
+
+---
+*Last Updated: April 2026. Benchmarks based on SWE-bench Pro and Terminal-Bench 2.0.*
