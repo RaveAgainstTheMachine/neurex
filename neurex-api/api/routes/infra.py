@@ -34,8 +34,13 @@ async def run_benchmark(model: str):
 
 @router.get("/status")
 async def get_infra_status():
-    """Get status of all supported inference engines."""
-    return await infra_manager.get_status()
+    """Get status of all supported inference engines and system metrics."""
+    engines = await infra_manager.get_status()
+    metrics = infra_manager.get_system_metrics()
+    return {
+        "engines": engines,
+        "metrics": metrics
+    }
 
 @router.post("/engine/{name}/start")
 async def start_engine(name: str):

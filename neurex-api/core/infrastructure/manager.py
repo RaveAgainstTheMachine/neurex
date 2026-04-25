@@ -68,6 +68,17 @@ class InfrastructureManager:
         # Mocking for now — in production we'd use nvidia-smi
         return 24.0 
 
+    def get_system_metrics(self) -> Dict[str, Any]:
+        """Gather real-time CPU and RAM metrics."""
+        ram = psutil.virtual_memory()
+        return {
+            "vram_gb": self.get_system_vram(),
+            "ram_total_gb": round(ram.total / (1024 ** 3), 1),
+            "ram_used_gb": round(ram.used / (1024 ** 3), 1),
+            "ram_percent": ram.percent,
+            "cpu_percent": psutil.cpu_percent(interval=0.1)
+        }
+
     def _is_process_running(self, name: str) -> bool:
         """Check if any process matching the name is active."""
         for proc in psutil.process_iter(['name']):

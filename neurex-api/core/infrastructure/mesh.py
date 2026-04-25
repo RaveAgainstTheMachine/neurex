@@ -22,6 +22,8 @@ class PeerNode:
         self.name = name
         self.status = "offline"
         self.vram_gb = 0.0
+        self.ram_total_gb = 0.0
+        self.cpu_percent = 0.0
         self.models = []
         self.latency_ms = 0
 
@@ -32,6 +34,8 @@ class PeerNode:
             "name": self.name,
             "status": self.status,
             "vram_gb": self.vram_gb,
+            "ram_total_gb": self.ram_total_gb,
+            "cpu_percent": self.cpu_percent,
             "models": self.models,
             "latency_ms": self.latency_ms
         }
@@ -86,7 +90,10 @@ class MeshRouter:
                 data = resp.json()
                 
                 peer.status = "online"
-                peer.vram_gb = data.get("vram_gb", 0)
+                metrics = data.get("metrics", {})
+                peer.vram_gb = metrics.get("vram_gb", 0.0)
+                peer.ram_total_gb = metrics.get("ram_total_gb", 0.0)
+                peer.cpu_percent = metrics.get("cpu_percent", 0.0)
                 peer.latency_ms = int((time.time() - start) * 1000)
                 # In the future, parse available models from the response
                 self._save_peers()

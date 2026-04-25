@@ -32,6 +32,7 @@ interface SkillManifest {
 
 export function InfraPanel() {
   const [engines, setEngines] = useState<EngineStatus[]>([]);
+  const [metrics, setMetrics] = useState<any>(null);
   const [registry, setRegistry] = useState<ModelProfile[]>([]);
   const [skills, setSkills] = useState<SkillManifest[]>([]);
   const [peers, setPeers] = useState<any[]>([]);
@@ -44,8 +45,10 @@ export function InfraPanel() {
         fetch(`${API_BASE}/api/infra/registry`),
         fetch(`${API_BASE}/api/infra/skills`),
         fetch(`${API_BASE}/api/infra/mesh/peers`)
-      ]);
-      setEngines(await sRes.json());
+      const sData = await sRes.json();
+      setEngines(sData.engines || []);
+      setMetrics(sData.metrics || null);
+      
       setRegistry(await rRes.json());
       setSkills(await skRes.json());
       setPeers(await pRes.json());
@@ -84,6 +87,12 @@ export function InfraPanel() {
       <div className="infra-panel__header">
         <Cpu size={16} />
         <span>Inference Infrastructure</span>
+        {metrics && (
+          <div style={{ marginLeft: "auto", fontSize: 10, color: "var(--text-muted)", display: "flex", gap: 12 }}>
+            <span><Cpu size={10} style={{marginRight: 4}}/>{metrics.cpu_percent}%</span>
+            <span><Database size={10} style={{marginRight: 4}}/>{metrics.ram_used_gb} / {metrics.ram_total_gb} GB</span>
+          </div>
+        )}
       </div>
 
       <div className="infra-section">
@@ -188,7 +197,7 @@ export function InfraPanel() {
                   </span>
                   {p.status === 'online' && (
                     <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>
-                      {p.vram_gb}GB VRAM • {p.latency_ms}ms
+                      {p.vram_gb}GB VRAM • {p.ram_total_gb}GB RAM • {p.cpu_percent}% CPU • {p.latency_ms}ms
                     </span>
                   )}
                 </div>
