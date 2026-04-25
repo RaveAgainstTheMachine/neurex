@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import {
-  Files, MessageSquare, Settings, GitBranch, Search, Bot, Activity, Clock, Cpu, Shield
+  Files, MessageSquare, Settings, GitBranch, Search, Bot, Activity, Clock, Cpu, Shield, Puzzle
 } from "lucide-react";
 import { FileExplorer } from "./components/FileExplorer/FileExplorer";
 import { ConversationList } from "./components/ConversationList/ConversationList";
@@ -12,13 +12,14 @@ import { SearchPanel } from "./components/SearchPanel/SearchPanel";
 import { EditorPane } from "./components/Editor/EditorPane";
 import { AIPanel } from "./components/AIPanel/AIPanel";
 import { Terminal } from "./components/Terminal/Terminal";
+import { SkillsPanel } from "./components/SkillsPanel/SkillsPanel";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useNotifications } from "./hooks/useNotifications";
 import { useStore } from "./lib/store";
 import { Toaster } from "react-hot-toast";
 import "./App.css";
 
-type SidebarTab = "explorer" | "search" | "git" | "agent" | "history" | "infra" | "system";
+type SidebarTab = "explorer" | "search" | "git" | "agent" | "skills" | "history" | "infra" | "system";
 
 export default function App() {
   useNotifications();
@@ -46,6 +47,7 @@ export default function App() {
               { id: "infra",    icon: Cpu,            label: "AI Infrastructure" },
               { id: "system",   icon: Shield,         label: "System Logs" },
               { id: "git",      icon: GitBranch,      label: "Source Control" },
+              { id: "skills",   icon: Puzzle,         label: "Skills & Extensions" },
               { id: "agent",    icon: Bot,            label: "Agents" },
             ] as { id: SidebarTab; icon: React.FC<any>; label: string }[]
           ).map(({ id, icon: Icon, label }) => (
@@ -84,6 +86,7 @@ export default function App() {
             {sidebarTab === "system"   && <SystemLogsPanel />}
             {sidebarTab === "search"   && <SearchPanel />}
             {sidebarTab === "git"      && <PlaceholderPanel label="Source Control" />}
+            {sidebarTab === "skills"   && <SkillsPanel />}
             {sidebarTab === "agent"    && <PlaceholderPanel label="Agent Logs" />}
           </Panel>
 

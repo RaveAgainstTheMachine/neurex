@@ -17,6 +17,7 @@ import structlog
 from core.context.manager import ContextManager
 from core.context.rules_parser import RulesParser
 from core.mcp.client import MCPClient
+from core.skills.manager import SkillManager
 
 log = structlog.get_logger()
 
@@ -38,6 +39,7 @@ class BaseAgent(ABC):
         self.rules = rules
         self.ctx = ctx
         self.mcp = MCPClient()
+        self.skills = SkillManager()
         self.model = model
 
     # ── Subclasses implement these ────────────────────────────────────────
@@ -91,8 +93,12 @@ class BaseAgent(ABC):
 
         }
 
-        if tools:
-            payload["tools"] = tools
+        # Merge dynamic skills
+        skill_tools = self.skills.get_enabled_tools()
+        final_tools = (tools or []) + skill_tools
+
+        if final_tools:
+            payload["tools"] = final_tools
 
         full_text = ""
         async with httpx.AsyncClient(timeout=300) as client:
