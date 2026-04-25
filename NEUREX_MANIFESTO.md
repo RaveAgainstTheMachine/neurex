@@ -7,7 +7,7 @@ Neurex is not just an IDE; it is a decentralized orchestration layer for the nex
 *   **The Hive Mind (Collective Memory)**: A decentralized vector knowledge base that allows your swarm to recall architectural precedents and optimized patterns from every project you've ever touched.
 *   **MeshRouter Intelligence**: Advanced weighted-load balancing that dynamically routes inference tasks based on real-time node telemetry, queue depth, and network latency.
 *   **Role-Based Command (RBAC)**: Industrial-grade security that ensures compute resources are shared safely across teams, with granular permissions for Admins, Developers, and Viewers.
-*   **System Insomnia**: Integrated sleep-inhibition logic that keeps your mesh nodes awake and processing through the most demanding heavy-lift cycles.
+
 
 ---
 
@@ -18,7 +18,7 @@ Neurex, c'est pas juste un éditeur de code; c'est le cerveau de ton réseau. On
 *   **La Ruche (Mémoire Collective)** : Une base de connaissances vectorielle qui permet à ton "swarm" de se rappeler de tout ce que t'as déjà codé de bon dans le passé.
 *   **MeshRouter Intelligent** : Un algorithme de balancement de charge qui pitche les tâches aux meilleures machines en temps réel, selon le "jus" qui leur reste (VRAM, CPU, latence).
 *   **Contrôle par Rôle (RBAC)** : De la sécurité de calibre industriel pour être sûr que tes ressources sont partagées proprement, avec des droits précis pour les Boss, les Codeurs pis les Spectateurs.
-*   **Insomnie Système** : Ton ordi s'endormira jamais pendant qu'il travaille. Neurex le garde réveillé tant que la job est pas finie.
+
 
 ---
 
@@ -29,4 +29,4 @@ Neurex, c'est pas juste un éditeur de code; c'est le cerveau de ton réseau. On
 *   **العقل الجماعي (الذاكرة المشتركة)**: قاعدة معرفية متجهية لا مركزية تسمح لسربك باسترجاع السوابق المعمارية والأنماط المحسنة من كل مشروع قمت بالعمل عليه.
 *   **ذكاء موجه الشبكة (MeshRouter)**: موازنة أحمال متقدمة تقوم بتوجيه مهام الاستنتاج ديناميكيًا بناءً على القياسات اللحظية للعقد، وعمق الطابور، وزمن انتقال الشبكة.
 *   **التحكم القائم على الأدوار (RBAC)**: أمن بمستوى صناعي يضمن مشاركة موارد الحوسبة بأمان عبر الفرق، مع أذونات دقيقة للمسؤولين، والمطورين، والمشاهدين.
-*   **نظام الأرق (Insomnia)**: منطق متكامل لمنع سكون الأجهزة، مما يحافظ على عقد الشبكة مستيقظة وتعمل خلال أكثر دورات العمل تطلبًا.
+

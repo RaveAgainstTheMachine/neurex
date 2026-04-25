@@ -200,7 +200,6 @@ function App() {
                 <li>• <b>MeshRouter</b>: Dynamic VRAM load balancing</li>
                 <li>• <b>Ollama Proxy</b>: Secure inference streaming</li>
                 <li>• <b>MPI Scaffolding</b>: Distributed tensor pooling</li>
-                <li>• <b>Insomnia Mode</b>: System sleep inhibition</li>
                 <li>• <b>Resource Capping</b>: Per-node RAM/CPU limits</li>
               </ul>
             </div>
