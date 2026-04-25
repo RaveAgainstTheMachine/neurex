@@ -12,6 +12,7 @@ Neurex is not just an IDE; it is a decentralized orchestration layer for the nex
 *   **BYOK Ready**: Augment your local swarm with high-reasoning paid models (OpenAI, Anthropic) via our secure Bring-Your-Own-Key gateway.
 *   **Self-Updating Platform**: Neurex checks GitHub Releases in the background and installs new versions without service interruption.
 *   **Role-Aware Installer**: A single `install.sh` intelligently configures a full Master stack or a lean RPC Node depending on the machine's role in your swarm.
+*   **Hardware Tiering**: Optimize your mesh using our [Hardware Benchmarks & Tier List](file:///games/CodeProjects/AntiGravity/Neurex/neurex/HARDWARE_BENCHMARKS.md).
 
 
 ---
@@ -28,6 +29,7 @@ Neurex, c'est pas juste un éditeur de code; c'est le cerveau de ton réseau. On
 *   **Prêt pour BYOK** : Augmente la puissance de ton swarm local avec des modèles payants (OpenAI, Anthropic) via notre passerelle sécurisée "Bring-Your-Own-Key".
 *   **Mise à Jour Automatique** : Neurex vérifie les nouvelles versions en arrière-plan pis les installe sans interrompre le service.
 *   **Installateur Intelligent** : Un seul `install.sh` qui configure soit un Master complet, soit un Node RPC léger, selon le rôle de ta machine dans le swarm.
+*   **Classement Matériel** : Optimise ton swarm avec notre [Liste de Benchmarks Matériels](file:///games/CodeProjects/AntiGravity/Neurex/neurex/HARDWARE_BENCHMARKS.md).
 
 
 ---
@@ -44,6 +46,7 @@ Neurex, c'est pas juste un éditeur de code; c'est le cerveau de ton réseau. On
 *   **جاهز لمفتاحك الخاص (BYOK)**: عزز سربك المحلي بنماذج مدفوعة عالية الاستنتاج (OpenAI, Anthropic) عبر بوابة "Bring-Your-Own-Key" الآمنة.
 *   **التحديث الذاتي**: يفحص نيوركس الإصدارات الجديدة في الخلفية ويثبتها دون انقطاع في الخدمة.
 *   **المثبّت الذكي**: يقوم ملف `install.sh` واحد بتكوين إما مجموعة Master الكاملة أو Node RPC خفيف الوزن.
+*   **تصنيف العتاد**: حسّن سربك باستخدام [قائمة معايير وتصنيفات العتاد](file:///games/CodeProjects/AntiGravity/Neurex/neurex/HARDWARE_BENCHMARKS.md).
 
 
 ---

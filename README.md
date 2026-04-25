@@ -216,3 +216,5 @@ neurex/
 ---
 
 *Built with love by **Steven Frost** with the assistance of **Antigravity**, a powerful AI coding assistant. Absolute Autonomy. Federated Intelligence.*
+
+[**Hardware Benchmarks & Tier List**](file:///games/CodeProjects/AntiGravity/Neurex/neurex/HARDWARE_BENCHMARKS.md) | [**API Reference**](file:///games/CodeProjects/AntiGravity/Neurex/neurex/API_REFERENCE.md)
