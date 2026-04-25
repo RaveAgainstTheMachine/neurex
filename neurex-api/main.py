@@ -14,7 +14,7 @@ load_dotenv()
 
 from core.memory.worker import MemoryWorker
 from core.context.rules_parser import RulesParser
-from api.routes import chat, tasks, files, infra, notifications, skills, settings
+from api.routes import chat, tasks, files, infra, notifications, skills, settings, auth
 from api.websocket import router as ws_router
 from core.task_graph import init_db
 
@@ -75,6 +75,7 @@ app.include_router(infra.router, prefix="/api/infra", tags=["infra"])
 app.include_router(notifications.router, prefix="/api/notifications", tags=["notifications"])
 app.include_router(skills.router, prefix="/api/skills", tags=["skills"])
 app.include_router(settings.router, prefix="/api/settings", tags=["settings"])
+app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(ws_router, tags=["websocket"])
 
 

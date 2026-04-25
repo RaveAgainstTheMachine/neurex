@@ -14,12 +14,20 @@ infra_manager = InfrastructureManager()
 benchmarker = Benchmarker()
 skill_manager = SkillManager()
 
+from core.skills.manager import SkillManager
+from api.routes.auth import require_role, UserRole
+
+router = APIRouter()
+infra_manager = InfrastructureManager()
+benchmarker = Benchmarker()
+skill_manager = SkillManager()
+
 @router.get("/skills")
 async def list_skills():
     """List all available and pre-baked skills."""
     return skill_manager.list_available()
 
-@router.post("/skills/{skill_id}/toggle")
+@router.post("/skills/{skill_id}/toggle", dependencies=[Depends(require_role(UserRole.ADMIN))])
 async def toggle_skill(skill_id: str, enable: bool):
     """Enable or disable a specific skill."""
     success = skill_manager.toggle_skill(skill_id, enable)
@@ -27,7 +35,7 @@ async def toggle_skill(skill_id: str, enable: bool):
         raise HTTPException(status_code=404, detail="Skill not found")
     return {"status": "success", "enabled": enable}
 
-@router.post("/benchmark/{model}")
+@router.post("/benchmark/{model}", dependencies=[Depends(require_role(UserRole.DEVELOPER))])
 async def run_benchmark(model: str):
     """Run a performance benchmark against a specific model."""
     return await benchmarker.run_benchmark(model)
@@ -42,7 +50,7 @@ async def get_infra_status():
         "metrics": metrics
     }
 
-@router.post("/engine/{name}/start")
+@router.post("/engine/{name}/start", dependencies=[Depends(require_role(UserRole.ADMIN))])
 async def start_engine(name: str):
     """Start a specific AI engine."""
     try:
@@ -51,7 +59,7 @@ async def start_engine(name: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/engine/{name}/stop")
+@router.post("/engine/{name}/stop", dependencies=[Depends(require_role(UserRole.ADMIN))])
 async def stop_engine(name: str):
     """Stop a specific AI engine."""
     success = await infra_manager.stop_engine(name)
@@ -87,19 +95,19 @@ class PeerRequest(BaseModel):
 async def list_peers():
     return [p.to_dict() for p in mesh_router.peers.values()]
 
-@router.post("/mesh/peers")
+@router.post("/mesh/peers", dependencies=[Depends(require_role(UserRole.ADMIN))])
 async def add_peer(req: PeerRequest):
     success = mesh_router.add_peer(req.url, req.token, req.name)
     if not success:
         raise HTTPException(status_code=400, detail="Peer already exists")
     return {"status": "success"}
 
-@router.delete("/mesh/peers")
+@router.delete("/mesh/peers", dependencies=[Depends(require_role(UserRole.ADMIN))])
 async def remove_peer(url: str):
     mesh_router.remove_peer(url)
     return {"status": "deleted"}
 
-@router.post("/ollama_proxy/{path:path}")
+@router.post("/ollama_proxy/{path:path}", dependencies=[Depends(require_role(UserRole.DEVELOPER))])
 async def ollama_proxy(path: str, request: Request):
     """
     Reverse proxy for Ollama inference. Allows authorized peer nodes 

@@ -16,6 +16,19 @@ from sqlalchemy.ext.asyncio import create_async_engine
 DATABASE_URL = "sqlite+aiosqlite:///./neurex.db"
 engine = create_async_engine(DATABASE_URL, echo=False)
 
+class UserRole(str, Enum):
+    ADMIN     = "admin"      # Full control over Mesh and Settings
+    DEVELOPER = "developer"  # Can run agents, edit files, but not change system infra
+    VIEWER    = "viewer"     # Read-only access to terminal and editor
+
+class User(SQLModel, table=True):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
+    username: str = Field(index=True, unique=True)
+    hashed_password: str
+    role: UserRole = UserRole.DEVELOPER
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    is_active: bool = Field(default=True)
+
 class AutonomyLevel(str, Enum):
     RESTRICTED = "restricted" # Everything needs approval
     LIMITED    = "limited"    # Safe commands are auto, unsafe need approval
