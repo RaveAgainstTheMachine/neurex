@@ -19,32 +19,65 @@ interface SettingsState {
 
 export function SettingsPanel() {
   const [settings, setSettings] = useState<SettingsState | null>(null);
+  const [user, setUser] = useState<{ id: string, role: string } | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/settings/`)
-      .then(res => res.json())
-      .then(data => {
-        setSettings(data);
+    const fetchData = async () => {
+      try {
+        const [settingsRes, userRes] = await Promise.all([
+          fetch(`${API_BASE}/api/settings/`),
+          fetch(`${API_BASE}/api/auth/me`, {
+            headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+          })
+        ]);
+
+        if (settingsRes.status === 403 || userRes.status === 401) {
+          toast.error("Unauthorized access. Admin privileges required.");
+        }
+
+        const settingsData = await settingsRes.json();
+        const userData = await userRes.json();
+        
+        setSettings(settingsData);
+        setUser(userData);
+      } catch (err) {
+        toast.error("Failed to sync with Neurex core");
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    fetchData();
   }, []);
 
+  const isAdmin = user?.role === "ADMIN";
+  const isViewer = user?.role === "VIEWER";
+
   const handleChange = (key: string, value: any) => {
-    if (!settings) return;
+    if (!settings || isViewer) return;
     setSettings({ ...settings, [key]: value });
   };
 
   const handleSave = async () => {
-    if (!settings) return;
+    if (!settings || isViewer) return;
     setSaving(true);
     try {
-      await fetch(`${API_BASE}/api/settings/`, {
+      const res = await fetch(`${API_BASE}/api/settings/`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
         body: JSON.stringify({ settings })
       });
+
+      if (res.status === 403) {
+        toast.error("Operation denied: Admin privileges required.");
+        return;
+      }
+
       toast.success("Settings saved successfully");
     } catch (err) {
       toast.error("Failed to save settings");
@@ -64,7 +97,7 @@ export function SettingsPanel() {
           <SettingsIcon size={20} className="text-purple" />
           <h2>Neurex Control Center</h2>
         </div>
-        <button className="btn btn--purple btn--save" onClick={handleSave} disabled={saving}>
+        <button className="btn btn--purple btn--save" onClick={handleSave} disabled={saving || isViewer}>
           <Save size={14} /> {saving ? "Saving..." : "Save Changes"}
         </button>
       </div>
@@ -88,6 +121,7 @@ export function SettingsPanel() {
                   value={settings.autonomy_level} 
                   onChange={(e) => handleChange("autonomy_level", e.target.value)}
                   className="settings-select"
+                  disabled={isViewer}
                 >
                   <option value="restricted">Restricted (High Touch)</option>
                   <option value="limited">Limited (Balanced)</option>
@@ -107,6 +141,7 @@ export function SettingsPanel() {
                   onChange={(e) => handleChange("system_prompt_addition", e.target.value)}
                   placeholder="e.g. Always write comments in French..."
                   className="settings-textarea"
+                  disabled={isViewer}
                 />
               </div>
             </div>
@@ -127,8 +162,8 @@ export function SettingsPanel() {
                 <p>Allows the terminal sandbox to curl, wget, or npm install from public registries. Disable for air-gapped security.</p>
               </div>
               <div className="setting-control">
-                <label className="toggle-switch">
-                  <input type="checkbox" checked={settings.enable_agent_internet} onChange={(e) => handleChange("enable_agent_internet", e.target.checked)} />
+                <label className={`toggle-switch ${isViewer ? 'disabled' : ''}`}>
+                  <input type="checkbox" checked={settings.enable_agent_internet} onChange={(e) => handleChange("enable_agent_internet", e.target.checked)} disabled={isViewer} />
                   <span className="toggle-slider"></span>
                 </label>
               </div>
@@ -140,7 +175,7 @@ export function SettingsPanel() {
                 <p>The protected directory where agent-deleted files are moved. Agents cannot read or write to this directory.</p>
               </div>
               <div className="setting-control">
-                <input type="text" value={settings.neurex_trash_path} onChange={(e) => handleChange("neurex_trash_path", e.target.value)} className="settings-input" />
+                <input type="text" value={settings.neurex_trash_path} onChange={(e) => handleChange("neurex_trash_path", e.target.value)} className="settings-input" disabled={isViewer} />
               </div>
             </div>
 
@@ -160,8 +195,8 @@ export function SettingsPanel() {
                 <p>Automatically offload heavy LLM inference to the most powerful connected peer node.</p>
               </div>
               <div className="setting-control">
-                <label className="toggle-switch">
-                  <input type="checkbox" checked={settings.enable_mesh_routing} onChange={(e) => handleChange("enable_mesh_routing", e.target.checked)} />
+                <label className={`toggle-switch ${isViewer ? 'disabled' : ''}`}>
+                  <input type="checkbox" checked={settings.enable_mesh_routing} onChange={(e) => handleChange("enable_mesh_routing", e.target.checked)} disabled={isViewer} />
                   <span className="toggle-slider"></span>
                 </label>
               </div>
@@ -174,8 +209,8 @@ export function SettingsPanel() {
                 <span className="badge badge--experimental">Experimental</span>
               </div>
               <div className="setting-control">
-                <label className="toggle-switch toggle-switch--purple">
-                  <input type="checkbox" checked={settings.enable_distributed_pooling} onChange={(e) => handleChange("enable_distributed_pooling", e.target.checked)} />
+                <label className={`toggle-switch toggle-switch--purple ${isViewer ? 'disabled' : ''}`}>
+                  <input type="checkbox" checked={settings.enable_distributed_pooling} onChange={(e) => handleChange("enable_distributed_pooling", e.target.checked)} disabled={isViewer} />
                   <span className="toggle-slider"></span>
                 </label>
               </div>
@@ -197,8 +232,8 @@ export function SettingsPanel() {
                 <p>Wake up your mobile device when an agent requires manual approval to proceed.</p>
               </div>
               <div className="setting-control">
-                <label className="toggle-switch">
-                  <input type="checkbox" checked={settings.enable_push_notifications} onChange={(e) => handleChange("enable_push_notifications", e.target.checked)} />
+                <label className={`toggle-switch ${isViewer ? 'disabled' : ''}`}>
+                  <input type="checkbox" checked={settings.enable_push_notifications} onChange={(e) => handleChange("enable_push_notifications", e.target.checked)} disabled={isViewer} />
                   <span className="toggle-slider"></span>
                 </label>
               </div>

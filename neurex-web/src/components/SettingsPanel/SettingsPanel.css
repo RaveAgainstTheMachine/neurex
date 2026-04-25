@@ -235,3 +235,19 @@ input:checked + .toggle-slider:before {
   background-color: var(--accent-purple);
   border-color: var(--accent-purple);
 }
+
+.toggle-switch.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+}
+
+.toggle-switch.disabled .toggle-slider {
+  cursor: not-allowed;
+}
+
+.settings-input:disabled, .settings-select:disabled, .settings-textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: rgba(255, 255, 255, 0.05);
+}
