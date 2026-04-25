@@ -26,4 +26,10 @@ async def update_settings(req: SettingsUpdateRequest):
     from core.infrastructure.insomnia import insomnia_service
     insomnia_service.sync()
     
+    from core.infrastructure.distributed import distributed_manager
+    if settings_manager.get("enable_distributed_pooling"):
+        await distributed_manager.start_rpc_server()
+    else:
+        distributed_manager.stop_rpc_server()
+    
     return {"status": "success", "settings": settings_manager.get_all()}

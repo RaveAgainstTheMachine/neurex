@@ -47,6 +47,10 @@ async def lifespan(app: FastAPI):
     from core.infrastructure.insomnia import insomnia_service
     insomnia_service.sync()
 
+    # Start Distributed RPC Server
+    from core.infrastructure.distributed import distributed_manager
+    await distributed_manager.start_rpc_server()
+
     log.info("neurex.ready")
     yield
 
