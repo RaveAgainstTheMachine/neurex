@@ -56,11 +56,11 @@ async def read_file(path: str) -> str:
     return content
 
 
-async def write_file(path: str, content: str) -> str:
+async def write_file(path: str, content: str, autonomy_level: str = "limited") -> str:
     """Write text content to a file in the workspace."""
     resolved = _safe_path(path)
     
-    level = os.getenv("AUTONOMY_LEVEL", "limited").lower()
+    level = autonomy_level.lower()
     if level == "restricted":
         return f"APPROVAL_REQUIRED: Restricted mode: File write to '{path}' requires approval."
 
@@ -77,11 +77,16 @@ async def write_file(path: str, content: str) -> str:
     finally:
         collab_manager.release_lock(path, "autonomous_agent_1")
 
-async def delete_file(path: str) -> str:
-    """Move a file to the TRASH_ROOT directory instead of deleting it."""
-    # We resolve the path manually because _safe_path would block the trash itself,
-    # but here we want to allow MOVING a file TO trash (one way).
-    # However, we still use _safe_path for the source to ensure no path traversal.
+
+async def delete_file(path: str, autonomy_level: str = "limited") -> str:
+    """
+    Soft-delete: moves to .neurex/trash/ instead of hard deleting.
+    Ensures that misbehaving agents cannot permanently destroy data.
+    """
+    level = autonomy_level.lower()
+    if level == "restricted":
+        return f"APPROVAL_REQUIRED: Restricted mode: File deletion of '{path}' requires approval."
+
     resolved = _safe_path(path)
     if not resolved.exists():
         return f"Error: {path} does not exist"
@@ -94,6 +99,7 @@ async def delete_file(path: str) -> str:
     trash_path = TRASH_ROOT / f"{timestamp}_{resolved.name}"
     
     shutil.move(str(resolved), str(trash_path))
+    log.info("fs.soft_delete", path=path, trash=str(trash_path))
     return f"OK: {path} moved to trash as {trash_path.name}"
 
 
@@ -109,28 +115,15 @@ async def list_directory(path: str = ".") -> str:
     return "\n".join(entries) if entries else "(empty directory)"
 
 
-async def delete_file(path: str) -> str:
-    """
-    Soft-delete: moves to .neurex_trash/ instead of hard deleting.
-    This prevents irreversible destruction by a misbehaving agent.
-    """
-    safe = _safe_path(path)
-    if not safe.exists():
-        return f"Error: path not found: {path}"
-    trash = WORKSPACE_ROOT / ".neurex_trash"
-    trash.mkdir(exist_ok=True)
-    dest = trash / safe.relative_to(WORKSPACE_ROOT)
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    safe.rename(dest)
-    log.info("fs.soft_delete", path=path, trash=str(dest))
-    return f"OK: moved {path} to .neurex_trash/"
-
-
-async def apply_diff(path: str, search: str, replace: str) -> str:
+async def apply_diff(path: str, search: str, replace: str, autonomy_level: str = "limited") -> str:
     """
     Surgical edit: search for specific text and replace it.
     Both blocks must match whitespace exactly.
     """
+    level = autonomy_level.lower()
+    if level == "restricted":
+        return f"APPROVAL_REQUIRED: Restricted mode: Applying diff to '{path}' requires approval."
+
     safe = _safe_path(path)
     if not safe.is_file():
         return f"Error: file not found: {path}"

@@ -35,12 +35,13 @@ class BaseAgent(ABC):
     system_prompt: str = "You are a helpful AI coding assistant."
     agent_type: str = "base"
 
-    def __init__(self, rules: RulesParser, ctx: ContextManager, model: str | None = None):
+    def __init__(self, rules: RulesParser, ctx: ContextManager, model: str | None = None, autonomy_level: str = "limited"):
         self.rules = rules
         self.ctx = ctx
         self.mcp = MCPClient()
         self.skills = SkillManager()
         self.model = model
+        self.autonomy_level = autonomy_level
 
     # ── Subclasses implement these ────────────────────────────────────────
 
@@ -101,8 +102,21 @@ class BaseAgent(ABC):
             payload["tools"] = final_tools
 
         from core.infrastructure.mesh import mesh_router
-        ollama_url = await mesh_router.get_best_inference_node()
+        from core.infrastructure.external_providers import external_engine
 
+        # 1. Check if model is external (BYOK)
+        if external_engine.is_external(payload["model"]):
+            async for chunk in external_engine.stream_chat(
+                payload["model"], 
+                payload["messages"], 
+                tools=payload.get("tools"),
+                temperature=0.2
+            ):
+                yield chunk
+            return
+
+        # 2. Otherwise, route to local Mesh (Ollama)
+        ollama_url = await mesh_router.get_best_inference_node()
         full_text = ""
         # Increase timeout for complex mesh generation
         async with httpx.AsyncClient(timeout=300) as client:
@@ -153,5 +167,5 @@ class BaseAgent(ABC):
         """Route a tool_call from the model to the MCP client."""
         name = tool_call.get("function", {}).get("name", "")
         args = tool_call.get("function", {}).get("arguments", {})
-        log.info("tool_dispatch", tool=name, args=args)
-        return await self.mcp.call(name, args)
+        log.info("tool_dispatch", tool=name, args=args, autonomy=self.autonomy_level)
+        return await self.mcp.call(name, args, autonomy_level=self.autonomy_level)

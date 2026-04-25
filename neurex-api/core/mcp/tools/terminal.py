@@ -54,12 +54,12 @@ def _check_safety(command: str) -> bool:
     # Very restrictive safe-list
     return binary in {"ls", "pwd", "git"} and "rm" not in command and "mv" not in command
 
-async def run_command(command: str, cwd: str = ".", approved: bool = False) -> str:
+async def run_command(command: str, cwd: str = ".", approved: bool = False, autonomy_level: str = "limited") -> str:
     """
     Execute `command` inside a Docker sandbox container.
     If the command is unsafe and not pre-approved, returns an approval request.
     """
-    level = os.getenv("AUTONOMY_LEVEL", "limited").lower()
+    level = autonomy_level.lower()
     trash_path = os.getenv("NEUREX_TRASH_PATH", ".neurex/trash")
     
     if trash_path in command:

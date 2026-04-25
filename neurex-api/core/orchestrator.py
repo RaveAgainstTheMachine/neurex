@@ -55,6 +55,11 @@ class Orchestrator:
         self.ctx = context_manager
         self.infra = InfrastructureManager()
         self.workspace = Path(os.getenv("WORKSPACE_PATH", "/workspace"))
+        self.autonomy_level = os.getenv("AUTONOMY_CEILING", "limited")
+
+    def set_autonomy_level(self, level: str):
+        """Override the session-specific autonomy level."""
+        self.autonomy_level = level
 
     async def _create_git_snapshot(self, graph_id: str):
         """Creates a git tag/snapshot of the workspace for safety."""

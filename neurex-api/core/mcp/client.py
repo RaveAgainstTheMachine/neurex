@@ -40,12 +40,18 @@ class MCPClient:
     Python implementations that are security-scoped.
     """
 
-    async def call(self, tool_name: str, arguments: dict) -> str:
+    async def call(self, tool_name: str, arguments: dict, autonomy_level: str = "limited") -> str:
         fn = TOOL_REGISTRY.get(tool_name)
         if fn is None:
             log.warning("mcp.unknown_tool", tool=tool_name)
             return f"Error: unknown tool '{tool_name}'"
         try:
+            # Inject autonomy_level into arguments if the tool supports it
+            import inspect
+            sig = inspect.signature(fn)
+            if "autonomy_level" in sig.parameters:
+                arguments["autonomy_level"] = autonomy_level
+                
             result = await fn(**arguments)
             return str(result)
         except PermissionError as e:

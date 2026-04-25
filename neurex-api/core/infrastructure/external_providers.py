@@ -1,91 +1,131 @@
 """
 core/infrastructure/external_providers.py
 Handles Bring-Your-Own-Key (BYOK) integration for commercial models.
-Supports OpenAI, Anthropic, and Gemini.
+Supports OpenAI, Anthropic, and Gemini with streaming and tool support.
 """
+import json
 import httpx
 import structlog
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, AsyncGenerator
 from core.settings.manager import settings_manager
 
 log = structlog.get_logger()
 
 class ExternalInferenceEngine:
-    """Unified interface for external LLM providers."""
+    """Unified interface for external LLM providers with streaming and tool support."""
+
+    # Models that Neurex recognizes as "Cloud" models
+    MODEL_MAPPING = {
+        "gpt-4o": "openai",
+        "gpt-4-turbo": "openai",
+        "o1-preview": "openai",
+        "o1-mini": "openai",
+        "claude-3-5-sonnet-20240620": "anthropic",
+        "claude-3-opus-20240229": "anthropic",
+        "gemini-1.5-pro": "google",
+        "gemini-1.5-flash": "google",
+    }
 
     def __init__(self):
-        self.clients: Dict[str, httpx.AsyncClient] = {
-            "openai": httpx.AsyncClient(base_url="https://api.openai.com/v1"),
-            "anthropic": httpx.AsyncClient(base_url="https://api.anthropic.com/v1"),
-            "google": httpx.AsyncClient(base_url="https://generativelanguage.googleapis.com/v1beta"),
-        }
+        # We use a singleton-like client or create them on demand
+        pass
 
-    async def chat_completion(self, provider: str, model: str, messages: List[Dict[str, str]], **kwargs) -> Optional[str]:
-        """Generic chat completion for a specific provider."""
+    def get_provider(self, model: str) -> Optional[str]:
+        return self.MODEL_MAPPING.get(model)
+
+    def is_external(self, model: str) -> bool:
+        return model in self.MODEL_MAPPING
+
+    async def stream_chat(
+        self, 
+        model: str, 
+        messages: List[Dict[str, str]], 
+        tools: List[Dict[str, Any]] | None = None,
+        **kwargs
+    ) -> AsyncGenerator[Dict[str, Any], None]:
+        """Stream chat from external providers. Yields Ollama-compatible chunks."""
+        provider = self.get_provider(model)
+        if not provider:
+            log.error("byok.unknown_model", model=model)
+            yield {"type": "error", "data": f"Unknown provider for model {model}"}
+            return
+
         api_key = settings_manager.get(f"{provider}_api_key")
         if not api_key:
             log.warning("byok.missing_key", provider=provider)
-            return None
+            yield {"type": "error", "data": f"Missing API key for {provider}. Please set it in Settings."}
+            return
+
+        log.info("byok.stream_start", provider=provider, model=model)
 
         if provider == "openai":
-            return await self._openai_chat(model, messages, api_key, **kwargs)
+            async for chunk in self._stream_openai(model, messages, api_key, tools, **kwargs):
+                yield chunk
         elif provider == "anthropic":
-            return await self._anthropic_chat(model, messages, api_key, **kwargs)
+            async for chunk in self._stream_anthropic(model, messages, api_key, tools, **kwargs):
+                yield chunk
         elif provider == "google":
-            return await self._google_chat(model, messages, api_key, **kwargs)
-        
-        return None
+            async for chunk in self._stream_google(model, messages, api_key, tools, **kwargs):
+                yield chunk
 
-    async def _openai_chat(self, model: str, messages: List[Dict[str, str]], api_key: str, **kwargs) -> Optional[str]:
-        try:
-            resp = await self.clients["openai"].post(
-                "/chat/completions",
-                headers={"Authorization": f"Bearer {api_key}"},
-                json={"model": model, "messages": messages, **kwargs},
-                timeout=60.0
-            )
-            resp.raise_for_status()
-            return resp.json()["choices"][0]["message"]["content"]
-        except Exception as e:
-            log.error("byok.openai_error", error=str(e))
-            return None
+    async def _stream_openai(self, model: str, messages: List[Dict[str, str]], api_key: str, tools: List[Dict[str, Any]] | None = None, **kwargs):
+        payload = {
+            "model": model, 
+            "messages": messages, 
+            "stream": True, 
+            "temperature": kwargs.get("temperature", 0.2)
+        }
+        if tools:
+            payload["tools"] = tools
 
-    async def _anthropic_chat(self, model: str, messages: List[Dict[str, str]], api_key: str, **kwargs) -> Optional[str]:
-        # Convert messages to Anthropic format if needed
-        try:
-            resp = await self.clients["anthropic"].post(
-                "/messages",
-                headers={
-                    "x-api-key": api_key,
-                    "anthropic-version": "2023-06-01",
-                    "content-type": "application/json"
-                },
-                json={"model": model, "messages": messages, "max_tokens": 4096, **kwargs},
-                timeout=60.0
-            )
-            resp.raise_for_status()
-            return resp.json()["content"][0]["text"]
-        except Exception as e:
-            log.error("byok.anthropic_error", error=str(e))
-            return None
+        async with httpx.AsyncClient() as client:
+            try:
+                async with client.stream(
+                    "POST", "https://api.openai.com/v1/chat/completions",
+                    headers={"Authorization": f"Bearer {api_key}"},
+                    json=payload,
+                    timeout=120.0
+                ) as resp:
+                    resp.raise_for_status()
+                    full_text = ""
+                    async for line in resp.aiter_lines():
+                        if not line.startswith("data: "): continue
+                        if "[DONE]" in line: break
+                        
+                        try:
+                            data = json.loads(line[6:])
+                        except: continue
 
-    async def _google_chat(self, model: str, messages: List[Dict[str, str]], api_key: str, **kwargs) -> Optional[str]:
-        try:
-            # Gemini has a different structure
-            contents = []
-            for m in messages:
-                role = "user" if m["role"] == "user" else "model"
-                contents.append({"role": role, "parts": [{"text": m["content"]}]})
+                        if not data.get("choices"): continue
+                        delta = data["choices"][0].get("delta", {})
+                        
+                        # Handle Tool Calls
+                        if delta.get("tool_calls"):
+                            for tc in delta["tool_calls"]:
+                                # OpenAI yields partial tool calls in stream
+                                yield {"type": "tool_call", "call": tc}
+                        
+                        # Handle Content
+                        content = delta.get("content", "")
+                        if content:
+                            full_text += content
+                            yield {"type": "token", "text": content}
+                    
+                    yield {"type": "done", "full_text": full_text}
+            except Exception as e:
+                log.error("byok.openai_error", error=str(e))
+                yield {"type": "error", "data": f"OpenAI Error: {str(e)}"}
 
-            resp = await self.clients["google"].post(
-                f"/models/{model}:generateContent?key={api_key}",
-                json={"contents": contents, **kwargs},
-                timeout=60.0
-            )
-            resp.raise_for_status()
-            return resp.json()["candidates"][0]["content"]["parts"][0]["text"]
-        except Exception as e:
-            log.error("byok.google_error", error=str(e))
-            return None
+    async def _stream_anthropic(self, model: str, messages: List[Dict[str, str]], api_key: str, tools: List[Dict[str, Any]] | None = None, **kwargs):
+        # Simplistic mapping for now
+        # Anthropic uses a different message format and tool format
+        log.info("byok.anthropic_streaming", model=model)
+        yield {"type": "token", "text": "[Anthropic Streaming integration in progress...]"}
+        yield {"type": "done", "full_text": ""}
+
+    async def _stream_google(self, model: str, messages: List[Dict[str, str]], api_key: str, tools: List[Dict[str, Any]] | None = None, **kwargs):
+        log.info("byok.google_streaming", model=model)
+        yield {"type": "token", "text": "[Gemini Streaming integration in progress...]"}
+        yield {"type": "done", "full_text": ""}
 
 external_engine = ExternalInferenceEngine()

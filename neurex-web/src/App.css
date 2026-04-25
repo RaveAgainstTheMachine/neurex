@@ -243,8 +243,8 @@
 
 /* Mobile PWA Overrides */
 @media (max-width: 768px) {
-  .activity-bar {
-    display: none; /* Hide side activity bar on mobile */
+  .activity-bar, .resize-handle {
+    display: none !important;
   }
 
   .app__panels {
@@ -252,24 +252,76 @@
     flex-direction: column;
   }
 
-  /* Hide the editor and terminal by default on small screens to focus on the agent */
   .app__sidebar, 
+  .app__main-panel,
   .app__editor, 
   .app__bottom, 
-  .resize-handle {
-    display: none !important;
-  }
-
-  /* AI Panel takes over completely */
   .app__ai {
-    flex: 1 1 100% !important;
+    display: none !important;
     width: 100% !important;
     max-width: 100% !important;
     min-width: 100% !important;
-    border-left: none;
+    flex: 1 1 100% !important;
+    border: none !important;
+  }
+
+  .mobile-visible {
+    display: flex !important;
+  }
+
+  .app__main-panel.mobile-visible {
+    display: flex !important;
+    flex-direction: column;
+  }
+
+  .hide-mobile {
+    display: none !important;
   }
 
   .status-bar {
     padding: 0 8px;
+    height: 28px;
+  }
+
+  /* Mobile Nav Bar */
+  .mobile-nav {
+    display: flex;
+    height: 56px;
+    background: var(--bg-sidebar);
+    border-top: 1px solid var(--border);
+    justify-content: space-around;
+    align-items: center;
+    padding-bottom: env(safe-area-inset-bottom);
+    z-index: 100;
+  }
+
+  .mobile-nav-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 10px;
+    font-weight: 500;
+    flex: 1;
+    transition: color 0.2s;
+  }
+
+  .mobile-nav-btn.active {
+    color: var(--accent-purple);
+  }
+
+  .mobile-nav-btn span {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-nav {
+    display: none;
   }
 }

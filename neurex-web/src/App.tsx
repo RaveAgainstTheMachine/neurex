@@ -1,8 +1,8 @@
 // src/App.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import {
-  Files, MessageSquare, Settings, GitBranch, Search, Bot, Activity, Clock, Cpu, Shield, Puzzle
+  Files, MessageSquare, Settings, GitBranch, Search, Bot, Activity, Clock, Cpu, Shield, Puzzle, Layout
 } from "lucide-react";
 import { FileExplorer } from "./components/FileExplorer/FileExplorer";
 import { ConversationList } from "./components/ConversationList/ConversationList";
@@ -25,17 +25,28 @@ import { UpdateNotifier } from "./components/UpdateNotifier/UpdateNotifier";
 import "./App.css";
 
 type SidebarTab = "explorer" | "search" | "git" | "agent" | "skills" | "history" | "infra" | "system";
+type MobileTab = "chat" | "editor" | "terminal" | "explorer";
 
 export default function App() {
   useNotifications();
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("explorer");
-  const [showAIPanel, setShowAIPanel] = useState(true);
+  const [showAIPanel, setShowAIPanel] = useState(window.innerWidth > 768);
+  const [mobileTab, setMobileTab] = useState<MobileTab>("chat");
   const [showSettings, setShowSettings] = useState(false);
   const [showHiveMind, setShowHiveMind] = useState(false);
   const wsStatus = useStore((s) => s.wsStatus);
   const activeConversationId = useStore((s) => s.activeConversationId);
 
   const { send } = useWebSocket(activeConversationId);
+
+  // Handle window resizing
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768) setShowAIPanel(true);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const toggleSettings = () => {
     setShowSettings(v => !v);
@@ -52,7 +63,8 @@ export default function App() {
       <Toaster position="top-right" toastOptions={{ 
         style: { background: '#1e1e24', color: '#e8e8f0', border: '1px solid var(--border)' } 
       }} />
-      {/* Activity bar (left edge — VS Code style) */}
+      
+      {/* Activity bar (Hidden on mobile) */}
       <div className="activity-bar">
         <div className="activity-bar__top">
           <div className="activity-bar__logo">⬡</div>
@@ -107,7 +119,10 @@ export default function App() {
       <div className="app__body">
         <PanelGroup direction="horizontal" className="app__panels">
           {/* Sidebar */}
-          <Panel defaultSize={16} minSize={10} maxSize={35} className="app__sidebar">
+          <Panel 
+            defaultSize={16} minSize={10} maxSize={35} 
+            className={`app__sidebar ${mobileTab === "explorer" ? "mobile-visible" : ""}`}
+          >
             {sidebarTab === "explorer" && <FileExplorer />}
             {sidebarTab === "history"  && <ConversationList />}
             {sidebarTab === "infra"    && <InfraPanel />}
@@ -121,26 +136,38 @@ export default function App() {
           <ResizeHandle />
 
           {/* Editor + bottom terminal */}
-          <Panel minSize={30}>
+          <Panel 
+            minSize={30} 
+            className={`app__main-panel ${mobileTab === "editor" || mobileTab === "terminal" ? "mobile-visible" : ""}`}
+          >
             <PanelGroup direction="vertical">
-              <Panel minSize={25} className="app__editor">
+              <Panel 
+                minSize={25} 
+                className={`app__editor ${mobileTab === "editor" ? "mobile-visible" : ""}`}
+              >
                 <PresenceBar />
                 {showSettings ? <SettingsPanel /> : showHiveMind ? <HiveMindPanel /> : <EditorPane />}
               </Panel>
 
               {/* Bottom: Terminal */}
               <ResizeHandle vertical />
-              <Panel defaultSize={25} minSize={10} className="app__bottom">
+              <Panel 
+                defaultSize={25} minSize={10} 
+                className={`app__bottom ${mobileTab === "terminal" ? "mobile-visible" : ""}`}
+              >
                 <BottomPanel send={send} />
               </Panel>
             </PanelGroup>
           </Panel>
 
           {/* AI Panel */}
-          {showAIPanel && (
+          {(showAIPanel || mobileTab === "chat") && (
             <>
               <ResizeHandle />
-              <Panel defaultSize={24} minSize={16} maxSize={45} className="app__ai">
+              <Panel 
+                defaultSize={24} minSize={16} maxSize={45} 
+                className={`app__ai ${mobileTab === "chat" ? "mobile-visible" : ""}`}
+              >
                 <AIPanel send={send} conversationId={activeConversationId} />
               </Panel>
             </>
@@ -152,14 +179,34 @@ export default function App() {
           <div className="status-bar__left">
             <span className={`status-ws status-ws--${wsStatus}`}>
               <Activity size={10} />
-              {wsStatus === "connected" ? "Neurex connected" : wsStatus}
+              <span className="hide-mobile">{wsStatus === "connected" ? "Neurex connected" : wsStatus}</span>
             </span>
           </div>
           <div className="status-bar__right">
             <UpdateNotifier />
-            <span>UTF-8</span>
-            <span>Spaces: 2</span>
+            <span className="hide-mobile">UTF-8</span>
+            <span className="hide-mobile">Spaces: 2</span>
           </div>
+        </div>
+
+        {/* Mobile Navigation */}
+        <div className="mobile-nav">
+          <button className={`mobile-nav-btn ${mobileTab === "chat" ? "active" : ""}`} onClick={() => setMobileTab("chat")}>
+            <MessageSquare size={20} />
+            <span>Chat</span>
+          </button>
+          <button className={`mobile-nav-btn ${mobileTab === "editor" ? "active" : ""}`} onClick={() => setMobileTab("editor")}>
+            <Layout size={20} />
+            <span>Code</span>
+          </button>
+          <button className={`mobile-nav-btn ${mobileTab === "terminal" ? "active" : ""}`} onClick={() => setMobileTab("terminal")}>
+            <Activity size={20} />
+            <span>Run</span>
+          </button>
+          <button className={`mobile-nav-btn ${mobileTab === "explorer" ? "active" : ""}`} onClick={() => setMobileTab("explorer")}>
+            <Files size={20} />
+            <span>Files</span>
+          </button>
         </div>
       </div>
     </div>

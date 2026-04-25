@@ -108,6 +108,12 @@ async def websocket_endpoint(
                     pty_session.resize(msg.get("rows", 24), msg.get("cols", 80))
                     continue
 
+                if msg_type == "set_autonomy":
+                    level = msg.get("level", "limited")
+                    orch.set_autonomy_level(level)
+                    log.info("ws.autonomy_updated", level=level, conversation_id=conversation_id)
+                    continue
+
                 if msg_type == "message":
                     content = msg.get("content", "").strip()
                     requested_model = msg.get("model")

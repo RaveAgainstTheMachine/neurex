@@ -218,15 +218,31 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
              onChange={(e) => setPreferredModel(e.target.value)}
              title="Select Active LLM"
            >
-             <optgroup label="Recommended">
+             <optgroup label="Local Mesh (GGUF)">
                <option value="qwen2.5-coder:7b">Qwen 2.5 Coder (Fast)</option>
-               <option value="deepseek-coder-v2:lite">DeepSeek Coder V2 (Smart)</option>
+               <option value="qwen2.5-coder:14b">Qwen 2.5 Coder 14B (Pro)</option>
+               <option value="qwen2.5-coder:32b">Qwen 2.5 Coder 32B (Elite)</option>
+               <option value="deepseek-r1:7b">DeepSeek R1 7B (Logic)</option>
                <option value="llama3.1:8b">Llama 3.1 8B (Chat)</option>
              </optgroup>
-             <optgroup label="Infrastructure">
-               {conversations.length > 0 && <option value="manage" onClick={() => window.dispatchEvent(new CustomEvent('switch-tab', {detail: 'infra'}))}>Manage Models...</option>}
+             <optgroup label="BYOK Gateway (Cloud)">
+               <option value="gpt-4o">GPT-4o (Frontier)</option>
+               <option value="claude-3-5-sonnet-20240620">Claude 3.5 Sonnet</option>
+               <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
              </optgroup>
            </select>
+
+           <select 
+             className="autonomy-selector"
+             defaultValue="limited"
+             onChange={(e) => send({ type: "set_autonomy", level: e.target.value })}
+             title="Set Autonomy Level"
+           >
+             <option value="restricted">🛡️ Restricted</option>
+             <option value="limited">⚖️ Limited</option>
+             <option value="full">🔥 Full Auto</option>
+           </select>
+
            <button className="icon-btn" onClick={newConversation} title="New Chat">
              <Trash2 size={14} style={{ transform: "rotate(45deg)" }} />
            </button>
