@@ -41,7 +41,48 @@ CODER_TOOLS = [
             },
         },
     },
-
+    {
+        "type": "function",
+        "function": {
+            "name": "list_directory",
+            "description": "List the contents of a directory in the workspace.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "Relative path, default '.'"}
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "grep_search",
+            "description": "Search for a string across the codebase.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "Search term"},
+                    "include_globs": {"type": "array", "items": {"type": "string"}, "description": "Optional file globs to include"}
+                },
+                "required": ["query"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_file",
+            "description": "Move a file to the workspace trash.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string"}
+                },
+                "required": ["path"],
+            },
+        },
+    },
     {
         "type": "function",
         "function": {

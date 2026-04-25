@@ -1,8 +1,7 @@
-// src/App.tsx
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import {
-  Files, MessageSquare, Settings, GitBranch, Search, Bot, Activity, Clock, Cpu, Shield, Puzzle, Layout
+  Files, MessageSquare, Settings, GitBranch, Search, Bot, Activity, Clock, Cpu, Shield, Puzzle, Layout, AlertTriangle
 } from "lucide-react";
 import { FileExplorer } from "./components/FileExplorer/FileExplorer";
 import { ConversationList } from "./components/ConversationList/ConversationList";
@@ -24,10 +23,39 @@ import { BrainCircuit } from "lucide-react";
 import { UpdateNotifier } from "./components/UpdateNotifier/UpdateNotifier";
 import "./App.css";
 
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() { return { hasError: true }; }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="error-boundary">
+          <AlertTriangle size={48} className="text-red mb-4" />
+          <h1>System Failure</h1>
+          <p>Neurex encountered a critical rendering error.</p>
+          <button className="btn btn--purple mt-4" onClick={() => window.location.reload()}>Reboot System</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 type SidebarTab = "explorer" | "search" | "git" | "agent" | "skills" | "history" | "infra" | "system";
 type MobileTab = "chat" | "editor" | "terminal" | "explorer";
 
 export default function App() {
+  return (
+    <ErrorBoundary>
+      <AppContent />
+    </ErrorBoundary>
+  );
+}
+
+function AppContent() {
   useNotifications();
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("explorer");
   const [showAIPanel, setShowAIPanel] = useState(window.innerWidth > 768);
@@ -57,6 +85,14 @@ export default function App() {
     setShowHiveMind(v => !v);
     setShowSettings(false);
   };
+
+  // Global handle for store to close overlays
+  useEffect(() => {
+    (window as any).hideOverlays = () => {
+      setShowSettings(false);
+      setShowHiveMind(false);
+    };
+  }, []);
 
   return (
     <div className="app">

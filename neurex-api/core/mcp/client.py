@@ -9,6 +9,7 @@ from core.mcp.tools.filesystem import (
     read_file, write_file, list_directory, delete_file
 )
 from core.mcp.tools.terminal import run_command
+from core.mcp.tools.search import grep_search
 from core.mcp.tools.researcher import web_search
 from core.mcp.tools.browser import (
     browser_navigate, browser_screenshot, browser_click, browser_type, browser_get_content
@@ -23,6 +24,7 @@ TOOL_REGISTRY: dict[str, callable] = {
     "list_directory": list_directory,
     "delete_file":    delete_file,
     "run_command":    run_command,
+    "grep_search":    grep_search,
     "web_search":     web_search,
     "browser_navigate":    browser_navigate,
     "browser_screenshot":  browser_screenshot,
@@ -30,19 +32,25 @@ TOOL_REGISTRY: dict[str, callable] = {
     "browser_type":        browser_type,
     "browser_get_content": browser_get_content,
 }
-
-
-
 class MCPClient:
     """
     Thin dispatcher. In a full MCP implementation this would speak the
     Model Context Protocol over stdio/HTTP. For now it directly calls
     Python implementations that are security-scoped.
     """
+    def __init__(self):
+        from core.skills.manager import SkillManager
+        self.skills = SkillManager()
 
     async def call(self, tool_name: str, arguments: dict, autonomy_level: str = "limited") -> str:
         fn = TOOL_REGISTRY.get(tool_name)
         if fn is None:
+            # Check SkillManager for dynamic tools
+            skill_name = self.skills.get_skill_for_tool(tool_name)
+            if skill_name:
+                log.info("mcp.dispatch_to_skill", tool=tool_name, skill=skill_name)
+                return await self.skills.execute_skill_tool(skill_name, tool_name, arguments)
+                
             log.warning("mcp.unknown_tool", tool=tool_name)
             return f"Error: unknown tool '{tool_name}'"
         try:

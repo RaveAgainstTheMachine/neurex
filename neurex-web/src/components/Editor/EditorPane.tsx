@@ -23,7 +23,7 @@ export function EditorPane() {
   }
 
   const active = openFiles.find((f) => f.path === activeFile) ?? openFiles[0];
-
+  
   const editorRef = useRef<any>(null);
 
   useEffect(() => {
@@ -32,10 +32,21 @@ export function EditorPane() {
     }
   }, [presence]);
 
+  if (!active || !active.path) {
+    return (
+      <div className="editor-empty">
+        <div className="editor-empty__content">
+          <div className="editor-empty__title">Loading...</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="editor-pane">
       <div className="editor-tabs">
         {openFiles.map((file) => {
+          if (!file || !file.path) return null;
           const name = file.path.split("/").pop() ?? file.path;
           return (
             <div
@@ -92,6 +103,7 @@ export function EditorPane() {
           />
         ) : (
           <MonacoEditor
+            key={active.path}
             path={active.path}
             language={active.language}
             value={active.content}
@@ -115,19 +127,23 @@ export function EditorPane() {
               // ── Remote Cursor Rendering ──
               let decorations: string[] = [];
               const renderRemoteCursors = () => {
-                const newDecorations: any[] = [];
-                presence.forEach((p) => {
-                  if (p.active_file === active.path && p.cursor) {
-                    newDecorations.push({
-                      range: new monaco.Range(p.cursor.line, p.cursor.ch, p.cursor.line, p.cursor.ch + 1),
-                      options: {
-                        className: `remote-cursor remote-cursor--${p.user_id.toLowerCase().includes('agent') ? 'agent' : 'user'}`,
-                        hoverMessage: { value: p.user_id }
-                      }
-                    });
-                  }
-                });
-                decorations = editor.deltaDecorations(decorations, newDecorations);
+                try {
+                  const newDecorations: any[] = [];
+                  presence.forEach((p) => {
+                    if (p.active_file === active.path && p.cursor && typeof p.cursor.line === 'number') {
+                      newDecorations.push({
+                        range: new monaco.Range(p.cursor.line, p.cursor.ch, p.cursor.line, p.cursor.ch + 1),
+                        options: {
+                          className: `remote-cursor remote-cursor--${p.user_id.toLowerCase().includes('agent') ? 'agent' : 'user'}`,
+                          hoverMessage: { value: p.user_id }
+                        }
+                      });
+                    }
+                  });
+                  decorations = editor.deltaDecorations(decorations, newDecorations);
+                } catch (err) {
+                  console.error("Failed to render remote cursors:", err);
+                }
               };
 
               // Re-render when presence changes

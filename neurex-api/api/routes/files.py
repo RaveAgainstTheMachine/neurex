@@ -20,7 +20,9 @@ async def file_tree():
         name = path.name
         if path.is_dir():
             children = []
-            for child in sorted(path.iterdir()):
+            # Sort: directories first, then alphabetical
+            items = sorted(path.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
+            for child in items:
                 if child.name not in IGNORED:
                     children.append(_walk(child))
             return {"name": name, "type": "dir", "children": children}

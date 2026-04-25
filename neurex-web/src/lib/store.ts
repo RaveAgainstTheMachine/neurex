@@ -8,6 +8,19 @@ const API_BASE = "http://localhost:8000";
 
 export const useStore = create<NeurexStore>()(
   immer((set, get) => ({
+    // ── File Tree ─────────────────────────────────────────────────────
+    fileTree: [],
+    setFileTree: (tree) => set((s) => { s.fileTree = tree; }),
+    refreshFileTree: async () => {
+      try {
+        const r = await fetch(`${API_BASE}/api/files/tree`);
+        const data = await r.json();
+        set((s) => { s.fileTree = Array.isArray(data) ? data : [data]; });
+      } catch (err) {
+        console.error("Failed to fetch file tree:", err);
+      }
+    },
+
     // ── Chat ──────────────────────────────────────────────────────────
     messages: [],
     activeConversationId: localStorage.getItem("neurex_conv_id") || "default",
@@ -57,11 +70,14 @@ export const useStore = create<NeurexStore>()(
     openFiles: [],
     activeFile: null,
     openFile: (path, content, language) => set((s) => {
+      if (!path) return;
       const exists = s.openFiles.some(f => f.path === path);
       if (!exists) {
         s.openFiles.push({ path, content, language, isDirty: false });
       }
       s.activeFile = path;
+      // Force editor visibility
+      (window as any).hideOverlays?.();
     }),
     closeFile: (path) => set((s) => {
       s.openFiles = s.openFiles.filter(f => f.path !== path);
@@ -69,7 +85,10 @@ export const useStore = create<NeurexStore>()(
         s.activeFile = s.openFiles[s.openFiles.length - 1]?.path ?? null;
       }
     }),
-    setActiveFile: (path) => set((s) => { s.activeFile = path; }),
+    setActiveFile: (path) => set((s) => { 
+      s.activeFile = path; 
+      (window as any).hideOverlays?.();
+    }),
     setFileContent: (path, content) => set((s) => {
       const f = s.openFiles.find(f => f.path === path);
       if (f) { f.content = content; f.isDirty = true; }

@@ -26,14 +26,22 @@ function FileItem({ node, depth }: { node: FileNode; depth: number }) {
   const handleClick = async () => {
     if (isDir) {
       setExpanded((v) => !v);
-      } else if (node.path) {
+    } else if (node.path) {
+      // If already open, just switch
+      const alreadyOpen = useStore.getState().openFiles.find(f => f.path === node.path);
+      if (alreadyOpen) {
+        useStore.getState().setActiveFile(node.path);
+        return;
+      }
+
       try {
         const r = await fetch(`${API_BASE}/api/files/read?path=${encodeURIComponent(node.path)}`);
+        if (!r.ok) throw new Error("Failed to read");
         const data = await r.json();
-        openFile(node.path, data.content ?? "", getLanguage(node.path));
-      } catch {
-
-        openFile(node.path, "// Could not load file", getLanguage(node.path));
+        useStore.getState().openFile(node.path, data.content ?? "", getLanguage(node.path));
+      } catch (err) {
+        console.error(err);
+        useStore.getState().openFile(node.path, "// Error loading file", getLanguage(node.path));
       }
     }
   };
@@ -60,41 +68,49 @@ function FileItem({ node, depth }: { node: FileNode; depth: number }) {
         )}
         <span className="file-item__name">{node.name}</span>
       </div>
-      {isDir && expanded && node.children?.map((child) => (
-        <FileItem key={child.path ?? child.name} node={child} depth={depth + 1} />
-      ))}
+      {isDir && expanded && node.children && (
+        <div className="file-item__children">
+          {[...node.children]
+            .sort((a, b) => (a.type === "dir" ? -1 : 1) || a.name.localeCompare(b.name))
+            .map((child) => (
+              <FileItem key={child.path ?? child.name} node={child} depth={depth + 1} />
+            ))}
+        </div>
+      )}
     </div>
   );
 }
 
 export function FileExplorer() {
-  const [tree, setTree] = useState<FileNode[]>([]);
+  const { fileTree, refreshFileTree } = useStore();
   const [loading, setLoading] = useState(false);
 
-  const loadTree = async () => {
+  const handleRefresh = async () => {
     setLoading(true);
-    try {
-      const r = await fetch(`${API_BASE}/api/files/tree`);
-      const data = await r.json();
-      setTree(Array.isArray(data) ? data : [data]);
-    } catch {}
+    await refreshFileTree();
     setLoading(false);
   };
 
-  useEffect(() => { loadTree(); }, []);
+  useEffect(() => {
+    if (fileTree.length === 0) {
+      handleRefresh();
+    }
+  }, []);
 
   return (
     <div className="file-explorer">
       <div className="file-explorer__header">
         <span>EXPLORER</span>
-        <button className="icon-btn" onClick={loadTree} title="Refresh">
+        <button className="icon-btn" onClick={handleRefresh} title="Refresh" disabled={loading}>
           <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
         </button>
       </div>
       <div className="file-explorer__tree">
-        {tree.map((node) => (
-          <FileItem key={node.path ?? node.name} node={node} depth={0} />
-        ))}
+        {[...fileTree]
+          .sort((a, b) => (a.type === "dir" ? -1 : 1) || a.name.localeCompare(b.name))
+          .map((node) => (
+            <FileItem key={node.path ?? node.name} node={node} depth={0} />
+          ))}
       </div>
     </div>
   );

@@ -59,6 +59,11 @@ export interface Presence {
 }
 
 export interface NeurexStore {
+  // File Tree
+  fileTree: FileNode[];
+  setFileTree: (tree: FileNode[]) => void;
+  refreshFileTree: () => Promise<void>;
+
   // Chat
   messages: ChatMessage[];
   activeConversationId: string;

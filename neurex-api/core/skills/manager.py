@@ -54,11 +54,30 @@ class SkillManager:
     def get_enabled_tools(self) -> List[Dict[str, Any]]:
         """Scan skills directory and return all tool definitions."""
         all_tools = []
+        self._tool_to_skill = {} # Map tool_name -> skill_name for dispatch
+        
+        if not SKILLS_DIR.exists():
+            return []
+
         for skill_dir in SKILLS_DIR.iterdir():
             if skill_dir.is_dir() and not skill_dir.name.startswith("."):
-                skill = SkillSet(skill_dir.name, skill_dir)
-                all_tools.extend(skill.tools)
+                try:
+                    skill = SkillSet(skill_dir.name, skill_dir)
+                    for tool in skill.tools:
+                        tool_name = tool.get("function", {}).get("name")
+                        if tool_name:
+                            self._tool_to_skill[tool_name] = skill_dir.name
+                    all_tools.extend(skill.tools)
+                except Exception as e:
+                    log.warning("skill.load_failed", name=skill_dir.name, error=str(e))
         return all_tools
+
+    def get_skill_for_tool(self, tool_name: str) -> str | None:
+        """Return the skill name that provides the given tool."""
+        # Ensure we've scanned
+        if not hasattr(self, "_tool_to_skill"):
+            self.get_enabled_tools()
+        return self._tool_to_skill.get(tool_name)
 
     def fetch_curated_list(self) -> List[Dict[str, Any]]:
         """Fetch the curated 'Awesome Skills' manifest from GitHub."""
@@ -73,10 +92,37 @@ class SkillManager:
             log.warning("skill.fetch_curated_failed", error=str(e))
         return []
 
-    def execute_skill_tool(self, skill_name: str, tool_name: str, args: Dict[str, Any]) -> str:
+    async def execute_skill_tool(self, skill_name: str, tool_name: str, args: Dict[str, Any]) -> str:
         """
         Execute a tool provided by a specific skill.
-        Skills are expected to provide a 'handler.py' or equivalent entry point.
+        Skills are expected to provide a 'handler.py' with an async 'handle(tool_name, args)' function.
         """
-        # TODO: Implement dynamic execution of skill-specific logic
-        return f"Skill tool '{tool_name}' execution not yet implemented for '{skill_name}'"
+        skill_path = SKILLS_DIR / skill_name
+        handler_path = skill_path / "handler.py"
+        
+        if not handler_path.exists():
+            return f"Error: Skill '{skill_name}' does not have a handler.py"
+            
+        import importlib.util
+        import sys
+        
+        try:
+            module_name = f"neurex_skill_{skill_name}"
+            spec = importlib.util.spec_from_file_location(module_name, str(handler_path))
+            if not spec or not spec.loader:
+                return f"Error: Could not load handler for skill '{skill_name}'"
+                
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[module_name] = module
+            spec.loader.exec_module(module)
+            
+            if not hasattr(module, "handle"):
+                return f"Error: Skill '{skill_name}' handler has no 'handle' function"
+                
+            # Execute the handler (must be async)
+            result = await module.handle(tool_name, args)
+            return str(result)
+            
+        except Exception as e:
+            log.error("skill.execution_failed", skill=skill_name, tool=tool_name, error=str(e))
+            return f"Skill execution error: {str(e)}"
