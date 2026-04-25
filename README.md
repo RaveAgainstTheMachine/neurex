@@ -2,7 +2,7 @@
 
 > **Reclaim your hardware. Reclaim your intelligence.**
 
-Neurex is the first decentralized AI operating system designed to run **massive, open-source models on consumer hardware**. By pooling the VRAM of your gaming rigs and workstations into a unified compute mesh, Neurex delivers enterprise-grade agentic power without the "Cloud Tax" or privacy compromises of centralized providers.
+Neurex is the first decentralized AI operating system designed to run **massive, open-source models on consumer hardware**. Whether deployed as a **Standalone Master** on a single workstation or a **Federated Swarm** across multiple rigs, Neurex delivers enterprise-grade agentic power without the "Cloud Tax" or privacy compromises of centralized providers.
 
 ---
 
@@ -86,7 +86,8 @@ The Node registers with the Master automatically via the heartbeat agent and app
 ## Key Features
 
 ### 🧠 Federated Compute Mesh
-- Pool VRAM across multiple machines with `llama.cpp` RPC
+- **Standalone or Federated**: Run as a single sovereign Master or scale horizontally via `llama.cpp` RPC.
+- **VRAM Pooling**: Aggregates GPU memory from all nodes into a unified inference engine.
 - **Weighted-Load MeshRouter**: routes inference to the node with the best capability score (`VRAM × 2 / (CPU + latency/10 + queue×20 + 1)`)
 - Swarm heartbeat every 15 seconds — automatic peer discovery
 
