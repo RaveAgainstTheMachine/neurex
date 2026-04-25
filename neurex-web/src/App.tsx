@@ -21,6 +21,7 @@ import { useNotifications } from "./hooks/useNotifications";
 import { useStore } from "./lib/store";
 import { Toaster } from "react-hot-toast";
 import { BrainCircuit } from "lucide-react";
+import { UpdateNotifier } from "./components/UpdateNotifier/UpdateNotifier";
 import "./App.css";
 
 type SidebarTab = "explorer" | "search" | "git" | "agent" | "skills" | "history" | "infra" | "system";
@@ -155,6 +156,7 @@ export default function App() {
             </span>
           </div>
           <div className="status-bar__right">
+            <UpdateNotifier />
             <span>UTF-8</span>
             <span>Spaces: 2</span>
           </div>
