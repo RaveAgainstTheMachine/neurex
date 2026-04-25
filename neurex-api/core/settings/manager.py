@@ -36,6 +36,11 @@ DEFAULT_SETTINGS = {
     "neurex_trash_path": ".neurex/trash",
     "enable_push_notifications": True,
 
+    # BYOK (Bring Your Own Key) for External Providers
+    "openai_api_key": "",
+    "anthropic_api_key": "",
+    "google_api_key": "",
+
     # System Lifecycle
     "enable_insomnia": True,
 }

@@ -1,8 +1,8 @@
 # ⬡ Neurex — Federated Agentic IDE
 
-> **The decentralized intelligence platform for the next era of software engineering.**
+> **Reclaim your hardware. Reclaim your intelligence.**
 
-Neurex is not a wrapper around a chat model. It is a **distributed AI operating system** — a fully agentic IDE that pools hardware across multiple machines into a unified compute mesh, maintains a semantic collective memory of everything your team has ever built, and executes complex multi-step engineering tasks with industrial-grade human-in-the-loop safety controls.
+Neurex is the first decentralized AI operating system designed to run **massive, open-source models on consumer hardware**. By pooling the VRAM of your gaming rigs and workstations into a unified compute mesh, Neurex delivers enterprise-grade agentic power without the "Cloud Tax" or privacy compromises of centralized providers.
 
 ---
 
@@ -203,6 +203,7 @@ neurex/
 | Phase 11 | ✅ Complete | Hive Mind UI (semantic search portal) |
 | Phase 12 | ✅ Complete | RBAC frontend enforcement |
 | Phase 13 | ✅ Complete | Role-aware installer, self-update system |
+| Phase 13.5| 🔲 In Progress | **BYOK Gateway**: Support for OpenAI, Anthropic, Gemini |
 | Phase 14 | 🔲 Planned | LSP integration (diagnostics, hover, go-to-def) |
 | Phase 15 | 🔲 Planned | Git UI panel (diff, stage, commit, branch) |
 | Phase 16 | 🔲 Planned | DAP Debugger (breakpoints, step-through) |
