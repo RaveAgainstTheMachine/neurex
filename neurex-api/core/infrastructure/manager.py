@@ -47,7 +47,20 @@ class InfrastructureManager:
             )
             log.info("infra.engine_started", engine=name)
             return True
-        # Add vLLM / llama.cpp start logic here
+        
+        elif name == "llama.cpp":
+            from core.settings.manager import settings_manager
+            is_worker = settings_manager.get("enable_distributed_pooling")
+            
+            if is_worker:
+                log.info("infra.mpi_pooling_enabled", role="worker")
+                # Scaffolding for launching `llama-server --rpc ...`
+                # await asyncio.create_subprocess_exec("llama-rpc-server", "-H", "0.0.0.0", "-p", "50052")
+                return True
+            else:
+                log.info("infra.mpi_pooling_disabled", role="master")
+                return True
+
         raise Exception(f"Start logic for {name} not implemented yet")
 
     async def stop_engine(self, name: str):

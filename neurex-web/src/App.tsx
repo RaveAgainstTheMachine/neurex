@@ -13,6 +13,7 @@ import { EditorPane } from "./components/Editor/EditorPane";
 import { AIPanel } from "./components/AIPanel/AIPanel";
 import { Terminal } from "./components/Terminal/Terminal";
 import { SkillsPanel } from "./components/SkillsPanel/SkillsPanel";
+import { SettingsPanel } from "./components/SettingsPanel/SettingsPanel";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useNotifications } from "./hooks/useNotifications";
 import { useStore } from "./lib/store";
@@ -25,6 +26,7 @@ export default function App() {
   useNotifications();
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("explorer");
   const [showAIPanel, setShowAIPanel] = useState(true);
+  const [showSettings, setShowSettings] = useState(false);
   const wsStatus = useStore((s) => s.wsStatus);
   const activeConversationId = useStore((s) => s.activeConversationId);
 
@@ -69,7 +71,11 @@ export default function App() {
           >
             <MessageSquare size={20} />
           </button>
-          <button className="activity-btn" title="Settings">
+          <button 
+            className={`activity-btn ${showSettings ? "activity-btn--active" : ""}`} 
+            title="Settings"
+            onClick={() => setShowSettings((v) => !v)}
+          >
             <Settings size={20} />
           </button>
         </div>
@@ -96,7 +102,7 @@ export default function App() {
           <Panel minSize={30}>
             <PanelGroup direction="vertical">
               <Panel minSize={25} className="app__editor">
-                <EditorPane />
+                {showSettings ? <SettingsPanel /> : <EditorPane />}
               </Panel>
 
               {/* Bottom: Terminal */}
