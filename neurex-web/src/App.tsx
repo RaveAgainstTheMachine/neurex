@@ -14,11 +14,13 @@ import { AIPanel } from "./components/AIPanel/AIPanel";
 import { Terminal } from "./components/Terminal/Terminal";
 import { SkillsPanel } from "./components/SkillsPanel/SkillsPanel";
 import { SettingsPanel } from "./components/SettingsPanel/SettingsPanel";
+import { HiveMindPanel } from "./components/HiveMindPanel/HiveMindPanel";
 import { PresenceBar } from "./components/PresenceBar/PresenceBar";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useNotifications } from "./hooks/useNotifications";
 import { useStore } from "./lib/store";
 import { Toaster } from "react-hot-toast";
+import { BrainCircuit } from "lucide-react";
 import "./App.css";
 
 type SidebarTab = "explorer" | "search" | "git" | "agent" | "skills" | "history" | "infra" | "system";
@@ -28,10 +30,21 @@ export default function App() {
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("explorer");
   const [showAIPanel, setShowAIPanel] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  const [showHiveMind, setShowHiveMind] = useState(false);
   const wsStatus = useStore((s) => s.wsStatus);
   const activeConversationId = useStore((s) => s.activeConversationId);
 
   const { send } = useWebSocket(activeConversationId);
+
+  const toggleSettings = () => {
+    setShowSettings(v => !v);
+    setShowHiveMind(false);
+  };
+
+  const toggleHiveMind = () => {
+    setShowHiveMind(v => !v);
+    setShowSettings(false);
+  };
 
   return (
     <div className="app">
@@ -57,7 +70,7 @@ export default function App() {
             <button
               key={id}
               className={`activity-btn ${sidebarTab === id ? "activity-btn--active" : ""}`}
-              onClick={() => setSidebarTab(id)}
+              onClick={() => { setSidebarTab(id); setShowSettings(false); setShowHiveMind(false); }}
               title={label}
             >
               <Icon size={20} />
@@ -65,6 +78,13 @@ export default function App() {
           ))}
         </div>
         <div className="activity-bar__bottom">
+          <button
+            className={`activity-btn ${showHiveMind ? "activity-btn--active" : ""}`}
+            onClick={toggleHiveMind}
+            title="Hive Mind (Collective Memory)"
+          >
+            <BrainCircuit size={20} className="text-cyan" />
+          </button>
           <button
             className={`activity-btn ${showAIPanel ? "activity-btn--active" : ""}`}
             onClick={() => setShowAIPanel((v) => !v)}
@@ -75,7 +95,7 @@ export default function App() {
           <button 
             className={`activity-btn ${showSettings ? "activity-btn--active" : ""}`} 
             title="Settings"
-            onClick={() => setShowSettings((v) => !v)}
+            onClick={toggleSettings}
           >
             <Settings size={20} />
           </button>
@@ -104,7 +124,7 @@ export default function App() {
             <PanelGroup direction="vertical">
               <Panel minSize={25} className="app__editor">
                 <PresenceBar />
-                {showSettings ? <SettingsPanel /> : <EditorPane />}
+                {showSettings ? <SettingsPanel /> : showHiveMind ? <HiveMindPanel /> : <EditorPane />}
               </Panel>
 
               {/* Bottom: Terminal */}
