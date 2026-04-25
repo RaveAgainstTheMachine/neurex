@@ -23,7 +23,9 @@ export function Terminal({ onInput, onResize, output }: TerminalProps) {
       cursorBlink: true,
       allowTransparency: true,
       scrollback: 5000,
-      rows: 24, // Initial height to prevent layout flicker
+      rows: 1, // Small initial height to prevent layout flicker
+      lineHeight: 1.2,
+      allowProposedApi: true,
       theme: {
         background: "hsl(240, 10%, 4%)",
         foreground: "#e8e8f0",
@@ -40,9 +42,7 @@ export function Terminal({ onInput, onResize, output }: TerminalProps) {
       },
       fontFamily: "var(--font-mono)",
       fontSize: 12,
-      lineHeight: 1.2,
-      scrollOnData: true,
-      allowProposedApi: true,
+      convertEol: true
     });
 
     const fitAddon = new FitAddon();
@@ -50,26 +50,35 @@ export function Terminal({ onInput, onResize, output }: TerminalProps) {
     term.loadAddon(new WebLinksAddon());
 
     term.open(terminalRef.current);
-    
-    // Initial fit with double-check
+
+    // Smooth resize logic: only fit after a short pause during bursts
     let resizeTimeout: any = null;
+    let burstTimeout: any = null;
+
     const doFit = (isInitial = false) => {
-      try {
-        fitAddon.fit();
-        term.scrollToBottom();
-        
-        // Only notify parent of resize after a short delay (debounced)
-        if (!isInitial) {
-          clearTimeout(resizeTimeout);
-          resizeTimeout = setTimeout(() => {
-            onResize(term.rows, term.cols);
-          }, 150);
-        }
-      } catch (e) {}
+      if (isInitial) {
+        try { fitAddon.fit(); term.scrollToBottom(); } catch (e) { }
+        return;
+      }
+
+      // Immediately keep the prompt at the bottom of the current grid during drag
+      // using RAF for 60fps+ synchronization to prevent "dipping"
+      requestAnimationFrame(() => {
+        try { term.scrollToBottom(); } catch (e) { }
+      });
+
+      clearTimeout(burstTimeout);
+      burstTimeout = setTimeout(() => {
+        try {
+          fitAddon.fit();
+          term.scrollToBottom();
+          onResize(term.rows, term.cols);
+        } catch (e) { }
+      }, 50);
     };
 
     setTimeout(() => doFit(true), 50);
-    setTimeout(() => doFit(true), 250); 
+    setTimeout(() => doFit(true), 250);
 
     const observer = new ResizeObserver(() => {
       doFit();

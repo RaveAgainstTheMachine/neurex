@@ -1,15 +1,18 @@
-/* src/components/Terminal/Terminal.css */
 .terminal-container {
   width: 100%;
   height: 100%;
   background: var(--bg-app);
   box-sizing: border-box;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end; /* Anchor to bottom */
 }
 
 .xterm {
   width: 100%;
-  height: 100%;
+  padding: 0;
+  height: auto !important;
 }
 
 .xterm-viewport, 
