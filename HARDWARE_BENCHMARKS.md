@@ -26,34 +26,34 @@ This guide ranks hardware for your Neurex compute mesh based on **Inference Spee
 ## 🏆 Tier 1: The Hive Overlords (Elite)
 *Best for: Running 70B+ models at interactive speeds or handling massive context.*
 
-| Model                      | Architecture | VRAM / Memory | Why it wins                                   |
-|:---------------------------|:-------------|:--------------|:----------------------------------------------|
-| **NVIDIA RTX 5090**        | Blackwell    | 32GB GDDR7    | **The New Standard**. 32GB fits 30B+ comfortably.|
-| **Apple M3/M4 Ultra**      | Apple Silicon| Up to 192GB   | **Massive Context**. Runs 671B DeepSeek-R1.    |
-| **NVIDIA RTX 4090**        | Ada Lovelace | 24GB G6X      | Ultra-reliable CUDA performance.              |
-| **Intel Arc Pro B70**      | Battlemage   | 32GB GDDR6    | **Enterprise Value**. 32GB for AI inference.  |
+| Model                | Architecture  | VRAM / Memory | Why it wins                                         |
+|:---------------------|:--------------|:--------------|:----------------------------------------------------|
+| **NVIDIA RTX 5090**  | Blackwell     | 32GB GDDR7    | **The New Standard**. 32GB fits 30B+ comfortably.   |
+| **Apple M3/M4 Ultra**| Apple Silicon | Up to 192GB   | **Massive Context**. Runs 671B DeepSeek-R1.         |
+| **NVIDIA RTX 4090**  | Ada Lovelace  | 24GB G6X      | Ultra-reliable CUDA performance.                    |
+| **Intel Arc Pro B70**| Battlemage    | 32GB GDDR6    | **Enterprise Value**. 32GB for AI inference.        |
 
 ---
 
 ## 🥇 Tier 2: High-Speed Command Nodes
 *Best for: Running 14B - 32B models at lightning speed.*
 
-| Model                      | Architecture | VRAM / Memory | Why it wins                                   |
-|:---------------------------|:-------------|:--------------|:----------------------------------------------|
-| **NVIDIA RTX 5080**        | Blackwell    | 16GB GDDR7    | High speed for mid-sized agent models.        |
-| **AMD RX 7900 XTX**        | RDNA 3       | 24GB G6       | Best non-NVIDIA capacity for the price.       |
-| **NVIDIA RTX 3090**        | Ampere       | 24GB G6X      | The budget king for 24GB VRAM nodes.          |
+| Model                | Architecture  | VRAM / Memory | Why it wins                                         |
+|:---------------------|:--------------|:--------------|:----------------------------------------------------|
+| **NVIDIA RTX 5080**  | Blackwell     | 16GB GDDR7    | High speed for mid-sized agent models.              |
+| **AMD RX 7900 XTX**  | RDNA 3        | 24GB G6       | Best non-NVIDIA capacity for the price.             |
+| **NVIDIA RTX 3090**  | Ampere        | 24GB G6X      | The budget king for 24GB VRAM nodes.                |
 
 ---
 
 ## 🥈 Tier 3: Reliable Swarm Workers
 *Best for: Serving as RPC Nodes to contribute VRAM to the mesh.*
 
-| Model                      | Architecture | VRAM / Memory | Why it wins                                   |
-|:---------------------------|:-------------|:--------------|:----------------------------------------------|
-| **Intel Arc B580**         | Battlemage   | 12GB GDDR6    | Solid 12GB performance for mesh expansion.    |
-| **NVIDIA RTX 4060 Ti 16GB**| Ada Lovelace | 16GB G6       | Low power consumption for 24/7 RPC nodes.     |
-| **NVIDIA RTX 3060 12GB**   | Ampere       | 12GB G6       | The most affordable way to join the mesh.     |
+| Model                | Architecture  | VRAM / Memory | Why it wins                                         |
+|:---------------------|:--------------|:--------------|:----------------------------------------------------|
+| **Intel Arc B580**   | Battlemage    | 12GB GDDR6    | Solid 12GB performance for mesh expansion.          |
+| **NVIDIA RTX 4060 Ti**| Ada Lovelace  | 16GB G6       | Low power consumption for 24/7 RPC nodes.           |
+| **NVIDIA RTX 3060**  | Ampere        | 12GB G6       | The most affordable way to join the mesh.           |
 
 ---
 
