@@ -21,4 +21,9 @@ async def get_settings():
 async def update_settings(req: SettingsUpdateRequest):
     for key, value in req.settings.items():
         settings_manager.update(key, value)
+    
+    # Sync system services
+    from core.infrastructure.insomnia import insomnia_service
+    insomnia_service.sync()
+    
     return {"status": "success", "settings": settings_manager.get_all()}

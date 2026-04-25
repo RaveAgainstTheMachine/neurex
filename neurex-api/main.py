@@ -43,6 +43,10 @@ async def lifespan(app: FastAPI):
     pty_manager = PTYManager()
     app.state.pty_manager = pty_manager
 
+    # Start Insomnia Service
+    from core.infrastructure.insomnia import insomnia_service
+    insomnia_service.sync()
+
     log.info("neurex.ready")
     yield
 

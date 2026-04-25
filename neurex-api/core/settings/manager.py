@@ -23,7 +23,10 @@ DEFAULT_SETTINGS = {
     
     # Security & Filesystem
     "neurex_trash_path": ".neurex/trash",
-    "enable_push_notifications": True
+    "enable_push_notifications": True,
+    
+    # System Lifecycle
+    "enable_insomnia": True # Prevent system sleep
 }
 
 class SettingsManager:
