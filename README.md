@@ -33,18 +33,18 @@ Neurex is the first decentralized AI operating system designed to run **massive,
 └─────────────────┘                └─────────────────┘
 ```
 
-| Layer                  | Technology                                                                        |
-|:-----------------------|:----------------------------------------------------------------------------------|
-| **Frontend**           | Vite + React + TypeScript + Monaco Editor + Xterm.js                              |
-| **Backend API**        | FastAPI + SQLModel + aiosqlite (SQLite)                                           |
-| **Agent Orchestration**| Custom multi-agent graph (Planner, Coder, Reviewer, Tester, Researcher, Summarizer)|
-| **Inference**          | llama.cpp (via Ollama) + Distributed RPC for mesh inference                       |
-| **Collective Memory** | ChromaDB + sentence-transformers + Tree-Sitter chunking |
-| **Terminal Sandbox** | Docker (neurex-sandbox image) — RO workspace, network-none, 512MB/1CPU cap |
-| **MCP Toolset** | Filesystem, Terminal, Browser (Playwright), Web Search |
-| **Security** | JWT (HS256, 24h) + bcrypt + RBAC (Admin/Developer/Viewer) |
-| **Real-time** | WebSocket (presence, streaming tokens, terminal I/O, HITL approvals) |
-| **Proxy/SSL** | Caddy (automatic Let's Encrypt) |
+| Layer                  | Technology                                                                           |
+|:-----------------------|:-------------------------------------------------------------------------------------|
+| **Frontend**           | Vite + React + TypeScript + Monaco Editor + Xterm.js                                 |
+| **Backend API**        | FastAPI + SQLModel + aiosqlite (SQLite)                                              |
+| **Agent Orchestration**| Custom multi-agent graph (Planner, Coder, Reviewer, Tester, Researcher, Summarizer)  |
+| **Inference**          | llama.cpp (via Ollama) + Distributed RPC for mesh inference                          |
+| **Collective Memory**  | ChromaDB + sentence-transformers + Tree-Sitter chunking                              |
+| **Terminal Sandbox**   | Docker (neurex-sandbox image) — RO workspace, network-none, 512MB/1CPU cap           |
+| **MCP Toolset**        | Filesystem, Terminal, Browser (Playwright), Web Search                               |
+| **Security**           | JWT (HS256, 24h) + bcrypt + RBAC (Admin/Developer/Viewer)                            |
+| **Real-time**          | WebSocket (presence, streaming tokens, terminal I/O, HITL approvals)                 |
+| **Proxy/SSL**          | Caddy (automatic Let's Encrypt)                                                      |
 
 ---
 
@@ -181,7 +181,7 @@ neurex/
 | `DEFAULT_MODEL`         | `qwen2.5-coder:14b` | Default inference model                             |
 | `NEUREX_GITHUB_REPO`    | `TBD/neurex`        | Repo for update checks                              |
 | `MASTER_URL`            | —                   | *(Node only)* Master API URL                        |
-| `RPC_PORT`              | `50051`             | *(Node only)* llama-rpc-server port                  |
+| `RPC_PORT`              | `50051`             | *(Node only)* llama-rpc-server port                 |
 
 ---
 
@@ -192,29 +192,29 @@ neurex/
 | [`API_REFERENCE.md`](API_REFERENCE.md)            | Complete REST & WebSocket API reference             |
 | [`NEUREX_COMPENDIUM.md`](NEUREX_COMPENDIUM.md)    | Technical deep-dive: all subsystems with diagrams   |
 | [`NEUREX_MANIFESTO.md`](NEUREX_MANIFESTO.md)      | Feature showcase in EN / FR (Québécois) / AR        |
-| [`HARDWARE_REQUIREMENTS.md`](HARDWARE_REQUIREMENTS.md) | Hardware specs for Master and Node deployments      |
+| [`HARDWARE_REQUIREMENTS.md`](HARDWARE_REQUIREMENTS.md) | Hardware specs for Master and Node deployments |
 | [`.neurexrules`](.neurexrules)                    | Agent behavioral guidelines and coding standards    |
 
 ---
 
 ## Roadmap
 
-| Phase       | Status          | Description                                         |
-|:------------|:----------------|:----------------------------------------------------|
-| Phase 1–9   | ✅ Complete     | Core IDE, agents, memory, RBAC, collaboration       |
-| Phase 10.5  | ✅ Complete     | Distributed Tensor Pooling (llama.cpp RPC)         |
-| Phase 11    | ✅ Complete     | Hive Mind UI (semantic search portal)               |
-| Phase 12    | ✅ Complete     | RBAC frontend enforcement                           |
-| Phase 13    | ✅ Complete     | Role-aware installer, self-update system            |
-| Phase 13.5  | 🔲 In Progress  | **BYOK Gateway**: Support for OpenAI, Anthropic, Gemini |
-| Phase 14    | 🔲 Planned      | LSP integration (diagnostics, hover, go-to-def)     |
-| Phase 15    | 🔲 Planned      | Git UI panel (diff, stage, commit, branch)          |
-| Phase 16    | 🔲 Planned      | DAP Debugger (breakpoints, step-through)            |
-| Phase 17    | 🔲 Planned      | Diagnostics panel + find-across-files               |
-| Phase 18    | 🔲 Planned      | Plugin Marketplace (Skills → Extensions)            |
+| Phase       | Status          | Description                                            |
+|:------------|:----------------|:-------------------------------------------------------|
+| Phase 1–9   | ✅ Complete     | Core IDE, agents, memory, RBAC, collaboration          |
+| Phase 10.5  | ✅ Complete     | Distributed Tensor Pooling (llama.cpp RPC)             |
+| Phase 11    | ✅ Complete     | Hive Mind UI (semantic search portal)                  |
+| Phase 12    | ✅ Complete     | RBAC frontend enforcement                              |
+| Phase 13    | ✅ Complete     | Role-aware installer, self-update system               |
+| Phase 13.5  | 🔲 In Progress  | **BYOK Gateway**: Support for OpenAI, Anthropic, Gemini|
+| Phase 14    | 🔲 Planned      | LSP integration (diagnostics, hover, go-to-def)        |
+| Phase 15    | 🔲 Planned      | Git UI panel (diff, stage, commit, branch)             |
+| Phase 16    | 🔲 Planned      | DAP Debugger (breakpoints, step-through)               |
+| Phase 17    | 🔲 Planned      | Diagnostics panel + find-across-files                  |
+| Phase 18    | 🔲 Planned      | Plugin Marketplace (Skills → Extensions)               |
 
 ---
 
 *Built with love by **Steven Frost** with the assistance of **Antigravity**, a powerful AI coding assistant. Absolute Autonomy. Federated Intelligence.*
 
-[**Hardware Benchmarks & Tier List**](file:///games/CodeProjects/AntiGravity/Neurex/neurex/HARDWARE_BENCHMARKS.md) | [**API Reference**](file:///games/CodeProjects/AntiGravity/Neurex/neurex/API_REFERENCE.md)
+[**Hardware Benchmarks**](file:///games/CodeProjects/AntiGravity/Neurex/neurex/HARDWARE_BENCHMARKS.md) | [**Recommended Models**](file:///games/CodeProjects/AntiGravity/Neurex/neurex/MODEL_GUIDE.md) | [**API Reference**](file:///games/CodeProjects/AntiGravity/Neurex/neurex/API_REFERENCE.md)

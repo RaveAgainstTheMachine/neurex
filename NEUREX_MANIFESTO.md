@@ -13,6 +13,7 @@ Neurex is not just an IDE; it is a decentralized orchestration layer for the nex
 *   **Self-Updating Platform**: Neurex checks GitHub Releases in the background and installs new versions without service interruption.
 *   **Role-Aware Installer**: A single `install.sh` intelligently configures a full Master stack or a lean RPC Node depending on the machine's role in your swarm.
 *   **Hardware Tiering**: Optimize your mesh using our [Hardware Benchmarks & Tier List](file:///games/CodeProjects/AntiGravity/Neurex/neurex/HARDWARE_BENCHMARKS.md).
+*   **Model Inventory**: Find the best brain for your GPU in our [Recommended Model Guide](file:///games/CodeProjects/AntiGravity/Neurex/neurex/MODEL_GUIDE.md).
 
 
 ---
@@ -30,6 +31,7 @@ Neurex, c'est pas juste un éditeur de code; c'est le cerveau de ton réseau. On
 *   **Mise à Jour Automatique** : Neurex vérifie les nouvelles versions en arrière-plan pis les installe sans interrompre le service.
 *   **Installateur Intelligent** : Un seul `install.sh` qui configure soit un Master complet, soit un Node RPC léger, selon le rôle de ta machine dans le swarm.
 *   **Classement Matériel** : Optimise ton swarm avec notre [Liste de Benchmarks Matériels](file:///games/CodeProjects/AntiGravity/Neurex/neurex/HARDWARE_BENCHMARKS.md).
+*   **Inventaire de Modèles** : Trouve le meilleur cerveau pour ton GPU dans notre [Guide des Modèles Recommandés](file:///games/CodeProjects/AntiGravity/Neurex/neurex/MODEL_GUIDE.md).
 
 
 ---
@@ -47,6 +49,7 @@ Neurex, c'est pas juste un éditeur de code; c'est le cerveau de ton réseau. On
 *   **التحديث الذاتي**: يفحص نيوركس الإصدارات الجديدة في الخلفية ويثبتها دون انقطاع في الخدمة.
 *   **المثبّت الذكي**: يقوم ملف `install.sh` واحد بتكوين إما مجموعة Master الكاملة أو Node RPC خفيف الوزن.
 *   **تصنيف العتاد**: حسّن سربك باستخدام [قائمة معايير وتصنيفات العتاد](file:///games/CodeProjects/AntiGravity/Neurex/neurex/HARDWARE_BENCHMARKS.md).
+*   **دليل النماذج**: ابحث عن أفضل عقل لبطاقة الرسوميات الخاصة بك في [دليل النماذج الموصى بها](file:///games/CodeProjects/AntiGravity/Neurex/neurex/MODEL_GUIDE.md).
 
 
 ---
