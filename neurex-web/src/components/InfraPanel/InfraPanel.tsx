@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Play, Square, RefreshCcw, Cpu, Zap, Database, ExternalLink, Code } from "lucide-react";
+import { Play, Square, RefreshCcw, Cpu, Zap, Database, ExternalLink, Code, Network } from "lucide-react";
 import "./InfraPanel.css";
 
 const API_BASE = "http://localhost:8000";
@@ -34,18 +34,21 @@ export function InfraPanel() {
   const [engines, setEngines] = useState<EngineStatus[]>([]);
   const [registry, setRegistry] = useState<ModelProfile[]>([]);
   const [skills, setSkills] = useState<SkillManifest[]>([]);
+  const [peers, setPeers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchData = async () => {
     try {
-      const [sRes, rRes, skRes] = await Promise.all([
+      const [sRes, rRes, skRes, pRes] = await Promise.all([
         fetch(`${API_BASE}/api/infra/status`),
         fetch(`${API_BASE}/api/infra/registry`),
-        fetch(`${API_BASE}/api/infra/skills`)
+        fetch(`${API_BASE}/api/infra/skills`),
+        fetch(`${API_BASE}/api/infra/mesh/peers`)
       ]);
       setEngines(await sRes.json());
       setRegistry(await rRes.json());
       setSkills(await skRes.json());
+      setPeers(await pRes.json());
     } catch (err) {
       console.error("Failed to fetch infra data:", err);
     }
@@ -161,6 +164,37 @@ export function InfraPanel() {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+      <div className="infra-section">
+        <div className="infra-section__title">Mesh Federation</div>
+        <div className="infra-list">
+          {peers.length === 0 ? (
+            <div className="model-card" style={{ textAlign: "center", color: "var(--text-muted)" }}>
+              No remote nodes connected.
+            </div>
+          ) : (
+            peers.map((p) => (
+              <div key={p.url} className={`infra-card ${p.status === "online" ? "infra-card--active" : ""}`}>
+                <div className="infra-card__info">
+                  <div className="infra-card__name">{p.name}</div>
+                  <div className="infra-card__version" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Network size={10} /> {p.url}
+                  </div>
+                </div>
+                <div className="infra-card__actions" style={{ flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                  <span className="task-tag" style={{ background: p.status === 'online' ? 'rgba(46, 204, 113, 0.1)' : 'rgba(255, 69, 58, 0.1)', color: p.status === 'online' ? 'var(--status-done)' : 'var(--status-failed)' }}>
+                    {p.status.toUpperCase()}
+                  </span>
+                  {p.status === 'online' && (
+                    <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>
+                      {p.vram_gb}GB VRAM • {p.latency_ms}ms
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

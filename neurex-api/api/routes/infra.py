@@ -65,3 +65,55 @@ async def recommend_model(task: str):
 async def get_model_registry():
     """List all models known to Neurex and their capabilities."""
     return MODEL_REGISTRY
+
+# ── Mesh Federation ──
+from core.infrastructure.mesh import mesh_router
+from pydantic import BaseModel
+import httpx
+from fastapi.responses import StreamingResponse
+from fastapi import Request
+
+class PeerRequest(BaseModel):
+    url: str
+    token: str
+    name: str
+
+@router.get("/mesh/peers")
+async def list_peers():
+    return [p.to_dict() for p in mesh_router.peers.values()]
+
+@router.post("/mesh/peers")
+async def add_peer(req: PeerRequest):
+    success = mesh_router.add_peer(req.url, req.token, req.name)
+    if not success:
+        raise HTTPException(status_code=400, detail="Peer already exists")
+    return {"status": "success"}
+
+@router.delete("/mesh/peers")
+async def remove_peer(url: str):
+    mesh_router.remove_peer(url)
+    return {"status": "deleted"}
+
+@router.post("/ollama_proxy/{path:path}")
+async def ollama_proxy(path: str, request: Request):
+    """
+    Reverse proxy for Ollama inference. Allows authorized peer nodes 
+    to use this node's GPU for generation.
+    """
+    import os
+    ollama_base = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+    target_url = f"{ollama_base}/{path}"
+    
+    client = httpx.AsyncClient()
+    
+    async def stream_generator():
+        async with client.stream(
+            method=request.method,
+            url=target_url,
+            headers={k: v for k, v in request.headers.items() if k.lower() != 'host'},
+            content=request.stream()
+        ) as resp:
+            async for chunk in resp.aiter_bytes():
+                yield chunk
+
+    return StreamingResponse(stream_generator(), media_type="application/json")

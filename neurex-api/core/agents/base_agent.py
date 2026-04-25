@@ -100,13 +100,26 @@ class BaseAgent(ABC):
         if final_tools:
             payload["tools"] = final_tools
 
+        from core.infrastructure.mesh import mesh_router
+        ollama_url = await mesh_router.get_best_inference_node()
+
         full_text = ""
+        # Increase timeout for complex mesh generation
         async with httpx.AsyncClient(timeout=300) as client:
+            # We may be routing to a peer, so we need to add the peer's token if applicable
+            headers = {}
+            if "ollama_proxy" in ollama_url:
+                peer_url = ollama_url.split("/api/infra")[0]
+                if peer_url in mesh_router.peers:
+                    headers["Authorization"] = f"Bearer {mesh_router.peers[peer_url].token}"
+
+            target_url = f"{ollama_url}/api/chat" if "ollama_proxy" not in ollama_url else ollama_url.replace("ollama_proxy", "ollama_proxy/api/chat")
+
             async with client.stream(
                 "POST",
-                f"{get_ollama_base()}/api/chat",
-
+                target_url,
                 json=payload,
+                headers=headers
             ) as resp:
                 resp.raise_for_status()
                 async for line in resp.aiter_lines():
