@@ -485,3 +485,73 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+
+.lang-selector-mini {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0 4px;
+  outline: none;
+  appearance: none;
+}
+.lang-selector-mini:hover {
+  color: var(--text-primary);
+}
+
+.model-selector, .autonomy-selector, .lang-selector-mini {
+  background: #1e1e24 !important;
+  color: #ffffff !important;
+  border: 1px solid #333 !important;
+  border-radius: 4px;
+  font-size: 11px;
+  padding: 2px 4px;
+  outline: none;
+}
+
+.lang-selector-mini {
+  border: none !important;
+  background: transparent !important;
+  font-weight: 700;
+  padding: 0 8px;
+}
+
+.ai-input__wrapper {
+  box-shadow: none !important;
+  border: 1px solid var(--border) !important;
+  background: var(--bg-app) !important;
+  transition: border-color 0.2s;
+}
+
+.ai-input__wrapper:focus-within {
+  border-color: var(--accent-purple) !important;
+}
+
+.ai-input__textarea {
+  max-height: 40vh;
+  overflow-y: auto !important;
+  resize: none;
+  line-height: 1.5;
+  padding: 8px 12px !important;
+  color: #ffffff !important;
+}
+
+/* Fix dropdown colors to be white and match UI */
+.model-selector, .autonomy-selector, .voice-selector, .lang-selector-mini {
+  background: transparent !important;
+  color: #ffffff !important;
+  border: 1px solid transparent !important;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.model-selector:hover, .autonomy-selector:hover, .voice-selector:hover {
+  background: var(--bg-hover) !important;
+}
+
+.autonomy-selector option, .voice-selector option, .model-selector option {
+  background: #1e1e24;
+  color: #ffffff;
+}

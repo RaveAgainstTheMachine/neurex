@@ -39,11 +39,12 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
   const { 
     messages, tasks, wsStatus, clearTasks, 
     conversations, setConversations, setActiveConversation, newConversation,
-    preferredModel, setPreferredModel
+    preferredModel, setPreferredModel, speechLang, setSpeechLang
   } = useStore();
 
   const [isListening, setIsListening] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [voicePreset, setVoicePreset] = useState("male");
   const recognitionRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -54,7 +55,8 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
       const recognition = new SpeechRecognition();
       recognition.continuous = false;
       recognition.interimResults = true;
-      
+      // Use browser language or fallback
+      recognition.lang = navigator.language || 'en-US';
       recognition.onresult = (event: any) => {
         let finalTranscript = "";
         for (let i = event.resultIndex; i < event.results.length; ++i) {
@@ -77,8 +79,11 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
     if (isListening) {
       recognitionRef.current?.stop();
     } else {
-      recognitionRef.current?.start();
-      setIsListening(true);
+      if (recognitionRef.current) {
+        recognitionRef.current.lang = speechLang;
+        recognitionRef.current.start();
+        setIsListening(true);
+      }
     }
   };
 
@@ -211,12 +216,12 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
              onChange={(e) => send({ type: "set_autonomy", level: e.target.value })}
              title="Set Autonomy Level"
            >
-             <option value="restricted">🛡️ Restricted</option>
-             <option value="limited">⚖️ Limited</option>
-             <option value="full">🔥 Full Auto</option>
+             <option value="restricted">Restricted</option>
+             <option value="limited">Limited</option>
+             <option value="full">Full Auto</option>
            </select>
 
-           <button className="icon-btn" onClick={newConversation} title="New Chat">
+           <select className="voice-selector" value={voicePreset} onChange={(e) => setVoicePreset(e.target.value)} title="TTS Voice Personality"><option value="male">Male</option><option value="female">Female</option><option value="freeman">Freeman</option><option value="attenborough">Attenborough</option><option value="rick">Rick</option></select> <button className="icon-btn" onClick={newConversation} title="New Chat">
              <Trash2 size={14} style={{ transform: "rotate(45deg)" }} />
            </button>
         </div>
@@ -263,6 +268,21 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
                     className="icon-btn message__tts" 
                     onClick={() => {
                       const utterance = new SpeechSynthesisUtterance(msg.content);
+                      utterance.lang = speechLang;
+                      
+                      // Personality Presets
+                      if (voicePreset === "freeman") {
+                        utterance.pitch = 0.8; utterance.rate = 0.85;
+                      } else if (voicePreset === "attenborough") {
+                        utterance.pitch = 0.9; utterance.rate = 0.8;
+                      } else if (voicePreset === "rick") {
+                        utterance.pitch = 1.4; utterance.rate = 1.2;
+                      } else if (voicePreset === "female") {
+                        utterance.pitch = 1.2;
+                      } else {
+                        utterance.pitch = 1.0;
+                      }
+
                       window.speechSynthesis.speak(utterance);
                     }}
                     title="Read Aloud"
@@ -287,11 +307,19 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
               <textarea
                 ref={inputRef}
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(e) => {
+                  setInput(e.target.value);
+                  // Auto-expand logic
+                  const el = inputRef.current;
+                  if (el) {
+                    el.style.height = "auto";
+                    el.style.height = Math.min(el.scrollHeight, window.innerHeight * 0.4) + "px";
+                  }
+                }}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                 placeholder={wsStatus !== "connected" ? "Connecting…" : isWorking ? "Agent is working…" : isListening ? "Listening..." : "Ask Neurex anything…"}
                 disabled={wsStatus !== "connected" || isWorking}
-                rows={1}
+                rows={2}
                 className="ai-input__textarea"
               />
               <button 
@@ -302,6 +330,21 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
               >
                 {isListening ? <Mic className="animate-pulse text-red-500" size={14} color="var(--status-failed)" /> : <Mic size={14} />}
               </button>
+              <select 
+                className="lang-selector-mini"
+                value={speechLang}
+                onChange={(e) => setSpeechLang(e.target.value)}
+                title="Dictation Language"
+              >
+                <option value="en-US">EN</option>
+                <option value="fr-FR">FR</option>
+                <option value="ar-SA">AR</option>
+                <option value="es-ES">ES</option>
+                <option value="de-DE">DE</option>
+                <option value="it-IT">IT</option>
+                <option value="ja-JP">JA</option>
+                <option value="zh-CN">ZH</option>
+              </select>
               <button 
                 className="icon-btn ai-input__attach"
                 onClick={() => fileInputRef.current?.click()}

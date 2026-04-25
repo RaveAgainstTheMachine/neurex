@@ -325,3 +325,19 @@
     display: none;
   }
 }
+
+.error-boundary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: #131316;
+  color: #e8e8f0;
+  text-align: center;
+  padding: 24px;
+}
+
+.text-red { color: #ff5555; }
+.mb-4 { margin-bottom: 16px; }
+.mt-4 { margin-top: 16px; }

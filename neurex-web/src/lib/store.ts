@@ -8,6 +8,13 @@ const API_BASE = "http://localhost:8000";
 
 export const useStore = create<NeurexStore>()(
   immer((set, get) => ({
+    // ── Speech ────────────────────────────────────────────────────────
+    speechLang: localStorage.getItem("neurex_speech_lang") || "en-US",
+    setSpeechLang: (lang) => {
+      localStorage.setItem("neurex_speech_lang", lang);
+      set((s) => { s.speechLang = lang; });
+    },
+
     // ── File Tree ─────────────────────────────────────────────────────
     fileTree: [],
     setFileTree: (tree) => set((s) => { s.fileTree = tree; }),

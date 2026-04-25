@@ -59,6 +59,10 @@ export interface Presence {
 }
 
 export interface NeurexStore {
+  // Speech
+  speechLang: string;
+  setSpeechLang: (lang: string) => void;
+
   // File Tree
   fileTree: FileNode[];
   setFileTree: (tree: FileNode[]) => void;

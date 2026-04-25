@@ -19,7 +19,11 @@ function getLanguage(path: string) {
 
 function FileItem({ node, depth }: { node: FileNode; depth: number }) {
   const [expanded, setExpanded] = useState(depth < 1);
-  const { openFile, activeFile } = useStore();
+  const openFile = useStore((s) => s.openFile);
+  const setActiveFile = useStore((s) => s.setActiveFile);
+  const openFiles = useStore((s) => s.openFiles);
+  const activeFile = useStore((s) => s.activeFile);
+  
   const isDir = node.type === "dir";
   const isActive = activeFile === node.path;
 
@@ -27,10 +31,9 @@ function FileItem({ node, depth }: { node: FileNode; depth: number }) {
     if (isDir) {
       setExpanded((v) => !v);
     } else if (node.path) {
-      // If already open, just switch
-      const alreadyOpen = useStore.getState().openFiles.find(f => f.path === node.path);
+      const alreadyOpen = openFiles.find(f => f.path === node.path);
       if (alreadyOpen) {
-        useStore.getState().setActiveFile(node.path);
+        setActiveFile(node.path);
         return;
       }
 
@@ -38,10 +41,9 @@ function FileItem({ node, depth }: { node: FileNode; depth: number }) {
         const r = await fetch(`${API_BASE}/api/files/read?path=${encodeURIComponent(node.path)}`);
         if (!r.ok) throw new Error("Failed to read");
         const data = await r.json();
-        useStore.getState().openFile(node.path, data.content ?? "", getLanguage(node.path));
+        openFile(node.path, data.content ?? "", getLanguage(node.path));
       } catch (err) {
-        console.error(err);
-        useStore.getState().openFile(node.path, "// Error loading file", getLanguage(node.path));
+        openFile(node.path, "// Error loading file", getLanguage(node.path));
       }
     }
   };
