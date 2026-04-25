@@ -39,3 +39,7 @@ Neurex, c'est pas juste un éditeur de code; c'est le cerveau de ton réseau. On
 *   **التحديث الذاتي**: يفحص نيوركس الإصدارات الجديدة في الخلفية ويثبتها دون انقطاع في الخدمة.
 *   **المثبّت الذكي**: يقوم ملف `install.sh` واحد بتكوين إما مجموعة Master الكاملة أو Node RPC خفيف الوزن.
 
+
+---
+
+*Architected by AntiGravity Lab in collaboration with **Antigravity**. Real-world agentic engineering for the decentralized era.*
