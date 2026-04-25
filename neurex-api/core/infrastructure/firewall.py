@@ -359,15 +359,97 @@ class FirewallManager:
             "allow_from": port_set.allow_from,
         }
 
-    async def remove_all_rules(self) -> None:
-        """Remove all Neurex firewall rules (e.g. on uninstall)."""
+    async def check_integrity(self, role: str, bind_ip: str, port_set: PortSet) -> bool:
+        """Verify if all expected rules are present in the system firewall."""
         if self._system == "linux":
-            await _linux_remove_rules()
+            return await self._linux_check(port_set, bind_ip)
         elif self._system == "darwin":
-            await _macos_remove_rules()
+            return await self._macos_check(port_set, bind_ip)
         elif self._system == "windows":
-            await _windows_remove_rules()
-        log.info("firewall.all_rules_removed")
+            return await self._windows_check(port_set, bind_ip)
+        return True
+
+    async def _linux_check(self, port_set: PortSet, bind_ip: str) -> bool:
+        rc, output = await _run(["ufw", "status"])
+        if rc != 0: return False
+        source = port_set.allow_from if bind_ip == "0.0.0.0" else _local_subnet(bind_ip)
+        for port in port_set.ports:
+            if f"{port}/{port_set.proto}" not in output or source not in output:
+                return False
+        return True
+
+    async def _macos_check(self, port_set: PortSet, bind_ip: str) -> bool:
+        rc, output = await _run(["pfctl", "-a", NEUREX_TAG, "-s", "rules"])
+        if rc != 0: return False
+        for port in port_set.ports:
+            if f"port {port}" not in output: return False
+        return True
+
+    async def _windows_check(self, port_set: PortSet, bind_ip: str) -> bool:
+        rc, output = await _run(["netsh", "advfirewall", "firewall", "show", "rule", f"name=all"])
+        if rc != 0: return False
+        for port in port_set.ports:
+            if f"({port})" not in output or NEUREX_TAG not in output: return False
+        return True
+
+    async def start_sentinel(self, interval_hours: int = 1):
+        """Background task to periodically verify and heal firewall rules."""
+        from core.settings.manager import settings_manager
+        log.info("firewall.sentinel_started", interval_hours=interval_hours)
+        
+        while True:
+            await asyncio.sleep(interval_hours * 3600)
+            if not settings_manager.get("firewall_enabled"):
+                continue
+
+            role = os.getenv("NODE_ROLE", "master")
+            bind_ip = os.getenv("BIND_IP", "0.0.0.0")
+            
+            # Fetch expected ports
+            if role == "master":
+                ports = get_master_ports(
+                    settings_manager.get("api_port"),
+                    settings_manager.get("web_port"),
+                    settings_manager.get("chromadb_port"),
+                    settings_manager.get("ollama_port")
+                )
+            else:
+                ports = get_node_ports(settings_manager.get("rpc_port"))
+
+            if not await self.check_integrity(role, bind_ip, ports):
+                log.warning("firewall.integrity_failure", reason="Rules tampered or missing. Healing...")
+                await self.apply_rules(
+                    role=role,
+                    bind_ip=bind_ip,
+                    api_port=settings_manager.get("api_port"),
+                    web_port=settings_manager.get("web_port"),
+                    chromadb_port=settings_manager.get("chromadb_port"),
+                    ollama_port=settings_manager.get("ollama_port"),
+                    rpc_port=settings_manager.get("rpc_port"),
+                    lan_only=settings_manager.get("firewall_lan_only")
+                )
+
+    async def check_startup(self):
+        """Verify firewall on startup. If missing, apply immediately."""
+        from core.settings.manager import settings_manager
+        if not settings_manager.get("firewall_enabled"):
+            return
+
+        role = os.getenv("NODE_ROLE", "master")
+        bind_ip = os.getenv("BIND_IP", "0.0.0.0")
+        
+        # Apply immediately to be safe on startup
+        await self.apply_rules(
+            role=role,
+            bind_ip=bind_ip,
+            api_port=settings_manager.get("api_port"),
+            web_port=settings_manager.get("web_port"),
+            chromadb_port=settings_manager.get("chromadb_port"),
+            ollama_port=settings_manager.get("ollama_port"),
+            rpc_port=settings_manager.get("rpc_port"),
+            lan_only=settings_manager.get("firewall_lan_only")
+        )
+        log.info("firewall.startup_check_complete")
 
 
 # Singleton

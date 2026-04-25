@@ -176,7 +176,7 @@ neurex/
 | `AUTONOMY_CEILING` | `limited` | Max agent autonomy: `restricted`, `limited`, `full` |
 | `ENABLE_AGENT_INTERNET` | `false` | Allow browser/search tools to reach the web |
 | `DEFAULT_MODEL` | `qwen2.5-coder:14b` | Default inference model |
-| `NEUREX_GITHUB_REPO` | `sickn33/neurex` | Repo for update checks |
+| `NEUREX_GITHUB_REPO` | `TBD/neurex` | Repo for update checks |
 | `MASTER_URL` | — | *(Node only)* Master API URL |
 | `RPC_PORT` | `50051` | *(Node only)* llama-rpc-server port |
 

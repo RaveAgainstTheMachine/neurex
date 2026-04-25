@@ -51,6 +51,12 @@ async def lifespan(app: FastAPI):
     from core.infrastructure.distributed import distributed_manager
     await distributed_manager.start_rpc_server()
 
+    # Firewall Integrity Check + Sentinel (Auto-Healing)
+    from core.infrastructure.firewall import firewall_manager
+    import asyncio
+    await firewall_manager.check_startup()
+    asyncio.create_task(firewall_manager.start_sentinel())
+
     log.info("neurex.ready")
     yield
 
