@@ -2,6 +2,8 @@
 core/collaboration/presence.py
 Manages real-time user presence and cursor broadcasting.
 """
+import asyncio
+import time
 import structlog
 from typing import Dict, List, Set, Any
 from fastapi import WebSocket
@@ -14,6 +16,7 @@ class PresenceManager:
         self.active_connections: Dict[str, Set[WebSocket]] = {}
         # Map conversation_id -> user_id -> presence_data
         self.presence_state: Dict[str, Dict[str, Any]] = {}
+        asyncio.create_task(self._sweep_zombies())
 
     async def connect(self, conversation_id: str, websocket: WebSocket, user_id: str):
         if conversation_id not in self.active_connections:
@@ -25,7 +28,8 @@ class PresenceManager:
             "user_id": user_id,
             "cursor": None,
             "active_file": None,
-            "status": "online"
+            "status": "online",
+            "last_ping": time.time()
         }
         await self.broadcast(conversation_id, {
             "event": "presence_update",
@@ -44,12 +48,33 @@ class PresenceManager:
             })
 
     async def update_presence(self, conversation_id: str, user_id: str, data: Dict[str, Any]):
-        if conversation_id in self.presence_state:
+        if conversation_id in self.presence_state and user_id in self.presence_state[conversation_id]:
             self.presence_state[conversation_id][user_id].update(data)
+            self.presence_state[conversation_id][user_id]["last_ping"] = time.time()
             await self.broadcast(conversation_id, {
                 "event": "presence_update",
                 "data": list(self.presence_state[conversation_id].values())
             }, exclude_user=user_id)
+
+    async def ping(self, conversation_id: str, user_id: str):
+        if conversation_id in self.presence_state and user_id in self.presence_state[conversation_id]:
+            self.presence_state[conversation_id][user_id]["last_ping"] = time.time()
+
+    async def _sweep_zombies(self):
+        """Continuously clean up connections that haven't pinged in 30 seconds."""
+        while True:
+            await asyncio.sleep(30)
+            now = time.time()
+            for conv_id, users in list(self.presence_state.items()):
+                zombies = [uid for uid, data in users.items() if now - data.get("last_ping", now) > 35]
+                if zombies:
+                    for z in zombies:
+                        del self.presence_state[conv_id][z]
+                        log.info("ws.zombie_swept", user_id=z, conversation_id=conv_id)
+                    await self.broadcast(conv_id, {
+                        "event": "presence_update",
+                        "data": list(self.presence_state[conv_id].values())
+                    })
 
     async def broadcast(self, conversation_id: str, message: Any, exclude_user: str = None):
         """Send a message to all connected clients in a conversation."""

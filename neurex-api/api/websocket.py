@@ -88,6 +88,10 @@ async def websocket_endpoint(
                 msg_type = msg.get("type")
                 log.info("ws.message_received", type=msg_type, conversation_id=conversation_id)
 
+                if msg_type == "ping":
+                    await presence_manager.ping(conversation_id, user_id)
+                    continue
+
                 if msg_type == "presence_update":
                     await presence_manager.update_presence(conversation_id, user_id, msg.get("data", {}))
                     continue

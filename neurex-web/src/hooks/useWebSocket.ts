@@ -69,11 +69,18 @@ export function useWebSocket(conversationId: string) {
       } catch {}
     };
 
+    const heartbeat = setInterval(() => {
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: "ping" }));
+      }
+    }, 15000);
+
     return () => {
+      clearInterval(heartbeat);
       socket.close();
       clearTasks();
     };
-  }, [conversationId, setWsStatus, upsertTask, appendToken, addMessage, clearTasks]);
+  }, [conversationId, setWsStatus, upsertTask, appendToken, addMessage, clearTasks, setPresence]);
 
   // Load history on mount or switch
   useEffect(() => {
