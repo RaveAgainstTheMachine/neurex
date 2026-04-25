@@ -4,8 +4,9 @@
 Neurex is not just an IDE; it is a decentralized orchestration layer for the next generation of software engineering. By merging local hardware with a global compute mesh, Neurex provides:
 
 *   **Consumer-Grade Sovereignty**: Built specifically to run state-of-the-art Open Source models (Qwen2.5-Coder, DeepSeek-R1) on the hardware you already own.
-*   **Standalone or Federated**: Run as a complete sovereign cell on a single machine, or scale horizontally by pooling VRAM across a local compute mesh.
-*   **Distributed Tensor Pooling**: Run massive 70B+ models across multiple machines by pooling RAM and VRAM into a single, unified compute cell.
+*   **Standalone or Federated**: Run as a complete sovereign cell on a single machine, or scale horizontally by pooling VRAM, GPU shaders, and CPU cycles across a local compute mesh.
+*   **Pocket-Orchestration (Mobile)**: Not limited to your desk. Oversee agent pipelines, start new projects, and issue human-in-the-loop approvals via **Voice & Text** from any mobile device.
+*   **Full-Spectrum Pooling**: Aggregates every available resource—VRAM, RAM, and Compute (CPU/GPU)—into a unified, high-performance inference engine.
 *   **The Hive Mind (Collective Memory)**: A decentralized vector knowledge base that allows your swarm to recall architectural precedents and optimized patterns from every project you've ever touched.
 *   **MeshRouter Intelligence**: Advanced weighted-load balancing that dynamically routes inference tasks based on real-time node telemetry, queue depth, and network latency.
 *   **BYOK Ready**: Augment your local swarm with high-reasoning paid models (OpenAI, Anthropic) via our secure Bring-Your-Own-Key gateway.
@@ -19,8 +20,9 @@ Neurex is not just an IDE; it is a decentralized orchestration layer for the nex
 Neurex, c'est pas juste un éditeur de code; c'est le cerveau de ton réseau. On prend tes machines pis on en fait une seule grosse machine de guerre pour coder. Voici pourquoi Neurex torche tout :
 
 *   **Souveraineté Matérielle** : Conçu spécifiquement pour rouler les meilleurs modèles Open Source (Qwen2.5-Coder, DeepSeek-R1) sur l'équipement que t'as déjà chez vous.
-*   **Standalone ou Fédéré** : Roule comme une cellule souveraine complète sur une seule machine, ou scale horizontalement en mettant ton VRAM en commun.
-*   **Mise en Commun de la Mémoire** : Combine la RAM pis la VRAM de tous tes ordis pour rouler des modèles géants (70B+) sans que ça lag.
+*   **Standalone ou Fédéré** : Roule comme une cellule souveraine complète sur une seule machine, ou scale horizontalement en mettant ton VRAM, tes GPU et tes CPU en commun.
+*   **Pocket-Orchestration (Mobile)** : Ne reste pas collé à ton bureau. Pilote tes agents, lance des projets pis donne tes approbations par **Voix ou Texte** directement de ton cell.
+*   **Mise en Commun Totale** : Combine tout ton "jus" — RAM, VRAM, et puissance de calcul (CPU/GPU) — pour une vitesse d'inférence maximale.
 *   **La Ruche (Mémoire Collective)** : Une base de connaissances vectorielle qui permet à ton "swarm" de se rappeler de tout ce que t'as déjà codé de bon dans le passé.
 *   **MeshRouter Intelligent** : Un algorithme de balancement de charge qui pitche les tâches aux meilleures machines en temps réel, selon le "jus" qui leur reste (VRAM, CPU, latence).
 *   **Prêt pour BYOK** : Augmente la puissance de ton swarm local avec des modèles payants (OpenAI, Anthropic) via notre passerelle sécurisée "Bring-Your-Own-Key".
@@ -34,8 +36,9 @@ Neurex, c'est pas juste un éditeur de code; c'est le cerveau de ton réseau. On
 نيوركس (Neurex) ليس مجرد بيئة تطوير، بل هو طبقة تنسيق لا مركزية للجيل القادم من هندسة البرمجيات. من خلال دمج الأجهزة المحلية في شبكة حوسبة عالمية، يوفر نيوركس:
 
 *   **السيادة على العتاد الشخصي**: مصمم خصيصاً لتشغيل أحدث النماذج مفتوحة المصدر (Qwen2.5-Coder, DeepSeek-R1) على العتاد الذي تملكه بالفعل.
-*   **مستقل أو موزع**: تشغيل كخلية سيادية كاملة على جهاز واحد، أو التوسع أفقيًا من خلال تجميع موارد الحوسبة المحلية.
-*   **تجميع الموارد الموزع**: تشغيل نماذج ضخمة عبر أجهزة متعددة من خلال دمج ذاكرة الوصول العشوائي وذاكرة الفيديو في خلية حوسبة موحدة.
+*   **مستقل أو موزع**: تشغيل كخلية سيادية كاملة على جهاز واحد، أو التوسع أفقيًا من خلال تجميع ذاكرة الفيديو، وقوة المعالجة (CPU/GPU).
+*   **قيادة الأجهزة المحمولة (Pocket-Orchestration)**: لست مقيداً بمكتبك. أشرف على خطوط عمل الوكلاء، وابدأ مشاريع جديدة، وأصدر الموافقات عبر **الصوت والنص** من أي جهاز محمول.
+*   **تجميع الموارد الكامل**: يدمج كل الموارد المتاحة — VRAM، وRAM، وقدرة المعالجة — في محرك استنتاج واحد عالي الأداء.
 *   **العقل الجماعي (الذاكرة المشتركة)**: قاعدة معرفية متجهية لا مركزية تسمح لسربك باسترجاع السوابق المعمارية والأنماط المحسنة من كل مشروع عملت عليه.
 *   **ذكاء موجه الشبكة (MeshRouter)**: موازنة أحمال متقدمة تقوم بتوجيه مهام الاستنتاج ديناميكيًا بناءً على القياسات اللحظية للعقد.
 *   **جاهز لمفتاحك الخاص (BYOK)**: عزز سربك المحلي بنماذج مدفوعة عالية الاستنتاج (OpenAI, Anthropic) عبر بوابة "Bring-Your-Own-Key" الآمنة.

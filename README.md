@@ -86,8 +86,10 @@ The Node registers with the Master automatically via the heartbeat agent and app
 ## Key Features
 
 ### 🧠 Federated Compute Mesh
-- **Standalone or Federated**: Run as a single sovereign Master or scale horizontally via `llama.cpp` RPC.
-- **VRAM Pooling**: Aggregates GPU memory from all nodes into a unified inference engine.
+*   **Consumer-Grade Sovereignty**: Built specifically to run state-of-the-art Open Source models (Qwen2.5-Coder, DeepSeek-R1) on the hardware you already own.
+*   **Standalone or Federated**: Run as a complete sovereign cell on a single machine, or scale horizontally by pooling VRAM, GPU shaders, and CPU cycles across a local compute mesh.
+*   **Pocket-Orchestration (Mobile)**: Not limited to your desk. Oversee agent pipelines, start new projects, and issue human-in-the-loop approvals via **Voice & Text** from any mobile device.
+*   **Full-Spectrum Pooling**: Aggregates every available resource—VRAM, RAM, and Compute (CPU/GPU)—into a unified, high-performance inference engine.
 - **Weighted-Load MeshRouter**: routes inference to the node with the best capability score (`VRAM × 2 / (CPU + latency/10 + queue×20 + 1)`)
 - Swarm heartbeat every 15 seconds — automatic peer discovery
 
@@ -115,7 +117,7 @@ The Node registers with the Master automatically via the heartbeat agent and app
 ### 👥 Real-Time Collaboration
 - WebSocket presence broadcasting (cursors, file locks, status)
 - Collaboration file locking prevents agent/human write conflicts
-- Multiplayer-safe: multiple humans and multiple agents can co-exist
+- **Mobile Command & Voice**: Integrated Web Speech API for hands-free dictation and text-to-speech (TTS) playback of agent responses.
 
 ### 🔄 Self-Update
 - Polls GitHub Releases every 30 minutes
