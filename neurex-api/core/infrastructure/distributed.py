@@ -46,9 +46,30 @@ class DistributedManager:
             self.rpc_process = None
             log.info("mesh.rpc_server_stopped")
 
+    def get_capabilities(self) -> dict:
+        """Returns the node's current compute capacity for the mesh."""
+        from core.infrastructure.manager import infrastructure_manager
+        metrics = infrastructure_manager.get_system_metrics()
+        
+        return {
+            "is_rpc_worker": self.rpc_process is not None,
+            "rpc_endpoint": self.get_rpc_address(),
+            "vram_gb": metrics.get("vram_gb", 0),
+            "ram_total_gb": metrics.get("ram_total_gb", 0),
+            "ram_free_gb": metrics.get("ram_total_gb", 0) - metrics.get("ram_used_gb", 0)
+        }
+
     def get_rpc_address(self) -> str:
-        """Returns the local IP and port for master discovery."""
-        # In a real mesh, we'd use the mesh-defined IP
-        return f"0.0.0.0:{self.port}"
+        """Returns the routable IP and port for master discovery."""
+        import socket
+        try:
+            # Simple way to get local network IP
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            local_ip = s.getsockname()[0]
+            s.close()
+            return f"{local_ip}:{self.port}"
+        except:
+            return f"127.0.0.1:{self.port}"
 
 distributed_manager = DistributedManager()

@@ -16,7 +16,23 @@ class PresenceManager:
         self.active_connections: Dict[str, Set[WebSocket]] = {}
         # Map conversation_id -> user_id -> presence_data
         self.presence_state: Dict[str, Dict[str, Any]] = {}
+        self.node_id = "node-" + str(time.time()) # Unique ID for this specific instance
         asyncio.create_task(self._sweep_zombies())
+        asyncio.create_task(self._heartbeat_system())
+
+    async def _heartbeat_system(self):
+        """Periodically broadcasts this node's compute capabilities to the mesh."""
+        from core.infrastructure.distributed import distributed_manager
+        while True:
+            await asyncio.sleep(15) # Pulse every 15 seconds
+            caps = distributed_manager.get_capabilities()
+            
+            # Update local state and broadcast to all conversations
+            for conv_id in list(self.active_connections.keys()):
+                await self.update_presence(conv_id, self.node_id, {
+                    "type": "compute_node",
+                    "capabilities": caps
+                })
 
     async def connect(self, conversation_id: str, websocket: WebSocket, user_id: str):
         if conversation_id not in self.active_connections:

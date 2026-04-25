@@ -49,17 +49,33 @@ class InfrastructureManager:
             return True
         
         elif name == "llama.cpp":
-            from core.settings.manager import settings_manager
-            is_worker = settings_manager.get("enable_distributed_pooling")
+            from core.collaboration.presence import presence_manager
             
-            if is_worker:
-                log.info("infra.mpi_pooling_enabled", role="worker")
-                # Scaffolding for launching `llama-server --rpc ...`
-                # await asyncio.create_subprocess_exec("llama-rpc-server", "-H", "0.0.0.0", "-p", "50052")
-                return True
-            else:
-                log.info("infra.mpi_pooling_disabled", role="master")
-                return True
+            # 1. Discover all RPC workers in the mesh
+            rpc_hosts = []
+            for conv_state in presence_manager.presence_state.values():
+                for user_state in conv_state.values():
+                    if user_state.get("type") == "compute_node":
+                        caps = user_state.get("capabilities", {})
+                        if caps.get("is_rpc_worker") and caps.get("rpc_endpoint"):
+                            rpc_hosts.append(caps["rpc_endpoint"])
+            
+            # 2. Construct the --rpc flag (comma-separated list)
+            rpc_flag = ",".join(rpc_hosts)
+            
+            # 3. Start llama-server as Master
+            cmd = ["llama-server", "--model", "models/default.gguf"] # Placeholder model
+            if rpc_flag:
+                log.info("infra.distributed_inference_active", hosts=rpc_hosts)
+                cmd.extend(["--rpc", rpc_flag])
+            
+            process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            log.info("infra.engine_started", engine=name, distributed=bool(rpc_flag))
+            return True
 
         raise Exception(f"Start logic for {name} not implemented yet")
 
@@ -116,3 +132,5 @@ class InfrastructureManager:
         except:
             pass
         return "unknown"
+
+infrastructure_manager = InfrastructureManager()
