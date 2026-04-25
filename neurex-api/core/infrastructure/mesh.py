@@ -94,8 +94,8 @@ class MeshRouter:
                 peer.vram_gb = metrics.get("vram_gb", 0.0)
                 peer.ram_total_gb = metrics.get("ram_total_gb", 0.0)
                 peer.cpu_percent = metrics.get("cpu_percent", 0.0)
+                peer.queue_depth = data.get("queue_depth", 0)
                 peer.latency_ms = int((time.time() - start) * 1000)
-                # In the future, parse available models from the response
                 self._save_peers()
                 log.debug("mesh.peer_healthy", url=url, latency=peer.latency_ms)
         except Exception as e:
@@ -106,27 +106,32 @@ class MeshRouter:
     async def get_best_inference_node(self) -> str:
         """
         Returns the Ollama base URL to use.
-        Prioritizes the local host unless a peer has significantly more VRAM.
+        Uses a Weighted-Load algorithm to calculate node capability scores.
         """
-        local_base = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+        from core.infrastructure.manager import infrastructure_manager
+        local_metrics = infrastructure_manager.get_system_metrics()
+        local_vram = local_metrics.get("vram_gb", 8.0)
+        local_cpu = local_metrics.get("cpu_percent", 0.0)
         
-        # Simple heuristic: find peer with status=online and max VRAM
-        best_peer = None
-        max_vram = 0.0
+        # 1. Start with local node as default
+        # Local Score calculation: (VRAM) / (CPU Load + 1)
+        best_score = (local_vram * 2) / (local_cpu + 1)
+        best_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
         
         for peer in self.peers.values():
-            if peer.status == "online" and peer.vram_gb > max_vram:
-                max_vram = peer.vram_gb
-                best_peer = peer
-                
-        # If a remote peer has > 8GB more VRAM than local (assuming local is 8GB for now), use it
-        # TODO: Get actual local VRAM dynamically
-        if best_peer and best_peer.vram_gb > 16.0:
-            log.info("mesh.routing_remote", peer=best_peer.name, vram=best_peer.vram_gb)
-            # We assume the remote Neurex node exposes Ollama, or we proxy it.
-            # For phase 10, we proxy via the Neurex API
-            return f"{best_peer.url}/api/infra/ollama_proxy"
+            if peer.status != "online":
+                continue
             
-        return local_base
+            # 2. Peer Score = (VRAM * 2) / ((CPU + Latency/10 + Queue*20) + 1)
+            # High VRAM boosts score; high load, latency, or queue depth penalizes it.
+            load_factor = peer.cpu_percent + (peer.latency_ms / 10) + (peer.queue_depth * 20)
+            score = (peer.vram_gb * 2) / (load_factor + 1)
+            
+            if score > best_score:
+                best_score = score
+                best_url = f"{peer.url}/api/infra/ollama_proxy"
+                log.info("mesh.routing_optimized", node=peer.name, score=round(score, 2))
+                
+        return best_url
 
 mesh_router = MeshRouter()
