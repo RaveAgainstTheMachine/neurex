@@ -212,4 +212,4 @@ neurex/
 
 ---
 
-*Built by AntiGravity Lab with the assistance of **Antigravity**, a powerful AI coding assistant. Absolute Autonomy. Federated Intelligence.*
+*Built with love by **Steven Frost** with the assistance of **Antigravity**, a powerful AI coding assistant. Absolute Autonomy. Federated Intelligence.*

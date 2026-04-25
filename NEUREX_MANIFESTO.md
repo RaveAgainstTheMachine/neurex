@@ -42,4 +42,4 @@ Neurex, c'est pas juste un éditeur de code; c'est le cerveau de ton réseau. On
 
 ---
 
-*Architected by AntiGravity Lab in collaboration with **Antigravity**. Real-world agentic engineering for the decentralized era.*
+*Architected by Steven Frost in collaboration with **Antigravity**. Real-world agentic engineering for the decentralized era.*

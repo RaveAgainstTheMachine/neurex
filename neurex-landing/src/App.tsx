@@ -244,7 +244,7 @@ function App() {
 
       <footer className="container" style={{ padding: '4rem 0', borderTop: '1px solid var(--glass-border)', color: '#6c757d', fontSize: '0.9rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <div>© 2026 AntiGravity Lab. Built for the era of absolute autonomy.</div>
+          <div>© 2026 Steven Frost. Built for the era of absolute autonomy.</div>
           <div style={{ display: 'flex', gap: '2rem' }}>
             <a href="https://github.com/sickn33/Neurex" style={{ color: 'inherit' }}>GitHub</a>
             <span>Documentation</span>
