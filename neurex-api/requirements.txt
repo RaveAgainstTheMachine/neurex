@@ -11,8 +11,8 @@ chromadb==0.5.15
 sentence-transformers==3.2.0
 
 # Code chunking
-# tree-sitter
-# tree-sitter-languages
+tree-sitter==0.23.1
+tree-sitter-languages==1.10.2
 
 
 

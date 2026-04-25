@@ -21,7 +21,7 @@ if [ ! -f .env ]; then
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODELS=$OLLAMA_MODELS
 CHROMA_DB_DIR=$CHROMA_DB
-WORKSPACE_PATH=$(pwd)/workspace
+WORKSPACE_PATH=$(pwd)
 API_TOKEN=neurex-dev-token
 DEFAULT_MODEL=qwen2.5-coder:14b
 EMBED_MODEL=nomic-embed-text

@@ -12,7 +12,8 @@ export function useWebSocket(conversationId: string) {
 
   const send = useCallback((payload: object) => {
     if (ws.current?.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify(payload));
+      const preferredModel = useStore.getState().preferredModel;
+      ws.current.send(JSON.stringify({ ...payload, model: preferredModel }));
     }
   }, []);
 
@@ -47,6 +48,9 @@ export function useWebSocket(conversationId: string) {
           case "done":
             (data.tasks as TaskNode[]).forEach(upsertTask);
             break;
+          case "terminal_output":
+            window.dispatchEvent(new CustomEvent("terminal_write", { detail: data }));
+            break;
           case "error":
             addMessage({ role: "assistant", content: `❌ Error: ${data}` });
             break;
@@ -56,24 +60,31 @@ export function useWebSocket(conversationId: string) {
 
     return () => {
       socket.close();
+      clearTasks();
     };
-  }, [conversationId]);
+  }, [conversationId, setWsStatus, upsertTask, appendToken, addMessage, clearTasks]);
 
-  // Load history on mount
+  // Load history on mount or switch
   useEffect(() => {
+    if (!conversationId) return;
     fetch(`${API_BASE}/api/chat/${conversationId}`)
       .then((r) => r.json())
       .then((data) => useStore.getState().setMessages(data))
       .catch(() => {});
   }, [conversationId]);
 
-  // Load tasks on mount
+  // Load tasks on mount or switch
   useEffect(() => {
+    if (!conversationId) return;
+    // We should ideally fetch tasks for this conversation, 
+    // but for now we fetch all and filter in store if needed.
     fetch(`${API_BASE}/api/tasks/`)
       .then((r) => r.json())
-      .then((data: TaskNode[]) => data.forEach(upsertTask))
+      .then((data: TaskNode[]) => {
+        data.forEach(upsertTask);
+      })
       .catch(() => {});
-  }, []);
+  }, [conversationId, upsertTask]);
 
   return { send };
 }

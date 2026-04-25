@@ -10,6 +10,9 @@ from core.mcp.tools.filesystem import (
 )
 from core.mcp.tools.terminal import run_command
 from core.mcp.tools.researcher import web_search
+from core.mcp.tools.browser import (
+    browser_navigate, browser_screenshot, browser_click, browser_type, browser_get_content
+)
 
 
 log = structlog.get_logger()
@@ -21,6 +24,11 @@ TOOL_REGISTRY: dict[str, callable] = {
     "delete_file":    delete_file,
     "run_command":    run_command,
     "web_search":     web_search,
+    "browser_navigate":    browser_navigate,
+    "browser_screenshot":  browser_screenshot,
+    "browser_click":       browser_click,
+    "browser_type":        browser_type,
+    "browser_get_content": browser_get_content,
 }
 
 

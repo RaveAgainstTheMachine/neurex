@@ -1,11 +1,14 @@
 // src/components/Editor/EditorPane.tsx
-import MonacoEditor from "@monaco-editor/react";
-import { X } from "lucide-react";
+import MonacoEditor, { DiffEditor } from "@monaco-editor/react";
+import { X, Check, RotateCcw } from "lucide-react";
 import { useStore } from "../../lib/store";
 import "./EditorPane.css";
 
 export function EditorPane() {
-  const { openFiles, activeFile, closeFile, setActiveFile, setFileContent } = useStore();
+  const { 
+    openFiles, activeFile, closeFile, setActiveFile, setFileContent, saveFile,
+    acceptDiff, discardDiff
+  } = useStore();
 
   if (openFiles.length === 0) {
     return (
@@ -52,53 +55,84 @@ export function EditorPane() {
             {i < arr.length - 1 && <span className="breadcrumb-sep"> › </span>}
           </span>
         ))}
+        {active.originalContent !== undefined && (
+          <div className="editor-diff-actions">
+            <button className="btn btn--green btn--sm" onClick={() => acceptDiff(active.path)}>
+              <Check size={12} /> Accept
+            </button>
+            <button className="btn btn--red btn--sm" onClick={() => discardDiff(active.path)}>
+              <RotateCcw size={12} /> Discard
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="editor-monaco">
-        <MonacoEditor
-          path={active.path}
-          language={active.language}
-          value={active.content}
-          theme="neurex-dark"
-          onChange={(val) => setFileContent(active.path, val ?? "")}
-          options={{
-            fontSize: 13,
-            fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-            fontLigatures: true,
-            lineHeight: 22,
-            minimap: { enabled: true, scale: 1 },
-            scrollBeyondLastLine: false,
-            renderLineHighlight: "line",
-            cursorBlinking: "smooth",
-            cursorSmoothCaretAnimation: "on",
-            smoothScrolling: true,
-            padding: { top: 12, bottom: 12 },
-            tabSize: 2,
-            wordWrap: "on",
-          }}
-          beforeMount={(monaco) => {
-            monaco.editor.defineTheme("neurex-dark", {
-              base: "vs-dark",
-              inherit: true,
-              rules: [
-                { token: "comment", foreground: "55556a", fontStyle: "italic" },
-                { token: "keyword", foreground: "9c6fff" },
-                { token: "string", foreground: "3ddc84" },
-                { token: "number", foreground: "ffc542" },
-                { token: "type", foreground: "3ddcdc" },
-              ],
-              colors: {
-                "editor.background": "#131316",
-                "editor.foreground": "#e8e8f0",
-                "editor.lineHighlightBackground": "#1a1a1f",
-                "editor.selectionBackground": "#4c8eff33",
-                "editorCursor.foreground": "#4c8eff",
-                "editorLineNumber.foreground": "#2a2a35",
-                "editorLineNumber.activeForeground": "#55556a",
-              },
-            });
-          }}
-        />
+        {active.originalContent !== undefined ? (
+          <DiffEditor
+            original={active.originalContent}
+            modified={active.content}
+            language={active.language}
+            theme="neurex-dark"
+            options={{
+              fontSize: 13,
+              fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+              renderSideBySide: true,
+              scrollBeyondLastLine: false,
+              readOnly: false,
+            }}
+          />
+        ) : (
+          <MonacoEditor
+            path={active.path}
+            language={active.language}
+            value={active.content}
+            theme="neurex-dark"
+            onChange={(val) => setFileContent(active.path, val ?? "")}
+            onMount={(editor, monaco) => {
+              editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+                saveFile(active.path);
+              });
+            }}
+            options={{
+              fontSize: 13,
+              fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+              fontLigatures: true,
+              lineHeight: 22,
+              minimap: { enabled: true, scale: 1 },
+              scrollBeyondLastLine: false,
+              renderLineHighlight: "line",
+              cursorBlinking: "smooth",
+              cursorSmoothCaretAnimation: "on",
+              smoothScrolling: true,
+              padding: { top: 12, bottom: 12 },
+              tabSize: 2,
+              wordWrap: "on",
+            }}
+            beforeMount={(monaco) => {
+              monaco.editor.defineTheme("neurex-dark", {
+                base: "vs-dark",
+                inherit: true,
+                rules: [
+                  { token: "comment", foreground: "55556a", fontStyle: "italic" },
+                  { token: "keyword", foreground: "9c6fff" },
+                  { token: "string", foreground: "3ddc84" },
+                  { token: "number", foreground: "ffc542" },
+                  { token: "type", foreground: "3ddcdc" },
+                ],
+                colors: {
+                  "editor.background": "#131316",
+                  "editor.foreground": "#e8e8f0",
+                  "editor.lineHighlightBackground": "#1a1a1f",
+                  "editor.selectionBackground": "#4c8eff33",
+                  "editorCursor.foreground": "#4c8eff",
+                  "editorLineNumber.foreground": "#2a2a35",
+                  "editorLineNumber.activeForeground": "#55556a",
+                },
+              });
+            }}
+          />
+        )}
       </div>
     </div>
   );

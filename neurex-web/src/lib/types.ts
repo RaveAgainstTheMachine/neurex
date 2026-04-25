@@ -20,6 +20,7 @@ export interface TaskNode {
   title: string;
   description: string;
   status: TaskStatus;
+  approval_reason?: string;
   result: string | null;
   error: string | null;
   iteration: number;
@@ -45,6 +46,7 @@ export interface ChatMessage {
 export interface OpenFile {
   path: string;
   content: string;
+  originalContent?: string; // For diff view
   language: string;
   isDirty: boolean;
 }
@@ -52,9 +54,16 @@ export interface OpenFile {
 export interface NeurexStore {
   // Chat
   messages: ChatMessage[];
+  activeConversationId: string;
+  preferredModel: string;
+  conversations: { conversation_id: string; last_message: string }[];
   setMessages: (msgs: ChatMessage[]) => void;
   addMessage: (msg: Omit<ChatMessage, "id" | "timestamp">) => void;
   appendToken: (token: string) => void;
+  setActiveConversation: (id: string) => void;
+  setConversations: (convs: { conversation_id: string; last_message: string }[]) => void;
+  setPreferredModel: (model: string) => void;
+  newConversation: () => void;
 
   // Tasks
   tasks: Record<string, TaskNode>;
@@ -68,6 +77,10 @@ export interface NeurexStore {
   closeFile: (path: string) => void;
   setActiveFile: (path: string) => void;
   setFileContent: (path: string, content: string) => void;
+  setDiff: (path: string, original: string, modified: string) => void;
+  acceptDiff: (path: string) => void;
+  discardDiff: (path: string) => void;
+  saveFile: (path: string) => Promise<void>;
 
   // WS
   wsStatus: "connecting" | "connected" | "disconnected";

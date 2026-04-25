@@ -34,10 +34,11 @@ class BaseAgent(ABC):
     system_prompt: str = "You are a helpful AI coding assistant."
     agent_type: str = "base"
 
-    def __init__(self, rules: RulesParser, ctx: ContextManager):
+    def __init__(self, rules: RulesParser, ctx: ContextManager, model: str | None = None):
         self.rules = rules
         self.ctx = ctx
         self.mcp = MCPClient()
+        self.model = model
 
     # ── Subclasses implement these ────────────────────────────────────────
 
@@ -83,7 +84,7 @@ class BaseAgent(ABC):
           {"type": "done",      "full_text": "..."}
         """
         payload: dict[str, Any] = {
-            "model": model or get_default_model(),
+            "model": model or self.model or get_default_model(),
             "messages": messages,
             "stream": True,
             "options": {"temperature": 0.2, "num_gpu": 99},

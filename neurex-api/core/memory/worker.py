@@ -59,15 +59,11 @@ class MemoryWorker:
             self._enabled = True
             log.info("memory_worker.chroma_connected")
 
-        except Exception as e:
-            log.warning(
-                "memory_worker.chroma_unavailable",
-                error=str(e),
-                hint="ChromaDB is not running. RAG context is disabled. "
-                     "Start ChromaDB or ignore this warning."
-            )
+        except Exception:
+            # Silent fallback for environments without ChromaDB or incompatible dependencies (Python 3.14)
             self._enabled = False
-            return  # Don't start watcher or indexing if ChromaDB is down
+            log.info("memory_worker.disabled", reason="ChromaDB unavailable or dependency mismatch")
+            return
 
         # Start file watcher
         try:

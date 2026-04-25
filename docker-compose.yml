@@ -111,9 +111,29 @@ services:
       neurex-api:
         condition: service_healthy
 
-# volumes:
-#   ollama_data:
-#   chroma_data:
+  # ──────────────────────────────────────────────
+  # Caddy — Reverse Proxy & Automated SSL
+  # ──────────────────────────────────────────────
+  caddy:
+    image: caddy:latest
+    container_name: neurex-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - NEUREX_DOMAIN=${NEUREX_DOMAIN:-neurex.local}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - neurex-api
+      - neurex-web
+
+volumes:
+  caddy_data:
+  caddy_config:
 
 
 networks:

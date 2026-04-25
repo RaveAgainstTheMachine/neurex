@@ -1,0 +1,72 @@
+.system-logs {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-sidebar);
+}
+
+.system-logs__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.system-logs__list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sys-log-item {
+  background: var(--bg-app);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--text-muted);
+  padding: 8px 10px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.sys-log-item--info { border-left-color: var(--accent-blue); }
+.sys-log-item--security { border-left-color: var(--purple-main); }
+.sys-log-item--warn { border-left-color: var(--accent-yellow); }
+.sys-log-item--error { border-left-color: var(--accent-red); }
+
+.sys-log-item__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.sys-log-item__event {
+  flex: 1;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.sys-log-item__time {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.sys-log-item__meta {
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.sys-log-item__details {
+  color: var(--text-secondary);
+  line-height: 1.4;
+  word-break: break-word;
+}

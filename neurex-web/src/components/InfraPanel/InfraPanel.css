@@ -1,0 +1,150 @@
+/* src/components/InfraPanel/InfraPanel.css */
+.infra-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-sidebar);
+  color: var(--text-main);
+  font-size: 13px;
+}
+
+.infra-panel__header {
+  height: 35px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.infra-section {
+  padding: 16px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.infra-section__title {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  font-weight: 700;
+}
+
+.infra-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.infra-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s;
+}
+
+.infra-card--active {
+  border-color: var(--status-done);
+  box-shadow: 0 0 10px rgba(78, 204, 163, 0.1);
+}
+
+.infra-card__name {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.infra-card__version {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.model-card {
+  background: var(--bg-app);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px;
+  transition: all 0.2s;
+}
+
+.model-card:hover {
+  border-color: var(--purple-main);
+}
+
+.model-card__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.model-card__icon {
+  color: var(--purple-light);
+}
+
+.model-card__name {
+  font-weight: 600;
+  flex: 1;
+}
+
+.model-card__tag {
+  font-size: 10px;
+  background: var(--bg-surface);
+  padding: 2px 6px;
+  border-radius: 10px;
+  color: var(--text-muted);
+}
+
+.model-card__details {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.model-card__detail {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.model-card__tasks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.task-tag {
+  font-size: 9px;
+  background: rgba(165, 148, 249, 0.1);
+  color: var(--purple-light);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(165, 148, 249, 0.2);
+}
+
+.icon-btn--green {
+  color: var(--status-done);
+}
+
+.icon-btn--green:hover {
+  background: rgba(78, 204, 163, 0.1);
+}
+
+.icon-btn--red {
+  color: var(--status-failed);
+}
+
+.icon-btn--red:hover {
+  background: rgba(255, 69, 58, 0.1);
+}

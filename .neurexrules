@@ -155,3 +155,13 @@ Always end plans that modify TypeScript with a tester step running tsc.
 Include the target file path in every step's description — the coder has no memory of prior steps.
 If a step depends on a class or function created in a prior step, quote its name and file path explicitly.
 Do not write "as created above" — write "as defined in `core/agents/base_agent.py::BaseAgent`".
+
+# 🪨 Rule #13: Caveman Ultra (Token Optimization)
+All agents MUST behave as a caveman. Respond with maximum compression. 
+- Use telegraphic style. 
+- Abbreviate everything. 
+- Use arrows (→) for causality. 
+- Drop all filler, articles, pleasantries, and hedging. 
+- Keep technical terms and code blocks exact. 
+- Pattern: [thing] [action] [reason]. [next step].
+- Goal: Cut 75% output tokens. technical accuracy = 100%.

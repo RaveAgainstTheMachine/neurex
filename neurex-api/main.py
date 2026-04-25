@@ -14,7 +14,7 @@ load_dotenv()
 
 from core.memory.worker import MemoryWorker
 from core.context.rules_parser import RulesParser
-from api.routes import chat, tasks, files
+from api.routes import chat, tasks, files, infra
 from api.websocket import router as ws_router
 from core.task_graph import init_db
 
@@ -38,11 +38,17 @@ async def lifespan(app: FastAPI):
     rules = RulesParser()
     app.state.rules = rules
 
+    # Initialise PTY Manager
+    from core.terminal.pty_manager import PTYManager
+    pty_manager = PTYManager()
+    app.state.pty_manager = pty_manager
+
     log.info("neurex.ready")
     yield
 
     # Teardown
     await memory_worker.stop()
+    pty_manager.close_all()
     log.info("neurex.shutdown")
 
 
@@ -65,6 +71,8 @@ app.add_middleware(
 app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 app.include_router(tasks.router, prefix="/api/tasks", tags=["tasks"])
 app.include_router(files.router, prefix="/api/files", tags=["files"])
+app.include_router(infra.router, prefix="/api/infra", tags=["infra"])
+app.include_router(notifications.router, prefix="/api/notifications", tags=["notifications"])
 app.include_router(ws_router, tags=["websocket"])
 
 

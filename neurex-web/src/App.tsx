@@ -2,28 +2,38 @@
 import { useState } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import {
-  Files, MessageSquare, Settings, GitBranch, Search, Bot, Activity
+  Files, MessageSquare, Settings, GitBranch, Search, Bot, Activity, Clock, Cpu, Shield
 } from "lucide-react";
 import { FileExplorer } from "./components/FileExplorer/FileExplorer";
+import { ConversationList } from "./components/ConversationList/ConversationList";
+import { InfraPanel } from "./components/InfraPanel/InfraPanel";
+import { SystemLogsPanel } from "./components/SystemLogs/SystemLogs";
+import { SearchPanel } from "./components/SearchPanel/SearchPanel";
 import { EditorPane } from "./components/Editor/EditorPane";
 import { AIPanel } from "./components/AIPanel/AIPanel";
+import { Terminal } from "./components/Terminal/Terminal";
 import { useWebSocket } from "./hooks/useWebSocket";
+import { useNotifications } from "./hooks/useNotifications";
 import { useStore } from "./lib/store";
+import { Toaster } from "react-hot-toast";
 import "./App.css";
 
-const CONVERSATION_ID = "default";
-
-type SidebarTab = "explorer" | "search" | "git" | "agent";
+type SidebarTab = "explorer" | "search" | "git" | "agent" | "history" | "infra" | "system";
 
 export default function App() {
+  useNotifications();
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("explorer");
   const [showAIPanel, setShowAIPanel] = useState(true);
   const wsStatus = useStore((s) => s.wsStatus);
+  const activeConversationId = useStore((s) => s.activeConversationId);
 
-  const { send } = useWebSocket(CONVERSATION_ID);
+  const { send } = useWebSocket(activeConversationId);
 
   return (
     <div className="app">
+      <Toaster position="top-right" toastOptions={{ 
+        style: { background: '#1e1e24', color: '#e8e8f0', border: '1px solid var(--border)' } 
+      }} />
       {/* Activity bar (left edge — VS Code style) */}
       <div className="activity-bar">
         <div className="activity-bar__top">
@@ -32,6 +42,9 @@ export default function App() {
             [
               { id: "explorer", icon: Files,          label: "Explorer" },
               { id: "search",   icon: Search,         label: "Search" },
+              { id: "history",  icon: Clock,          label: "History" },
+              { id: "infra",    icon: Cpu,            label: "AI Infrastructure" },
+              { id: "system",   icon: Shield,         label: "System Logs" },
               { id: "git",      icon: GitBranch,      label: "Source Control" },
               { id: "agent",    icon: Bot,            label: "Agents" },
             ] as { id: SidebarTab; icon: React.FC<any>; label: string }[]
@@ -66,7 +79,10 @@ export default function App() {
           {/* Sidebar */}
           <Panel defaultSize={16} minSize={10} maxSize={35} className="app__sidebar">
             {sidebarTab === "explorer" && <FileExplorer />}
-            {sidebarTab === "search"   && <PlaceholderPanel label="Search" />}
+            {sidebarTab === "history"  && <ConversationList />}
+            {sidebarTab === "infra"    && <InfraPanel />}
+            {sidebarTab === "system"   && <SystemLogsPanel />}
+            {sidebarTab === "search"   && <SearchPanel />}
             {sidebarTab === "git"      && <PlaceholderPanel label="Source Control" />}
             {sidebarTab === "agent"    && <PlaceholderPanel label="Agent Logs" />}
           </Panel>
@@ -80,10 +96,10 @@ export default function App() {
                 <EditorPane />
               </Panel>
 
-              {/* Bottom: status / future terminal */}
+              {/* Bottom: Terminal */}
               <ResizeHandle vertical />
               <Panel defaultSize={25} minSize={10} className="app__bottom">
-                <BottomPanel />
+                <BottomPanel send={send} />
               </Panel>
             </PanelGroup>
           </Panel>
@@ -93,7 +109,7 @@ export default function App() {
             <>
               <ResizeHandle />
               <Panel defaultSize={24} minSize={16} maxSize={45} className="app__ai">
-                <AIPanel send={send} conversationId={CONVERSATION_ID} />
+                <AIPanel send={send} conversationId={activeConversationId} />
               </Panel>
             </>
           )}
@@ -134,8 +150,10 @@ function PlaceholderPanel({ label }: { label: string }) {
   );
 }
 
-function BottomPanel() {
+function BottomPanel({ send }: { send: (p: any) => void }) {
+  const [tab, setTab] = useState<"terminal" | "output">("terminal");
   const tasks = useStore((s) => s.tasks);
+  
   const lines = Object.values(tasks)
     .filter((t) => t.result || t.error)
     .flatMap((t) => {
@@ -148,13 +166,25 @@ function BottomPanel() {
   return (
     <div className="bottom-panel">
       <div className="bottom-panel__header">
-        <span>OUTPUT</span>
+        <div className="bottom-panel__tabs">
+          <button className={`bottom-tab ${tab === "terminal" ? "active" : ""}`} onClick={() => setTab("terminal")}>TERMINAL</button>
+          <button className={`bottom-tab ${tab === "output" ? "active" : ""}`} onClick={() => setTab("output")}>OUTPUT</button>
+        </div>
       </div>
       <div className="bottom-panel__content">
-        {lines.length === 0 ? (
-          <span className="bottom-panel__empty">No output yet.</span>
+        {tab === "terminal" ? (
+          <Terminal 
+            onInput={(data) => send({ type: "terminal_input", data })}
+            onResize={(rows, cols) => send({ type: "terminal_resize", rows, cols })}
+          />
         ) : (
-          lines.map((l, i) => <div key={i} className="bottom-panel__line">{l}</div>)
+          <div className="output-log">
+            {lines.length === 0 ? (
+              <span className="bottom-panel__empty">No output yet.</span>
+            ) : (
+              lines.map((l, i) => <div key={i} className="bottom-panel__line">{l}</div>)
+            )}
+          </div>
         )}
       </div>
     </div>

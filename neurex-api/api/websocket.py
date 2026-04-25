@@ -2,17 +2,6 @@
 api/websocket.py
 WebSocket endpoint. Each connection maps to one conversation.
 Streams Orchestrator events as newline-delimited JSON.
-
-Message shapes from server:
-  {"event": "task_created",  "data": {TaskNode}}
-  {"event": "task_updated",  "data": {"id": ..., "status": ...}}
-  {"event": "token",         "data": "string token"}
-  {"event": "done",          "data": {"graph_id": ..., "tasks": [...]}}
-  {"event": "error",         "data": "message"}
-
-Message shapes from client:
-  {"type": "message", "content": "user text"}
-  {"type": "cancel"}
 """
 from __future__ import annotations
 import json
@@ -72,63 +61,89 @@ async def websocket_endpoint(
         ctx = ContextManager()
         orch = Orchestrator(session, rules, ctx)
 
+        # Use the PTY manager from app state (initialized in main.py)
+        pty_manager = websocket.app.state.pty_manager
+
+        # Define output callback for this conversation's terminal
+        async def on_terminal_output(data: str):
+            try:
+                await websocket.send_json({"event": "terminal_output", "data": data})
+            except:
+                pass
+
+        # Start/Get PTY session
+        pty_session = pty_manager.create_session(
+            conversation_id, 
+            lambda data: asyncio.create_task(on_terminal_output(data))
+        )
+
         try:
             while True:
                 raw = await websocket.receive_text()
                 msg = json.loads(raw)
-                log.info("ws.message_received", type=msg.get("type"), conversation_id=conversation_id)
+                msg_type = msg.get("type")
+                log.info("ws.message_received", type=msg_type, conversation_id=conversation_id)
 
-                if msg.get("type") == "cancel":
+                if msg_type == "cancel":
                     await websocket.send_json({"event": "cancelled"})
                     break
 
-                if msg.get("type") == "message":
+                if msg_type == "terminal_input":
+                    pty_session.write(msg.get("data", ""))
+                    continue
+
+                if msg_type == "terminal_resize":
+                    pty_session.resize(msg.get("rows", 24), msg.get("cols", 80))
+                    continue
+
+                if msg_type == "message":
                     content = msg.get("content", "").strip()
+                    requested_model = msg.get("model")
                     if not content:
                         continue
 
-                    # Persist the user message
                     await _persist_message(session, conversation_id, "user", content)
 
-                    # Stream orchestrator events back over WS
                     assistant_tokens = []
                     last_graph_id = None
-                    async for event in orch.run(content, conversation_id):
-                        await websocket.send_json(event)
-                        await asyncio.sleep(0)
+                    try:
+                        async for event in orch.run(content, conversation_id, model=requested_model):
+                            await websocket.send_json(event)
+                            await asyncio.sleep(0)
+                            if event.get("event") == "token":
+                                assistant_tokens.append(event["data"])
+                            if event.get("event") in ("plan_ready", "done"):
+                                last_graph_id = event.get("data", {}).get("graph_id")
+                    except Exception as e:
+                        log.error("ws.orch_run_error", error=str(e))
+                        await websocket.send_json({"event": "error", "data": str(e)})
+                    finally:
+                        if assistant_tokens:
+                            await _persist_message(
+                                session, conversation_id, "assistant",
+                                "".join(assistant_tokens), last_graph_id
+                            )
 
-                        # Collect assistant tokens for persistence
-                        if event.get("event") == "token":
-                            assistant_tokens.append(event["data"])
-                        if event.get("event") in ("plan_ready", "done"):
-                            last_graph_id = event.get("data", {}).get("graph_id")
-
-                    # Persist the assistant reply
-                    if assistant_tokens:
-                        await _persist_message(
-                            session, conversation_id, "assistant",
-                            "".join(assistant_tokens), last_graph_id
-                        )
-
-                if msg.get("type") == "approve_plan":
+                if msg_type == "approve_plan":
                     graph_id = msg.get("graph_id")
                     if not graph_id:
                         continue
 
                     assistant_tokens = []
-                    async for event in orch.resume(graph_id, conversation_id):
-                        await websocket.send_json(event)
-                        await asyncio.sleep(0)
-                        if event.get("event") == "token":
-                            assistant_tokens.append(event["data"])
+                    try:
+                        async for event in orch.resume(graph_id, conversation_id):
+                            await websocket.send_json(event)
+                            await asyncio.sleep(0)
+                            if event.get("event") == "token":
+                                assistant_tokens.append(event["data"])
+                    finally:
+                        if assistant_tokens:
+                            await _persist_message(
+                                session, conversation_id, "assistant",
+                                "".join(assistant_tokens), graph_id
+                            )
 
-                    if assistant_tokens:
-                        await _persist_message(
-                            session, conversation_id, "assistant",
-                            "".join(assistant_tokens), graph_id
-                        )
-
-                if msg.get("type") == "approve_shell":
+                if msg_type == "approve_shell":
                     task_id = msg.get("task_id")
                     approved = msg.get("approved", False)
                     if not task_id:
@@ -147,3 +162,5 @@ async def websocket_endpoint(
                 await websocket.close()
             except Exception:
                 pass
+        finally:
+            pty_session.close()

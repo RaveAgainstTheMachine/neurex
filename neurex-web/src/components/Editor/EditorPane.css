@@ -3,7 +3,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--bg-panel);
+  background: var(--bg-surface);
   overflow: hidden;
 }
 
@@ -12,31 +12,39 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  background: var(--bg-panel);
+  background: var(--bg-app);
 }
 
 .editor-empty__content {
   text-align: center;
-  opacity: 0.5;
 }
 
 .editor-empty__logo {
-  font-size: 48px;
-  margin-bottom: 12px;
+  font-size: 64px;
+  margin-bottom: 16px;
   color: var(--accent-purple);
+  filter: drop-shadow(0 0 20px rgba(156, 111, 255, 0.2));
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
 .editor-empty__title {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
   margin-bottom: 8px;
+  letter-spacing: -0.02em;
 }
 
 .editor-empty__subtitle {
-  font-size: var(--font-size-sm);
+  font-size: 14px;
   color: var(--text-muted);
-  max-width: 320px;
+  max-width: 400px;
+  line-height: 1.6;
 }
 
 /* Tabs */
@@ -55,63 +63,103 @@
 .editor-tab {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 0 10px;
+  gap: 8px;
+  padding: 0 12px;
   border-right: 1px solid var(--border);
   cursor: pointer;
   white-space: nowrap;
-  font-size: var(--font-size-sm);
+  font-size: 13px;
   color: var(--text-muted);
-  background: var(--bg-app);
+  background: var(--bg-sidebar);
   position: relative;
-  transition: color 0.1s;
-  min-width: 100px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  min-width: 140px;
 }
 
-.editor-tab:hover { color: var(--text-secondary); background: var(--bg-hover); }
+.editor-tab:hover {
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+}
 
 .editor-tab--active {
   color: var(--text-primary);
-  background: var(--bg-panel);
-  border-top: 1px solid var(--accent-blue);
+  background: var(--bg-surface);
 }
 
-.editor-tab__name { flex: 1; }
+.editor-tab--active::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--accent-blue);
+  box-shadow: 0 0 10px rgba(76, 142, 255, 0.5);
+}
+
+.editor-tab__name { flex: 1; overflow: hidden; text-overflow: ellipsis; }
 
 .editor-tab__dirty {
-  width: 6px; height: 6px;
+  width: 8px; height: 8px;
   border-radius: 50%;
-  background: var(--accent-yellow);
+  background: var(--accent-blue);
   flex-shrink: 0;
+  box-shadow: 0 0 8px rgba(76, 142, 255, 0.4);
 }
 
 .editor-tab__close {
   background: none; border: none;
   color: var(--text-muted);
   display: flex; align-items: center;
-  padding: 2px; border-radius: 2px;
-  opacity: 0; transition: opacity 0.1s;
+  padding: 4px; border-radius: 4px;
+  opacity: 0.4; transition: all 0.2s;
 }
 
-.editor-tab:hover .editor-tab__close { opacity: 1; }
-.editor-tab__close:hover { color: var(--text-primary); background: var(--bg-elevated); }
+.editor-tab:hover .editor-tab__close { opacity: 0.8; }
+.editor-tab__close:hover { 
+  color: var(--text-primary); 
+  background: var(--bg-elevated);
+  opacity: 1;
+}
 
 /* Breadcrumb */
 .editor-breadcrumb {
-  padding: 4px 12px;
-  font-size: var(--font-size-xs);
+  padding: 0 16px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  font-size: 11px;
   color: var(--text-muted);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
-  background: var(--bg-panel);
+  background: var(--bg-surface);
+  gap: 4px;
 }
 
-.breadcrumb-seg { color: var(--text-muted); }
-.breadcrumb-sep { color: var(--border); }
-.breadcrumb-active { color: var(--text-secondary); }
+.breadcrumb-seg { transition: color 0.1s; }
+.breadcrumb-seg:hover { color: var(--text-secondary); cursor: pointer; }
+.breadcrumb-sep { opacity: 0.3; padding: 0 2px; }
+.breadcrumb-active {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.editor-diff-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.editor-diff-actions .btn--sm {
+  padding: 4px 10px;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 
 /* Monaco container */
 .editor-monaco {
   flex: 1;
   overflow: hidden;
+  background: var(--bg-surface);
 }

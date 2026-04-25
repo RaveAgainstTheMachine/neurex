@@ -16,6 +16,11 @@ from sqlalchemy.ext.asyncio import create_async_engine
 DATABASE_URL = "sqlite+aiosqlite:///./neurex.db"
 engine = create_async_engine(DATABASE_URL, echo=False)
 
+class AutonomyLevel(str, Enum):
+    RESTRICTED = "restricted" # Everything needs approval
+    LIMITED    = "limited"    # Safe commands are auto, unsafe need approval
+    FULL       = "full"       # Autonomous execution
+
 class TaskStatus(str, Enum):
     PENDING   = "pending"
     THINKING  = "thinking"
@@ -34,6 +39,7 @@ class TaskNode(SQLModel, table=True):
     title: str
     description: str
     status: TaskStatus = TaskStatus.PENDING
+    approval_reason: Optional[str] = None # Why are we waiting?
     result: Optional[str] = None
     error: Optional[str] = None
     iteration: int = 0
@@ -62,6 +68,7 @@ async def update_task(
     status: TaskStatus,
     result: str | None = None,
     error: str | None = None,
+    approval_reason: str | None = None,
 ) -> TaskNode | None:
     node = await session.get(TaskNode, task_id)
     if not node:
@@ -73,6 +80,8 @@ async def update_task(
         node.result = result
     if error is not None:
         node.error = error
+    if approval_reason is not None:
+        node.approval_reason = approval_reason
     session.add(node)
     await session.commit()
     await session.refresh(node)

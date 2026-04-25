@@ -4,54 +4,55 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  /* Core palette */
-  --bg-app:       #0d0d0f;
-  --bg-sidebar:   #111114;
-  --bg-panel:     #131316;
-  --bg-elevated:  #1a1a1f;
-  --bg-hover:     #1e1e24;
-  --bg-active:    #252530;
-  --bg-input:     #16161b;
+  /* Core palette (HSL for better harmony) */
+  --bg-app:       hsl(240, 10%, 4%);
+  --bg-sidebar:   hsl(240, 10%, 6%);
+  --bg-surface:   hsl(240, 10%, 8%);
+  --bg-elevated:  hsl(240, 10%, 11%);
+  --bg-hover:     hsl(240, 10%, 15%);
+  --bg-active:    hsl(240, 10%, 20%);
+  --bg-input:     hsl(240, 10%, 7%);
 
   /* Borders */
-  --border:       #2a2a35;
-  --border-focus: #4c4cff;
+  --border:       hsl(240, 10%, 16%);
+  --border-active: hsl(240, 10%, 25%);
+  --border-focus:  hsl(255, 70%, 65%);
 
   /* Text */
-  --text-primary:   #e8e8f0;
-  --text-secondary: #9898b0;
-  --text-muted:     #55556a;
-  --text-inverse:   #0d0d0f;
+  --text-primary:   hsl(240, 10%, 92%);
+  --text-secondary: hsl(240, 8%, 70%);
+  --text-muted:     hsl(240, 6%, 45%);
+  --text-inverse:   hsl(240, 10%, 4%);
 
   /* Accents */
-  --accent-blue:   #4c8eff;
-  --accent-purple: #9c6fff;
-  --accent-green:  #3ddc84;
-  --accent-red:    #ff5c5c;
-  --accent-yellow: #ffc542;
-  --accent-cyan:   #3ddcdc;
+  --accent-blue:   hsl(215, 100%, 65%);
+  --accent-purple: hsl(260, 90%, 70%);
+  --accent-green:  hsl(145, 80%, 50%);
+  --accent-red:    hsl(0, 85%, 65%);
+  --accent-yellow: hsl(45, 95%, 60%);
+  --accent-cyan:   hsl(185, 85%, 55%);
 
   /* Status */
-  --status-pending:  #55556a;
-  --status-thinking: #ffc542;
-  --status-writing:  #4c8eff;
-  --status-done:     #3ddc84;
-  --status-failed:   #ff5c5c;
-  --status-approval: #9c6fff;
+  --status-pending:  var(--text-muted);
+  --status-thinking: var(--accent-yellow);
+  --status-writing:  var(--accent-blue);
+  --status-done:     var(--accent-green);
+  --status-failed:   var(--accent-red);
+  --status-approval: var(--accent-purple);
 
   /* Layout */
-  --sidebar-width:    240px;
-  --titlebar-height:  38px;
-  --tabbar-height:    36px;
-  --statusbar-height: 22px;
+  --sidebar-width:    260px;
+  --titlebar-height:  40px;
+  --tabbar-height:    34px;
+  --statusbar-height: 24px;
 
   /* Typography */
-  --font-ui:   'Inter', system-ui, sans-serif;
+  --font-ui:   'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
-  --font-size-xs:  10px;
-  --font-size-sm:  11px;
-  --font-size-md:  12px;
-  --font-size-base: 13px;
+  --font-size-xs:  11px;
+  --font-size-sm:  12px;
+  --font-size-md:  13px;
+  --font-size-base: 14px;
 }
 
 html, body, #root {

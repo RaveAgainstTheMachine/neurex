@@ -1,117 +1,58 @@
-# Neurex IDE
+# Neurex: Agentic AI IDE ⬡
 
-A local-first agentic development environment. All inference runs on your
-hardware via Ollama. No API keys. No cloud.
+Neurex is a high-performance, agentic development environment designed for local-first AI coding. It features a Windsurf-style UI built with Vite, Monaco Editor, and a multi-agent backend that can plan, code, and test autonomously.
 
-```
-neurex/
-├── docker-compose.yml        # Phase 1 — Infrastructure
-├── ollama-entrypoint.sh      # VRAM-aware model pull on startup
-├── .env.example              # Copy to .env before first run
-├── .neurexrules              # Project-level agent rules
-│
-├── neurex-api/               # Phase 2 — Agentic Core (FastAPI)
-│   ├── main.py
-│   ├── core/
-│   │   ├── orchestrator.py   # Supervisor — builds + runs TaskGraphs
-│   │   ├── task_graph.py     # SQLite-backed DAG, loop detection
-│   │   ├── agents/
-│   │   │   ├── base_agent.py # Ollama streaming, tool dispatch
-│   │   │   ├── planner_agent.py
-│   │   │   ├── coder_agent.py
-│   │   │   └── tester_agent.py
-│   │   ├── mcp/
-│   │   │   ├── client.py     # MCP tool dispatcher
-│   │   │   └── tools/
-│   │   │       ├── filesystem.py  # Path-scoped read/write/delete
-│   │   │       └── terminal.py    # Sandboxed Docker exec
-│   │   ├── memory/
-│   │   │   ├── worker.py     # File watcher + indexing loop
-│   │   │   ├── chunker.py    # AST-based tree-sitter chunking
-│   │   │   └── embedder.py   # Ollama embeddings + cross-encoder reranker
-│   │   └── context/
-│   │       ├── manager.py    # Token budgeting, RAG retrieval, history trim
-│   │       └── rules_parser.py  # .neurexrules loader + merger
-│   └── api/
-│       ├── websocket.py      # Streaming WS endpoint
-│       └── routes/
-│           ├── tasks.py
-│           └── files.py
-│
-└── neurex-web/               # Phase 3 — UI (Next.js 14)
-    └── src/
-        ├── app/
-        │   ├── layout.tsx
-        │   ├── page.tsx      # 3-panel IDE workspace
-        │   └── globals.css   # Design tokens + dark theme
-        ├── components/
-        │   ├── Editor/       # Monaco editor, custom Neurex theme
-        │   ├── FileTree/     # Collapsible, auto-refreshing file browser
-        │   ├── AgentTerminal/# Streaming chat with the agent team
-        │   ├── AgentDashboard/ # Visual team status (Thinking/Writing/Testing)
-        │   └── Scratchpad/   # Editable agent plan tracker
-        ├── hooks/
-        │   └── useWebSocket.ts  # Reconnecting WS with event dispatch
-        └── lib/
-            ├── store.ts      # Zustand store (messages, tasks, files)
-            └── types.ts      # Shared TypeScript types
-```
+## 🏗️ Architecture
 
-## Prerequisites
+- **Frontend**: Vite + React + TypeScript + Monaco Editor + Xterm.js
+- **Backend**: FastAPI + SQLModel (SQLite) + Orchestrator
+- **Intelligence**: Local LLMs via Ollama (Qwen2.5-Coder, DeepSeek-R1)
+- **Memory**: ChromaDB for RAG context (Local Persistent Client)
+- **Sandbox**: Docker-isolated execution environment for tools
 
-- Docker + Docker Compose
-- NVIDIA GPU with drivers installed (CPU fallback works but is slow)
-- NVIDIA Container Toolkit (for GPU passthrough)
+## 🚀 Quick Start
 
-## Quick Start
+### 1. Prerequisites
+- **Python 3.12+**
+- **Node.js 20+**
+- **Ollama** (running locally)
+- **Docker** (optional, for tool sandboxing)
 
+### 2. Setup
+Run the setup script to initialize environment variables and pull models:
 ```bash
-# 1. Clone and configure
-cp .env.example .env
-# Edit .env — at minimum set WORKSPACE_PATH to your project directory
-
-# 2. Start everything
-docker compose up
-
-# 3. Open the IDE
-open http://localhost:3000
+bash setup_neurex.sh
 ```
 
-On first boot, `ollama-entrypoint.sh` detects your VRAM and pulls the
-appropriate model tier automatically. This takes several minutes on first run.
+### 3. Run Development Servers
 
-## Model Tiers
-
-| VRAM       | Model                    |
-|------------|--------------------------|
-| ≥ 22 GB    | `deepseek-r1:32b`        |
-| ≥ 10 GB    | `qwen2.5-coder:14b`      |
-| < 10 GB    | `qwen2.5-coder:7b`       |
-
-Override with `DEFAULT_MODEL=<model>` in `.env`.
-
-## Agent Rules
-
-Copy `.neurexrules` into your workspace directory and edit to taste.
-A global `~/.neurexrules` is also supported (project rules take precedence).
-
-## Security Notes
-
-- The API binds to `127.0.0.1` only. Set `API_TOKEN` in `.env`.
-- The tester agent runs commands inside a Docker sandbox with no network access.
-- Filesystem tools are scoped to `WORKSPACE_PATH` with path traversal protection.
-- File "deletes" are soft-moved to `.neurex_trash/`, never hard-deleted.
-
-## Development
-
+#### Backend
 ```bash
-# Run API locally (no Docker)
 cd neurex-api
+python3 -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
-uvicorn main:app --reload
+python main.py
+```
 
-# Run web locally
+#### Frontend
+```bash
 cd neurex-web
 npm install
 npm run dev
 ```
+
+Visit `http://localhost:3000` to start coding.
+
+## 🛠️ Features
+
+- **Agentic Workflow**: Agents generate plans, ask for approval, and execute complex refactors.
+- **Human-in-the-Loop**: Approval gateway for sensitive operations like shell commands or major file writes.
+- **RAG-Powered Context**: Automatic codebase indexing for context-aware coding assistance.
+- **Monaco Integration**: Familiar VS Code-like editing experience with syntax highlighting and multi-tab support.
+
+## 📜 Project Rules
+Check [.neurexrules](.neurexrules) for specific coding standards and agent behavioral guidelines.
+
+---
+*Built with Neurex, for Neurex.*

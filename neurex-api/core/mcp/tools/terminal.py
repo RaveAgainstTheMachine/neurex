@@ -59,15 +59,25 @@ async def run_command(command: str, cwd: str = ".", approved: bool = False) -> s
     Execute `command` inside a Docker sandbox container.
     If the command is unsafe and not pre-approved, returns an approval request.
     """
-    if not approved and not _check_safety(command):
-        return f"APPROVAL_REQUIRED: The command '{command}' is marked as potentially unsafe. Please approve or deny."
+    level = os.getenv("AUTONOMY_LEVEL", "limited").lower()
+    
+    if not approved:
+        reason = None
+        if level == "restricted":
+            reason = "Restricted mode: All shell commands require approval."
+        elif level == "limited" and not _check_safety(command):
+            reason = f"Limited mode: Command '{command}' is potentially unsafe."
+            
+        if reason:
+            return f"APPROVAL_REQUIRED: {reason}"
 
     _check_allowlist(command)
 
+    network_mode = "bridge" if os.getenv("ENABLE_AGENT_INTERNET", "false").lower() == "true" else "none"
 
     docker_cmd = [
         "docker", "run", "--rm",
-        "--network", "none",          # no internet access
+        "--network", network_mode,          # controlled internet access
         "--memory", "512m",
         "--cpus", "1",
         "-v", f"{WORKSPACE_PATH}:/workspace:ro",
