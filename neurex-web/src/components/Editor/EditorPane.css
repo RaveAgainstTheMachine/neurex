@@ -1,10 +1,32 @@
-/* src/components/Editor/EditorPane.css */
 .editor-pane {
   display: flex;
   flex-direction: column;
   height: 100%;
   background: var(--bg-surface);
   overflow: hidden;
+}
+
+/* ── Ghost Cursors ── */
+.remote-cursor {
+  width: 2px !important;
+  background: var(--status-done);
+  position: absolute;
+  z-index: 10;
+}
+
+.remote-cursor--agent {
+  background: var(--accent-purple);
+}
+
+.remote-cursor:after {
+  content: "";
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  width: 6px;
+  height: 6px;
+  background: inherit;
+  border-radius: 50%;
 }
 
 .editor-empty {

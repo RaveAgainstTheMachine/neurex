@@ -64,6 +64,10 @@ async def websocket_endpoint(
         # Use the PTY manager from app state (initialized in main.py)
         pty_manager = websocket.app.state.pty_manager
 
+        from core.collaboration.presence import presence_manager
+        user_id = websocket.query_params.get("user_id", "Anonymous")
+        await presence_manager.connect(conversation_id, websocket, user_id)
+
         # Define output callback for this conversation's terminal
         async def on_terminal_output(data: str):
             try:
@@ -83,6 +87,10 @@ async def websocket_endpoint(
                 msg = json.loads(raw)
                 msg_type = msg.get("type")
                 log.info("ws.message_received", type=msg_type, conversation_id=conversation_id)
+
+                if msg_type == "presence_update":
+                    await presence_manager.update_presence(conversation_id, user_id, msg.get("data", {}))
+                    continue
 
                 if msg_type == "cancel":
                     await websocket.send_json({"event": "cancelled"})
@@ -163,4 +171,5 @@ async def websocket_endpoint(
             except Exception:
                 pass
         finally:
+            await presence_manager.disconnect(conversation_id, websocket, user_id)
             pty_session.close()

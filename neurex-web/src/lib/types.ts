@@ -51,6 +51,13 @@ export interface OpenFile {
   isDirty: boolean;
 }
 
+export interface Presence {
+  user_id: string;
+  cursor: { line: number; ch: number } | null;
+  active_file: string | null;
+  status: string;
+}
+
 export interface NeurexStore {
   // Chat
   messages: ChatMessage[];
@@ -85,4 +92,6 @@ export interface NeurexStore {
   // WS
   wsStatus: "connecting" | "connected" | "disconnected";
   setWsStatus: (s: NeurexStore["wsStatus"]) => void;
+  presence: Presence[];
+  setPresence: (p: Presence[]) => void;
 }

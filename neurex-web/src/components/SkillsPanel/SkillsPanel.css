@@ -16,7 +16,40 @@
   font-size: 14px;
   font-weight: 600;
   color: var(--text-primary);
-  margin: 0 0 4px 0;
+  margin: 0;
+}
+
+.skills-panel__title-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.skills-tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-input);
+  padding: 2px;
+  border-radius: 6px;
+}
+
+.skills-tabs button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.skills-tabs button.active {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .skills-panel__subtitle {
@@ -100,6 +133,16 @@
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
+}
+
+.skill-card__author {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.btn--small {
+  padding: 4px 10px !important;
+  font-size: 10px;
 }
 
 .skill-card__badge {

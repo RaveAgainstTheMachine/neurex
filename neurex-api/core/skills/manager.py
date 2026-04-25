@@ -60,6 +60,19 @@ class SkillManager:
                 all_tools.extend(skill.tools)
         return all_tools
 
+    def fetch_curated_list(self) -> List[Dict[str, Any]]:
+        """Fetch the curated 'Awesome Skills' manifest from GitHub."""
+        import requests
+        try:
+            # We point to the raw manifest.json in the awesome-skills repo
+            url = "https://raw.githubusercontent.com/sickn33/antigravity-awesome-skills/main/skills.json"
+            resp = requests.get(url, timeout=5)
+            if resp.status_code == 200:
+                return resp.json().get("skills", [])
+        except Exception as e:
+            log.warning("skill.fetch_curated_failed", error=str(e))
+        return []
+
     def execute_skill_tool(self, skill_name: str, tool_name: str, args: Dict[str, Any]) -> str:
         """
         Execute a tool provided by a specific skill.

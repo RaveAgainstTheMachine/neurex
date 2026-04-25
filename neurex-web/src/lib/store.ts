@@ -121,5 +121,7 @@ export const useStore = create<NeurexStore>()(
     // ── WS ────────────────────────────────────────────────────────────
     wsStatus: "connecting",
     setWsStatus: (status) => set((s) => { s.wsStatus = status; }),
+    presence: [],
+    setPresence: (presence) => set((s) => { s.presence = presence; }),
   }))
 );

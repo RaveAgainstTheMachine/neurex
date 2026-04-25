@@ -14,6 +14,7 @@ import { AIPanel } from "./components/AIPanel/AIPanel";
 import { Terminal } from "./components/Terminal/Terminal";
 import { SkillsPanel } from "./components/SkillsPanel/SkillsPanel";
 import { SettingsPanel } from "./components/SettingsPanel/SettingsPanel";
+import { PresenceBar } from "./components/PresenceBar/PresenceBar";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useNotifications } from "./hooks/useNotifications";
 import { useStore } from "./lib/store";
@@ -102,6 +103,7 @@ export default function App() {
           <Panel minSize={30}>
             <PanelGroup direction="vertical">
               <Panel minSize={25} className="app__editor">
+                <PresenceBar />
                 {showSettings ? <SettingsPanel /> : <EditorPane />}
               </Panel>
 

@@ -29,6 +29,11 @@ async def list_skills():
             })
     return skills
 
+@router.get("/curated")
+async def list_curated():
+    """Fetch the 'Awesome Skills' library from remote."""
+    return manager.fetch_curated_list()
+
 @router.post("/install")
 async def install_skill(req: SkillInstallRequest):
     """Clone a new skill from Git."""

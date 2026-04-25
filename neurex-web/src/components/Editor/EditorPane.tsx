@@ -1,4 +1,4 @@
-// src/components/Editor/EditorPane.tsx
+import { useEffect, useRef } from "react";
 import MonacoEditor, { DiffEditor } from "@monaco-editor/react";
 import { X, Check, RotateCcw } from "lucide-react";
 import { useStore } from "../../lib/store";
@@ -7,7 +7,7 @@ import "./EditorPane.css";
 export function EditorPane() {
   const { 
     openFiles, activeFile, closeFile, setActiveFile, setFileContent, saveFile,
-    acceptDiff, discardDiff
+    acceptDiff, discardDiff, presence
   } = useStore();
 
   if (openFiles.length === 0) {
@@ -23,6 +23,14 @@ export function EditorPane() {
   }
 
   const active = openFiles.find((f) => f.path === activeFile) ?? openFiles[0];
+
+  const editorRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (editorRef.current?._presenceObserver) {
+      editorRef.current._presenceObserver();
+    }
+  }, [presence]);
 
   return (
     <div className="editor-pane">
@@ -90,6 +98,41 @@ export function EditorPane() {
             theme="neurex-dark"
             onChange={(val) => setFileContent(active.path, val ?? "")}
             onMount={(editor, monaco) => {
+              editorRef.current = editor;
+              // ── Cursor Broadcasting ──
+              // ── Cursor Broadcasting ──
+              const { sendPresence } = (window as any).neurexWS || {};
+              
+              editor.onDidChangeCursorPosition((e) => {
+                if (sendPresence) {
+                  sendPresence({
+                    active_file: active.path,
+                    cursor: { line: e.position.lineNumber, ch: e.position.column }
+                  });
+                }
+              });
+
+              // ── Remote Cursor Rendering ──
+              let decorations: string[] = [];
+              const renderRemoteCursors = () => {
+                const newDecorations: any[] = [];
+                presence.forEach((p) => {
+                  if (p.active_file === active.path && p.cursor) {
+                    newDecorations.push({
+                      range: new monaco.Range(p.cursor.line, p.cursor.ch, p.cursor.line, p.cursor.ch + 1),
+                      options: {
+                        className: `remote-cursor remote-cursor--${p.user_id.toLowerCase().includes('agent') ? 'agent' : 'user'}`,
+                        hoverMessage: { value: p.user_id }
+                      }
+                    });
+                  }
+                });
+                decorations = editor.deltaDecorations(decorations, newDecorations);
+              };
+
+              // Re-render when presence changes
+              (editor as any)._presenceObserver = renderRemoteCursors;
+
               editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
                 saveFile(active.path);
               });

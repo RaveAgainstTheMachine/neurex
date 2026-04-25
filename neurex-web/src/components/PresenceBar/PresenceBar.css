@@ -1,0 +1,58 @@
+.presence-bar {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  height: 32px;
+  background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border);
+}
+
+.presence-bar__empty {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.presence-avatars {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.presence-avatar {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+  transition: transform 0.2s;
+}
+
+.presence-avatar:hover {
+  transform: scale(1.1);
+  border-color: var(--accent-purple);
+}
+
+.avatar-icon {
+  color: var(--text-muted);
+}
+
+.avatar-icon--agent {
+  color: var(--accent-purple);
+}
+
+.avatar-status {
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  width: 8px;
+  height: 8px;
+  background: var(--status-done);
+  border: 2px solid var(--bg-sidebar);
+  border-radius: 50%;
+}

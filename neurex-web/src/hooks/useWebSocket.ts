@@ -5,10 +5,11 @@ import type { TaskNode } from "../lib/types";
 
 const API_BASE = "http://localhost:8000";
 const WS_TOKEN = "neurex-dev-token";
+const userId = "User-" + Math.random().toString(36).substring(7);
 
 export function useWebSocket(conversationId: string) {
   const ws = useRef<WebSocket | null>(null);
-  const { setWsStatus, upsertTask, addMessage, appendToken, clearTasks } = useStore();
+  const { setWsStatus, upsertTask, addMessage, appendToken, clearTasks, setPresence } = useStore();
 
   const send = useCallback((payload: object) => {
     if (ws.current?.readyState === WebSocket.OPEN) {
@@ -17,12 +18,19 @@ export function useWebSocket(conversationId: string) {
     }
   }, []);
 
+  const sendPresence = useCallback((data: object) => {
+    if (ws.current?.readyState === WebSocket.OPEN) {
+      ws.current.send(JSON.stringify({ type: "presence_update", data }));
+    }
+  }, []);
+
   useEffect(() => {
     if (!conversationId || conversationId === "undefined") return;
 
-    const url = `ws://localhost:8000/ws/${conversationId}?token=${WS_TOKEN}`;
+    const url = `ws://localhost:8000/ws/${conversationId}?token=${WS_TOKEN}&user_id=${userId}`;
     const socket = new WebSocket(url);
     ws.current = socket;
+    (window as any).neurexWS = { send, sendPresence };
     setWsStatus("connecting");
 
     socket.onopen = () => setWsStatus("connected");
@@ -35,6 +43,9 @@ export function useWebSocket(conversationId: string) {
         const { event, data } = msg;
 
         switch (event) {
+          case "presence_update":
+            setPresence(data.filter((p: any) => p.user_id !== userId));
+            break;
           case "task_created":
           case "task_updated":
             upsertTask(data as TaskNode);
@@ -86,5 +97,5 @@ export function useWebSocket(conversationId: string) {
       .catch(() => {});
   }, [conversationId, upsertTask]);
 
-  return { send };
+  return { send, sendPresence };
 }
