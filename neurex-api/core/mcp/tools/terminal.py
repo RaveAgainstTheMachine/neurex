@@ -60,7 +60,11 @@ async def run_command(command: str, cwd: str = ".", approved: bool = False) -> s
     If the command is unsafe and not pre-approved, returns an approval request.
     """
     level = os.getenv("AUTONOMY_LEVEL", "limited").lower()
+    trash_path = os.getenv("NEUREX_TRASH_PATH", ".neurex/trash")
     
+    if trash_path in command:
+         return f"ERROR: Access denied. Shell commands are not permitted to target the protected Trash directory: {trash_path}"
+
     if not approved:
         reason = None
         if level == "restricted":

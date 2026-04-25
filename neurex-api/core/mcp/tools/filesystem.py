@@ -12,10 +12,10 @@ import structlog
 log = structlog.get_logger()
 
 WORKSPACE_ROOT = Path(os.getenv("WORKSPACE_PATH", "/workspace")).resolve()
-
+TRASH_ROOT = Path(os.getenv("NEUREX_TRASH_PATH", str(WORKSPACE_ROOT / ".neurex" / "trash"))).resolve()
 
 def _safe_path(relative_path: str) -> Path:
-    """Resolve and validate that the path stays within WORKSPACE_ROOT."""
+    """Resolve and validate that the path stays within WORKSPACE_ROOT and NOT in TRASH_ROOT."""
     # Ensure workspace root exists
     if not WORKSPACE_ROOT.exists():
         WORKSPACE_ROOT.mkdir(parents=True, exist_ok=True)
@@ -30,6 +30,14 @@ def _safe_path(relative_path: str) -> Path:
                 f"Path traversal attempt blocked: {relative_path!r} "
                 f"resolves outside workspace."
             )
+            
+        # Rogue agent safeguard: Block access to trash
+        if resolved.is_relative_to(TRASH_ROOT):
+             raise PermissionError(
+                f"Access denied: {relative_path!r} is inside the protected Trash directory. "
+                "Agents are not permitted to read, write, or delete files from the trash."
+            )
+            
         return resolved
     except (ValueError, RuntimeError) as e:
         raise PermissionError(f"Invalid path {relative_path!r}: {e}")
@@ -70,18 +78,20 @@ async def write_file(path: str, content: str) -> str:
         collab_manager.release_lock(path, "autonomous_agent_1")
 
 async def delete_file(path: str) -> str:
-    """Move a file to the .neurex/trash directory instead of deleting it."""
+    """Move a file to the TRASH_ROOT directory instead of deleting it."""
+    # We resolve the path manually because _safe_path would block the trash itself,
+    # but here we want to allow MOVING a file TO trash (one way).
+    # However, we still use _safe_path for the source to ensure no path traversal.
     resolved = _safe_path(path)
     if not resolved.exists():
         return f"Error: {path} does not exist"
         
-    trash_dir = WORKSPACE / ".neurex" / "trash"
-    trash_dir.mkdir(parents=True, exist_ok=True)
+    TRASH_ROOT.mkdir(parents=True, exist_ok=True)
     
     import shutil
     from datetime import datetime
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    trash_path = trash_dir / f"{timestamp}_{resolved.name}"
+    trash_path = TRASH_ROOT / f"{timestamp}_{resolved.name}"
     
     shutil.move(str(resolved), str(trash_path))
     return f"OK: {path} moved to trash as {trash_path.name}"
