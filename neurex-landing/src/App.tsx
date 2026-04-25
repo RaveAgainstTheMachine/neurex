@@ -149,6 +149,96 @@ function App() {
         </div>
       </section>
 
+      {/* Mobile Section */}
+      <section className="container">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6rem', alignItems: 'center' }}>
+          <motion.div
+            initial={{ x: -100, opacity: 0 }}
+            whileInView={{ x: 0, opacity: 1 }}
+            transition={{ duration: 1 }}
+          >
+            <img src="/mobile.png" className="mockup-img" alt="Neurex Mobile" />
+          </motion.div>
+          <div>
+            <h2 style={{ fontSize: '3.5rem', marginBottom: '2rem' }}>Command from anywhere.</h2>
+            <p style={{ color: '#adb5bd', fontSize: '1.2rem', marginBottom: '2rem' }}>
+              Neurex Mobile is your off-band control center. Approve terminal commands, 
+              monitor mesh health, and receive critical alerts while you're away from your desk.
+            </p>
+            <ul style={{ listSetStyle: 'none', display: 'flex', flexDirection: 'column', gap: '1rem', color: '#adb5bd' }}>
+              <li>✓ One-tap command approval</li>
+              <li>✓ Real-time Mesh telemetry</li>
+              <li>✓ Secure mTLS tunnel</li>
+              <li>✓ Biometric RBAC authentication</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* Exhaustive Features & Glossary */}
+      <section style={{ backgroundColor: 'var(--bg-accent)' }}>
+        <div className="container">
+          <div style={{ textAlign: 'center', marginBottom: '6rem' }}>
+            <h2 style={{ fontSize: '3rem' }}>The Intelligence Index</h2>
+            <p style={{ color: '#adb5bd' }}>An exhaustive look at the platform's core primitives.</p>
+          </div>
+
+          <div className="feature-grid">
+            <div className="glass" style={{ padding: '2rem' }}>
+              <h4 style={{ marginBottom: '1.5rem', color: 'var(--primary)' }}>Compute & Mesh</h4>
+              <ul style={{ fontSize: '0.9rem', color: '#adb5bd', listStyleType: 'none', lineHeight: '2' }}>
+                <li>• <b>MeshRouter</b>: Dynamic VRAM load balancing</li>
+                <li>• <b>Ollama Proxy</b>: Secure inference streaming</li>
+                <li>• <b>MPI Scaffolding</b>: Distributed tensor pooling</li>
+                <li>• <b>Insomnia Mode</b>: System sleep inhibition</li>
+                <li>• <b>Resource Capping</b>: Per-node RAM/CPU limits</li>
+              </ul>
+            </div>
+            <div className="glass" style={{ padding: '2rem' }}>
+              <h4 style={{ marginBottom: '1.5rem', color: 'var(--primary)' }}>Security & Auth</h4>
+              <ul style={{ fontSize: '0.9rem', color: '#adb5bd', listStyleType: 'none', lineHeight: '2' }}>
+                <li>• <b>RBAC Engine</b>: Admin/Dev/Viewer roles</li>
+                <li>• <b>Zero-Trust mTLS</b>: Encrypted mesh tunnels</li>
+                <li>• <b>One-Way Trash</b>: Mathematical deletion protection</li>
+                <li>• <b>Internet Isolation</b>: Docker sandbox routing</li>
+                <li>• <b>JWT Lifecycle</b>: Secure session management</li>
+              </ul>
+            </div>
+            <div className="glass" style={{ padding: '2rem' }}>
+              <h4 style={{ marginBottom: '1.5rem', color: 'var(--primary)' }}>Intelligence</h4>
+              <ul style={{ fontSize: '0.9rem', color: '#adb5bd', listStyleType: 'none', lineHeight: '2' }}>
+                <li>• <b>Hive Mind</b>: Global semantic vector memory</li>
+                <li>• <b>Skill Marketplace</b>: Dynamic tool hot-loading</li>
+                <li>• <b>Orchestrator</b>: Multi-agent task decomposition</li>
+                <li>• <b>Presence Bar</b>: Real-time swarm collaboration</li>
+                <li>• <b>Context Graph</b>: Recursive codebase indexing</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Glossary */}
+          <div className="glass" style={{ marginTop: '4rem', padding: '3rem' }}>
+            <h3 style={{ marginBottom: '2rem' }}>Glossary of Primitives</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem' }}>
+              <div>
+                <dt style={{ color: 'var(--accent-cyan)', fontWeight: 'bold' }}>Mesh Federation</dt>
+                <dd style={{ color: '#adb5bd', marginBottom: '1.5rem', fontSize: '0.9rem' }}>The process of linking multiple heterogeneous hardware nodes into a single, unified inference cluster.</dd>
+                
+                <dt style={{ color: 'var(--accent-cyan)', fontWeight: 'bold' }}>Hive Mind</dt>
+                <dd style={{ color: '#adb5bd', marginBottom: '1.5rem', fontSize: '0.9rem' }}>A shared vector database that allows agents to recall successful strategies across different users and conversations.</dd>
+              </div>
+              <div>
+                <dt style={{ color: 'var(--accent-cyan)', fontWeight: 'bold' }}>Inhibitor Lock</dt>
+                <dd style={{ color: '#adb5bd', marginBottom: '1.5rem', fontSize: '0.9rem' }}>A system-level signal (Insomnia) that prevents the host machine from sleeping during long-running tasks.</dd>
+                
+                <dt style={{ color: 'var(--accent-cyan)', fontWeight: 'bold' }}>Ghost Cursor</dt>
+                <dd style={{ color: '#adb5bd', marginBottom: '1.5rem', fontSize: '0.9rem' }}>A real-time visual indicator of another collaborator or AI agent's active focus within the editor.</dd>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="container" style={{ textAlign: 'center' }}>
         <motion.div
@@ -163,7 +253,14 @@ function App() {
             Deploy Neurex on your local machine and start federation in minutes.
             Your agents are waiting.
           </p>
-          <button className="btn-primary" style={{ fontSize: '1.3rem', padding: '1.2rem 4rem' }}>Download Neurex v0.1.0</button>
+          <div style={{ display: 'flex', gap: '2rem', justifyContent: 'center' }}>
+            <button className="btn-primary" style={{ fontSize: '1.3rem', padding: '1.2rem 4rem' }}>Download from GitHub</button>
+            <button className="glass" style={{ fontSize: '1.1rem', padding: '1.2rem 3rem', borderRadius: '100px', cursor: 'pointer' }}>Read the Specs</button>
+          </div>
+          <p style={{ marginTop: '3rem', color: '#6c757d', fontSize: '0.8rem', maxWidth: '500px', margin: '3rem auto 0' }}>
+            *Note: Visuals on this page are High-Fidelity Conceptual Renderings representing the North Star UI. 
+            The current stable build (v0.1.0) follows this design language but is subject to refinement during our beta phase.
+          </p>
         </motion.div>
       </section>
 
@@ -171,8 +268,8 @@ function App() {
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <div>© 2026 AntiGravity Lab. Built for the era of absolute autonomy.</div>
           <div style={{ display: 'flex', gap: '2rem' }}>
+            <a href="https://github.com/sickn33/Neurex" style={{ color: 'inherit' }}>GitHub</a>
             <span>Documentation</span>
-            <span>GitHub</span>
             <span>Security</span>
           </div>
         </div>
