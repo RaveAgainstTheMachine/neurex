@@ -185,6 +185,16 @@ function App() {
 
           <div className="feature-grid">
             <div className="glass" style={{ padding: '2rem' }}>
+              <h4 style={{ marginBottom: '1.5rem', color: 'var(--primary)' }}>Safety & Governance</h4>
+              <ul style={{ fontSize: '0.9rem', color: '#adb5bd', listStyleType: 'none', lineHeight: '2' }}>
+                <li>• <b>HITL Approval</b>: Mandatory human sign-off for shell commands</li>
+                <li>• <b>One-Way Trash</b>: Agent-immutable deletion protection</li>
+                <li>• <b>Sandbox Isolation</b>: Air-gapped Docker execution environments</li>
+                <li>• <b>Token Scoping</b>: Cryptographically limited agent permissions</li>
+                <li>• <b>Audit Logging</b>: Immutable trace of all swarm operations</li>
+              </ul>
+            </div>
+            <div className="glass" style={{ padding: '2rem' }}>
               <h4 style={{ marginBottom: '1.5rem', color: 'var(--primary)' }}>Compute & Mesh</h4>
               <ul style={{ fontSize: '0.9rem', color: '#adb5bd', listStyleType: 'none', lineHeight: '2' }}>
                 <li>• <b>MeshRouter</b>: Dynamic VRAM load balancing</li>
@@ -199,41 +209,10 @@ function App() {
               <ul style={{ fontSize: '0.9rem', color: '#adb5bd', listStyleType: 'none', lineHeight: '2' }}>
                 <li>• <b>RBAC Engine</b>: Admin/Dev/Viewer roles</li>
                 <li>• <b>Zero-Trust mTLS</b>: Encrypted mesh tunnels</li>
-                <li>• <b>One-Way Trash</b>: Mathematical deletion protection</li>
-                <li>• <b>Internet Isolation</b>: Docker sandbox routing</li>
                 <li>• <b>JWT Lifecycle</b>: Secure session management</li>
+                <li>• <b>Fingerprint Auth</b>: Biometric hardware integration</li>
+                <li>• <b>Presence Audit</b>: Real-time collaborator tracking</li>
               </ul>
-            </div>
-            <div className="glass" style={{ padding: '2rem' }}>
-              <h4 style={{ marginBottom: '1.5rem', color: 'var(--primary)' }}>Intelligence</h4>
-              <ul style={{ fontSize: '0.9rem', color: '#adb5bd', listStyleType: 'none', lineHeight: '2' }}>
-                <li>• <b>Hive Mind</b>: Global semantic vector memory</li>
-                <li>• <b>Skill Marketplace</b>: Dynamic tool hot-loading</li>
-                <li>• <b>Orchestrator</b>: Multi-agent task decomposition</li>
-                <li>• <b>Presence Bar</b>: Real-time swarm collaboration</li>
-                <li>• <b>Context Graph</b>: Recursive codebase indexing</li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Glossary */}
-          <div className="glass" style={{ marginTop: '4rem', padding: '3rem' }}>
-            <h3 style={{ marginBottom: '2rem' }}>Glossary of Primitives</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem' }}>
-              <div>
-                <dt style={{ color: 'var(--accent-cyan)', fontWeight: 'bold' }}>Mesh Federation</dt>
-                <dd style={{ color: '#adb5bd', marginBottom: '1.5rem', fontSize: '0.9rem' }}>The process of linking multiple heterogeneous hardware nodes into a single, unified inference cluster.</dd>
-                
-                <dt style={{ color: 'var(--accent-cyan)', fontWeight: 'bold' }}>Hive Mind</dt>
-                <dd style={{ color: '#adb5bd', marginBottom: '1.5rem', fontSize: '0.9rem' }}>A shared vector database that allows agents to recall successful strategies across different users and conversations.</dd>
-              </div>
-              <div>
-                <dt style={{ color: 'var(--accent-cyan)', fontWeight: 'bold' }}>Inhibitor Lock</dt>
-                <dd style={{ color: '#adb5bd', marginBottom: '1.5rem', fontSize: '0.9rem' }}>A system-level signal (Insomnia) that prevents the host machine from sleeping during long-running tasks.</dd>
-                
-                <dt style={{ color: 'var(--accent-cyan)', fontWeight: 'bold' }}>Ghost Cursor</dt>
-                <dd style={{ color: '#adb5bd', marginBottom: '1.5rem', fontSize: '0.9rem' }}>A real-time visual indicator of another collaborator or AI agent's active focus within the editor.</dd>
-              </div>
             </div>
           </div>
         </div>
