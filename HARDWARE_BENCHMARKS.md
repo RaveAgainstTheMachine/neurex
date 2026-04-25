@@ -52,7 +52,7 @@ This guide ranks hardware for your Neurex compute mesh based on **Inference Spee
 | Model                | Architecture  | VRAM / Memory | Why it wins                                         |
 |:---------------------|:--------------|:--------------|:----------------------------------------------------|
 | **Intel Arc B580**   | Battlemage    | 12GB GDDR6    | Solid 12GB performance for mesh expansion.          |
-| **NVIDIA RTX 4060 Ti**| Ada Lovelace  | 16GB G6       | Low power consumption for 24/7 RPC nodes.           |
+| **NVIDIA RTX 4060 Ti**| Ada Lovelace  | 16GB G6       | Low power consumption for 24/7 RPC nodes.          |
 | **NVIDIA RTX 3060**  | Ampere        | 12GB G6       | The most affordable way to join the mesh.           |
 
 ---

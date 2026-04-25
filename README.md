@@ -33,12 +33,12 @@ Neurex is the first decentralized AI operating system designed to run **massive,
 └─────────────────┘                └─────────────────┘
 ```
 
-| Layer | Technology |
-|:---|:---|
-| **Frontend** | Vite + React + TypeScript + Monaco Editor + Xterm.js |
-| **Backend API** | FastAPI + SQLModel + aiosqlite (SQLite) |
-| **Agent Orchestration** | Custom multi-agent graph (Planner, Coder, Reviewer, Tester, Researcher, Summarizer) |
-| **Inference** | llama.cpp (via Ollama) + Distributed RPC for mesh inference |
+| Layer                  | Technology                                                                        |
+|:-----------------------|:----------------------------------------------------------------------------------|
+| **Frontend**           | Vite + React + TypeScript + Monaco Editor + Xterm.js                              |
+| **Backend API**        | FastAPI + SQLModel + aiosqlite (SQLite)                                           |
+| **Agent Orchestration**| Custom multi-agent graph (Planner, Coder, Reviewer, Tester, Researcher, Summarizer)|
+| **Inference**          | llama.cpp (via Ollama) + Distributed RPC for mesh inference                       |
 | **Collective Memory** | ChromaDB + sentence-transformers + Tree-Sitter chunking |
 | **Terminal Sandbox** | Docker (neurex-sandbox image) — RO workspace, network-none, 512MB/1CPU cap |
 | **MCP Toolset** | Filesystem, Terminal, Browser (Playwright), Web Search |
@@ -168,50 +168,50 @@ neurex/
 
 ## Environment Variables
 
-| Variable | Default | Description |
-|:---|:---|:---|
-| `NODE_ROLE` | `master` | `master` or `node` |
-| `NEUREX_VERSION` | `0.1.0` | Used for update comparisons |
-| `WORKSPACE_PATH` | `/workspace` | Root for all agent file operations |
-| `LLM_MODELS_PATH` | `./.models` | Local model storage |
-| `JWT_SECRET` | *(generated)* | HS256 signing key |
-| `ADMIN_OTP` | *(generated)* | One-time onboarding password |
-| `AUTONOMY_CEILING` | `limited` | Max agent autonomy: `restricted`, `limited`, `full` |
-| `ENABLE_AGENT_INTERNET` | `false` | Allow browser/search tools to reach the web |
-| `DEFAULT_MODEL` | `qwen2.5-coder:14b` | Default inference model |
-| `NEUREX_GITHUB_REPO` | `TBD/neurex` | Repo for update checks |
-| `MASTER_URL` | — | *(Node only)* Master API URL |
-| `RPC_PORT` | `50051` | *(Node only)* llama-rpc-server port |
+| Variable                | Default             | Description                                         |
+|:------------------------|:--------------------|:----------------------------------------------------|
+| `NODE_ROLE`             | `master`            | `master` or `node`                                  |
+| `NEUREX_VERSION`        | `0.1.0`             | Used for update comparisons                         |
+| `WORKSPACE_PATH`        | `/workspace`        | Root for all agent file operations                  |
+| `LLM_MODELS_PATH`       | `./.models`         | Local model storage                                 |
+| `JWT_SECRET`            | *(generated)*       | HS256 signing key                                   |
+| `ADMIN_OTP`             | *(generated)*       | One-time onboarding password                        |
+| `AUTONOMY_CEILING`      | `limited`           | Max agent autonomy: `restricted`, `limited`, `full` |
+| `ENABLE_AGENT_INTERNET` | `false`             | Allow browser/search tools to reach the web         |
+| `DEFAULT_MODEL`         | `qwen2.5-coder:14b` | Default inference model                             |
+| `NEUREX_GITHUB_REPO`    | `TBD/neurex`        | Repo for update checks                              |
+| `MASTER_URL`            | —                   | *(Node only)* Master API URL                        |
+| `RPC_PORT`              | `50051`             | *(Node only)* llama-rpc-server port                  |
 
 ---
 
 ## Documentation
 
-| Document | Description |
-|:---|:---|
-| [`API_REFERENCE.md`](API_REFERENCE.md) | Complete REST & WebSocket API reference |
-| [`NEUREX_COMPENDIUM.md`](NEUREX_COMPENDIUM.md) | Technical deep-dive: all subsystems with diagrams |
-| [`NEUREX_MANIFESTO.md`](NEUREX_MANIFESTO.md) | Feature showcase in EN / FR (Québécois) / AR |
-| [`HARDWARE_REQUIREMENTS.md`](HARDWARE_REQUIREMENTS.md) | Hardware specs for Master and Node deployments |
-| [`.neurexrules`](.neurexrules) | Agent behavioral guidelines and coding standards |
+| Document                                          | Description                                         |
+|:--------------------------------------------------|:----------------------------------------------------|
+| [`API_REFERENCE.md`](API_REFERENCE.md)            | Complete REST & WebSocket API reference             |
+| [`NEUREX_COMPENDIUM.md`](NEUREX_COMPENDIUM.md)    | Technical deep-dive: all subsystems with diagrams   |
+| [`NEUREX_MANIFESTO.md`](NEUREX_MANIFESTO.md)      | Feature showcase in EN / FR (Québécois) / AR        |
+| [`HARDWARE_REQUIREMENTS.md`](HARDWARE_REQUIREMENTS.md) | Hardware specs for Master and Node deployments      |
+| [`.neurexrules`](.neurexrules)                    | Agent behavioral guidelines and coding standards    |
 
 ---
 
 ## Roadmap
 
-| Phase | Status | Description |
-|:---|:---|:---|
-| Phase 1–9 | ✅ Complete | Core IDE, agents, memory, RBAC, collaboration |
-| Phase 10.5 | ✅ Complete | Distributed Tensor Pooling (llama.cpp RPC) |
-| Phase 11 | ✅ Complete | Hive Mind UI (semantic search portal) |
-| Phase 12 | ✅ Complete | RBAC frontend enforcement |
-| Phase 13 | ✅ Complete | Role-aware installer, self-update system |
-| Phase 13.5| 🔲 In Progress | **BYOK Gateway**: Support for OpenAI, Anthropic, Gemini |
-| Phase 14 | 🔲 Planned | LSP integration (diagnostics, hover, go-to-def) |
-| Phase 15 | 🔲 Planned | Git UI panel (diff, stage, commit, branch) |
-| Phase 16 | 🔲 Planned | DAP Debugger (breakpoints, step-through) |
-| Phase 17 | 🔲 Planned | Diagnostics panel + find-across-files |
-| Phase 18 | 🔲 Planned | Plugin Marketplace (Skills → Extensions) |
+| Phase       | Status          | Description                                         |
+|:------------|:----------------|:----------------------------------------------------|
+| Phase 1–9   | ✅ Complete     | Core IDE, agents, memory, RBAC, collaboration       |
+| Phase 10.5  | ✅ Complete     | Distributed Tensor Pooling (llama.cpp RPC)         |
+| Phase 11    | ✅ Complete     | Hive Mind UI (semantic search portal)               |
+| Phase 12    | ✅ Complete     | RBAC frontend enforcement                           |
+| Phase 13    | ✅ Complete     | Role-aware installer, self-update system            |
+| Phase 13.5  | 🔲 In Progress  | **BYOK Gateway**: Support for OpenAI, Anthropic, Gemini |
+| Phase 14    | 🔲 Planned      | LSP integration (diagnostics, hover, go-to-def)     |
+| Phase 15    | 🔲 Planned      | Git UI panel (diff, stage, commit, branch)          |
+| Phase 16    | 🔲 Planned      | DAP Debugger (breakpoints, step-through)            |
+| Phase 17    | 🔲 Planned      | Diagnostics panel + find-across-files               |
+| Phase 18    | 🔲 Planned      | Plugin Marketplace (Skills → Extensions)            |
 
 ---
 
