@@ -31,6 +31,7 @@ from core.context.manager import ContextManager
 from core.context.rules_parser import RulesParser
 from core.infrastructure.registry import LLMRecommender
 from core.infrastructure.manager import InfrastructureManager
+from core.memory.hive import hive_mind
 
 log = structlog.get_logger()
 
@@ -100,13 +101,21 @@ class Orchestrator:
         model_name = model or (rec.name if rec else None)
         
         log.info("orchestrator.using_model", agent="planner", model=model_name, source="user" if model else "rec")
+        
+        # Consult Hive Mind for context
+        memories = hive_mind.recall(user_message, limit=3)
+        hive_context = "\n".join([f"- {m['content']}" for m in memories]) if memories else "No relevant memories found."
+        
         planner = PlannerAgent(self.rules, self.ctx, model=model_name)
+        # Inject memories into the planning context
+        augmented_message = f"Relevant project history:\n{hive_context}\n\nUser request: {user_message}"
+        
         plan: list[dict] = []
 
         await update_task(self.session, planner_node.id, TaskStatus.THINKING)
         yield {"event": "task_updated", "data": {"id": planner_node.id, "status": TaskStatus.THINKING}}
 
-        async for chunk in planner.plan(user_message, conversation_id):
+        async for chunk in planner.plan(augmented_message, conversation_id):
             if chunk["type"] == "token":
                 yield {"event": "token", "data": chunk["text"]}
             elif chunk["type"] == "result":
@@ -213,6 +222,12 @@ class Orchestrator:
                             await update_task(self.session, node.id, status, result=node_result, approval_reason=reason)
                         else:
                             await update_task(self.session, node.id, status, result=node_result)
+                            # Index successful outcome in Hive Mind
+                            hive_mind.remember(
+                                content=f"Task: {node.title}\nDescription: {node.description}\nResult: {node_result}",
+                                metadata={"agent": node.agent_type, "graph_id": graph_id, "conversation_id": conversation_id},
+                                doc_id=f"outcome-{node.id}"
+                            )
                         yield {"event": "task_updated", "data": {"id": node.id, "status": status}}
 
                         # 2. Quality Gate (Reviewer loop)
