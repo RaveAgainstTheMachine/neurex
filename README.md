@@ -14,7 +14,7 @@ Neurex is not a wrapper around a chat model. It is a **distributed AI operating 
 │                                                             │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐   │
 │  │  neurex-web  │  │  neurex-api  │  │   ChromaDB       │   │
-│  │  (Vite+React │  │  (FastAPI)   │  │  (Hive Mind)     │   │
+│  │  Vite+React  │  │  (FastAPI)   │  │  (Hive Mind)     │   │
 │  │  Monaco+Xterm│  │  WebSocket   │  │  Vector Store    │   │
 │  └──────────────┘  └──────┬───────┘  └──────────────────┘   │ 
 │                           │                                 │
@@ -28,7 +28,7 @@ Neurex is not a wrapper around a chat model. It is a **distributed AI operating 
          ▼                                    ▼
 ┌─────────────────┐                ┌─────────────────┐
 │  RPC NODE A     │                │  RPC NODE B     │
-│  llama-rpc-svr  │  ◄─ VRAM ─►  │  llama-rpc-svr  │
+│  llama-rpc-svr  │  ◄─ VRAM ─►    │  llama-rpc-svr  │
 │  heartbeat agent│                │  heartbeat agent│
 └─────────────────┘                └─────────────────┘
 ```
@@ -104,6 +104,8 @@ The Node registers with the Master automatically via the heartbeat agent and app
 ### 🛡️ Zero-Trust Security
 - **HITL Approval Gates**: every terminal command above the autonomy ceiling requires explicit human sign-off
 - **One-Way Trash**: agents move files to `.neurex/trash`, never permanently delete
+- **Cross-Platform Firewall**: Atomic protection for Neurex ports on Linux (ufw), macOS (pf), and Windows (netsh).
+- **LAN-Only Restriction**: Optional one-click lockdown to prevent external exposure.
 - **Path Traversal Shield**: all filesystem ops are validated against `WORKSPACE_PATH`
 - **Sandbox Isolation**: Docker container, read-only workspace mount, no network by default
 - **RBAC**: Admin / Developer / Viewer with role hierarchy enforced on every endpoint

@@ -15,18 +15,29 @@ DEFAULT_SETTINGS = {
     "autonomy_level": "limited",
     "enable_agent_internet": False,
     "system_prompt_addition": "",
-    
+
     # Mesh & Infrastructure
     "enable_mesh_routing": True,
-    "enable_distributed_pooling": False, # Future-proofing for Phase 10.5
+    "enable_distributed_pooling": False,
     "ollama_base_url": "http://localhost:11434",
-    
+
+    # Network Ports (changing these re-applies firewall rules automatically)
+    "api_port":        8000,
+    "web_port":        3000,
+    "chromadb_port":   8001,
+    "ollama_port":     11434,
+    "rpc_port":        50051,
+
+    # Firewall
+    "firewall_enabled": True,
+    "firewall_lan_only": True,   # Restrict Neurex ports to LAN subnet only
+
     # Security & Filesystem
     "neurex_trash_path": ".neurex/trash",
     "enable_push_notifications": True,
-    
+
     # System Lifecycle
-    "enable_insomnia": True # Prevent system sleep
+    "enable_insomnia": True,
 }
 
 class SettingsManager:

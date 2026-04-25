@@ -18,7 +18,7 @@ source $VENV_DIR/bin/activate
 # Install required CLI UI libraries quietly
 echo -e "\033[1;34m[+] Fetching terminal UI components...\033[0m"
 pip install --quiet --upgrade pip
-pip install --quiet rich questionary requests psutil
+pip install --quiet rich questionary requests psutil structlog
 
 # Execute the main interactive installer
 python3 install.py
