@@ -47,7 +47,10 @@ class Reranker:
         if self._model is None:
             try:
                 from sentence_transformers import CrossEncoder
-                self._model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
+                import torch
+                device = "cuda" if torch.cuda.is_available() else "cpu"
+                log.info("reranker.loading", device=device)
+                self._model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2", device=device)
             except Exception as e:
                 log.warning("reranker.load_failed", error=str(e))
         return self._model

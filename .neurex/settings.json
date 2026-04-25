@@ -1,0 +1,21 @@
+{
+  "autonomy_level": "limited",
+  "enable_agent_internet": false,
+  "system_prompt_addition": "",
+  "enable_mesh_routing": true,
+  "enable_distributed_pooling": false,
+  "ollama_base_url": "http://localhost:11434",
+  "api_port": 8000,
+  "web_port": 3000,
+  "chromadb_port": 8001,
+  "ollama_port": 11434,
+  "rpc_port": 50051,
+  "firewall_enabled": true,
+  "firewall_lan_only": true,
+  "neurex_trash_path": ".neurex/trash",
+  "enable_push_notifications": true,
+  "openai_api_key": "",
+  "anthropic_api_key": "",
+  "google_api_key": "",
+  "enable_insomnia": true
+}

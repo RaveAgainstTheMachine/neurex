@@ -22,7 +22,8 @@ export function Terminal({ onInput, onResize, output }: TerminalProps) {
     const term = new XTerm({
       cursorBlink: true,
       allowTransparency: true,
-      scrollback: 1000,
+      scrollback: 5000,
+      rows: 24, // Initial height to prevent layout flicker
       theme: {
         background: "hsl(240, 10%, 4%)",
         foreground: "#e8e8f0",
@@ -39,7 +40,8 @@ export function Terminal({ onInput, onResize, output }: TerminalProps) {
       },
       fontFamily: "var(--font-mono)",
       fontSize: 12,
-      lineHeight: 1.4,
+      lineHeight: 1.2,
+      scrollOnData: true,
       allowProposedApi: true,
     });
 
@@ -49,14 +51,28 @@ export function Terminal({ onInput, onResize, output }: TerminalProps) {
 
     term.open(terminalRef.current);
     
-    // Initial fit
-    setTimeout(() => {
-      fitAddon.fit();
-      onResize(term.rows, term.cols);
-    }, 100);
+    // Initial fit with double-check
+    let resizeTimeout: any = null;
+    const doFit = (isInitial = false) => {
+      try {
+        fitAddon.fit();
+        term.scrollToBottom();
+        
+        // Only notify parent of resize after a short delay (debounced)
+        if (!isInitial) {
+          clearTimeout(resizeTimeout);
+          resizeTimeout = setTimeout(() => {
+            onResize(term.rows, term.cols);
+          }, 150);
+        }
+      } catch (e) {}
+    };
+
+    setTimeout(() => doFit(true), 50);
+    setTimeout(() => doFit(true), 250); 
 
     const observer = new ResizeObserver(() => {
-      fitAddon.fit();
+      doFit();
     });
     observer.observe(terminalRef.current);
 
@@ -64,9 +80,8 @@ export function Terminal({ onInput, onResize, output }: TerminalProps) {
       onInput(data);
     });
 
-    term.onResize(({ rows, cols }) => {
-      onResize(rows, cols);
-    });
+    // We no longer use term.onResize directly to avoid recursion or flood,
+    // we handle it inside our debounced doFit.
 
     xtermRef.current = term;
 

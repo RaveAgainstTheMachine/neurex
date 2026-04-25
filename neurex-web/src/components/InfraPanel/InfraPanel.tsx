@@ -45,6 +45,7 @@ export function InfraPanel() {
         fetch(`${API_BASE}/api/infra/registry`),
         fetch(`${API_BASE}/api/infra/skills`),
         fetch(`${API_BASE}/api/infra/mesh/peers`)
+      ]);
       const sData = await sRes.json();
       setEngines(sData.engines || []);
       setMetrics(sData.metrics || null);

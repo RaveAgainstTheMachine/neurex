@@ -152,33 +152,6 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const res = await fetch(`${API_BASE}/api/files/upload`, {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (data.status === "uploaded") {
-        const msg = `I have uploaded a file named ${data.filename} to ${data.path}. Please review it.`;
-        useStore.getState().addMessage({ role: "user", content: msg });
-        send({ type: "message", content: msg });
-      }
-    } catch (err) {
-      console.error("Upload failed", err);
-    } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
-  };
-
   const handleClear = async () => {
     try {
       await fetch(`${API_BASE}/api/tasks/`, { method: "DELETE" });

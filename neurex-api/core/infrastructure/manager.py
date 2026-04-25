@@ -91,11 +91,20 @@ class InfrastructureManager:
 
     def get_system_vram(self) -> float:
         """
-        Estimate available VRAM in GB. 
-        Placeholder for nvidia-smi / py3nvml integration.
+        Estimate available VRAM in GB using nvidia-smi.
         """
-        # Mocking for now — in production we'd use nvidia-smi
-        return 24.0 
+        try:
+            import subprocess
+            result = subprocess.run(
+                ["nvidia-smi", "--query-gpu=memory.total", "--format=csv,noheader,nounits"],
+                capture_output=True, text=True, check=True
+            )
+            # result might have multiple GPUs, we take the first one
+            total_mib = float(result.stdout.strip().split("\n")[0])
+            return round(total_mib / 1024, 1)
+        except Exception as e:
+            log.warning("infra.vram_detection_failed", error=str(e))
+            return 0.0 # Unknown
 
     def get_system_metrics(self) -> Dict[str, Any]:
         """Gather real-time CPU and RAM metrics."""
