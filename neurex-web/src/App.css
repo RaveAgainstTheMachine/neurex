@@ -89,6 +89,7 @@
   background: var(--bg-app);
   position: relative;
   z-index: 10;
+  transition: flex 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .app__sidebar {
@@ -98,6 +99,7 @@
   flex-direction: column;
   position: relative;
   z-index: 50; /* Ensure sidebar content can float over main panel */
+  transition: flex 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .app__ai {
