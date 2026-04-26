@@ -4,7 +4,7 @@ import { Lock, User, Shield, ArrowRight, Loader2, Cpu } from "lucide-react";
 import "./AuthOverlay.css";
 import toast from "react-hot-toast";
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "http://localhost:8000";
 
 export function AuthOverlay() {
   const [isLogin, setIsLogin] = useState(true);
