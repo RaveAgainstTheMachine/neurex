@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import "./InfraPanel.css";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = "http://127.0.0.1:8000";
 
 interface ModelProfile {
   name: string;
@@ -170,6 +170,15 @@ export function InfraPanel() {
     );
   };
 
+  const bestInClass = {
+    thinking: registry.find(m => m.name.toLowerCase().includes("r1")),
+    coding: registry.find(m => m.name.toLowerCase().includes("coder")),
+    vision: registry.find(m => m.name.toLowerCase().includes("vision")),
+    audio: registry.find(m => m.name.toLowerCase().includes("whisper")),
+    video: registry.find(m => m.name.toLowerCase().includes("video")),
+    images: registry.find(m => m.name.toLowerCase().includes("stable-diffusion"))
+  };
+
   return (
     <div className="infra-panel">
       <div className="infra-panel__header">
@@ -177,38 +186,70 @@ export function InfraPanel() {
         <span>Infrastructure Hub</span>
         {metrics && (
           <div style={{ marginLeft: "auto", fontSize: 10, color: "var(--text-muted)", display: "flex", gap: 12 }}>
-            <span title="GPU/VRAM Detection"><Zap size={10} style={{marginRight: 4, color: metrics.vram_gb > 0 ? 'var(--status-done)' : 'var(--text-muted)'}}/>{metrics.vram_gb || 0}GB</span>
-            <span title="System RAM Used"><Database size={10} style={{marginRight: 4}}/>{metrics.ram_used_gb} / {metrics.ram_total_gb} GB</span>
+            <span title="GPU Detection"><Zap size={10} style={{marginRight: 4, color: metrics.vram_gb > 0 ? 'var(--status-done)' : 'var(--text-muted)'}}/>{metrics.vram_gb || 0}GB</span>
+            <span title="RAM Usage"><Database size={10} style={{marginRight: 4}}/>{metrics.ram_used_gb}G</span>
           </div>
         )}
+      </div>
+
+      {/* AGENT RECOMMENDATIONS */}
+      <div className="infra-section">
+        <div className="infra-section__title">Agent Recommendations</div>
+        <div className="infra-list" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          {Object.entries(bestInClass).map(([role, model]) => model && (
+            <div key={role} className="model-card" style={{ padding: 8, borderStyle: 'dashed' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div style={{ fontSize: 9, textTransform: 'uppercase', color: 'var(--purple-light)', fontWeight: 700 }}>{role}</div>
+                <div style={{ fontSize: 8, color: 'var(--text-muted)' }}>{model.params} • {model.vram_required_gb}G</div>
+              </div>
+              <div style={{ fontSize: 11, fontWeight: 600, margin: '4px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {model.name.split(':').shift()}
+              </div>
+              <button 
+                className={`btn ${model.is_downloaded ? 'btn--disabled' : 'btn--purple'}`}
+                style={{ width: '100%', marginTop: 2, fontSize: 8, padding: '2px' }}
+                onClick={() => handlePullModel(model.engine, model.name)}
+                disabled={loading || model.is_downloaded}
+              >
+                {model.is_downloaded ? "ACTIVE" : "DEPLOY"}
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="infra-section">
         <div className="infra-section__title">Compute Engines</div>
         <div className="infra-list">
-          {engines.map((e) => (
-            <div key={e.name} className={`infra-card ${e.status === "running" ? "infra-card--active" : ""}`}>
-              <div className="infra-card__info">
-                <div className="infra-card__name" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  {e.name}
-                  {e.status === "missing" && <span title={e.details}><Info size={12} className="text-warn" /></span>}
-                </div>
-                <div className="infra-card__version">{e.version} • {e.status.toUpperCase()}</div>
-                {!e.installed && <div style={{ fontSize: 9, color: 'var(--status-failed)', marginTop: 2 }}>{e.details}</div>}
-              </div>
-              <div className="infra-card__actions">
-                {e.status === "running" ? (
-                  <button className="icon-btn icon-btn--red" onClick={() => handleControl(e.name, "stop")} disabled={loading}>
-                    <Square size={14} />
-                  </button>
-                ) : (
-                  <button className="icon-btn icon-btn--green" onClick={() => handleControl(e.name, "start")} disabled={loading || !e.installed}>
-                    <Play size={14} />
-                  </button>
-                )}
-              </div>
+          {engines.length === 0 ? (
+            <div className="model-card" style={{ textAlign: 'center', padding: 20, color: 'var(--text-muted)' }}>
+              <Loader2 size={20} className="loading-spinner" style={{ margin: '0 auto 8px' }} />
+              Connecting to local core...
             </div>
-          ))}
+          ) : (
+            engines.map((e) => (
+              <div key={e.name} className={`infra-card ${e.status === "running" ? "infra-card--active" : ""}`}>
+                <div className="infra-card__info">
+                  <div className="infra-card__name" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {e.name}
+                    {e.status === "missing" && <span title={e.details}><Info size={12} className="text-warn" /></span>}
+                  </div>
+                  <div className="infra-card__version">{e.version?.split(' ').pop()} • {e.status.toUpperCase()}</div>
+                </div>
+                <div className="infra-card__actions">
+                  {e.status === "running" ? (
+                    <button className="icon-btn icon-btn--red" onClick={() => handleControl(e.name, "stop")} disabled={loading}>
+                      <Square size={14} />
+                    </button>
+                  ) : (
+                    <button className="icon-btn icon-btn--green" onClick={() => handleControl(e.name, "start")} disabled={loading || !e.installed}>
+                      <Play size={14} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -237,7 +278,7 @@ export function InfraPanel() {
           {searchResults.length === 0 && (
             <>
               <div className="search-results-label">
-                <Brain size={10} /> CURATED ELITE REGISTRY
+                <Brain size={10} /> MODEL REGISTRY
               </div>
               {registry.map(m => renderModelCard(m))}
             </>
@@ -246,7 +287,7 @@ export function InfraPanel() {
       </div>
 
       <div className="infra-section">
-        <div className="infra-section__title">Mesh Mesh Federation</div>
+        <div className="infra-section__title">Mesh Federation</div>
         <div className="infra-list">
           {peers.length === 0 ? (
             <div className="model-card" style={{ textAlign: "center", color: "var(--text-muted)", fontSize: 10, padding: 10 }}>

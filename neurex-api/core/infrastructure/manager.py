@@ -29,7 +29,7 @@ class InfrastructureManager:
                 binary_name = "llama-server"
             
             path = shutil.which(binary_name)
-            is_running = self._is_process_running(binary_name)
+            is_running = await self._is_process_running(binary_name)
             version = await self._get_version(binary_name)
             
             status_text = "running" if is_running else ("stopped" if path else "missing")
@@ -183,20 +183,48 @@ class InfrastructureManager:
             "cpu_percent": psutil.cpu_percent(interval=0.1)
         }
 
-    def _is_process_running(self, name: str) -> bool:
-        """Check if any process matching the name is active."""
+    async def _is_process_running(self, name: str) -> bool:
+        """Check if any process matching the name is active and responding."""
+        is_active = False
         for proc in psutil.process_iter(['name']):
             try:
                 if name.lower() in proc.info['name'].lower():
-                    return True
+                    is_active = True
+                    break
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 pass
-        return False
+        
+        # If it's ollama, verify the API is actually responding
+        if name == "ollama" and is_active:
+            try:
+                import aiohttp
+                from core.settings.manager import settings_manager
+                base_url = settings_manager.get("ollama_base_url")
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(f"{base_url}/api/tags", timeout=1) as resp:
+                        return resp.status == 200
+            except:
+                return False
+        return is_active
 
     async def _get_version(self, name: str) -> str:
-        """Attempt to get engine version via CLI."""
+        """Attempt to get engine version via CLI or API."""
         try:
             if name == "ollama":
+                # Try API first as it's more accurate for the running instance
+                try:
+                    import aiohttp
+                    from core.settings.manager import settings_manager
+                    base_url = settings_manager.get("ollama_base_url")
+                    async with aiohttp.ClientSession() as session:
+                        async with session.get(f"{base_url}/api/version", timeout=1) as resp:
+                            if resp.status == 200:
+                                data = await resp.json()
+                                return f"Ollama {data.get('version', 'unknown')}"
+                except:
+                    pass
+                
+                # Fallback to CLI
                 proc = await asyncio.create_subprocess_exec(
                     "ollama", "--version",
                     stdout=asyncio.subprocess.PIPE,

@@ -34,15 +34,24 @@ Neurex is designed for **Infra-Aware Inference**. If you enable **Mesh Routing**
 ### 3. Hugging Face Integration
 Neurex now supports direct searching and pulling from Hugging Face. Use the **Infrastructure Hub** to search for any GGUF or Ollama-compatible model. Neurex will estimate the VRAM requirements and recommend a suitable engine.
 
----
+## ⬡ Neurex Infrastructure Hub
 
-## ⚖️ 2026 Performance Status
+The Infrastructure Hub provides a real-time overview of your local and mesh-based compute resources.
 
-| Category             | Cloud Standard | Neurex Rival (Local) | Verdict |
-|:---------------------|:---------------|:---------------------|:--------|
-| **Deep Thinking**    | **OpenAI o3**  | **DeepSeek-R1**      | **Tie**. R1 is superior for open coding. |
-| **Coding Precision** | **Claude 4.0** | **Qwen-2.5-Coder**   | **OS Wins**. Local FIM is faster. |
-| **Multi-Modal**      | **Gemini 2.0** | **Llama 3.2 + LTX**  | **Parity**. Local has no privacy leak. |
+### 1. Agent Recommendations
+Neurex now features a dedicated section that maps elite models to specific agent roles:
+*   **Logic (Thinking)**: `DeepSeek-R1` (32B+ recommended)
+*   **Coding**: `Qwen-2.5-Coder` (32B recommended)
+*   **Vision**: `Llama-3.2-Vision` (11B)
+*   **Multimedia**: `Whisper` (Audio) and `LTX` (Video)
+
+Each recommendation displays the **Parameter Count** and **VRAM Requirement** to help you match models to your hardware.
+
+### 2. Verified Engine Monitoring
+The status of engines like **Ollama** is now verified via both process detection and active API pings. If an engine shows as "STOPPED", ensure the service is active and the `ollama_base_url` in Settings is correct.
+
+### 3. Model Discovery
+Use the search bar to discover any GGUF or Ollama-compatible model from **Hugging Face**. Neurex will automatically estimate VRAM requirements and recommend a suitable engine.
 
 ---
 *Last Updated: April 2026. Benchmarks based on SWE-bench Pro and Terminal-Bench 2.0.*

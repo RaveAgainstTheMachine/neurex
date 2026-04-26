@@ -14,6 +14,7 @@ class ModelCapability(str, Enum):
     VISION      = "vision"
     AUDIO       = "audio"
     VIDEO       = "video"
+    IMAGE       = "image"
     EMBEDDING   = "embedding"
 
 class ModelProfile(BaseModel):

@@ -6,6 +6,18 @@
   background: var(--bg-sidebar);
   color: var(--text-main);
   font-size: 13px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--purple-main) transparent;
+}
+
+.infra-panel::-webkit-scrollbar {
+  width: 4px;
+}
+
+.infra-panel::-webkit-scrollbar-thumb {
+  background: var(--purple-main);
+  border-radius: 10px;
 }
 
 .infra-panel__header {
