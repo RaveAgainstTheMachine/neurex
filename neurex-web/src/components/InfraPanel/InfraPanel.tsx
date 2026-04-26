@@ -183,6 +183,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
       "Coding": "coding",
       "Vision": "vision",
       "Media": "image",
+      "Video": "video",
       "Audio": "audio"
     };
     const results: Record<string, ModelProfile | undefined> = {};
