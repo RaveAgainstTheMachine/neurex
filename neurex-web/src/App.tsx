@@ -42,22 +42,45 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import "./App.css";
 
-class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
   constructor(props: any) {
     super(props);
-    this.state = { hasError: false };
+    this.state = { hasError: false, error: null };
   }
-  static getDerivedStateFromError() { return { hasError: true }; }
+  static getDerivedStateFromError(error: Error) { return { hasError: true, error }; }
+  componentDidCatch(error: Error, errorInfo: any) {
+    console.error("Critical Failure:", error, errorInfo);
+  }
   render() {
     if (this.state.hasError) {
       return (
         <div className="error-boundary">
           <AlertTriangle size={48} className="text-red mb-4" />
-          <h1>System Failure</h1>
-          <p>Neurex encountered a critical rendering error.</p>
-          <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 10, padding: 10, background: 'rgba(0,0,0,0.3)' }}>
-            Error details will be in console. Re-attempting fix...
+          <h1 style={{ marginBottom: 4 }}>System Failure</h1>
+          <p style={{ color: 'var(--text-muted)', marginBottom: 20 }}>Neurex encountered a critical rendering error.</p>
+          
+          <div style={{ 
+            textAlign: 'left', 
+            fontSize: 11, 
+            color: '#ff5555', 
+            padding: 16, 
+            background: 'rgba(255,0,0,0.05)', 
+            border: '1px solid rgba(255,0,0,0.2)',
+            borderRadius: 4,
+            maxWidth: 600,
+            fontFamily: 'var(--font-mono)',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-all',
+            maxHeight: 400,
+            overflow: 'auto'
+          }}>
+            <strong style={{ display: 'block', marginBottom: 8, fontSize: 13 }}>Cause: {this.state.error?.name}</strong>
+            {this.state.error?.message}
+            <div style={{ marginTop: 12, opacity: 0.6, fontSize: 10 }}>
+              {this.state.error?.stack}
+            </div>
           </div>
+
           <button className="btn btn--purple mt-4" onClick={() => window.location.reload()}>Reboot System</button>
         </div>
       );

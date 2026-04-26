@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { 
   Play, Square, RefreshCcw, Cpu, Zap, Database, ExternalLink, 
   Code, Network, Search, Brain, FileJson, Video, Image, AudioLines, 
@@ -33,14 +33,23 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
   const [expanded, setExpanded] = useState(true);
   const [animating, setAnimating] = useState(true);
 
-  useEffect(() => {
-    const originalSize = currentSize;
-    onExpand(18); // Target ~300px
-    const t = setTimeout(() => setAnimating(false), 400);
-    return () => {
-      onExpand(originalSize);
-      clearTimeout(t);
-    };
+  const hubRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    if (hubRef.current) {
+      const originalSize = currentSize;
+      // Measure required width for comfortable display without wrapping
+      const requiredPx = 330; // 2 * 145px cards + gaps + padding
+      const totalWidth = window.innerWidth;
+      const percentage = Math.min(45, Math.max(15, (requiredPx / totalWidth) * 100));
+      
+      onExpand(percentage);
+      const t = setTimeout(() => setAnimating(false), 400);
+      return () => {
+        onExpand(originalSize);
+        clearTimeout(t);
+      };
+    }
   }, []);
 
   const fetchData = async () => {
@@ -193,6 +202,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
 
   return (
     <div 
+      ref={hubRef}
       className={`infra-panel ${expanded ? 'infra-panel--expanded' : ''}`}
     >
       <div className="infra-panel__header">
@@ -218,7 +228,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
       {/* AGENT RECOMMENDATIONS */}
       <div className="infra-section">
         <div className="infra-section__title">Agent Recommendations</div>
-        <div className="infra-list" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+        <div className="infra-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 145px)', gap: 8 }}>
           {Object.entries(bestInClass).map(([role, model]) => model && (
             <div key={role} className="model-card" style={{ padding: 10, borderStyle: 'dashed' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
