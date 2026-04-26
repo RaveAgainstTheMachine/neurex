@@ -99,8 +99,11 @@
   background: var(--bg-app);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  padding: 12px;
+  padding: 16px;
+  min-width: 180px;
   transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
 }
 
 .model-card:hover {

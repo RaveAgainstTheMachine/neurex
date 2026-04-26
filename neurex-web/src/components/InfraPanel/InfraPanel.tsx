@@ -39,9 +39,9 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
     if (hubRef.current) {
       const originalSize = currentSize;
       // Measure required width for comfortable display without wrapping
-      const requiredPx = 330; // 2 * 145px cards + gaps + padding
+      const requiredPx = 440; // 2 * 180px+ cards + gaps + padding
       const totalWidth = window.innerWidth;
-      const percentage = Math.min(45, Math.max(15, (requiredPx / totalWidth) * 100));
+      const percentage = Math.min(45, Math.max(20, (requiredPx / totalWidth) * 100));
       
       onExpand(percentage);
       const t = setTimeout(() => setAnimating(false), 400);
@@ -228,7 +228,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
       {/* AGENT RECOMMENDATIONS */}
       <div className="infra-section">
         <div className="infra-section__title">Agent Recommendations</div>
-        <div className="infra-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 145px)', gap: 8 }}>
+        <div className="infra-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
           {Object.entries(bestInClass).map(([role, model]) => model && (
             <div key={role} className="model-card" style={{ padding: 10, borderStyle: 'dashed' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
