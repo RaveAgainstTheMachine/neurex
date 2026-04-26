@@ -246,7 +246,7 @@ function AppContent() {
       }, 100);
 
       try {
-        await Promise.all([
+        await Promise.allSettled([
           state.refreshFileTree(),
           state.refreshInfra()
         ]);
@@ -256,6 +256,9 @@ function AppContent() {
         setTimeout(() => {
           setTargetProgress(100);
         }, 300);
+      } catch (err) {
+        console.error("Initialization warning:", err);
+        setTargetProgress(100);
       } finally {
         clearInterval(rampInterval);
       }
