@@ -172,7 +172,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
       const percentage = Math.min(45, Math.max(20, (requiredPx / totalWidth) * 100));
       
       onExpand(percentage);
-      const t = setTimeout(() => setAnimating(false), 400);
+      const t = setTimeout(() => setAnimating(false), 200);
       return () => {
         onExpand(originalSize);
         clearTimeout(t);
@@ -181,23 +181,17 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
   }, []);
 
   const fetchData = async () => {
-    try {
-      const [sRes, rRes, skRes, pRes] = await Promise.all([
-        fetch(`${API_BASE}/api/infra/status`),
-        fetch(`${API_BASE}/api/infra/registry`),
-        fetch(`${API_BASE}/api/infra/skills`),
-        fetch(`${API_BASE}/api/infra/mesh/peers`)
-      ]);
-      const sData = await sRes.json();
-      setEngines(sData.engines || []);
-      setMetrics(sData.metrics || null);
-      
-      setRegistry(await rRes.json());
-      setSkills(await skRes.json());
-      setPeers(await pRes.json());
-    } catch (err) {
-      console.error("Failed to fetch infra data:", err);
-    }
+    // Fast data first
+    fetch(`${API_BASE}/api/infra/status`).then(r => r.json()).then(data => {
+      setEngines(data.engines || []);
+      setMetrics(data.metrics || null);
+    });
+    
+    fetch(`${API_BASE}/api/infra/registry`).then(r => r.json()).then(data => setRegistry(data));
+    
+    // Background data
+    fetch(`${API_BASE}/api/infra/skills`).then(r => r.json()).then(data => setSkills(data));
+    fetch(`${API_BASE}/api/infra/mesh/peers`).then(r => r.json()).then(data => setPeers(data));
   };
 
   const handleToggleSkill = async (id: string, enabled: boolean) => {
