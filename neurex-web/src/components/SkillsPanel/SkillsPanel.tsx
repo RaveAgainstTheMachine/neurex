@@ -12,6 +12,41 @@ interface Skill {
   url: string;
 }
 
+import { AlertTriangle } from "lucide-react";
+
+function ConfirmModal({ 
+  show, 
+  title, 
+  message, 
+  onConfirm, 
+  onCancel 
+}: { 
+  show: boolean; 
+  title: string; 
+  message: string; 
+  onConfirm: () => void; 
+  onCancel: () => void;
+}) {
+  if (!show) return null;
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <div className="modal-header">
+          <AlertTriangle size={18} className="text-amber" />
+          <h3>{title}</h3>
+        </div>
+        <div className="modal-body">
+          <p>{message}</p>
+        </div>
+        <div className="modal-footer">
+          <button className="btn btn--muted" onClick={onCancel}>Cancel</button>
+          <button className="btn btn--red" onClick={onConfirm}>Confirm Uninstallation</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function SkillsPanel() {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [curated, setCurated] = useState<any[]>([]);
@@ -19,6 +54,7 @@ export function SkillsPanel() {
   const [installing, setInstalling] = useState(false);
   const [newSkillUrl, setNewSkillUrl] = useState("");
   const [tab, setTab] = useState<"installed" | "discover">("installed");
+  const [confirmState, setConfirmState] = useState<{ show: boolean; skillId: string | null }>({ show: false, skillId: null });
 
   const fetchSkills = async () => {
     setLoading(true);
@@ -69,17 +105,26 @@ export function SkillsPanel() {
   };
 
   const handleUninstall = async (id: string) => {
-    if (!confirm("Are you sure you want to uninstall this skill?")) return;
     try {
-      await fetch(`${API_BASE}/api/skills/${id}`, { method: "DELETE" });
+      const res = await fetch(`${API_BASE}/api/skills/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete");
       fetchSkills();
     } catch (err) {
       console.error("Uninstall failed", err);
+    } finally {
+      setConfirmState({ show: false, skillId: null });
     }
   };
 
   return (
     <div className="skills-panel">
+      <ConfirmModal 
+        show={confirmState.show}
+        title="Uninstall Skill"
+        message="Are you sure you want to uninstall this agent skill? This will remove all associated tools and capabilities permanently."
+        onConfirm={() => confirmState.skillId && handleUninstall(confirmState.skillId)}
+        onCancel={() => setConfirmState({ show: false, skillId: null })}
+      />
       <div className="skills-panel__header">
         <div className="skills-panel__title-bar">
            <h2 className="skills-panel__title">Agent Skills</h2>
@@ -135,7 +180,7 @@ export function SkillsPanel() {
                   </div>
                   <button 
                     className="skill-card__delete"
-                    onClick={() => handleUninstall(skill.id)}
+                    onClick={() => setConfirmState({ show: true, skillId: skill.id })}
                   >
                     <Trash2 size={12} />
                   </button>

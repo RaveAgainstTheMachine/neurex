@@ -2,7 +2,7 @@ import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { 
   Play, Square, RefreshCcw, Cpu, Zap, Database, ExternalLink, 
   Code, Network, Search, Brain, FileJson, Video, Image, AudioLines, 
-  Loader2, Info
+  Loader2, Info, Trash2, AlertTriangle
 } from "lucide-react";
 import "./InfraPanel.css";
 
@@ -20,6 +20,39 @@ interface ModelProfile {
   downloads?: number;
 }
 
+function ConfirmModal({ 
+  show, 
+  title, 
+  message, 
+  onConfirm, 
+  onCancel 
+}: { 
+  show: boolean; 
+  title: string; 
+  message: string; 
+  onConfirm: () => void; 
+  onCancel: () => void;
+}) {
+  if (!show) return null;
+  return (
+    <div className="modal-overlay">
+      <div className="modal-content">
+        <div className="modal-header">
+          <AlertTriangle size={18} className="text-amber" />
+          <h3>{title}</h3>
+        </div>
+        <div className="modal-body">
+          <p>{message}</p>
+        </div>
+        <div className="modal-footer">
+          <button className="btn btn--muted" onClick={onCancel}>Cancel</button>
+          <button className="btn btn--red" onClick={onConfirm}>Confirm Deletion</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) => void, currentSize: number }) {
   const [engines, setEngines] = useState<any[]>([]);
   const [metrics, setMetrics] = useState<any>(null);
@@ -32,6 +65,9 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(true);
   const [animating, setAnimating] = useState(true);
+  
+  // Custom Modal State
+  const [confirmState, setConfirmState] = useState<{ show: boolean; skillId: string | null }>({ show: false, skillId: null });
 
   const hubRef = useRef<HTMLDivElement>(null);
 
@@ -69,6 +105,35 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
       setPeers(await pRes.json());
     } catch (err) {
       console.error("Failed to fetch infra data:", err);
+    }
+  };
+
+  const handleToggleSkill = async (id: string, enabled: boolean) => {
+    // @ts-ignore
+    toast.success(`Skill ${id} ${enabled ? 'enabled' : 'disabled'}`);
+    setSkills(skills.map(s => s.id === id ? { ...s, enabled } : s));
+  };
+
+  const handleDeleteSkill = async (id: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/infra/skills/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        }
+      });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.detail || "Failed to delete");
+      }
+      // @ts-ignore
+      toast.success(`Skill ${id} purged from node`);
+      fetchData();
+    } catch (err: any) {
+      // @ts-ignore
+      toast.error(err.message);
+    } finally {
+      setConfirmState({ show: false, skillId: null });
     }
   };
 
@@ -114,15 +179,6 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
       await fetchData();
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleToggleSkill = async (id: string, enable: boolean) => {
-    try {
-      await fetch(`${API_BASE}/api/infra/skills/${id}/toggle?enable=${enable}`, { method: "POST" });
-      await fetchData();
-    } catch (err) {
-      console.error("Failed to toggle skill:", err);
     }
   };
 
@@ -205,6 +261,13 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
       ref={hubRef}
       className={`infra-panel ${expanded ? 'infra-panel--expanded' : ''}`}
     >
+      <ConfirmModal 
+        show={confirmState.show}
+        title="Purge Skill"
+        message="Are you sure you want to delete this community skill? This will remove the skill files from the node permanently."
+        onConfirm={() => confirmState.skillId && handleDeleteSkill(confirmState.skillId)}
+        onCancel={() => setConfirmState({ show: false, skillId: null })}
+      />
       <div className="infra-panel__header">
         <Cpu size={16} />
         <span>Infrastructure Hub</span>
@@ -362,6 +425,14 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
               <div className="model-card__header">
                 <Code size={12} className="model-card__icon" />
                 <span className="model-card__name">{s.name}</span>
+                <button 
+                  className="icon-btn text-red" 
+                  style={{ marginLeft: 'auto', opacity: 0.4 }} 
+                  onClick={() => setConfirmState({ show: true, skillId: s.id })}
+                  title="Purge Skill"
+                >
+                  <Trash2 size={12} />
+                </button>
                 <span className="model-card__tag">v{s.version}</span>
               </div>
               <div className="model-card__details" style={{ marginBottom: 6 }}>
