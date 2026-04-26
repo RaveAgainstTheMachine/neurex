@@ -213,26 +213,32 @@ function AppContent() {
 
   const initializedRef = useRef(false);
 
-  // Workspace Initialization
+  const token = useStore(s => s.token);
+
+  // Global Onboarding Check
   useEffect(() => {
-    if (initializedRef.current) return;
-    initializedRef.current = true;
-
-    const init = async () => {
-      const state = useStore.getState();
-
-      // Global Onboarding Check
+    const check = async () => {
       try {
         const obRes = await fetch(`${API_BASE}/api/auth/onboarding/status`);
         const obData = await obRes.json();
         if (obData.onboarding_required) {
           setOnboardingRequired(true);
-          state.logout(); // Clear stale token cleanly
-          return;
+          useStore.getState().logout();
         }
       } catch (err) {
         console.error("Critical: Onboarding check failed", err);
       }
+    };
+    check();
+  }, []);
+
+  // Workspace Initialization
+  useEffect(() => {
+    if (!token || onboardingRequired) return;
+    if (isInitialized) return;
+
+    const init = async () => {
+      const state = useStore.getState();
 
       // Start a steady ramp towards 40% immediately
       const rampInterval = setInterval(() => {
@@ -255,7 +261,7 @@ function AppContent() {
       }
     };
     init();
-  }, []);
+  }, [token, onboardingRequired, isInitialized]);
 
   // Finish initialization only when visual progress reaches 100
   useEffect(() => {
