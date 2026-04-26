@@ -9,8 +9,10 @@ const API_BASE = "http://127.0.0.1:8000";
 export function AuthOverlay() {
   const [isLogin, setIsLogin] = useState(true);
   const [showOtp, setShowOtp] = useState(false);
+  const [showForceChange, setShowForceChange] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [otpCode, setOtpCode] = useState("");
   const [loading, setLoading] = useState(false);
   const setAuth = useStore(s => s.setAuth);
@@ -46,6 +48,12 @@ export function AuthOverlay() {
 
       const data = await res.json();
       
+      if (data.password_change_required) {
+        setShowForceChange(true);
+        setLoading(false);
+        return;
+      }
+
       if (data.otp_required) {
         setShowOtp(true);
         setLoading(false);
@@ -81,6 +89,14 @@ export function AuthOverlay() {
       }
 
       const data = await res.json();
+
+      if (data.password_change_required) {
+        setShowForceChange(true);
+        setShowOtp(false);
+        setLoading(false);
+        return;
+      }
+
       const userRes = await fetch(`${API_BASE}/api/auth/me`, {
         headers: { "Authorization": `Bearer ${data.access_token}` }
       });
@@ -93,6 +109,70 @@ export function AuthOverlay() {
       setLoading(false);
     }
   };
+
+  const handleForceChangeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword) return;
+
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/change-password?username=${username}&old_password=${password}&new_password=${newPassword}`, {
+        method: "POST"
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.detail || "Failed to change password");
+      }
+
+      const data = await res.json();
+      const userRes = await fetch(`${API_BASE}/api/auth/me`, {
+        headers: { "Authorization": `Bearer ${data.access_token}` }
+      });
+      const userData = await userRes.json();
+      
+      toast.success("Security credentials updated");
+      setAuth(data.access_token, userData);
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (showForceChange) {
+    return (
+      <div className="auth-overlay">
+        <div className="auth-mesh-bg" />
+        <div className="auth-card glass">
+          <div className="auth-card__header">
+            <div className="auth-logo">
+              <div className="auth-logo__inner"><Shield size={32} /></div>
+            </div>
+            <h2>Update Credentials</h2>
+            <p className="text-muted">You must establish a permanent password for this identity</p>
+          </div>
+
+          <form className="auth-form" onSubmit={handleForceChangeSubmit}>
+            <div className="auth-input">
+              <Lock size={18} className="auth-input__icon" />
+              <input 
+                type="password" 
+                placeholder="New Permanent Password" 
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                required
+                autoFocus
+              />
+            </div>
+            <button className="btn btn--purple auth-submit" disabled={loading}>
+              {loading ? <Loader2 className="animate-spin" /> : "Synthesize Permanent Link"}
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   if (showOtp) {
     return (
