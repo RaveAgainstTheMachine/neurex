@@ -16,7 +16,8 @@
 }
 
 .infra-panel--expanded {
-  width: 450px;
+  width: 100%;
+  min-width: 320px;
   box-shadow: 10px 0 30px rgba(0, 0, 0, 0.4);
   background: var(--bg-app);
   z-index: 1000;

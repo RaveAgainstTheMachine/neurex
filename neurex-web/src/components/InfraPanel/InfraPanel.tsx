@@ -20,7 +20,7 @@ interface ModelProfile {
   downloads?: number;
 }
 
-export function InfraPanel() {
+export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) => void, currentSize: number }) {
   const [engines, setEngines] = useState<any[]>([]);
   const [metrics, setMetrics] = useState<any>(null);
   const [registry, setRegistry] = useState<ModelProfile[]>([]);
@@ -31,6 +31,12 @@ export function InfraPanel() {
   const [peers, setPeers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(true);
+
+  useEffect(() => {
+    const originalSize = currentSize;
+    onExpand(35); // Grow simultaneously
+    return () => onExpand(originalSize); // Back to user size
+  }, []);
 
   const fetchData = async () => {
     try {

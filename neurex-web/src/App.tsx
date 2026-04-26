@@ -226,83 +226,91 @@ function AppContent() {
   }, []);
 
   try {
-    return (
-      <div className="app">
-        {!isInitialized && <LoadingOverlay progress={visualProgress} />}
-        <Toaster position="top-right" toastOptions={{ 
-          style: { 
-            background: '#1e1e24', 
-            color: '#e8e8f0', 
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius-sm)'
-          } 
-        }} />
-        
-        {/* Activity bar (Hidden on mobile) */}
-        <div className="activity-bar">
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSidebarDragEnd}>
-            <div className="activity-bar__top">
-              <div className="activity-bar__logo">⬡</div>
-              <SortableContext items={sidebarOrder} strategy={verticalListSortingStrategy}>
-                {sidebarOrder.map(id => {
-                  const item = SIDEBAR_ITEMS.find(i => i.id === id);
-                  if (!item) return null;
-                  return (
-                    <SortableActivityItem
-                      key={id}
-                      id={id}
-                      icon={item.icon}
-                      label={item.label}
-                      active={sidebarTab === id}
-                      onClick={() => updateSidebarTab(id as SidebarTab)}
-                    />
-                  );
-                })}
-              </SortableContext>
-            </div>
-          </DndContext>
-          <div className="activity-bar__bottom">
-            <button
-              className={`activity-btn ${showHiveMind ? "activity-btn--active" : ""}`}
-              onClick={toggleHiveMind}
-              title="Hive Mind (Collective Memory)"
-            >
-              <BrainCircuit size={20} className="text-cyan" />
-            </button>
-            <button
-              className={`activity-btn ${showAIPanel ? "activity-btn--active" : ""}`}
-              onClick={() => setShowAIPanel((v) => !v)}
-              title="Toggle AI Panel"
-            >
-              <MessageSquare size={20} />
-            </button>
-            <button 
-              className={`activity-btn ${showSettings ? "activity-btn--active" : ""}`} 
-              title="Settings"
-              onClick={toggleSettings}
-            >
-              <Settings size={20} />
-            </button>
-          </div>
-        </div>
+  const sidebarRef = React.useRef<any>(null);
 
-        {/* Main layout */}
-        <div className="app__body">
-          <PanelGroup direction="horizontal" className="app__panels">
-            {/* Sidebar */}
-            <Panel 
-              defaultSize={16} minSize={10} maxSize={35} 
-              className={`app__sidebar ${mobileTab === "explorer" ? "mobile-visible" : ""}`}
-            >
-              {sidebarTab === "explorer" && <FileExplorer />}
-              {sidebarTab === "history"  && <ConversationList />}
-              {sidebarTab === "infra"    && <InfraPanel />}
-              {sidebarTab === "system"   && <SystemLogsPanel />}
-              {sidebarTab === "search"   && <SearchPanel />}
-              {sidebarTab === "git"      && <PlaceholderPanel label="Source Control" />}
-              {sidebarTab === "skills"   && <SkillsPanel />}
-              {sidebarTab === "agent"    && <AgentPanel />}
-            </Panel>
+  return (
+    <div className="app">
+      {!isInitialized && <LoadingOverlay progress={visualProgress} />}
+      <Toaster position="top-right" toastOptions={{ 
+        style: { 
+          background: '#1e1e24', 
+          color: '#e8e8f0', 
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-sm)'
+        } 
+      }} />
+      
+      {/* Activity bar (Hidden on mobile) */}
+      <div className="activity-bar">
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSidebarDragEnd}>
+          <div className="activity-bar__top">
+            <div className="activity-bar__logo">⬡</div>
+            <SortableContext items={sidebarOrder} strategy={verticalListSortingStrategy}>
+              {sidebarOrder.map(id => {
+                const item = SIDEBAR_ITEMS.find(i => i.id === id);
+                if (!item) return null;
+                return (
+                  <SortableActivityItem
+                    key={id}
+                    id={id}
+                    icon={item.icon}
+                    label={item.label}
+                    active={sidebarTab === id}
+                    onClick={() => updateSidebarTab(id as SidebarTab)}
+                  />
+                );
+              })}
+            </SortableContext>
+          </div>
+        </DndContext>
+        <div className="activity-bar__bottom">
+          <button
+            className={`activity-btn ${showHiveMind ? "activity-btn--active" : ""}`}
+            onClick={toggleHiveMind}
+            title="Hive Mind (Collective Memory)"
+          >
+            <BrainCircuit size={20} className="text-cyan" />
+          </button>
+          <button
+            className={`activity-btn ${showAIPanel ? "activity-btn--active" : ""}`}
+            onClick={() => setShowAIPanel((v) => !v)}
+            title="Toggle AI Panel"
+          >
+            <MessageSquare size={20} />
+          </button>
+          <button 
+            className={`activity-btn ${showSettings ? "activity-btn--active" : ""}`} 
+            title="Settings"
+            onClick={toggleSettings}
+          >
+            <Settings size={20} />
+          </button>
+        </div>
+      </div>
+
+      {/* Main layout */}
+      <div className="app__body">
+        <PanelGroup direction="horizontal" className="app__panels">
+          {/* Sidebar */}
+          <Panel 
+            ref={sidebarRef}
+            defaultSize={16} minSize={10} maxSize={45} 
+            className={`app__sidebar ${mobileTab === "explorer" ? "mobile-visible" : ""}`}
+          >
+            {sidebarTab === "explorer" && <FileExplorer />}
+            {sidebarTab === "history"  && <ConversationList />}
+            {sidebarTab === "infra"    && (
+              <InfraPanel 
+                onExpand={(size) => sidebarRef.current?.resize(size)} 
+                currentSize={sidebarRef.current?.getSize() || 16}
+              />
+            )}
+            {sidebarTab === "system"   && <SystemLogsPanel />}
+            {sidebarTab === "search"   && <SearchPanel />}
+            {sidebarTab === "git"      && <PlaceholderPanel label="Source Control" />}
+            {sidebarTab === "skills"   && <SkillsPanel />}
+            {sidebarTab === "agent"    && <AgentPanel />}
+          </Panel>
 
             <ResizeHandle />
 
