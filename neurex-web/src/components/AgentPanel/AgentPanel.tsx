@@ -1,16 +1,17 @@
 import { useStore } from "../../lib/store";
 import { Bot, ChevronDown, ChevronRight, CheckCircle, XCircle, Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import "./AgentPanel.css";
 
 export function AgentPanel() {
-  const tasks = useStore((s) => Object.values(s.tasks));
+  const tasksObj = useStore((s) => s.tasks);
+  const tasks = useMemo(() => Object.values(tasksObj), [tasksObj]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // Sort tasks by updated_at
-  const sortedTasks = [...tasks].sort((a, b) => 
+  const sortedTasks = useMemo(() => [...tasks].sort((a, b) => 
     new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-  );
+  ), [tasks]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -38,30 +39,30 @@ export function AgentPanel() {
             >
               <div className="task-item__header">
                 <span className="task-item__status">{getStatusIcon(task.status)}</span>
-                <span className="task-item__agent">[${task.agent_type.toUpperCase()}]</span>
-                <span className="task-item__title">${task.title}</span>
+                <span className="task-item__agent">[{task.agent_type.toUpperCase()}]</span>
+                <span className="task-item__title">{task.title}</span>
               </div>
               
               <div className="task-item__meta">
-                <span>Status: ${task.status}</span> • <span>${new Date(task.updated_at).toLocaleTimeString()}</span>
+                <span>Status: {task.status}</span> • <span>{new Date(task.updated_at).toLocaleTimeString()}</span>
               </div>
 
               {isExpanded && (
                 <div className="task-item__details">
                   <div className="detail-section">
                     <strong>Objective:</strong>
-                    <p>${task.description}</p>
+                    <p>{task.description}</p>
                   </div>
                   {task.result && (
                     <div className="detail-section result">
                       <strong>Outcome:</strong>
-                      <pre>${task.result}</pre>
+                      <pre>{task.result}</pre>
                     </div>
                   )}
                   {task.error && (
                     <div className="detail-section error">
                       <strong>Failure Reason:</strong>
-                      <pre>${task.error}</pre>
+                      <pre>{task.error}</pre>
                     </div>
                   )}
                 </div>
