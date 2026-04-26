@@ -16,6 +16,7 @@ import { SkillsPanel } from "./components/SkillsPanel/SkillsPanel";
 import { SettingsPanel } from "./components/SettingsPanel/SettingsPanel";
 import { HiveMindPanel } from "./components/HiveMindPanel/HiveMindPanel";
 import { PresenceBar } from "./components/PresenceBar/PresenceBar";
+import { AuthOverlay } from "./components/AuthOverlay/AuthOverlay";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useNotifications } from "./hooks/useNotifications";
 import { useStore } from "./lib/store";
@@ -269,9 +270,12 @@ function AppContent() {
 
   try {
 
+  const token = useStore(s => s.token);
+
   return (
     <div className="app">
-      {!isInitialized && <LoadingOverlay progress={visualProgress} />}
+      {!token && <AuthOverlay />}
+      {!isInitialized && token && <LoadingOverlay progress={visualProgress} />}
       <Toaster position="top-right" toastOptions={{ 
         style: { 
           background: '#1e1e24', 

@@ -2,10 +2,11 @@ import { useState, useEffect } from "react";
 import { 
   Shield, Network, Zap, Settings as SettingsIcon, Save, 
   Database, Bell, Palette, Cpu, HardDrive, Eye, EyeOff,
-  Cloud, Lock, Sliders
+  Cloud, Lock, Sliders, Users, Trash2, LogOut, ShieldCheck
 } from "lucide-react";
 import toast from "react-hot-toast";
 import "./SettingsPanel.css";
+import { useStore } from "../../lib/store";
 
 const API_BASE = "http://127.0.0.1:8000";
 
@@ -31,55 +32,68 @@ interface SettingsState {
   [key: string]: any;
 }
 
+interface UserProfile {
+  id: string;
+  username: string;
+  role: string;
+  is_active: boolean;
+  created_at: string;
+}
+
 export function SettingsPanel() {
   const [settings, setSettings] = useState<SettingsState | null>(null);
-  const [user, setUser] = useState<{ id: string, role: string } | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const logout = useStore(s => s.logout);
+
+  const fetchData = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      const [settingsRes, userRes] = await Promise.all([
+        fetch(`${API_BASE}/api/settings/`),
+        fetch(`${API_BASE}/api/auth/me`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        })
+      ]);
+
+      const settingsData = await settingsRes.json();
+      const userData = await userRes.json();
+      
+      const finalSettings = {
+        enable_glassmorphism: true,
+        enable_animations: true,
+        theme_preset: "obsidian",
+        llm_temperature: 0.7,
+        llm_context_length: 8192,
+        auto_save_files: true,
+        show_hidden_files: false,
+        ...settingsData
+      };
+
+      setSettings(finalSettings);
+      setUser(userData);
+
+      if (userData.role === "admin") {
+        const usersRes = await fetch(`${API_BASE}/api/auth/users`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (usersRes.ok) setUsers(await usersRes.json());
+      }
+    } catch (err) {
+      toast.error("Failed to sync with Neurex core");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [settingsRes, userRes] = await Promise.all([
-          fetch(`${API_BASE}/api/settings/`),
-          fetch(`${API_BASE}/api/auth/me`, {
-            headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
-          })
-        ]);
-
-        if (settingsRes.status === 403 || userRes.status === 401) {
-          toast.error("Unauthorized access. Admin privileges required.");
-        }
-
-        const settingsData = await settingsRes.json();
-        const userData = await userRes.json();
-        
-        // Merge defaults if keys missing
-        const finalSettings = {
-          enable_glassmorphism: true,
-          enable_animations: true,
-          theme_preset: "obsidian",
-          llm_temperature: 0.7,
-          llm_context_length: 8192,
-          auto_save_files: true,
-          show_hidden_files: false,
-          ...settingsData
-        };
-
-        setSettings(finalSettings);
-        setUser(userData);
-      } catch (err) {
-        toast.error("Failed to sync with Neurex core");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
   }, []);
 
-  const isAdmin = user?.role === "ADMIN";
-  const isViewer = user?.role === "VIEWER";
+  const isAdmin = user?.role === "admin";
+  const isViewer = user?.role === "viewer";
 
   const handleChange = (key: string, value: any) => {
     if (!settings || isViewer) return;
@@ -112,6 +126,37 @@ export function SettingsPanel() {
     }
   };
 
+  const handleUpdateRole = async (userId: string, role: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/users/${userId}/role?role=${role}`, {
+        method: "PATCH",
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      });
+      if (res.ok) {
+        toast.success("Role updated");
+        fetchData();
+      }
+    } catch (err) {
+      toast.error("Failed to update role");
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    if (!confirm("Are you sure you want to revoke mesh access for this identity?")) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/users/${userId}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      });
+      if (res.ok) {
+        toast.success("Identity purged");
+        fetchData();
+      }
+    } catch (err) {
+      toast.error("Failed to delete user");
+    }
+  };
+
   if (loading || !settings) {
     return (
       <div className="settings-panel loading">
@@ -135,13 +180,77 @@ export function SettingsPanel() {
             <p className="settings-panel__subtitle">Node ID: {user?.id?.slice(0,8) || "Local"}</p>
           </div>
         </div>
-        <button className="btn btn--purple btn--save" onClick={handleSave} disabled={saving || isViewer}>
-          <Save size={14} /> {saving ? "Saving..." : "Commit Changes"}
-        </button>
+        <div className="settings-panel__actions">
+          <button className="btn btn--outline" onClick={logout}>
+            <LogOut size={14} /> Log Out
+          </button>
+          <button className="btn btn--purple btn--save" onClick={handleSave} disabled={saving || isViewer}>
+            <Save size={14} /> {saving ? "Saving..." : "Commit Changes"}
+          </button>
+        </div>
       </div>
 
       <div className="settings-panel__content">
         
+        {/* ACCOUNT OVERVIEW */}
+        <section className="settings-group">
+          <div className="settings-group__header">
+            <ShieldCheck size={16} /> <h3>Account Security</h3>
+          </div>
+          <div className="settings-group__body">
+            <div className="setting-row">
+              <div className="setting-info">
+                <label>Authenticated Identity</label>
+                <p>You are logged in as <strong className="text-purple">{user?.username}</strong></p>
+              </div>
+              <div className="setting-control">
+                <span className={`badge badge--${user?.role}`}>{user?.role?.toUpperCase()}</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* USER MANAGEMENT (ADMIN ONLY) */}
+        {isAdmin && (
+          <section className="settings-group">
+            <div className="settings-group__header">
+              <Users size={16} /> <h3>User Management</h3>
+            </div>
+            <div className="settings-group__body">
+              <div className="user-management-list">
+                {users.map(u => (
+                  <div key={u.id} className="user-item">
+                    <div className="user-item__info">
+                      <strong>{u.username}</strong>
+                      <span>{u.id.slice(0, 8)} • Joined {new Date(u.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <div className="user-item__actions">
+                      <select 
+                        value={u.role} 
+                        onChange={(e) => handleUpdateRole(u.id, e.target.value)}
+                        className="settings-select settings-select--sm"
+                        disabled={u.id === user?.id}
+                      >
+                        <option value="admin">Admin</option>
+                        <option value="developer">Developer</option>
+                        <option value="viewer">Viewer</option>
+                      </select>
+                      <button 
+                        className="btn btn--icon btn--danger" 
+                        onClick={() => handleDeleteUser(u.id)}
+                        disabled={u.id === user?.id}
+                        title="Purge Identity"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
         {/* AI INFRASTRUCTURE */}
         <section className="settings-group">
           <div className="settings-group__header">

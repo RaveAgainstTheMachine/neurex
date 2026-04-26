@@ -282,6 +282,67 @@ input:checked + .toggle-slider:after {
   border: 1px solid rgba(168, 85, 247, 0.2);
 }
 
+.badge--admin { background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
+.badge--developer { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+.badge--viewer { background: rgba(113, 113, 122, 0.2); color: #a1a1aa; border: 1px solid rgba(113, 113, 122, 0.3); }
+
+.user-management-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.user-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.user-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(168, 85, 247, 0.3);
+}
+
+.user-item__info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.user-item__info strong {
+  font-size: 14px;
+  color: #fff;
+}
+
+.user-item__info span {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.user-item__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.settings-select--sm {
+  width: 120px;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.settings-panel__actions {
+  display: flex;
+  gap: 12px;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }

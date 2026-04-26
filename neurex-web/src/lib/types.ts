@@ -96,7 +96,19 @@ export interface Presence {
   status: string;
 }
 
+export interface User {
+  id: string;
+  username: string;
+  role: "admin" | "developer" | "viewer";
+}
+
 export interface NeurexStore {
+  // Auth
+  token: string | null;
+  user: User | null;
+  setAuth: (token: string, user: User) => void;
+  logout: () => void;
+
   // Infra
   infraEngines: InfraEngine[];
   infraMetrics: InfraMetrics | null;

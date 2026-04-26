@@ -8,6 +8,22 @@ const API_BASE = "http://127.0.0.1:8000";
 
 export const useStore = create<NeurexStore>()(
   immer((set, get) => ({
+    // ── Auth ──────────────────────────────────────────────────────────
+    token: localStorage.getItem("token"),
+    user: JSON.parse(localStorage.getItem("user") || "null"),
+    setAuth: (token, user) => {
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+      set((s) => { s.token = token; s.user = user; });
+      toast.success(`Welcome back, ${user.username}`);
+    },
+    logout: () => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      set((s) => { s.token = null; s.user = null; });
+      toast.error("Logged out");
+    },
+
     // ── Infra ─────────────────────────────────────────────────────────
     infraEngines: [],
     infraMetrics: null,
@@ -15,22 +31,23 @@ export const useStore = create<NeurexStore>()(
     infraSkills: [],
     infraPeers: [],
     refreshInfra: async () => {
+      const token = get().token;
       // Fast status
-      fetch(`${API_BASE}/api/infra/status`).then(r => r.json()).then(data => {
+      fetch(`${API_BASE}/api/infra/status`, { headers: { "Authorization": `Bearer ${token}` } }).then(r => r.json()).then(data => {
         set((s) => {
           s.infraEngines = data.engines || [];
           s.infraMetrics = data.metrics || null;
         });
       });
       // Registry
-      fetch(`${API_BASE}/api/infra/registry`).then(r => r.json()).then(data => {
+      fetch(`${API_BASE}/api/infra/registry`, { headers: { "Authorization": `Bearer ${token}` } }).then(r => r.json()).then(data => {
         set((s) => { s.infraRegistry = data; });
       });
       // Background skills/peers
-      fetch(`${API_BASE}/api/infra/skills`).then(r => r.json()).then(data => {
+      fetch(`${API_BASE}/api/infra/skills`, { headers: { "Authorization": `Bearer ${token}` } }).then(r => r.json()).then(data => {
         set((s) => { s.infraSkills = data; });
       });
-      fetch(`${API_BASE}/api/infra/mesh/peers`).then(r => r.json()).then(data => {
+      fetch(`${API_BASE}/api/infra/mesh/peers`, { headers: { "Authorization": `Bearer ${token}` } }).then(r => r.json()).then(data => {
         set((s) => { s.infraPeers = data; });
       });
     },
@@ -51,7 +68,10 @@ export const useStore = create<NeurexStore>()(
     setFileTree: (tree) => set((s) => { s.fileTree = tree; }),
     refreshFileTree: async () => {
       try {
-        const r = await fetch(`${API_BASE}/api/files/tree`);
+        const token = get().token;
+        const r = await fetch(`${API_BASE}/api/files/tree`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
         const data = await r.json();
         set((s) => { s.fileTree = Array.isArray(data) ? data : [data]; });
       } catch (err) {
@@ -171,9 +191,13 @@ export const useStore = create<NeurexStore>()(
       if (!file) return;
 
       try {
+        const token = get().token;
         await fetch(`${API_BASE}/api/files/save`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
           body: JSON.stringify({ path, content: file.content }),
         });
         set((s) => {

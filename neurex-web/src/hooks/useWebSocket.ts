@@ -4,11 +4,11 @@ import { useStore } from "../lib/store";
 import type { TaskNode } from "../lib/types";
 
 const API_BASE = "http://127.0.0.1:8000";
-const WS_TOKEN = "neurex-dev-token";
-const userId = "User-" + Math.random().toString(36).substring(7);
-
 export function useWebSocket(conversationId: string) {
   const ws = useRef<WebSocket | null>(null);
+  const token = useStore(s => s.token);
+  const user = useStore(s => s.user);
+  const userId = user?.username || "anonymous";
   
   const setWsStatus = useStore(s => s.setWsStatus);
   const upsertTask = useStore(s => s.upsertTask);
@@ -31,11 +31,11 @@ export function useWebSocket(conversationId: string) {
   }, []);
 
   useEffect(() => {
-    if (!conversationId || conversationId === "undefined") return;
+    if (!conversationId || conversationId === "undefined" || !token) return;
     const state = useStore.getState();
 
     const host = window.location.hostname || "127.0.0.1";
-    const url = `ws://${host}:8000/ws/${conversationId}?token=${WS_TOKEN}&user_id=${userId}`;
+    const url = `ws://${host}:8000/ws/${conversationId}?token=${token}&user_id=${userId}`;
     const socket = new WebSocket(url);
     ws.current = socket;
     (window as any).neurexWS = { send, sendPresence };
@@ -89,27 +89,31 @@ export function useWebSocket(conversationId: string) {
       socket.close();
       state.clearTasks();
     };
-  }, [conversationId, send, sendPresence]);
+  }, [conversationId, send, sendPresence, token, userId]);
 
   // Load history on mount or switch
   useEffect(() => {
-    if (!conversationId) return;
-    fetch(`${API_BASE}/api/chat/${conversationId}`)
+    if (!conversationId || !token) return;
+    fetch(`${API_BASE}/api/chat/${conversationId}`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    })
       .then((r) => r.json())
       .then((data) => useStore.getState().setMessages(data))
       .catch(() => {});
-  }, [conversationId]);
+  }, [conversationId, token]);
 
   // Load tasks on mount or switch
   useEffect(() => {
-    // Load tasks for the current conversation
-    fetch(`${API_BASE}/api/tasks/?graph_id=${conversationId}`)
+    if (!conversationId || !token) return;
+    fetch(`${API_BASE}/api/tasks/?graph_id=${conversationId}`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    })
       .then((r) => r.json())
       .then((data: TaskNode[]) => {
         data.forEach(upsertTask);
       })
       .catch(() => {});
-  }, [conversationId, upsertTask]);
+  }, [conversationId, upsertTask, token]);
 
   return { send, sendPresence };
 }
