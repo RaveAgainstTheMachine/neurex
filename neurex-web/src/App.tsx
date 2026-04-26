@@ -190,6 +190,7 @@ function AppContent() {
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>(
     (localStorage.getItem("neurex_sidebar_tab") as SidebarTab) || "explorer"
   );
+  const [globalOnboardingRequired, setGlobalOnboardingRequired] = useState(false);
 
   const updateSidebarTab = (tab: SidebarTab) => {
     setSidebarTab(tab);
@@ -214,6 +215,20 @@ function AppContent() {
 
     const init = async () => {
       const state = useStore.getState();
+
+      // Global Onboarding Check
+      try {
+        const obRes = await fetch("http://localhost:8000/api/auth/onboarding/status");
+        const obData = await obRes.json();
+        if (obData.onboarding_required) {
+          setGlobalOnboardingRequired(true);
+          state.logout(); // Clear stale token cleanly
+          return;
+        }
+      } catch (err) {
+        console.error("Critical: Onboarding check failed", err);
+      }
+
       // Start a steady ramp towards 40% immediately
       const rampInterval = setInterval(() => {
         setTargetProgress(prev => prev < 40 ? prev + 2 : prev);
@@ -274,8 +289,8 @@ function AppContent() {
 
   return (
     <div className="app">
-      {!token && <AuthOverlay />}
-      {!isInitialized && token && <LoadingOverlay progress={visualProgress} />}
+      {(!token || globalOnboardingRequired) && <AuthOverlay />}
+      {!isInitialized && token && !globalOnboardingRequired && <LoadingOverlay progress={visualProgress} />}
       <Toaster position="top-right" toastOptions={{ 
         style: { 
           background: '#1e1e24', 
