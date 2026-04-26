@@ -31,11 +31,16 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
   const [peers, setPeers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [expanded, setExpanded] = useState(true);
+  const [animating, setAnimating] = useState(true);
 
   useEffect(() => {
     const originalSize = currentSize;
-    onExpand(35); // Grow simultaneously
-    return () => onExpand(originalSize); // Back to user size
+    onExpand(18); // Target ~300px
+    const t = setTimeout(() => setAnimating(false), 400);
+    return () => {
+      onExpand(originalSize);
+      clearTimeout(t);
+    };
   }, []);
 
   const fetchData = async () => {
@@ -215,20 +220,20 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
         <div className="infra-section__title">Agent Recommendations</div>
         <div className="infra-list" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           {Object.entries(bestInClass).map(([role, model]) => model && (
-            <div key={role} className="model-card" style={{ padding: 8, borderStyle: 'dashed' }}>
+            <div key={role} className="model-card" style={{ padding: 10, borderStyle: 'dashed' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <div style={{ fontSize: 9, textTransform: 'uppercase', color: 'var(--purple-light)', fontWeight: 700 }}>{role}</div>
-                <div style={{ fontSize: 8, color: 'var(--text-muted)' }}>{model.params} • {model.vram_required_gb}G</div>
+                <div style={{ fontSize: 10.5, textTransform: 'uppercase', color: 'var(--purple-light)', fontWeight: 700 }}>{role}</div>
+                <div style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>{model.params} • {model.vram_required_gb}G</div>
               </div>
-              <div style={{ fontSize: 11, fontWeight: 600, margin: '4px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div style={{ fontSize: 12.5, fontWeight: 600, margin: '4px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {model.name.split(':').shift()}
               </div>
               <div className="model-card__tasks" style={{ margin: '4px 0 8px' }}>
-                {(model.recommended_tasks || []).map(t => <span key={t} className="task-tag" style={{ fontSize: 7, padding: '1px 4px' }}>{t}</span>)}
+                {(model.recommended_tasks || []).map(t => <span key={t} className="task-tag" style={{ fontSize: 9, padding: '1px 6px' }}>{t}</span>)}
               </div>
               <button 
                 className={`btn ${model.is_downloaded ? 'btn--disabled' : 'btn--purple'}`}
-                style={{ width: '100%', marginTop: 'auto', fontSize: 8, padding: '2px' }}
+                style={{ width: '100%', marginTop: 'auto', fontSize: 10.5, padding: '4px' }}
                 onClick={() => handlePullModel(model.engine, model.name)}
                 disabled={loading || model.is_downloaded}
               >
