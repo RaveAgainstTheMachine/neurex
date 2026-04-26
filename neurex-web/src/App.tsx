@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import {
   Files, MessageSquare, Settings, GitBranch, Search, Bot, Activity, Clock, Cpu, Shield, Puzzle, Layout, AlertTriangle
@@ -204,8 +204,13 @@ function AppContent() {
 
   const { send } = useWebSocket(activeConversationId);
 
+  const initializedRef = useRef(false);
+
   // Workspace Initialization
   useEffect(() => {
+    if (initializedRef.current) return;
+    initializedRef.current = true;
+
     const init = async () => {
       // Start a steady ramp towards 40% immediately
       const rampInterval = setInterval(() => {
@@ -232,10 +237,11 @@ function AppContent() {
 
   // Finish initialization only when visual progress reaches 100
   useEffect(() => {
-    if (visualProgress === 100) {
-      setTimeout(() => setIsInitialized(true), 400);
+    if (visualProgress === 100 && !isInitialized) {
+      const t = setTimeout(() => setIsInitialized(true), 400);
+      return () => clearTimeout(t);
     }
-  }, [visualProgress]);
+  }, [visualProgress, isInitialized]);
 
   const toggleSettings = () => {
     setShowSettings(v => !v);
@@ -247,6 +253,12 @@ function AppContent() {
     setShowSettings(false);
   };
 
+  const sidebarRef = useRef<any>(null);
+
+  const handleInfraExpand = React.useCallback((size: number) => {
+    sidebarRef.current?.resize(size);
+  }, []);
+
   useEffect(() => {
     (window as any).hideOverlays = () => {
       setShowSettings(false);
@@ -255,7 +267,6 @@ function AppContent() {
   }, []);
 
   try {
-  const sidebarRef = React.useRef<any>(null);
 
   return (
     <div className="app">
@@ -330,7 +341,7 @@ function AppContent() {
             {sidebarTab === "history"  && <ConversationList />}
             {sidebarTab === "infra"    && (
               <InfraPanel 
-                onExpand={(size) => sidebarRef.current?.resize(size)} 
+                onExpand={handleInfraExpand} 
                 currentSize={sidebarRef.current?.getSize() || 16}
               />
             )}
