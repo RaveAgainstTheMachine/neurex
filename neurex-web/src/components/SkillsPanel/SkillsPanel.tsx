@@ -92,7 +92,10 @@ export function SkillsPanel() {
     try {
       await fetch(`${API_BASE}/api/skills/install`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        },
         body: JSON.stringify({ url })
       });
       setNewSkillUrl("");
@@ -106,7 +109,12 @@ export function SkillsPanel() {
 
   const handleUninstall = async (id: string) => {
     try {
-      const res = await fetch(`${API_BASE}/api/skills/${id}`, { method: "DELETE" });
+      const res = await fetch(`${API_BASE}/api/skills/${id}`, { 
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        }
+      });
       if (!res.ok) throw new Error("Failed to delete");
       fetchSkills();
     } catch (err) {
