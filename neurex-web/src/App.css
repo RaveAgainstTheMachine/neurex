@@ -341,3 +341,14 @@
 .text-red { color: #ff5555; }
 .mb-4 { margin-bottom: 16px; }
 .mt-4 { margin-top: 16px; }
+
+.bottom-panel__tab-content {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.bottom-panel__tab-content[hidden] {
+  display: none !important;
+}

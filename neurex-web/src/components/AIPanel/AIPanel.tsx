@@ -17,6 +17,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { CustomSelect } from '../CustomSelect/CustomSelect';
+import { VoiceLangSelect } from '../CustomSelect/VoiceLangSelect';
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github-dark.css";
@@ -59,6 +60,25 @@ const AUTONOMY_OPTIONS = [
   { value: "restricted", label: "Restricted" },
   { value: "limited", label: "Limited" },
   { value: "full", label: "Full Auto" }
+];
+
+const VOICE_OPTIONS = [
+  { value: "male", label: "Male" },
+  { value: "female", label: "Female" },
+  { value: "freeman", label: "Freeman" },
+  { value: "attenborough", label: "Attenborough" },
+  { value: "rick", label: "Rick" }
+];
+
+const LANG_OPTIONS = [
+  { value: "en-US", label: "EN" },
+  { value: "fr-FR", label: "FR" },
+  { value: "ar-SA", label: "AR" },
+  { value: "es-ES", label: "ES" },
+  { value: "de-DE", label: "DE" },
+  { value: "it-IT", label: "IT" },
+  { value: "ja-JP", label: "JA" },
+  { value: "zh-CN", label: "ZH" },
 ];
 
 function SortableItem(props: { id: string; children: React.ReactNode }) {
@@ -502,37 +522,13 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
                   />
                 </div>
                 <div className="ai-input__footer-right">
-                  {/* Voice Personality Selector Trigger Icon */}
-                  <CustomSelect 
-                    className="icon-only"
-                    value={voicePreset} 
-                    onChange={(val) => setVoicePreset(val)} 
-                    options={[
-                      { value: "male", label: "Male" },
-                      { value: "female", label: "Female" },
-                      { value: "freeman", label: "Freeman" },
-                      { value: "attenborough", label: "Attenborough" },
-                      { value: "rick", label: "Rick" }
-                    ]}
-                    title="TTS Voice Personality"
-                  />
-
-                  {/* Dictation Language Selector Trigger Icon */}
-                  <CustomSelect 
-                    className="icon-only"
-                    value={speechLang}
-                    onChange={(val) => setSpeechLang(val)}
-                    options={[
-                      { value: "en-US", label: "EN" },
-                      { value: "fr-FR", label: "FR" },
-                      { value: "ar-SA", label: "AR" },
-                      { value: "es-ES", label: "ES" },
-                      { value: "de-DE", label: "DE" },
-                      { value: "it-IT", label: "IT" },
-                      { value: "ja-JP", label: "JA" },
-                      { value: "zh-CN", label: "ZH" },
-                    ]}
-                    title="Dictation Language"
+                  <VoiceLangSelect 
+                    voiceValue={voicePreset}
+                    voiceOnChange={setVoicePreset}
+                    voiceOptions={VOICE_OPTIONS}
+                    langValue={speechLang}
+                    langOnChange={setSpeechLang}
+                    langOptions={LANG_OPTIONS}
                   />
 
                   <button 
@@ -550,14 +546,6 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
                     disabled={isUploading}
                   >
                     {isUploading ? <Loader2 className="animate-spin" size={14} /> : <Paperclip size={14} />}
-                  </button>
-                  <button
-                    onClick={handleSend}
-                    disabled={wsStatus !== "connected" || isWorking || !input.trim()}
-                    className="icon-btn ai-input__send-embedded"
-                    title="Send Message"
-                  >
-                    {isWorking ? <Loader2 size={14} className="animate-spin" /> : <ArrowUp size={14} />}
                   </button>
                   <input 
                     type="file" 

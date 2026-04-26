@@ -1,5 +1,9 @@
 import { useState, useEffect } from "react";
-import { Shield, Network, Zap, Settings as SettingsIcon, Save, Database, Bell } from "lucide-react";
+import { 
+  Shield, Network, Zap, Settings as SettingsIcon, Save, 
+  Database, Bell, Palette, Cpu, HardDrive, Eye, EyeOff,
+  Cloud, Lock, Sliders
+} from "lucide-react";
 import toast from "react-hot-toast";
 import "./SettingsPanel.css";
 
@@ -14,6 +18,16 @@ interface SettingsState {
   ollama_base_url: string;
   neurex_trash_path: string;
   enable_push_notifications: boolean;
+  // Appearance
+  enable_glassmorphism: boolean;
+  enable_animations: boolean;
+  theme_preset: string;
+  // LLM Advanced
+  llm_temperature: number;
+  llm_context_length: number;
+  // Workspace
+  auto_save_files: boolean;
+  show_hidden_files: boolean;
   [key: string]: any;
 }
 
@@ -40,7 +54,19 @@ export function SettingsPanel() {
         const settingsData = await settingsRes.json();
         const userData = await userRes.json();
         
-        setSettings(settingsData);
+        // Merge defaults if keys missing
+        const finalSettings = {
+          enable_glassmorphism: true,
+          enable_animations: true,
+          theme_preset: "obsidian",
+          llm_temperature: 0.7,
+          llm_context_length: 8192,
+          auto_save_files: true,
+          show_hidden_files: false,
+          ...settingsData
+        };
+
+        setSettings(finalSettings);
         setUser(userData);
       } catch (err) {
         toast.error("Failed to sync with Neurex core");
@@ -87,34 +113,79 @@ export function SettingsPanel() {
   };
 
   if (loading || !settings) {
-    return <div className="settings-panel loading"><SettingsIcon className="animate-spin" /></div>;
+    return (
+      <div className="settings-panel loading">
+        <div className="settings-loader">
+          <SettingsIcon className="animate-spin text-purple" size={32} />
+          <span>Syncing Core...</span>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="settings-panel">
       <div className="settings-panel__header">
         <div className="settings-panel__title-bar">
-          <SettingsIcon size={20} className="text-purple" />
-          <h2>Neurex Control Center</h2>
+          <div className="settings-icon-wrapper">
+            <SettingsIcon size={20} className="text-purple" />
+          </div>
+          <div>
+            <h2>Control Center</h2>
+            <p className="settings-panel__subtitle">Node ID: {user?.id?.slice(0,8) || "Local"}</p>
+          </div>
         </div>
         <button className="btn btn--purple btn--save" onClick={handleSave} disabled={saving || isViewer}>
-          <Save size={14} /> {saving ? "Saving..." : "Save Changes"}
+          <Save size={14} /> {saving ? "Saving..." : "Commit Changes"}
         </button>
       </div>
 
       <div className="settings-panel__content">
         
+        {/* APPEARANCE */}
+        <section className="settings-group">
+          <div className="settings-group__header">
+            <Palette size={16} /> <h3>Interface & Visuals</h3>
+          </div>
+          <div className="settings-group__body">
+            <div className="setting-row">
+              <div className="setting-info">
+                <label>Glassmorphism Effects</label>
+                <p>Enable high-fidelity backdrop blurs and translucency. (Requires GPU)</p>
+              </div>
+              <div className="setting-control">
+                <label className={`toggle-switch ${isViewer ? 'disabled' : ''}`}>
+                  <input type="checkbox" checked={settings.enable_glassmorphism} onChange={(e) => handleChange("enable_glassmorphism", e.target.checked)} disabled={isViewer} />
+                  <span className="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div className="setting-row">
+              <div className="setting-info">
+                <label>Motion & Transitions</label>
+                <p>Enable smooth kinetic transitions and micro-interactions.</p>
+              </div>
+              <div className="setting-control">
+                <label className={`toggle-switch ${isViewer ? 'disabled' : ''}`}>
+                  <input type="checkbox" checked={settings.enable_animations} onChange={(e) => handleChange("enable_animations", e.target.checked)} disabled={isViewer} />
+                  <span className="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* AGENT BEHAVIOR */}
         <section className="settings-group">
           <div className="settings-group__header">
-            <Zap size={16} /> <h3>Agent Behavior & Autonomy</h3>
+            <Zap size={16} /> <h3>Agent Runtime & Autonomy</h3>
           </div>
           <div className="settings-group__body">
-            
             <div className="setting-row">
               <div className="setting-info">
                 <label>Autonomy Level</label>
-                <p>Dictates how frequently the agent requires human approval for execution.</p>
+                <p>Control the frequency of required human approvals.</p>
               </div>
               <div className="setting-control">
                 <select 
@@ -132,8 +203,26 @@ export function SettingsPanel() {
 
             <div className="setting-row">
               <div className="setting-info">
+                <label>Inference Temperature</label>
+                <p>Adjust creativity vs. determinism in agent output.</p>
+              </div>
+              <div className="setting-control">
+                <div className="slider-group">
+                  <input 
+                    type="range" min="0" max="2" step="0.1" 
+                    value={settings.llm_temperature} 
+                    onChange={(e) => handleChange("llm_temperature", parseFloat(e.target.value))}
+                    disabled={isViewer}
+                  />
+                  <span className="slider-value">{settings.llm_temperature}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="setting-row setting-row--vertical">
+              <div className="setting-info">
                 <label>Custom System Prompt</label>
-                <p>Inject permanent behavioral rules into the agent's core memory.</p>
+                <p>Inject permanent behavioral logic into the core agent memory.</p>
               </div>
               <div className="setting-control full-width">
                 <textarea 
@@ -145,7 +234,40 @@ export function SettingsPanel() {
                 />
               </div>
             </div>
+          </div>
+        </section>
 
+        {/* WORKSPACE */}
+        <section className="settings-group">
+          <div className="settings-group__header">
+            <HardDrive size={16} /> <h3>Workspace & Filesystem</h3>
+          </div>
+          <div className="settings-group__body">
+            <div className="setting-row">
+              <div className="setting-info">
+                <label>Auto-Save Documents</label>
+                <p>Automatically save file changes after 500ms of inactivity.</p>
+              </div>
+              <div className="setting-control">
+                <label className={`toggle-switch ${isViewer ? 'disabled' : ''}`}>
+                  <input type="checkbox" checked={settings.auto_save_files} onChange={(e) => handleChange("auto_save_files", e.target.checked)} disabled={isViewer} />
+                  <span className="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div className="setting-row">
+              <div className="setting-info">
+                <label>Show Hidden Files</label>
+                <p>Display dotfiles (e.g. .env, .git) in the file explorer.</p>
+              </div>
+              <div className="setting-control">
+                <label className={`toggle-switch ${isViewer ? 'disabled' : ''}`}>
+                  <input type="checkbox" checked={settings.show_hidden_files} onChange={(e) => handleChange("show_hidden_files", e.target.checked)} disabled={isViewer} />
+                  <span className="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -155,11 +277,10 @@ export function SettingsPanel() {
             <Shield size={16} /> <h3>Security & Isolation</h3>
           </div>
           <div className="settings-group__body">
-            
             <div className="setting-row">
               <div className="setting-info">
                 <label>Enable Agent Internet Access</label>
-                <p>Allows the terminal sandbox to curl, wget, or npm install from public registries. Disable for air-gapped security.</p>
+                <p>Allows the terminal sandbox to access public registries.</p>
               </div>
               <div className="setting-control">
                 <label className={`toggle-switch ${isViewer ? 'disabled' : ''}`}>
@@ -168,17 +289,6 @@ export function SettingsPanel() {
                 </label>
               </div>
             </div>
-
-            <div className="setting-row">
-              <div className="setting-info">
-                <label>Hardened Trash Path</label>
-                <p>The protected directory where agent-deleted files are moved. Agents cannot read or write to this directory.</p>
-              </div>
-              <div className="setting-control">
-                <input type="text" value={settings.neurex_trash_path} onChange={(e) => handleChange("neurex_trash_path", e.target.value)} className="settings-input" disabled={isViewer} />
-              </div>
-            </div>
-
           </div>
         </section>
 
@@ -188,11 +298,10 @@ export function SettingsPanel() {
             <Network size={16} /> <h3>Mesh & Distributed Compute</h3>
           </div>
           <div className="settings-group__body">
-            
             <div className="setting-row">
               <div className="setting-info">
                 <label>Enable Mesh Inference Routing</label>
-                <p>Automatically offload heavy LLM inference to the most powerful connected peer node.</p>
+                <p>Automatically offload heavy inference to connected peer nodes.</p>
               </div>
               <div className="setting-control">
                 <label className={`toggle-switch ${isViewer ? 'disabled' : ''}`}>
@@ -204,8 +313,8 @@ export function SettingsPanel() {
 
             <div className="setting-row">
               <div className="setting-info">
-                <label>Enable Distributed MPI Pooling (Phase 10.5)</label>
-                <p>Act as a worker node for Llama.cpp RPC, pooling your CPU/RAM with other nodes to run massive models.</p>
+                <label>Enable Distributed MPI Pooling</label>
+                <p>Act as a worker node for Llama.cpp RPC pooling.</p>
                 <span className="badge badge--experimental">Experimental</span>
               </div>
               <div className="setting-control">
@@ -215,7 +324,6 @@ export function SettingsPanel() {
                 </label>
               </div>
             </div>
-
           </div>
         </section>
 
@@ -225,11 +333,10 @@ export function SettingsPanel() {
             <Bell size={16} /> <h3>Alerts & Telemetry</h3>
           </div>
           <div className="settings-group__body">
-            
             <div className="setting-row">
               <div className="setting-info">
                 <label>Push Notifications (VAPID)</label>
-                <p>Wake up your mobile device when an agent requires manual approval to proceed.</p>
+                <p>Wake up your mobile device when approval is required.</p>
               </div>
               <div className="setting-control">
                 <label className={`toggle-switch ${isViewer ? 'disabled' : ''}`}>
@@ -238,7 +345,6 @@ export function SettingsPanel() {
                 </label>
               </div>
             </div>
-
           </div>
         </section>
 

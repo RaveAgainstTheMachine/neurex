@@ -145,8 +145,19 @@ function AppContent() {
 
   useNotifications();
   const { wsStatus, fileTree, refreshFileTree } = useStore();
-  const [loadingProgress, setLoadingProgress] = useState(10);
+  const [targetProgress, setTargetProgress] = useState(10);
+  const [visualProgress, setVisualProgress] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
+
+  // Smooth visual progress catch-up
+  useEffect(() => {
+    if (visualProgress < targetProgress) {
+      const timer = setTimeout(() => {
+        setVisualProgress(prev => Math.min(prev + 1, targetProgress));
+      }, 10);
+      return () => clearTimeout(timer);
+    }
+  }, [visualProgress, targetProgress]);
 
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>(
     (localStorage.getItem("neurex_sidebar_tab") as SidebarTab) || "explorer"
@@ -169,17 +180,24 @@ function AppContent() {
   // Workspace Initialization
   useEffect(() => {
     const init = async () => {
-      setLoadingProgress(30);
+      setTargetProgress(30);
       await refreshFileTree();
-      setLoadingProgress(70);
-      // Brief delay for the "premium" feel
+      setTargetProgress(80);
+      
+      // Artificial stabilization period
       setTimeout(() => {
-        setLoadingProgress(100);
-        setTimeout(() => setIsInitialized(true), 500);
-      }, 800);
+        setTargetProgress(100);
+      }, 400);
     };
     init();
   }, [refreshFileTree]);
+
+  // Finish initialization only when visual progress reaches 100
+  useEffect(() => {
+    if (visualProgress === 100) {
+      setTimeout(() => setIsInitialized(true), 400);
+    }
+  }, [visualProgress]);
 
   const toggleSettings = () => {
     setShowSettings(v => !v);
@@ -201,7 +219,7 @@ function AppContent() {
   try {
     return (
       <div className="app">
-        {!isInitialized && <LoadingOverlay progress={loadingProgress} />}
+        {!isInitialized && <LoadingOverlay progress={visualProgress} />}
         <Toaster position="top-right" toastOptions={{ 
           style: { 
             background: '#1e1e24', 
@@ -400,20 +418,19 @@ function BottomPanel({ send }: { send: (p: any) => void }) {
         </div>
       </div>
       <div className="bottom-panel__content">
-        {tab === "terminal" ? (
+        <div className="bottom-panel__tab-content" hidden={tab !== "terminal"}>
           <Terminal 
             onInput={(data) => send({ type: "terminal_input", data })}
             onResize={(rows, cols) => send({ type: "terminal_resize", rows, cols })}
           />
-        ) : (
-          <div className="output-log">
-            {lines.length === 0 ? (
-              <span className="bottom-panel__empty">No output yet.</span>
-            ) : (
-              lines.map((l, i) => <div key={i} className="bottom-panel__line">{l}</div>)
-            )}
-          </div>
-        )}
+        </div>
+        <div className="bottom-panel__tab-content output-log" hidden={tab !== "output"}>
+          {lines.length === 0 ? (
+            <span className="bottom-panel__empty">No output yet.</span>
+          ) : (
+            lines.map((l, i) => <div key={i} className="bottom-panel__line">{l}</div>)
+          )}
+        </div>
       </div>
     </div>
   );

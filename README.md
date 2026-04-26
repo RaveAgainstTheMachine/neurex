@@ -191,6 +191,8 @@ neurex/
 
 | Document                                          | Description                                         |
 |:--------------------------------------------------|:----------------------------------------------------|
+| [**Core Philosophy**](../PHILOSOPHY.md)           | The five pillars of the Neurex experience.          |
+| [**Design Language**](../DESIGN_SYSTEM.md)        | The Void & Obsidian aesthetic and kinetic motion rules. |
 | [`API_REFERENCE.md`](API_REFERENCE.md)            | Complete REST & WebSocket API reference             |
 | [`NEUREX_COMPENDIUM.md`](NEUREX_COMPENDIUM.md)    | Technical deep-dive: all subsystems with diagrams   |
 | [`NEUREX_MANIFESTO.md`](NEUREX_MANIFESTO.md)      | Feature showcase in EN / FR (Québécois) / AR        |
