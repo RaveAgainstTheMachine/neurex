@@ -8,8 +8,10 @@ const API_BASE = "http://127.0.0.1:8000";
 
 export function AuthOverlay() {
   const [isLogin, setIsLogin] = useState(true);
+  const [showOtp, setShowOtp] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [otpCode, setOtpCode] = useState("");
   const [loading, setLoading] = useState(false);
   const setAuth = useStore(s => s.setAuth);
 
@@ -43,6 +45,13 @@ export function AuthOverlay() {
       }
 
       const data = await res.json();
+      
+      if (data.otp_required) {
+        setShowOtp(true);
+        setLoading(false);
+        return;
+      }
+
       const userRes = await fetch(`${API_BASE}/api/auth/me`, {
         headers: { "Authorization": `Bearer ${data.access_token}` }
       });
@@ -55,6 +64,76 @@ export function AuthOverlay() {
       setLoading(false);
     }
   };
+
+  const handleOtpSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otpCode) return;
+
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/token-otp?username=${username}&code=${otpCode}`, {
+        method: "POST"
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.detail || "Invalid OTP");
+      }
+
+      const data = await res.json();
+      const userRes = await fetch(`${API_BASE}/api/auth/me`, {
+        headers: { "Authorization": `Bearer ${data.access_token}` }
+      });
+      const userData = await userRes.json();
+      
+      setAuth(data.access_token, userData);
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (showOtp) {
+    return (
+      <div className="auth-overlay">
+        <div className="auth-mesh-bg" />
+        <div className="auth-card glass">
+          <div className="auth-card__header">
+            <div className="auth-logo">
+              <div className="auth-logo__inner"><Shield size={32} /></div>
+            </div>
+            <h2>Verification Required</h2>
+            <p className="text-muted">Enter the 6-digit code from your authenticator app</p>
+          </div>
+
+          <form className="auth-form" onSubmit={handleOtpSubmit}>
+            <div className="auth-input">
+              <Lock size={18} className="auth-input__icon" />
+              <input 
+                type="text" 
+                placeholder="000000" 
+                value={otpCode}
+                onChange={e => setOtpCode(e.target.value)}
+                maxLength={6}
+                required
+                autoFocus
+              />
+            </div>
+            <button className="btn btn--purple auth-submit" disabled={loading}>
+              {loading ? <Loader2 className="animate-spin" /> : "Verify & Connect"}
+            </button>
+          </form>
+
+          <div className="auth-footer">
+            <button className="auth-toggle" onClick={() => setShowOtp(false)}>
+              Back to Login
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-overlay">

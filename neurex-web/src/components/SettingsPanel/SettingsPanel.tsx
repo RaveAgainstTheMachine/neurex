@@ -46,6 +46,8 @@ export function SettingsPanel() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [otpData, setOtpData] = useState<{ secret: string, qr_code: string } | null>(null);
+  const [otpVerifyCode, setOtpVerifyCode] = useState("");
   const logout = useStore(s => s.logout);
 
   const fetchData = async () => {
@@ -123,6 +125,37 @@ export function SettingsPanel() {
       toast.error("Failed to save settings");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSetupOtp = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/setup-otp`, {
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      });
+      const data = await res.json();
+      setOtpData(data);
+    } catch (err) {
+      toast.error("Failed to initiate OTP setup");
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/verify-otp?code=${otpVerifyCode}`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      });
+      if (res.ok) {
+        toast.success("2FA Enabled Successfully");
+        setOtpData(null);
+        fetchData();
+      } else {
+        const err = await res.json();
+        toast.error(err.detail || "Invalid code");
+      }
+    } catch (err) {
+      toast.error("Verification failed");
     }
   };
 
@@ -207,6 +240,51 @@ export function SettingsPanel() {
                 <span className={`badge badge--${user?.role}`}>{user?.role?.toUpperCase()}</span>
               </div>
             </div>
+
+            <div className="setting-row">
+              <div className="setting-info">
+                <label>Two-Factor Authentication (OTP)</label>
+                <p>Add an extra layer of security to your neural connection.</p>
+              </div>
+              <div className="setting-control">
+                {user?.is_active && !otpData && (
+                  <button 
+                    className={`btn ${user?.role === 'admin' ? 'btn--purple' : 'btn--outline'} btn--sm`}
+                    onClick={handleSetupOtp}
+                    disabled={!!(user as any).otp_enabled}
+                  >
+                    {(user as any).otp_enabled ? "✓ 2FA Active" : "Enable 2FA"}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {otpData && (
+              <div className="otp-setup-box glass">
+                <div className="otp-setup-box__header">
+                  <h4>Neural Link Synchronization</h4>
+                  <p>Scan this QR code with Google Authenticator or Authy</p>
+                </div>
+                <div className="otp-setup-box__content">
+                  <img src={otpData.qr_code} alt="OTP QR Code" className="otp-qr" />
+                  <div className="otp-setup-form">
+                    <p className="text-muted">Secret: <code>{otpData.secret}</code></p>
+                    <input 
+                      type="text" 
+                      placeholder="6-digit code" 
+                      className="settings-input"
+                      value={otpVerifyCode}
+                      onChange={e => setOtpVerifyCode(e.target.value)}
+                      maxLength={6}
+                    />
+                    <div className="otp-setup-actions">
+                      <button className="btn btn--outline btn--sm" onClick={() => setOtpData(null)}>Cancel</button>
+                      <button className="btn btn--purple btn--sm" onClick={handleVerifyOtp}>Verify & Enable</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
