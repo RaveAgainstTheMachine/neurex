@@ -85,15 +85,16 @@
 
 .app__panels {
   flex: 1;
-  overflow: hidden;
+  overflow: visible;
   background: var(--bg-app);
 }
 
 .app__sidebar {
   background: var(--bg-sidebar);
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
+  z-index: 5;
 }
 
 .app__ai {

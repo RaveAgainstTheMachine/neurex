@@ -30,6 +30,7 @@ export function InfraPanel() {
   const [skills, setSkills] = useState<any[]>([]);
   const [peers, setPeers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -180,16 +181,28 @@ export function InfraPanel() {
   };
 
   return (
-    <div className="infra-panel">
+    <div 
+      className={`infra-panel ${expanded ? 'infra-panel--expanded' : ''}`}
+      onClick={() => !expanded && setExpanded(true)}
+    >
       <div className="infra-panel__header">
         <Cpu size={16} />
         <span>Infrastructure Hub</span>
-        {metrics && (
-          <div style={{ marginLeft: "auto", fontSize: 10, color: "var(--text-muted)", display: "flex", gap: 12 }}>
-            <span title="GPU Detection"><Zap size={10} style={{marginRight: 4, color: metrics.vram_gb > 0 ? 'var(--status-done)' : 'var(--text-muted)'}}/>{metrics.vram_gb || 0}GB</span>
-            <span title="RAM Usage"><Database size={10} style={{marginRight: 4}}/>{metrics.ram_used_gb}G</span>
-          </div>
-        )}
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
+          {metrics && (
+            <div style={{ fontSize: 10, color: "var(--text-muted)", display: "flex", gap: 12 }}>
+              <span title="GPU Detection"><Zap size={10} style={{marginRight: 4, color: metrics.vram_gb > 0 ? 'var(--status-done)' : 'var(--text-muted)'}}/>{metrics.vram_gb || 0}GB</span>
+              <span title="RAM Usage"><Database size={10} style={{marginRight: 4}}/>{metrics.ram_used_gb}G</span>
+            </div>
+          )}
+          <button 
+            className="icon-btn" 
+            onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
+            title={expanded ? "Minimize" : "Expand Focus"}
+          >
+            <RefreshCcw size={12} className={expanded ? "rotate-180" : ""} />
+          </button>
+        </div>
       </div>
 
       {/* AGENT RECOMMENDATIONS */}

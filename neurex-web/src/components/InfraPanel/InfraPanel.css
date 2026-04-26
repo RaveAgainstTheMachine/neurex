@@ -9,6 +9,20 @@
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--purple-main) transparent;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  width: 100%;
+  z-index: 10;
+}
+
+.infra-panel--expanded {
+  width: 450px;
+  box-shadow: 10px 0 30px rgba(0, 0, 0, 0.4);
+  background: var(--bg-app);
+}
+
+.rotate-180 {
+  transform: rotate(180deg);
 }
 
 .infra-panel::-webkit-scrollbar {
