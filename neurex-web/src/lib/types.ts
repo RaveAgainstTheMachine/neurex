@@ -53,6 +53,42 @@ export interface OpenFile {
   isDirty: boolean;
 }
 
+export interface ModelProfile {
+  name: string;
+  engine: string;
+  params: string;
+  context_window: number;
+  vram_required_gb: number;
+  recommended_tasks: string[];
+  description?: string;
+  benchmarks?: Record<string, string>;
+  repo_url?: string;
+  is_downloaded?: boolean;
+}
+
+export interface InfraEngine {
+  name: string;
+  status: "running" | "stopped" | "missing";
+  version?: string;
+  installed: boolean;
+  details?: string;
+}
+
+export interface InfraMetrics {
+  vram_gb: number;
+  ram_used_gb: number;
+  cpu_usage: number;
+}
+
+export interface MeshPeer {
+  name: string;
+  url: string;
+  status: "online" | "offline";
+  vram_gb: number;
+  latency_ms: number;
+  models?: string[];
+}
+
 export interface Presence {
   user_id: string;
   cursor: { line: number; ch: number } | null;
@@ -61,6 +97,14 @@ export interface Presence {
 }
 
 export interface NeurexStore {
+  // Infra
+  infraEngines: InfraEngine[];
+  infraMetrics: InfraMetrics | null;
+  infraRegistry: ModelProfile[];
+  infraSkills: any[];
+  infraPeers: MeshPeer[];
+  refreshInfra: () => Promise<void>;
+
   // Speech
   speechLang: string;
   setSpeechLang: (lang: string) => void;

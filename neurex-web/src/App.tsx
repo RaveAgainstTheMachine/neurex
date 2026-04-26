@@ -168,7 +168,7 @@ function AppContent() {
   };
 
   useNotifications();
-  const { wsStatus, fileTree, refreshFileTree } = useStore();
+  const { wsStatus, fileTree, refreshFileTree, refreshInfra } = useStore();
   const [targetProgress, setTargetProgress] = useState(10);
   const [visualProgress, setVisualProgress] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -210,7 +210,10 @@ function AppContent() {
       }, 50);
 
       try {
-        await refreshFileTree();
+        await Promise.all([
+          refreshFileTree(),
+          refreshInfra()
+        ]);
         setTargetProgress(70);
         
         // Finalize
@@ -222,7 +225,7 @@ function AppContent() {
       }
     };
     init();
-  }, [refreshFileTree]);
+  }, [refreshFileTree, refreshInfra]);
 
   // Finish initialization only when visual progress reaches 100
   useEffect(() => {

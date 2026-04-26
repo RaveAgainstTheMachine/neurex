@@ -8,6 +8,33 @@ const API_BASE = "http://127.0.0.1:8000";
 
 export const useStore = create<NeurexStore>()(
   immer((set, get) => ({
+    // ── Infra ─────────────────────────────────────────────────────────
+    infraEngines: [],
+    infraMetrics: null,
+    infraRegistry: [],
+    infraSkills: [],
+    infraPeers: [],
+    refreshInfra: async () => {
+      // Fast status
+      fetch(`${API_BASE}/api/infra/status`).then(r => r.json()).then(data => {
+        set((s) => {
+          s.infraEngines = data.engines || [];
+          s.infraMetrics = data.metrics || null;
+        });
+      });
+      // Registry
+      fetch(`${API_BASE}/api/infra/registry`).then(r => r.json()).then(data => {
+        set((s) => { s.infraRegistry = data; });
+      });
+      // Background skills/peers
+      fetch(`${API_BASE}/api/infra/skills`).then(r => r.json()).then(data => {
+        set((s) => { s.infraSkills = data; });
+      });
+      fetch(`${API_BASE}/api/infra/mesh/peers`).then(r => r.json()).then(data => {
+        set((s) => { s.infraPeers = data; });
+      });
+    },
+
     // ── Editor ────────────────────────────────────────────────────────
     openFiles: JSON.parse(localStorage.getItem("neurex_open_files") || "[]"),
     activeFile: localStorage.getItem("neurex_active_file"),
