@@ -29,6 +29,20 @@ async def toggle_skill(skill_id: str, enable: bool):
         raise HTTPException(status_code=404, detail="Skill not found")
     return {"status": "success", "enabled": enable}
 
+@router.delete("/skills/{skill_id}", dependencies=[Depends(require_role(UserRole.ADMIN))])
+async def delete_skill(skill_id: str):
+    """Purge a community skill from the node."""
+    from core.logger import log
+    log.info("infra.skill_delete_request", skill_id=skill_id)
+    if skill_manager.delete_skill(skill_id):
+        log.info("infra.skill_deleted", skill_id=skill_id)
+        return {"status": "deleted"}
+    log.warning("infra.skill_delete_failed", skill_id=skill_id, reason="not_found", path=str(skill_manager.SKILLS_DIR / skill_id))
+    raise HTTPException(
+        status_code=404, 
+        detail=f"Skill '{skill_id}' not found at {skill_manager.SKILLS_DIR / skill_id}"
+    )
+
 @router.post("/benchmark/{model}", dependencies=[Depends(require_role(UserRole.DEVELOPER))])
 async def run_benchmark(model: str):
     """Run a performance benchmark against a specific model."""

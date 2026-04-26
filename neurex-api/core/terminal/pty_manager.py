@@ -62,10 +62,19 @@ class PTYSession:
     def start(self):
         try:
             shell = os.environ.get("SHELL", "/bin/bash")
+            # Enhance environment for modern shells like fish/zsh
+            env = {
+                **os.environ,
+                "TERM": "xterm-256color",
+                "COLORTERM": "truecolor",
+                "LANG": "en_US.UTF-8",
+                "LC_ALL": "en_US.UTF-8",
+                "PS1": "neurex> "
+            }
             self.proc = PtyProcessUnicode.spawn(
                 [shell],
                 cwd=self.workspace,
-                env={**os.environ, "TERM": "xterm-256color", "PS1": "neurex> "}
+                env=env
             )
             log.info("pty.started", session=self.session_id, pid=self.proc.pid)
             self.task = asyncio.create_task(self._read_loop())

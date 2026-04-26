@@ -4,6 +4,8 @@ from pathlib import Path
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from pydantic import BaseModel
 import shutil
+import subprocess
+import ast
 from core.collaboration.manager import CollaborationManager
 
 router = APIRouter()
@@ -32,6 +34,16 @@ async def file_tree():
     except:
         pass
 
+    def _get_file_errors(path: Path) -> int:
+        """Heuristic check for critical syntax errors."""
+        if path.suffix == ".py":
+            try:
+                ast.parse(path.read_text(errors="ignore"))
+                return 0
+            except:
+                return 1
+        return 0
+
     def _walk(path: Path) -> dict:
         name = path.name
         rel_path = str(path.relative_to(WORKSPACE))
@@ -49,7 +61,7 @@ async def file_tree():
             "type": "file", 
             "path": rel_path,
             "status": git_status.get(rel_path),
-            "errors": 0 # Placeholder for future lint integration
+            "errors": _get_file_errors(path)
         }
 
     return _walk(WORKSPACE)

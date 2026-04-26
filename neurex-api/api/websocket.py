@@ -23,8 +23,8 @@ API_TOKEN = os.getenv("API_TOKEN", "neurex-dev-token")
 
 
 async def _authenticate(websocket: WebSocket) -> bool:
-    token = websocket.query_params.get("token", "")
-    if token != API_TOKEN:
+    token = websocket.query_params.get("token", "").strip()
+    if token != API_TOKEN.strip():
         await websocket.close(code=http_status.WS_1008_POLICY_VIOLATION)
         return False
     return True
