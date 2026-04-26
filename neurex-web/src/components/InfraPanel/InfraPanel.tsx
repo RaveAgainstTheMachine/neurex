@@ -215,6 +215,25 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
     }
   };
 
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    setSearching(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/infra/registry/search?query=${encodeURIComponent(query)}`);
+      if (res.ok) {
+        setSearchResults(await res.json());
+      }
+    } catch (err) {
+      console.error("Search failed:", err);
+    } finally {
+      setSearching(false);
+    }
+  };
+
   const handleDeleteSkill = async (id: string) => {
     try {
       const res = await fetch(`${API_BASE}/api/infra/skills/${id}`, {
@@ -239,6 +258,27 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
     if (t.includes("audio")) return <AudioLines size={14} className="capability-icon--active" />;
     if (t.includes("video")) return <Video size={14} className="capability-icon--active" />;
     return <Brain size={14} className="capability-icon--active" />;
+  };
+
+  const renderModelCard = (m: ModelProfile) => {
+    const isDownloaded = m.is_downloaded || false;
+    return (
+      <div key={m.name} className={`model-card ${isDownloaded ? 'model-card--downloaded' : ''}`} onClick={() => setSelectedModel(m)} style={{ cursor: 'pointer' }}>
+        <div className="model-card__header">
+          {getCapabilityIcon(m.recommended_tasks)}
+          <span className="model-card__name">{m.name}</span>
+          <span className="model-card__tag">{m.params}</span>
+        </div>
+        <div className="model-card__details">
+          <div className="model-card__detail">
+            <Database size={10} /> {(m.vram_required_gb || 0)}GB VRAM
+          </div>
+          <div className="model-card__detail">
+            <RefreshCcw size={10} /> {((m.context_window || 0) / 1000).toFixed(0)}k ctx
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -274,6 +314,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
         </div>
       </div>
 
+      {/* RECOMMENDATIONS */}
       <div className="infra-section">
         <div className="infra-section__title">Agent Recommendations</div>
         <div className="infra-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
@@ -281,7 +322,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
             <div key={role} className="model-card" style={{ padding: 10, borderStyle: 'dashed', cursor: 'pointer' }} onClick={() => setSelectedModel(model)}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div style={{ fontSize: 10.5, textTransform: 'uppercase', color: 'var(--purple-light)', fontWeight: 700 }}>{role}</div>
-                <div style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>{model.params}</div>
+                <div style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>{model.params} • {model.vram_required_gb}G VRAM</div>
               </div>
               <div style={{ fontSize: 12.5, fontWeight: 600, margin: '4px 0' }}>{model.name.split(':').shift()}</div>
               <button 
@@ -297,6 +338,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
         </div>
       </div>
 
+      {/* ENGINES */}
       <div className="infra-section">
         <div className="infra-section__title">Compute Engines</div>
         <div className="infra-list">
@@ -316,16 +358,63 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
         </div>
       </div>
 
+      {/* CATALOG + SEARCH */}
       <div className="infra-section">
         <div className="infra-section__title">Model Catalog</div>
+        <div className="infra-search" style={{ marginBottom: 12 }}>
+          <div className="skills-input">
+            <Search size={14} className="skills-input__icon" />
+            <input 
+              type="text" 
+              placeholder="Search registry or Hugging Face..." 
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+            />
+            {searching && <Loader2 size={14} className="animate-spin" />}
+          </div>
+        </div>
         <div className="infra-list">
-          {registry.map((m: ModelProfile) => (
-            <div key={m.name} className={`model-card ${m.is_downloaded ? 'model-card--downloaded' : ''}`} onClick={() => setSelectedModel(m)} style={{ cursor: 'pointer' }}>
-              <div className="model-card__header">
-                {getCapabilityIcon(m.recommended_tasks)}
-                <span className="model-card__name">{m.name}</span>
-                <span className="model-card__tag">{m.params}</span>
+          {(searchQuery ? searchResults : registry).map((m: ModelProfile) => renderModelCard(m))}
+        </div>
+      </div>
+
+      {/* MESH */}
+      <div className="infra-section">
+        <div className="infra-section__title">Infrastructure Mesh</div>
+        <div className="infra-list">
+          {peers.length === 0 ? (
+            <div style={{ fontSize: 10, color: "var(--text-muted)", padding: 8 }}>No peers detected. Enable Mesh to split loads.</div>
+          ) : (
+            peers.map((p: MeshPeer) => (
+              <div key={p.url} className={`infra-card ${p.status === "online" ? "infra-card--active" : ""}`}>
+                <div className="infra-card__info">
+                  <div className="infra-card__name">{p.name}</div>
+                  <div className="infra-card__version"><Network size={10} /> {p.url} • {p.vram_gb}GB</div>
+                </div>
+                <div className="infra-card__actions">
+                  <span className="task-tag">{p.status.toUpperCase()}</span>
+                </div>
               </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* SKILLS */}
+      <div className="infra-section">
+        <div className="infra-section__title">Community Skills</div>
+        <div className="infra-list">
+          {skills.map((s: any) => (
+            <div key={s.id} className={`model-card ${s.enabled ? "model-card--active" : ""}`}>
+              <div className="model-card__header">
+                <Code size={12} className="model-card__icon" />
+                <span className="model-card__name">{s.name}</span>
+                <button className="icon-btn text-red" style={{ marginLeft: 'auto', opacity: 0.4 }} onClick={() => setConfirmState({ show: true, skillId: s.id })}>
+                  <Trash2 size={12} />
+                </button>
+                <span className="model-card__tag">v{s.version}</span>
+              </div>
+              <p style={{ fontSize: 10, color: "var(--text-muted)", margin: "4px 0" }}>{s.description}</p>
             </div>
           ))}
         </div>
