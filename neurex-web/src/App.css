@@ -87,6 +87,8 @@
   flex: 1;
   overflow: visible;
   background: var(--bg-app);
+  position: relative;
+  z-index: 10;
 }
 
 .app__sidebar {
@@ -94,13 +96,15 @@
   overflow: visible;
   display: flex;
   flex-direction: column;
-  z-index: 5;
+  position: relative;
+  z-index: 50; /* Ensure sidebar content can float over main panel */
 }
 
 .app__ai {
   background: var(--bg-sidebar);
   overflow: hidden;
   border-left: 1px solid var(--border);
+  z-index: 5;
 }
 
 .status-bar {

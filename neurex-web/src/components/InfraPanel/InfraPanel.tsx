@@ -217,9 +217,12 @@ export function InfraPanel() {
               <div style={{ fontSize: 11, fontWeight: 600, margin: '4px 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {model.name.split(':').shift()}
               </div>
+              <div className="model-card__tasks" style={{ margin: '4px 0 8px' }}>
+                {(model.recommended_tasks || []).map(t => <span key={t} className="task-tag" style={{ fontSize: 7, padding: '1px 4px' }}>{t}</span>)}
+              </div>
               <button 
                 className={`btn ${model.is_downloaded ? 'btn--disabled' : 'btn--purple'}`}
-                style={{ width: '100%', marginTop: 2, fontSize: 8, padding: '2px' }}
+                style={{ width: '100%', marginTop: 'auto', fontSize: 8, padding: '2px' }}
                 onClick={() => handlePullModel(model.engine, model.name)}
                 disabled={loading || model.is_downloaded}
               >
