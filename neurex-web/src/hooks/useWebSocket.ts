@@ -3,7 +3,7 @@ import { useEffect, useRef, useCallback } from "react";
 import { useStore } from "../lib/store";
 import type { TaskNode } from "../lib/types";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = "http://127.0.0.1:8000";
 const WS_TOKEN = "neurex-dev-token";
 const userId = "User-" + Math.random().toString(36).substring(7);
 
@@ -27,7 +27,7 @@ export function useWebSocket(conversationId: string) {
   useEffect(() => {
     if (!conversationId || conversationId === "undefined") return;
 
-    const url = `ws://localhost:8000/ws/${conversationId}?token=${WS_TOKEN}&user_id=${userId}`;
+    const url = `ws://127.0.0.1:8000/ws/${conversationId}?token=${WS_TOKEN}&user_id=${userId}`;
     const socket = new WebSocket(url);
     ws.current = socket;
     (window as any).neurexWS = { send, sendPresence };

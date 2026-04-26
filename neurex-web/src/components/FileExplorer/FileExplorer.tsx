@@ -9,7 +9,7 @@ import { useStore } from "../../lib/store";
 import type { FileNode } from "../../lib/types";
 import "./FileExplorer.css";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = "http://127.0.0.1:8000";
 
 const LANG_MAP: Record<string, string> = {
   ts: "typescript", tsx: "typescriptreact", js: "javascript", jsx: "javascriptreact",

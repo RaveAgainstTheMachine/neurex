@@ -4,7 +4,7 @@ import { immer } from "zustand/middleware/immer";
 import toast from "react-hot-toast";
 import type { NeurexStore, TaskNode } from "./types";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = "http://127.0.0.1:8000";
 
 export const useStore = create<NeurexStore>()(
   immer((set, get) => ({

@@ -3,7 +3,7 @@ import { Search, FileText, Loader2 } from "lucide-react";
 import { useStore } from "../../lib/store";
 import "./SearchPanel.css";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = "http://127.0.0.1:8000";
 
 interface SearchResult {
   path: string;

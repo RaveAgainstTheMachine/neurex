@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Puzzle, Download, Trash2, Globe, Loader2, Plus } from "lucide-react";
 import "./SkillsPanel.css";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = "http://127.0.0.1:8000";
 
 interface Skill {
   id: string;

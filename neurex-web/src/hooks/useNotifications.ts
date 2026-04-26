@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 const VAPID_PUBLIC_KEY = 'BPXD9z076zxWXfa8rDgeEF4l6N240ChuS1TivvgPzLEOovAyX-2rwuTE0fYav6Z7UMmlx-97k3H8et5yFtH5giI';
-const API_BASE = 'http://localhost:8000';
+const API_BASE = 'http://127.0.0.1:8000';
 
 export function useNotifications() {
   useEffect(() => {

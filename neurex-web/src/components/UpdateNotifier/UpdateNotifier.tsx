@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Download, RefreshCw, CheckCircle, AlertCircle } from "lucide-react";
 import "./UpdateNotifier.css";
 
-const API = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
+const API = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
 const CHECK_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
 
 interface UpdateStatus {
