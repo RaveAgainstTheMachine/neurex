@@ -27,7 +27,8 @@ export function useWebSocket(conversationId: string) {
   useEffect(() => {
     if (!conversationId || conversationId === "undefined") return;
 
-    const url = `ws://127.0.0.1:8000/ws/${conversationId}?token=${WS_TOKEN}&user_id=${userId}`;
+    const host = window.location.hostname || "127.0.0.1";
+    const url = `ws://${host}:8000/ws/${conversationId}?token=${WS_TOKEN}&user_id=${userId}`;
     const socket = new WebSocket(url);
     ws.current = socket;
     (window as any).neurexWS = { send, sendPresence };
