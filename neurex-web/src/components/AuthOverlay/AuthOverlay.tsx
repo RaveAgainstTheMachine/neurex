@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useStore } from "../../lib/store";
 import { Lock, User, Shield, ArrowRight, Loader2, Cpu } from "lucide-react";
 import "./AuthOverlay.css";
@@ -8,14 +8,54 @@ const API_BASE = "http://127.0.0.1:8000";
 
 export function AuthOverlay() {
   const [isLogin, setIsLogin] = useState(true);
+  const [onboardingRequired, setOnboardingRequired] = useState(false);
   const [showOtp, setShowOtp] = useState(false);
   const [showForceChange, setShowForceChange] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [initToken, setInitToken] = useState("");
   const [otpCode, setOtpCode] = useState("");
   const [loading, setLoading] = useState(false);
   const setAuth = useStore(s => s.setAuth);
+
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/auth/onboarding/status`);
+        const data = await res.json();
+        if (data.onboarding_required) {
+          setOnboardingRequired(true);
+        }
+      } catch {}
+    };
+    checkOnboarding();
+  }, []);
+
+  const handleOnboardingSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!username || !password || !initToken) return;
+
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/onboarding/setup?username=${username}&password=${password}&token=${initToken}`, {
+        method: "POST"
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.detail || "Onboarding failed");
+      }
+
+      toast.success("Master Identity Synthesized! Please sign in.");
+      setOnboardingRequired(false);
+      setIsLogin(true);
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -139,6 +179,67 @@ export function AuthOverlay() {
       setLoading(false);
     }
   };
+
+  if (onboardingRequired) {
+    return (
+      <div className="auth-overlay">
+        <div className="auth-mesh-bg" />
+        <div className="auth-card glass">
+          <div className="auth-card__header">
+            <div className="auth-logo">
+              <div className="auth-logo__inner">⬡</div>
+            </div>
+            <h2>Master Initialization</h2>
+            <p className="text-muted">No administrative presence detected. Synthesis required.</p>
+          </div>
+
+          <form className="auth-form" onSubmit={handleOnboardingSubmit}>
+            <div className="auth-input-group">
+              <div className="auth-input">
+                <Shield size={18} className="auth-input__icon" />
+                <input 
+                  type="text" 
+                  placeholder="Installation Token (check logs)" 
+                  value={initToken}
+                  onChange={e => setInitToken(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="auth-input">
+                <User size={18} className="auth-input__icon" />
+                <input 
+                  type="text" 
+                  placeholder="Master Username" 
+                  value={username}
+                  onChange={e => setUsername(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="auth-input">
+                <Lock size={18} className="auth-input__icon" />
+                <input 
+                  type="password" 
+                  placeholder="Initial Password" 
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <button className="btn btn--purple auth-submit" disabled={loading}>
+              {loading ? <Loader2 className="animate-spin" /> : "Synthesize Master Identity"}
+            </button>
+          </form>
+
+          <div className="auth-badge">
+            <Cpu size={12} />
+            Stand-alone Node Mode
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (showForceChange) {
     return (
