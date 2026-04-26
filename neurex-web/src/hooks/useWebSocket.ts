@@ -32,45 +32,47 @@ export function useWebSocket(conversationId: string) {
 
   useEffect(() => {
     if (!conversationId || conversationId === "undefined") return;
+    const state = useStore.getState();
 
     const host = window.location.hostname || "127.0.0.1";
     const url = `ws://${host}:8000/ws/${conversationId}?token=${WS_TOKEN}&user_id=${userId}`;
     const socket = new WebSocket(url);
     ws.current = socket;
     (window as any).neurexWS = { send, sendPresence };
-    setWsStatus("connecting");
+    state.setWsStatus("connecting");
 
-    socket.onopen = () => setWsStatus("connected");
-    socket.onclose = () => setWsStatus("disconnected");
-    socket.onerror = () => setWsStatus("disconnected");
+    socket.onopen = () => state.setWsStatus("connected");
+    socket.onclose = () => state.setWsStatus("disconnected");
+    socket.onerror = () => state.setWsStatus("disconnected");
 
     socket.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data);
         const { event, data } = msg;
+        const s = useStore.getState();
 
         switch (event) {
           case "presence_update":
-            setPresence(data.filter((p: any) => p.user_id !== userId));
+            s.setPresence(data.filter((p: any) => p.user_id !== userId));
             break;
           case "task_created":
           case "task_updated":
-            upsertTask(data as TaskNode);
+            s.upsertTask(data as TaskNode);
             break;
           case "plan_ready":
-            (data.tasks as TaskNode[]).forEach(upsertTask);
+            (data.tasks as TaskNode[]).forEach(s.upsertTask);
             break;
           case "token":
-            appendToken(data as string);
+            s.appendToken(data as string);
             break;
           case "done":
-            (data.tasks as TaskNode[]).forEach(upsertTask);
+            (data.tasks as TaskNode[]).forEach(s.upsertTask);
             break;
           case "terminal_output":
             window.dispatchEvent(new CustomEvent("terminal_write", { detail: data }));
             break;
           case "error":
-            addMessage({ role: "assistant", content: `❌ Error: ${data}` });
+            s.addMessage({ role: "assistant", content: `❌ Error: ${data}` });
             break;
         }
       } catch {}
@@ -85,9 +87,9 @@ export function useWebSocket(conversationId: string) {
     return () => {
       clearInterval(heartbeat);
       socket.close();
-      clearTasks();
+      state.clearTasks();
     };
-  }, [conversationId, setWsStatus, upsertTask, appendToken, addMessage, clearTasks, setPresence]);
+  }, [conversationId, send, sendPresence]);
 
   // Load history on mount or switch
   useEffect(() => {

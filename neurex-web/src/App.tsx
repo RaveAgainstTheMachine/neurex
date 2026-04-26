@@ -212,15 +212,16 @@ function AppContent() {
     initializedRef.current = true;
 
     const init = async () => {
+      const state = useStore.getState();
       // Start a steady ramp towards 40% immediately
       const rampInterval = setInterval(() => {
         setTargetProgress(prev => prev < 40 ? prev + 2 : prev);
-      }, 50);
+      }, 100);
 
       try {
         await Promise.all([
-          refreshFileTree(),
-          refreshInfra()
+          state.refreshFileTree(),
+          state.refreshInfra()
         ]);
         setTargetProgress(70);
         
@@ -233,7 +234,7 @@ function AppContent() {
       }
     };
     init();
-  }, [refreshFileTree, refreshInfra]);
+  }, []);
 
   // Finish initialization only when visual progress reaches 100
   useEffect(() => {
