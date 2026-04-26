@@ -17,6 +17,7 @@ interface ModelProfile {
   recommended_tasks: string[];
   description?: string;
   benchmarks?: Record<string, string>;
+  repo_url?: string;
   is_downloaded?: boolean;
   is_community?: boolean;
   downloads?: number;
@@ -86,6 +87,17 @@ function ModelDetailsModal({
         </div>
         <div className="modal-footer">
           <button className="btn btn--muted" onClick={onClose}>Close</button>
+          {model.repo_url && (
+            <a 
+              href={model.repo_url} 
+              target="_blank" 
+              rel="noreferrer" 
+              className="btn btn--muted"
+              style={{ display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}
+            >
+              <ExternalLink size={14} /> HF HUB
+            </a>
+          )}
           <button 
             className={`btn ${model.is_downloaded ? 'btn--disabled' : 'btn--purple'}`}
             disabled={loading || model.is_downloaded}
