@@ -9,7 +9,13 @@ const userId = "User-" + Math.random().toString(36).substring(7);
 
 export function useWebSocket(conversationId: string) {
   const ws = useRef<WebSocket | null>(null);
-  const { setWsStatus, upsertTask, addMessage, appendToken, clearTasks, setPresence } = useStore();
+  
+  const setWsStatus = useStore(s => s.setWsStatus);
+  const upsertTask = useStore(s => s.upsertTask);
+  const addMessage = useStore(s => s.addMessage);
+  const appendToken = useStore(s => s.appendToken);
+  const clearTasks = useStore(s => s.clearTasks);
+  const setPresence = useStore(s => s.setPresence);
 
   const send = useCallback((payload: object) => {
     if (ws.current?.readyState === WebSocket.OPEN) {

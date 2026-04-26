@@ -133,14 +133,12 @@ function ConfirmModal({
 }
 
 export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) => void, currentSize: number }) {
-  const { 
-    infraEngines: engines, 
-    infraMetrics: metrics, 
-    infraRegistry: registry, 
-    infraSkills: skills, 
-    infraPeers: peers,
-    refreshInfra: fetchData 
-  } = useStore();
+  const engines = useStore(s => s.infraEngines);
+  const metrics = useStore(s => s.infraMetrics);
+  const registry = useStore(s => s.infraRegistry);
+  const skills = useStore(s => s.infraSkills);
+  const peers = useStore(s => s.infraPeers);
+  const fetchData = useStore(s => s.refreshInfra);
 
   const [searchResults, setSearchResults] = useState<ModelProfile[]>([]);
   const [searchQuery, setSearchQuery] = useState("");

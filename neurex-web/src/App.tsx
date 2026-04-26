@@ -168,7 +168,10 @@ function AppContent() {
   };
 
   useNotifications();
-  const { wsStatus, fileTree, refreshFileTree, refreshInfra } = useStore();
+  const wsStatus = useStore(s => s.wsStatus);
+  const refreshFileTree = useStore(s => s.refreshFileTree);
+  const refreshInfra = useStore(s => s.refreshInfra);
+  
   const [targetProgress, setTargetProgress] = useState(10);
   const [visualProgress, setVisualProgress] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
