@@ -9,6 +9,8 @@ const API_BASE = "http://127.0.0.1:8000";
 export const useStore = create<NeurexStore>()(
   immer((set, get) => ({
     // ── Auth ──────────────────────────────────────────────────────────
+    onboardingRequired: false,
+    setOnboardingRequired: (val) => set((s) => { s.onboardingRequired = val; }),
     token: localStorage.getItem("token"),
     user: JSON.parse(localStorage.getItem("user") || "null"),
     setAuth: (token, user) => {

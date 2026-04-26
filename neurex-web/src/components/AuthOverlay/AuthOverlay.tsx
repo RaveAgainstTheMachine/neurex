@@ -10,7 +10,6 @@ const API_BASE = window.location.origin.includes(":3000")
 
 export function AuthOverlay() {
   const [isLogin, setIsLogin] = useState(true);
-  const [onboardingRequired, setOnboardingRequired] = useState(false);
   const [checkingOnboarding, setCheckingOnboarding] = useState(true);
   const [showOtp, setShowOtp] = useState(false);
   const [showForceChange, setShowForceChange] = useState(false);
@@ -21,6 +20,8 @@ export function AuthOverlay() {
   const [otpCode, setOtpCode] = useState("");
   const [loading, setLoading] = useState(false);
   const setAuth = useStore(s => s.setAuth);
+  const onboardingRequired = useStore(s => s.onboardingRequired);
+  const setOnboardingRequired = useStore(s => s.setOnboardingRequired);
 
   useEffect(() => {
     const checkOnboarding = async () => {

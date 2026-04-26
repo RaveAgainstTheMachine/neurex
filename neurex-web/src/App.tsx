@@ -194,7 +194,8 @@ function AppContent() {
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>(
     (localStorage.getItem("neurex_sidebar_tab") as SidebarTab) || "explorer"
   );
-  const [globalOnboardingRequired, setGlobalOnboardingRequired] = useState(false);
+  const onboardingRequired = useStore(s => s.onboardingRequired);
+  const setOnboardingRequired = useStore(s => s.setOnboardingRequired);
 
   const updateSidebarTab = (tab: SidebarTab) => {
     setSidebarTab(tab);
@@ -225,7 +226,7 @@ function AppContent() {
         const obRes = await fetch(`${API_BASE}/api/auth/onboarding/status`);
         const obData = await obRes.json();
         if (obData.onboarding_required) {
-          setGlobalOnboardingRequired(true);
+          setOnboardingRequired(true);
           state.logout(); // Clear stale token cleanly
           return;
         }
@@ -293,8 +294,8 @@ function AppContent() {
 
   return (
     <div className="app">
-      {(!token || globalOnboardingRequired) && <AuthOverlay />}
-      {!isInitialized && token && !globalOnboardingRequired && <LoadingOverlay progress={visualProgress} />}
+      {(!token || onboardingRequired) && <AuthOverlay />}
+      {!isInitialized && token && !onboardingRequired && <LoadingOverlay progress={visualProgress} />}
       <Toaster position="top-right" toastOptions={{ 
         style: { 
           background: '#1e1e24', 

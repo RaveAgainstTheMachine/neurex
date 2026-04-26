@@ -104,6 +104,8 @@ export interface User {
 
 export interface NeurexStore {
   // Auth
+  onboardingRequired: boolean;
+  setOnboardingRequired: (val: boolean) => void;
   token: string | null;
   user: User | null;
   setAuth: (token: string, user: User) => void;
