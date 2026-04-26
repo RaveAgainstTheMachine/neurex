@@ -30,7 +30,7 @@ export function InfraPanel() {
   const [skills, setSkills] = useState<any[]>([]);
   const [peers, setPeers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
 
   const fetchData = async () => {
     try {
@@ -183,7 +183,6 @@ export function InfraPanel() {
   return (
     <div 
       className={`infra-panel ${expanded ? 'infra-panel--expanded' : ''}`}
-      onClick={() => !expanded && setExpanded(true)}
     >
       <div className="infra-panel__header">
         <Cpu size={16} />
