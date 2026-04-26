@@ -9,6 +9,7 @@ const API_BASE = "http://127.0.0.1:8000";
 export function AuthOverlay() {
   const [isLogin, setIsLogin] = useState(true);
   const [onboardingRequired, setOnboardingRequired] = useState(false);
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
   const [showOtp, setShowOtp] = useState(false);
   const [showForceChange, setShowForceChange] = useState(false);
   const [username, setUsername] = useState("");
@@ -27,7 +28,11 @@ export function AuthOverlay() {
         if (data.onboarding_required) {
           setOnboardingRequired(true);
         }
-      } catch {}
+      } catch (err) {
+        console.error("Onboarding check failed:", err);
+      } finally {
+        setCheckingOnboarding(false);
+      }
     };
     checkOnboarding();
   }, []);
@@ -179,6 +184,18 @@ export function AuthOverlay() {
       setLoading(false);
     }
   };
+
+  if (checkingOnboarding) {
+    return (
+      <div className="auth-overlay">
+        <div className="auth-mesh-bg" />
+        <div className="auth-loader">
+          <Loader2 className="animate-spin text-purple" size={32} />
+          <span>Syncing Mesh...</span>
+        </div>
+      </div>
+    );
+  }
 
   if (onboardingRequired) {
     return (

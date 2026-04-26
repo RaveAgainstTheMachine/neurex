@@ -149,3 +149,15 @@
   letter-spacing: 1px;
   opacity: 0.6;
 }
+
+.auth-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  z-index: 1;
+}
