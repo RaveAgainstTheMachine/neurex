@@ -38,7 +38,7 @@ Register a new user. The **first** user registered is automatically granted `adm
 | Field | Type | Description |
 |:---|:---|:---|
 | `username` | string | Unique username |
-| `password` | string | Plain-text password (hashed server-side with bcrypt) |
+| `password` | string | Plain-text password (hashed server-side with pbkdf2_sha256) |
 
 **Response `200`**:
 ```json
@@ -48,7 +48,7 @@ Register a new user. The **first** user registered is automatically granted `adm
 ---
 
 ### `POST /api/auth/token`
-Authenticate and receive a JWT. Token lifetime: **24 hours**.
+Authenticate and receive a JWT. Token lifetime: **8 hours**.
 
 **Body** (`application/x-www-form-urlencoded`):
 | Field | Type |

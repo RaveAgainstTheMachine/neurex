@@ -3,7 +3,7 @@ import { useEffect, useRef, useCallback } from "react";
 import { useStore } from "../lib/store";
 import type { TaskNode } from "../lib/types";
 
-const API_BASE = "http://127.0.0.1:8000";
+import { API_BASE } from "../lib/config";
 export function useWebSocket(conversationId: string) {
   const ws = useRef<WebSocket | null>(null);
   const token = useStore(s => s.token);
@@ -34,8 +34,8 @@ export function useWebSocket(conversationId: string) {
     if (!conversationId || conversationId === "undefined" || !token) return;
     const state = useStore.getState();
 
-    const host = window.location.hostname || "127.0.0.1";
-    const url = `ws://${host}:8000/ws/${conversationId}?token=${token}&user_id=${userId}`;
+    const wsBase = API_BASE.replace(/^http/, "ws");
+    const url = `${wsBase}/ws/${conversationId}?token=${token}&user_id=${userId}`;
     const socket = new WebSocket(url);
     ws.current = socket;
     (window as any).neurexWS = { send, sendPresence };

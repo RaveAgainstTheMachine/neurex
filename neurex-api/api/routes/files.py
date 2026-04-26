@@ -23,47 +23,45 @@ async def file_tree():
     try:
         res = subprocess.run(
             ["git", "status", "--porcelain"], 
-            cwd=WORKSPACE, capture_output=True, text=True, check=True
+            cwd=WORKSPACE, capture_output=True, text=True, timeout=5
         )
         for line in res.stdout.splitlines():
             if len(line) > 3:
                 status = line[:2].strip()
                 path = line[3:].strip()
-                # Status: M (Modified), ?? (Untracked) -> U
                 git_status[path] = "M" if "M" in status else "U" if "??" in status else None
     except:
         pass
 
-    def _get_file_errors(path: Path) -> int:
-        """Heuristic check for critical syntax errors."""
-        if path.suffix == ".py":
-            try:
-                ast.parse(path.read_text(errors="ignore"))
-                return 0
-            except:
-                return 1
-        return 0
-
     def _walk(path: Path) -> dict:
         name = path.name
-        rel_path = str(path.relative_to(WORKSPACE))
+        try:
+            rel_path = str(path.relative_to(WORKSPACE))
+        except ValueError:
+            rel_path = name
         
         if path.is_dir():
             children = []
-            items = sorted(path.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
-            for child in items:
-                if child.name not in IGNORED:
-                    children.append(_walk(child))
+            try:
+                # Use os.scandir for better performance on large directories
+                for entry in os.scandir(path):
+                    if entry.name not in IGNORED:
+                        children.append(_walk(Path(entry.path)))
+                children.sort(key=lambda x: (x["type"] != "dir", x["name"].lower()))
+            except PermissionError:
+                pass
             return {"name": name, "type": "dir", "children": children}
         
         return {
             "name": name, 
             "type": "file", 
             "path": rel_path,
-            "status": git_status.get(rel_path),
-            "errors": _get_file_errors(path)
+            "status": git_status.get(rel_path)
         }
 
+    if not WORKSPACE.exists():
+        return {"name": "root", "type": "dir", "children": [], "error": "Workspace not found"}
+        
     return _walk(WORKSPACE)
 
 

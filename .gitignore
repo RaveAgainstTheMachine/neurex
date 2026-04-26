@@ -12,21 +12,24 @@ venv/
 .mypy_cache/
 .ruff_cache/
 
-# ── SQLite databases ──────────────────────────────────────────────────────────
-neurex-api/neurex.db
-neurex-api/neurex.db-shm
-neurex-api/neurex.db-wal
+# ── Databases & Logs ──────────────────────────────────────────────────────────
+neurex-api/*.db
+neurex-api/*.db-shm
+neurex-api/*.db-wal
+neurex-api/*.log
+neurex-web/vite.log
 
-# ── Node ──────────────────────────────────────────────────────────────────────
-neurex-web/node_modules/
-neurex-web/.next/
-neurex-web/out/
+# ── Keys & Secrets ────────────────────────────────────────────────────────────
+neurex-api/*.pem
+neurex-api/scratch/
+neurex-api/skills/*/
 
-# ── Eval results ──────────────────────────────────────────────────────────────
-eval/results/
-
-# ── Workspace trash ───────────────────────────────────────────────────────────
-workspace/.neurex_trash/
+# ── Local Storage ─────────────────────────────────────────────────────────────
+.models/
+chroma_db/
+.neurex/
+workspace/
 
 # ── Docker ────────────────────────────────────────────────────────────────────
 *.log
+neurex-web/dist/

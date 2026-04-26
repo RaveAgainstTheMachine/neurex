@@ -76,13 +76,12 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
+    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|.*\.local):3000",
     allow_origins=[
+        "http://10.10.10.48:3000",
+        "https://10.10.10.48:3000",
         "http://localhost:3000",
         "http://127.0.0.1:3000",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:5174",
-        "http://127.0.0.1:5174",
     ],
     allow_credentials=True,
     allow_methods=["*"],

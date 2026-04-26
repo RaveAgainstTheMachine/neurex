@@ -1,7 +1,7 @@
 import json
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
-from core.skills.manager import SkillManager, SKILLS_DIR
+from core.skills.manager import SkillManager
 from api.routes.auth import require_role, UserRole
 
 router = APIRouter()
@@ -13,23 +13,7 @@ class SkillInstallRequest(BaseModel):
 @router.get("/")
 async def list_skills():
     """List all installed skills."""
-    skills = []
-    if SKILLS_DIR.exists():
-        for d in SKILLS_DIR.iterdir():
-            if d.is_dir() and not d.name.startswith("."):
-                manifest = {}
-                m_path = d / "manifest.json"
-                if m_path.exists():
-                    manifest = json.loads(m_path.read_text())
-                
-                skills.append({
-                    "id": d.name,
-                    "name": manifest.get("name", d.name),
-                    "description": manifest.get("description", ""),
-                    "tools_count": len(manifest.get("tools", [])),
-                    "url": manifest.get("repository", "")
-                })
-    return skills
+    return manager.list_available()
 
 @router.delete("/{skill_id}", dependencies=[Depends(require_role(UserRole.ADMIN))])
 async def delete_skill(skill_id: str):

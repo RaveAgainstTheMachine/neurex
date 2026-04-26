@@ -28,6 +28,9 @@ class User(SQLModel, table=True):
     role: UserRole = UserRole.DEVELOPER
     created_at: datetime = Field(default_factory=datetime.utcnow)
     is_active: bool = Field(default=True)
+    otp_secret: Optional[str] = None
+    otp_enabled: bool = Field(default=False)
+    force_password_change: bool = Field(default=False)
 
 class AutonomyLevel(str, Enum):
     RESTRICTED = "restricted" # Everything needs approval

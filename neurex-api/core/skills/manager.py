@@ -33,7 +33,8 @@ class SkillSet:
 
 class SkillManager:
     def __init__(self):
-        SKILLS_DIR.mkdir(parents=True, exist_ok=True)
+        self.SKILLS_DIR = Path(os.getenv("NEUREX_SKILLS_PATH", "./skills")).absolute()
+        self.SKILLS_DIR.mkdir(parents=True, exist_ok=True)
 
     def install_from_git(self, url: str) -> str:
         """Clone a skill repository into the local skills store."""

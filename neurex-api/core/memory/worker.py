@@ -67,9 +67,6 @@ class MemoryWorker:
 
         # Start file watcher
         try:
-            from watchdog.observers import Observer
-            from watchdog.events import FileSystemEventHandler
-
             handler = _ChangeHandler(self._queue, self._loop)
             self._observer = Observer()
             self._observer.schedule(handler, str(WORKSPACE_PATH), recursive=True)
@@ -145,7 +142,10 @@ class MemoryWorker:
         return True
 
 
-class _ChangeHandler:
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+
+class _ChangeHandler(FileSystemEventHandler):
     """Watchdog event handler that enqueues changed files for re-indexing."""
     def __init__(self, queue: asyncio.Queue, loop: asyncio.AbstractEventLoop):
         self._queue = queue
