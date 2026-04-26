@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Database, Search, Cpu, Clock, ExternalLink, BrainCircuit } from "lucide-react";
 import "./HiveMindPanel.css";
 
-const API_BASE = "http://127.0.0.1:8000";
+import { API_BASE } from "../../lib/config";
 
 interface MemoryEntry {
   id: string;

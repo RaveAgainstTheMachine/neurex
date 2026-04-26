@@ -3,7 +3,7 @@ import { Puzzle, Download, Trash2, Globe, Loader2, Plus } from "lucide-react";
 import "./SkillsPanel.css";
 import toast from "react-hot-toast";
 
-const API_BASE = "http://127.0.0.1:8000";
+import { API_BASE } from "../../lib/config";
 
 interface Skill {
   id: string;

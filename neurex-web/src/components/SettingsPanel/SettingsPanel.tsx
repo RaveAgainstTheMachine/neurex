@@ -8,7 +8,9 @@ import toast from "react-hot-toast";
 import "./SettingsPanel.css";
 import { useStore } from "../../lib/store";
 
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = window.location.origin.includes(":3000") 
+  ? window.location.origin.replace(":3000", ":8000") 
+  : window.location.origin;
 
 interface SettingsState {
   autonomy_level: string;

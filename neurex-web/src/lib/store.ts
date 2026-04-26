@@ -11,16 +11,34 @@ export const useStore = create<NeurexStore>()(
     // ── Auth ──────────────────────────────────────────────────────────
     onboardingRequired: false,
     setOnboardingRequired: (val) => set((s) => { s.onboardingRequired = val; }),
-    token: localStorage.getItem("token"),
+    token: (() => {
+      const t = localStorage.getItem("token");
+      const ts = localStorage.getItem("token_timestamp");
+      if (t && ts) {
+        const age = Date.now() - parseInt(ts);
+        if (age > 8 * 60 * 60 * 1000) { // 8 hours
+          localStorage.removeItem("token");
+          localStorage.removeItem("token_timestamp");
+          return null;
+        }
+      }
+      return t;
+    })(),
     user: JSON.parse(localStorage.getItem("user") || "null"),
     setAuth: (token, user) => {
+      const now = Date.now().toString();
       localStorage.setItem("token", token);
+      localStorage.setItem("token_timestamp", now);
       localStorage.setItem("user", JSON.stringify(user));
-      set((s) => { s.token = token; s.user = user; });
+      set((s) => { 
+        s.token = token; 
+        s.user = user;
+      });
       toast.success(`Welcome back, ${user.username}`);
     },
     logout: () => {
       localStorage.removeItem("token");
+      localStorage.removeItem("token_timestamp");
       localStorage.removeItem("user");
       set((s) => { s.token = null; s.user = null; });
       toast.error("Logged out");

@@ -26,7 +26,7 @@ import { useStore } from "../../lib/store";
 import type { TaskNode } from "../../lib/types";
 import "./AIPanel.css";
 
-const API_BASE = "http://127.0.0.1:8000";
+import { API_BASE } from "../../lib/config";
 
 const STATUS_COLOR: Record<string, string> = {
   PENDING:          "var(--status-pending)",

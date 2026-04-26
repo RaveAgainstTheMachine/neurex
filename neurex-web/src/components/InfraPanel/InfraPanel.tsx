@@ -9,7 +9,7 @@ import { useStore } from "../../lib/store";
 import { ModelProfile, InfraEngine, MeshPeer } from "../../lib/types";
 import toast from "react-hot-toast";
 
-const API_BASE = "http://127.0.0.1:8000";
+import { API_BASE } from "../../lib/config";
 
 function ModelDetailsModal({ 
   show, 

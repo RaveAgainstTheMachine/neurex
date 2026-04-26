@@ -1,7 +1,9 @@
 /* src/App.css */
 .app {
   display: flex;
-  height: 100vh;
+  height: 100vh; /* Fallback */
+  height: -webkit-fill-available;
+  height: 100dvh;
   overflow: hidden;
   background: var(--bg-app);
 }
@@ -337,7 +339,9 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  height: 100vh; /* Fallback */
+  height: -webkit-fill-available;
+  height: 100dvh;
   background: #131316;
   color: #e8e8f0;
   text-align: center;

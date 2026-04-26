@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Shield, ShieldAlert, Activity, Key } from "lucide-react";
 import "./SystemLogs.css";
 
-const API_BASE = "http://127.0.0.1:8000";
+import { API_BASE } from "../../lib/config";
 
 interface AuditLog {
   id: string;
