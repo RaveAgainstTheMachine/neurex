@@ -7,7 +7,7 @@ import {
 import toast from "react-hot-toast";
 import "./SettingsPanel.css";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = "http://127.0.0.1:8000";
 
 interface SettingsState {
   autonomy_level: string;
@@ -142,6 +142,52 @@ export function SettingsPanel() {
 
       <div className="settings-panel__content">
         
+        {/* AI INFRASTRUCTURE */}
+        <section className="settings-group">
+          <div className="settings-group__header">
+            <Cpu size={16} /> <h3>AI Infrastructure</h3>
+          </div>
+          <div className="settings-group__body">
+            <div className="setting-row">
+              <div className="setting-info">
+                <label>Ollama API Endpoint</label>
+                <p>The base URL for your local Ollama service.</p>
+              </div>
+              <div className="setting-control">
+                <input 
+                  type="text" 
+                  value={settings.ollama_base_url} 
+                  onChange={(e) => handleChange("ollama_base_url", e.target.value)}
+                  className="settings-input"
+                  placeholder="http://127.0.0.1:11434"
+                  disabled={isViewer}
+                />
+              </div>
+            </div>
+
+            <div className="setting-row">
+              <div className="setting-info">
+                <label>Global Context Window</label>
+                <p>Override the default context length for all models.</p>
+              </div>
+              <div className="setting-control">
+                <select 
+                  value={settings.llm_context_length} 
+                  onChange={(e) => handleChange("llm_context_length", parseInt(e.target.value))}
+                  className="settings-select"
+                  disabled={isViewer}
+                >
+                  <option value={4096}>4k (Fast)</option>
+                  <option value={8192}>8k (Balanced)</option>
+                  <option value={16384}>16k (Deep)</option>
+                  <option value={32768}>32k (Ultra)</option>
+                  <option value={131072}>128k (Full)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* APPEARANCE */}
         <section className="settings-group">
           <div className="settings-group__header">
