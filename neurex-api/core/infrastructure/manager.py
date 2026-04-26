@@ -21,16 +21,35 @@ class InfrastructureManager:
         self.supported_engines = ["ollama", "vllm", "llama.cpp"]
 
     async def get_status(self) -> List[Dict[str, Any]]:
-        """Check status of all supported engines."""
+        """Check status of all supported engines with detailed diagnostics."""
         statuses = []
         for engine in self.supported_engines:
-            is_running = self._is_process_running(engine)
-            version = await self._get_version(engine) if is_running else "n/a"
+            binary_name = engine
+            if engine == "llama.cpp":
+                binary_name = "llama-server"
+            
+            path = shutil.which(binary_name)
+            is_running = self._is_process_running(binary_name)
+            version = await self._get_version(binary_name)
+            
+            status_text = "running" if is_running else ("stopped" if path else "missing")
+            
+            details = ""
+            if not path:
+                if engine == "ollama":
+                    details = "Install via 'curl -fsSL https://ollama.com/install.sh | sh'"
+                elif engine == "vllm":
+                    details = "Install via 'pip install vllm'"
+                elif engine == "llama.cpp":
+                    details = "Ensure 'llama-server' is in PATH"
+            
             statuses.append({
                 "name": engine,
-                "status": "running" if is_running else "stopped",
-                "version": version,
-                "installed": shutil.which(engine) is not None
+                "status": status_text,
+                "version": version if version != "unknown" else ("Installed" if path else "n/a"),
+                "installed": path is not None,
+                "details": details,
+                "path": path or "Not found"
             })
         return statuses
 
@@ -56,6 +75,30 @@ class InfrastructureManager:
             return True
         
         raise Exception(f"Pulling models for {engine} is not supported yet.")
+
+    async def get_installed_models(self, engine: str) -> List[str]:
+        """List models currently downloaded and available on this node."""
+        if engine == "ollama":
+            if not shutil.which("ollama"):
+                return []
+            try:
+                # ollama list output format: NAME  ID  SIZE  MODIFIED
+                process = await asyncio.create_subprocess_exec(
+                    "ollama", "list",
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE
+                )
+                stdout, _ = await process.communicate()
+                lines = stdout.decode().strip().split("\n")
+                if len(lines) <= 1: return [] # Header only or empty
+                
+                # Skip header, take first column (name)
+                # Split by multiple spaces and take the first part
+                return [line.split()[0] for line in lines[1:] if line.strip()]
+            except Exception as e:
+                log.warning("infra.model_list_failed", engine=engine, error=str(e))
+                return []
+        return []
 
     async def start_engine(self, name: str):
         """Start a specific LLM engine."""

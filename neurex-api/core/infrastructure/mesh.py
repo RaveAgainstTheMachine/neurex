@@ -94,6 +94,7 @@ class MeshRouter:
                 peer.vram_gb = metrics.get("vram_gb", 0.0)
                 peer.ram_total_gb = metrics.get("ram_total_gb", 0.0)
                 peer.cpu_percent = metrics.get("cpu_percent", 0.0)
+                peer.models = data.get("local_models", [])
                 peer.queue_depth = data.get("queue_depth", 0)
                 peer.latency_ms = int((time.time() - start) * 1000)
                 self._save_peers()

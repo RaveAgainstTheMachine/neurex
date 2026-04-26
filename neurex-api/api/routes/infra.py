@@ -8,14 +8,8 @@ from core.infrastructure.manager import InfrastructureManager
 from core.infrastructure.registry import LLMRecommender, MODEL_REGISTRY
 from core.infrastructure.benchmarker import Benchmarker
 from core.skills.manager import SkillManager
-
-router = APIRouter()
-infra_manager = InfrastructureManager()
-benchmarker = Benchmarker()
-skill_manager = SkillManager()
-
-from core.skills.manager import SkillManager
 from api.routes.auth import require_role, UserRole
+from core.infrastructure.registry import LLMRecommender, MODEL_REGISTRY, search_huggingface
 
 router = APIRouter()
 infra_manager = InfrastructureManager()
@@ -45,9 +39,11 @@ async def get_infra_status():
     """Get status of all supported inference engines and system metrics."""
     engines = await infra_manager.get_status()
     metrics = infra_manager.get_system_metrics()
+    local_models = await infra_manager.get_installed_models("ollama")
     return {
         "engines": engines,
-        "metrics": metrics
+        "metrics": metrics,
+        "local_models": local_models
     }
 
 @router.post("/engine/{name}/start", dependencies=[Depends(require_role(UserRole.ADMIN))])
@@ -76,8 +72,15 @@ async def recommend_model(task: str):
 
 @router.get("/registry")
 async def get_model_registry():
-    """List all models known to Neurex and their capabilities."""
-    return MODEL_REGISTRY
+    """List all models known to Neurex and their availability."""
+    local_models = await infra_manager.get_installed_models("ollama")
+    enriched_registry = []
+    for model in MODEL_REGISTRY:
+        m_dict = model.dict()
+        # Mark as downloaded if name exists in local_models
+        m_dict["is_downloaded"] = any(model.name in lm for lm in local_models)
+        enriched_registry.append(m_dict)
+    return enriched_registry
 
 @router.post("/model/pull", dependencies=[Depends(require_role(UserRole.ADMIN))])
 async def pull_model(engine: str, model: str):
@@ -139,3 +142,14 @@ async def ollama_proxy(path: str, request: Request):
                 yield chunk
 
     return StreamingResponse(stream_generator(), media_type="application/json")
+
+@router.get("/logs")
+async def get_system_logs():
+    """Retrieve the latest system audit logs."""
+    from core.logger import get_audit_logs
+    return get_audit_logs(limit=100)
+
+@router.get("/registry/search")
+async def search_registry(query: str):
+    """Search Hugging Face for GGUF models."""
+    return await search_huggingface(query)

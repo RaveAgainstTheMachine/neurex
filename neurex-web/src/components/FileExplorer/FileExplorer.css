@@ -85,3 +85,48 @@
 }
 
 .icon-btn:hover { color: var(--text-primary); }
+
+.file-item__icon.ts { color: #3178c6; }
+.file-item__icon.js { color: #f7df1e; }
+.file-item__icon.py { color: #3776ab; }
+.file-item__icon.css { color: #1572b6; }
+.file-item__icon.json { color: #fbc02d; }
+.file-item__icon.md { color: #083fa1; }
+.file-item__icon.yml { color: #cb171e; }
+
+.file-status-tag {
+  font-size: 9px;
+  font-weight: 800;
+  margin-left: auto;
+  padding: 0 4px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.tag--m { color: #cca700; } /* Modified */
+.tag--u { color: #73c991; } /* Untracked */
+
+.file-item--m .file-item__name { color: #cca700; font-weight: 600; }
+.file-item--u .file-item__name { color: #73c991; }
+
+.file-error-badge {
+  background: var(--status-failed);
+  color: white;
+  font-size: 8px;
+  padding: 0 4px;
+  border-radius: 8px;
+  margin-left: 4px;
+  min-width: 14px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.file-item__icon.vite { color: #646cff; }
+.file-item__icon.docker { color: #2496ed; }
+.file-item__icon.git { color: #f05032; }
+.file-item__icon.npm { color: #cb3837; }
+.file-item__icon.env { color: #ffeb3b; }
+.file-item__icon.eslint { color: #4b32c3; }
+.file-item__icon.sql { color: #336791; }
+.file-item__icon.html { color: #e34f26; }
+.file-item__icon.modules { color: #8bc34a; opacity: 0.6; }

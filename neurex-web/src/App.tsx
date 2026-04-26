@@ -10,6 +10,7 @@ import { SystemLogsPanel } from "./components/SystemLogs/SystemLogs";
 import { SearchPanel } from "./components/SearchPanel/SearchPanel";
 import { EditorPane } from "./components/Editor/EditorPane";
 import { AIPanel } from "./components/AIPanel/AIPanel";
+import { AgentPanel } from "./components/AgentPanel/AgentPanel";
 import { Terminal } from "./components/Terminal/Terminal";
 import { SkillsPanel } from "./components/SkillsPanel/SkillsPanel";
 import { SettingsPanel } from "./components/SettingsPanel/SettingsPanel";
@@ -180,14 +181,22 @@ function AppContent() {
   // Workspace Initialization
   useEffect(() => {
     const init = async () => {
-      setTargetProgress(30);
-      await refreshFileTree();
-      setTargetProgress(80);
-      
-      // Artificial stabilization period
-      setTimeout(() => {
-        setTargetProgress(100);
-      }, 400);
+      // Start a steady ramp towards 40% immediately
+      const rampInterval = setInterval(() => {
+        setTargetProgress(prev => prev < 40 ? prev + 2 : prev);
+      }, 50);
+
+      try {
+        await refreshFileTree();
+        setTargetProgress(70);
+        
+        // Finalize
+        setTimeout(() => {
+          setTargetProgress(100);
+        }, 300);
+      } finally {
+        clearInterval(rampInterval);
+      }
     };
     init();
   }, [refreshFileTree]);
@@ -292,7 +301,7 @@ function AppContent() {
               {sidebarTab === "search"   && <SearchPanel />}
               {sidebarTab === "git"      && <PlaceholderPanel label="Source Control" />}
               {sidebarTab === "skills"   && <SkillsPanel />}
-              {sidebarTab === "agent"    && <PlaceholderPanel label="Agent Logs" />}
+              {sidebarTab === "agent"    && <AgentPanel />}
             </Panel>
 
             <ResizeHandle />

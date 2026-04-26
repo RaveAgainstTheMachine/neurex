@@ -15,18 +15,42 @@ collab_manager = CollaborationManager()
 
 @router.get("/tree")
 async def file_tree():
-    """Return a nested JSON file tree of the workspace."""
+    """Return a nested JSON file tree of the workspace with Git status."""
+    # Fetch Git Status
+    git_status = {}
+    try:
+        res = subprocess.run(
+            ["git", "status", "--porcelain"], 
+            cwd=WORKSPACE, capture_output=True, text=True, check=True
+        )
+        for line in res.stdout.splitlines():
+            if len(line) > 3:
+                status = line[:2].strip()
+                path = line[3:].strip()
+                # Status: M (Modified), ?? (Untracked) -> U
+                git_status[path] = "M" if "M" in status else "U" if "??" in status else None
+    except:
+        pass
+
     def _walk(path: Path) -> dict:
         name = path.name
+        rel_path = str(path.relative_to(WORKSPACE))
+        
         if path.is_dir():
             children = []
-            # Sort: directories first, then alphabetical
             items = sorted(path.iterdir(), key=lambda p: (not p.is_dir(), p.name.lower()))
             for child in items:
                 if child.name not in IGNORED:
                     children.append(_walk(child))
             return {"name": name, "type": "dir", "children": children}
-        return {"name": name, "type": "file", "path": str(path.relative_to(WORKSPACE))}
+        
+        return {
+            "name": name, 
+            "type": "file", 
+            "path": rel_path,
+            "status": git_status.get(rel_path),
+            "errors": 0 # Placeholder for future lint integration
+        }
 
     return _walk(WORKSPACE)
 

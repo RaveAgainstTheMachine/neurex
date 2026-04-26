@@ -33,6 +33,8 @@ export interface FileNode {
   type: "file" | "dir";
   path?: string;
   children?: FileNode[];
+  status?: "M" | "U" | "D" | null; // Modified, Untracked, Deleted
+  errors?: number; // Lint error count
 }
 
 export interface ChatMessage {

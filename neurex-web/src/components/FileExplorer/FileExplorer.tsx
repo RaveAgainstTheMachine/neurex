@@ -1,6 +1,10 @@
 // src/components/FileExplorer/FileExplorer.tsx
 import { useState, useEffect } from "react";
-import { ChevronRight, ChevronDown, File, Folder, FolderOpen, RefreshCw } from "lucide-react";
+import { 
+  ChevronRight, ChevronDown, File, Folder, FolderOpen, RefreshCw,
+  FileJson, FileCode, FileText, Settings, FileKey, GitGraph, 
+  Container, Zap, Database, Terminal as TerminalIcon, Globe
+} from "lucide-react";
 import { useStore } from "../../lib/store";
 import type { FileNode } from "../../lib/types";
 import "./FileExplorer.css";
@@ -15,6 +19,44 @@ const LANG_MAP: Record<string, string> = {
 
 function getLanguage(path: string) {
   return LANG_MAP[path.split(".").pop() ?? ""] ?? "plaintext";
+}
+
+function getFileIcon(name: string, isDir: boolean, expanded: boolean) {
+  if (isDir) {
+    if (name === ".github") return <GitGraph size={13} className="file-item__icon git" />;
+    if (name === "node_modules") return <Database size={13} className="file-item__icon modules" />;
+    return expanded ? <FolderOpen size={13} className="file-item__icon dir" /> : <Folder size={13} className="file-item__icon dir" />;
+  }
+
+  const lowerName = name.toLowerCase();
+  const ext = name.split(".").pop()?.toLowerCase();
+
+  // Exact Match
+  if (lowerName === "package.json") return <FileJson size={13} className="file-item__icon npm" />;
+  if (lowerName === "tsconfig.json") return <Settings size={13} className="file-item__icon ts" />;
+  if (lowerName.includes("vite.config")) return <Zap size={13} className="file-item__icon vite" />;
+  if (lowerName.includes("dockerfile")) return <Container size={13} className="file-item__icon docker" />;
+  if (lowerName.startsWith(".env")) return <FileKey size={13} className="file-item__icon env" />;
+  if (lowerName.startsWith(".git")) return <GitGraph size={13} className="file-item__icon git" />;
+  if (lowerName.includes("eslint")) return <Settings size={13} className="file-item__icon eslint" />;
+
+  // Extension Match
+  switch (ext) {
+    case "ts":
+    case "tsx": return <FileCode size={13} className="file-item__icon ts" />;
+    case "js":
+    case "jsx": return <FileCode size={13} className="file-item__icon js" />;
+    case "py": return <TerminalIcon size={13} className="file-item__icon py" />;
+    case "css": return <FileText size={13} className="file-item__icon css" />;
+    case "json": return <FileJson size={13} className="file-item__icon json" />;
+    case "md": return <FileText size={13} className="file-item__icon md" />;
+    case "sh": return <TerminalIcon size={13} className="file-item__icon sh" />;
+    case "yml":
+    case "yaml": return <Settings size={13} className="file-item__icon yml" />;
+    case "html": return <Globe size={13} className="file-item__icon html" />;
+    case "sql": return <Database size={13} className="file-item__icon sql" />;
+    default: return <File size={13} className="file-item__icon" />;
+  }
 }
 
 function FileItem({ node, depth }: { node: FileNode; depth: number }) {
@@ -51,24 +93,33 @@ function FileItem({ node, depth }: { node: FileNode; depth: number }) {
   return (
     <div>
       <div
-        className={`file-item ${isActive ? "file-item--active" : ""}`}
+        className={`file-item ${isActive ? "file-item--active" : ""} ${node.status ? `file-item--${node.status.toLowerCase()}` : ""}`}
         style={{ paddingLeft: 8 + depth * 12 }}
         onClick={handleClick}
       >
         {isDir ? (
-          <>
-            <span className="file-item__arrow">
-              {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-            </span>
-            {expanded ? <FolderOpen size={13} className="file-item__icon dir" /> : <Folder size={13} className="file-item__icon dir" />}
-          </>
+          <span className="file-item__arrow">
+            {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+          </span>
         ) : (
-          <>
-            <span className="file-item__arrow" />
-            <File size={13} className="file-item__icon" />
-          </>
+          <span className="file-item__arrow" />
         )}
+        
+        {getFileIcon(node.name, isDir, expanded)}
+        
         <span className="file-item__name">{node.name}</span>
+
+        {node.status && (
+          <span className={`file-status-tag tag--${node.status.toLowerCase()}`}>
+            {node.status}
+          </span>
+        )}
+
+        {(node.errors ?? 0) > 0 && (
+          <span className="file-error-badge">
+            {node.errors}
+          </span>
+        )}
       </div>
       {isDir && expanded && node.children && (
         <div className="file-item__children">

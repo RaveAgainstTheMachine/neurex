@@ -74,6 +74,16 @@ async def create_task(session: AsyncSession, **kwargs) -> TaskNode:
     session.add(node)
     await session.commit()
     await session.refresh(node)
+    
+    # Audit Logging
+    import structlog
+    log = structlog.get_logger()
+    log.info("agent.task_created", 
+             agent_type=node.agent_type, 
+             task_id=node.id, 
+             title=node.title, 
+             user_id=f"agent:{node.agent_type}")
+    
     return node
 
 async def update_task(
@@ -99,6 +109,17 @@ async def update_task(
     session.add(node)
     await session.commit()
     await session.refresh(node)
+    
+    # Audit Logging
+    import structlog
+    log = structlog.get_logger()
+    log.info("agent.task_updated", 
+             agent_type=node.agent_type, 
+             task_id=node.id, 
+             status=node.status,
+             user_id=f"agent:{node.agent_type}",
+             error=node.error if node.error else None)
+             
     return node
 
 async def get_graph(session: AsyncSession, graph_id: str) -> List[TaskNode]:

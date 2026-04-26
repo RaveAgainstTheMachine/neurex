@@ -51,6 +51,30 @@ class SkillManager:
         
         return name
 
+    def list_available(self) -> List[Dict[str, Any]]:
+        """Scan skills directory and return metadata for all installed skills."""
+        skills = []
+        if not SKILLS_DIR.exists():
+            return []
+        for d in SKILLS_DIR.iterdir():
+            if d.is_dir() and not d.name.startswith("."):
+                manifest_path = d / "manifest.json"
+                m = {}
+                if manifest_path.exists():
+                    with open(manifest_path, "r") as f:
+                        m = json.load(f)
+                
+                skills.append({
+                    "id": d.name,
+                    "name": m.get("name", d.name),
+                    "description": m.get("description", "No description available."),
+                    "version": m.get("version", "0.1.0"),
+                    "author": m.get("author", "unknown"),
+                    "enabled": True, # Placeholder for state management
+                    "source_repo": m.get("repository", "")
+                })
+        return skills
+
     def get_enabled_tools(self) -> List[Dict[str, Any]]:
         """Scan skills directory and return all tool definitions."""
         all_tools = []
@@ -80,11 +104,10 @@ class SkillManager:
         return self._tool_to_skill.get(tool_name)
 
     def fetch_curated_list(self) -> List[Dict[str, Any]]:
-        """Fetch the curated 'Awesome Skills' manifest from GitHub."""
+        """Fetch the curated list from the Neurex Skills Marketplace."""
         import requests
         try:
-            # We point to the raw manifest.json in the awesome-skills repo
-            url = "https://raw.githubusercontent.com/sickn33/antigravity-awesome-skills/main/skills.json"
+            url = "https://skills.mp/api/v1/registry.json"
             resp = requests.get(url, timeout=5)
             if resp.status_code == 200:
                 return resp.json().get("skills", [])
@@ -92,37 +115,34 @@ class SkillManager:
             log.warning("skill.fetch_curated_failed", error=str(e))
         return []
 
+    def delete_skill(self, name: str) -> bool:
+        """Remove a skill from the local store."""
+        target_path = SKILLS_DIR / name
+        if target_path.exists() and target_path.is_dir():
+            log.info("skill.delete", name=name)
+            shutil.rmtree(target_path)
+            return True
+        return False
+
     async def execute_skill_tool(self, skill_name: str, tool_name: str, args: Dict[str, Any]) -> str:
-        """
-        Execute a tool provided by a specific skill.
-        Skills are expected to provide a 'handler.py' with an async 'handle(tool_name, args)' function.
-        """
         skill_path = SKILLS_DIR / skill_name
         handler_path = skill_path / "handler.py"
-        
         if not handler_path.exists():
             return f"Error: Skill '{skill_name}' does not have a handler.py"
-            
         import importlib.util
         import sys
-        
         try:
             module_name = f"neurex_skill_{skill_name}"
             spec = importlib.util.spec_from_file_location(module_name, str(handler_path))
             if not spec or not spec.loader:
                 return f"Error: Could not load handler for skill '{skill_name}'"
-                
             module = importlib.util.module_from_spec(spec)
             sys.modules[module_name] = module
             spec.loader.exec_module(module)
-            
             if not hasattr(module, "handle"):
                 return f"Error: Skill '{skill_name}' handler has no 'handle' function"
-                
-            # Execute the handler (must be async)
             result = await module.handle(tool_name, args)
             return str(result)
-            
         except Exception as e:
             log.error("skill.execution_failed", skill=skill_name, tool=tool_name, error=str(e))
             return f"Skill execution error: {str(e)}"

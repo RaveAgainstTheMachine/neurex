@@ -70,3 +70,60 @@
   line-height: 1.4;
   word-break: break-word;
 }
+
+.sys-log-item {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sys-log-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.sys-log-item--expanded {
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 2px solid var(--neurex-purple);
+}
+
+.sys-log-item__count {
+  background: var(--neurex-purple);
+  color: white;
+  font-size: 8px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  margin: 0 8px;
+  font-weight: bold;
+}
+
+.sys-log-item__details-expanded {
+  margin-top: 12px;
+  padding: 10px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  font-size: 10px;
+  border: 1px solid var(--border-color);
+}
+
+.sys-log-detail-box pre {
+  margin: 4px 0 12px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  color: var(--text-muted);
+}
+
+.sys-log-timeline {
+  border-top: 1px solid var(--border-color);
+  padding-top: 8px;
+}
+
+.timeline-list {
+  margin-top: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.timeline-entry {
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}

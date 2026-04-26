@@ -148,3 +148,99 @@
 .icon-btn--red:hover {
   background: rgba(255, 69, 58, 0.1);
 }
+
+.model-card--downloaded {
+  border-color: rgba(46, 204, 113, 0.4) !important;
+  background: rgba(46, 204, 113, 0.02) !important;
+}
+
+.model-card__nodes {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border-color);
+}
+
+.node-availability {
+  font-size: 9px;
+  color: var(--neurex-purple);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.btn--disabled {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: var(--text-muted) !important;
+  cursor: default !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+/* Search & Model Catalog Enhancements */
+.infra-search {
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.infra-search input {
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px 8px 32px;
+  color: var(--text-main);
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.infra-search input:focus {
+  border-color: var(--purple-main);
+}
+
+.infra-search svg {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+}
+
+.capability-icons {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.capability-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+  cursor: help;
+}
+
+.capability-icon--active {
+  background: rgba(165, 148, 249, 0.2);
+  color: var(--purple-light);
+}
+
+.search-results-label {
+  font-size: 9px;
+  color: var(--purple-light);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

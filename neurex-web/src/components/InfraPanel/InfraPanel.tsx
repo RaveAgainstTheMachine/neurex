@@ -1,15 +1,12 @@
 import { useEffect, useState } from "react";
-import { Play, Square, RefreshCcw, Cpu, Zap, Database, ExternalLink, Code, Network } from "lucide-react";
+import { 
+  Play, Square, RefreshCcw, Cpu, Zap, Database, ExternalLink, 
+  Code, Network, Search, Brain, FileJson, Video, Image, AudioLines, 
+  Loader2, Info
+} from "lucide-react";
 import "./InfraPanel.css";
 
 const API_BASE = "http://localhost:8000";
-
-interface EngineStatus {
-  name: string;
-  status: "running" | "stopped";
-  version: string;
-  installed: boolean;
-}
 
 interface ModelProfile {
   name: string;
@@ -18,23 +15,19 @@ interface ModelProfile {
   context_window: number;
   vram_required_gb: number;
   recommended_tasks: string[];
-}
-
-interface SkillManifest {
-  id: string;
-  name: string;
-  description: string;
-  version: string;
-  author: string;
-  enabled: boolean;
-  source_repo: string;
+  is_downloaded?: boolean;
+  is_community?: boolean;
+  downloads?: number;
 }
 
 export function InfraPanel() {
-  const [engines, setEngines] = useState<EngineStatus[]>([]);
+  const [engines, setEngines] = useState<any[]>([]);
   const [metrics, setMetrics] = useState<any>(null);
   const [registry, setRegistry] = useState<ModelProfile[]>([]);
-  const [skills, setSkills] = useState<SkillManifest[]>([]);
+  const [searchResults, setSearchResults] = useState<ModelProfile[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [skills, setSkills] = useState<any[]>([]);
   const [peers, setPeers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -58,9 +51,38 @@ export function InfraPanel() {
     }
   };
 
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query);
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    setSearching(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/infra/registry/search?query=${encodeURIComponent(query)}`);
+      if (res.ok) {
+        setSearchResults(await res.json());
+      }
+    } catch (err) {
+      console.error("Search failed:", err);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const getCapabilityIcon = (tasks: string[] | undefined) => {
+    if (!tasks) return <Brain size={14} className="capability-icon--active" />;
+    const t = tasks.join(" ").toLowerCase();
+    if (t.includes("vision") || t.includes("image")) return <span title="Vision Capable"><Image size={14} className="capability-icon--active" /></span>;
+    if (t.includes("code")) return <span title="Coding Specialized"><FileJson size={14} className="capability-icon--active" /></span>;
+    if (t.includes("audio") || t.includes("voice")) return <span title="Audio/STT Capable"><AudioLines size={14} className="capability-icon--active" /></span>;
+    if (t.includes("video")) return <span title="Video Generation"><Video size={14} className="capability-icon--active" /></span>;
+    return <span title="General Reasoning"><Brain size={14} className="capability-icon--active" /></span>;
+  };
+
   useEffect(() => {
     fetchData();
-    const timer = setInterval(fetchData, 5000);
+    const timer = setInterval(fetchData, 10000); // 10s refresh
     return () => clearInterval(timer);
   }, []);
 
@@ -96,27 +118,83 @@ export function InfraPanel() {
     }
   };
 
+  const renderModelCard = (m: any) => {
+    const nodesWithModel = peers.filter(p => p.models?.some((rm: string) => rm.includes(m.name)));
+    const isDownloaded = m.is_downloaded || false;
+
+    return (
+      <div key={m.name} className={`model-card ${isDownloaded ? 'model-card--downloaded' : ''}`}>
+        <div className="model-card__header">
+          {getCapabilityIcon(m.recommended_tasks)}
+          <span className="model-card__name" title={m.name}>{m.name.split('/').pop()}</span>
+          <span className="model-card__tag">{m.params}</span>
+          {isDownloaded && <span className="badge badge--done" style={{marginLeft: 'auto', fontSize: 8}}>LOCAL</span>}
+          {m.is_community && <span className="badge badge--warn" style={{marginLeft: 4, fontSize: 8}}>HF</span>}
+        </div>
+        <div className="model-card__details">
+          <div className="model-card__detail">
+            <Database size={10} /> {(m.vram_required_gb || 0)}GB VRAM
+          </div>
+          <div className="model-card__detail">
+            <RefreshCcw size={10} /> {((m.context_window || 0) / 1000).toFixed(0)}k
+          </div>
+          {m.downloads !== undefined && (
+            <div className="model-card__detail">
+              <Search size={10} /> {m.downloads.toLocaleString()}
+            </div>
+          )}
+        </div>
+        
+        {nodesWithModel.length > 0 && (
+          <div className="model-card__nodes">
+            <div className="node-availability">
+              <Network size={10} style={{marginRight: 4}}/> Available on: {nodesWithModel.map(n => n.name).join(", ")}
+            </div>
+          </div>
+        )}
+
+        <div className="model-card__footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 12 }}>
+          <div className="model-card__tasks">
+            {(m.recommended_tasks || []).map((t: string) => <span key={t} className="task-tag">{t}</span>)}
+          </div>
+          <button 
+            className={`btn ${isDownloaded ? 'btn--disabled' : 'btn--purple'}`} 
+            style={{ padding: '4px 10px', fontSize: 10 }}
+            onClick={() => handlePullModel(m.engine, m.name)}
+            disabled={loading || isDownloaded}
+          >
+            {isDownloaded ? "READY" : loading ? "..." : "PULL"}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="infra-panel">
       <div className="infra-panel__header">
         <Cpu size={16} />
-        <span>Inference Infrastructure</span>
+        <span>Infrastructure Hub</span>
         {metrics && (
           <div style={{ marginLeft: "auto", fontSize: 10, color: "var(--text-muted)", display: "flex", gap: 12 }}>
-            <span><Cpu size={10} style={{marginRight: 4}}/>{(metrics.cpu_percent || 0).toFixed(1)}%</span>
-            <span><Database size={10} style={{marginRight: 4}}/>{(metrics.ram_used_gb || 0).toFixed(1)} / {(metrics.ram_total_gb || 0).toFixed(1)} GB</span>
+            <span title="GPU/VRAM Detection"><Zap size={10} style={{marginRight: 4, color: metrics.vram_gb > 0 ? 'var(--status-done)' : 'var(--text-muted)'}}/>{metrics.vram_gb || 0}GB</span>
+            <span title="System RAM Used"><Database size={10} style={{marginRight: 4}}/>{metrics.ram_used_gb} / {metrics.ram_total_gb} GB</span>
           </div>
         )}
       </div>
 
       <div className="infra-section">
-        <div className="infra-section__title">Engines</div>
+        <div className="infra-section__title">Compute Engines</div>
         <div className="infra-list">
           {engines.map((e) => (
             <div key={e.name} className={`infra-card ${e.status === "running" ? "infra-card--active" : ""}`}>
               <div className="infra-card__info">
-                <div className="infra-card__name">{e.name}</div>
-                <div className="infra-card__version">{e.version}</div>
+                <div className="infra-card__name" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  {e.name}
+                  {e.status === "missing" && <span title={e.details}><Info size={12} className="text-warn" /></span>}
+                </div>
+                <div className="infra-card__version">{e.version} • {e.status.toUpperCase()}</div>
+                {!e.installed && <div style={{ fontSize: 9, color: 'var(--status-failed)', marginTop: 2 }}>{e.details}</div>}
               </div>
               <div className="infra-card__actions">
                 {e.status === "running" ? (
@@ -135,38 +213,67 @@ export function InfraPanel() {
       </div>
 
       <div className="infra-section">
-        <div className="infra-section__title">Model Registry</div>
+        <div className="infra-section__title">Model Discovery</div>
+        <div className="infra-search">
+          <Search size={14} />
+          <input 
+            type="text" 
+            placeholder="Search Hugging Face (e.g. llama-3, mistral)..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch(searchQuery)}
+          />
+          {searching && <Loader2 size={14} className="loading-spinner" style={{ position: 'absolute', right: 10, top: 10 }} />}
+        </div>
+
         <div className="infra-list">
-          {registry.map((m) => (
-            <div key={m.name} className="model-card">
-              <div className="model-card__header">
-                <Zap size={12} className="model-card__icon" />
-                <span className="model-card__name">{m.name}</span>
-                <span className="model-card__tag">{m.params}</span>
-              </div>
-              <div className="model-card__details">
-                <div className="model-card__detail">
-                  <Database size={10} /> {(m.vram_required_gb || 0)}GB VRAM
-                </div>
-                <div className="model-card__detail">
-                  <RefreshCcw size={10} /> {((m.context_window || 0) / 1000).toFixed(0)}k Context
-                </div>
-              </div>
-              <div className="model-card__footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div className="model-card__tasks">
-                  {(m.recommended_tasks || []).map(t => <span key={t} className="task-tag">{t}</span>)}
-                </div>
-                <button 
-                  className="btn btn--purple" 
-                  style={{ padding: '4px 10px', fontSize: 10 }}
-                  onClick={() => handlePullModel(m.engine, m.name)}
-                  disabled={loading}
-                >
-                  {loading ? "Pulling..." : "Pull Model"}
-                </button>
-              </div>
+          {searchResults.length > 0 && (
+            <div className="search-results-label">
+              <Search size={10} /> SEARCH RESULTS (HUGGINGFACE)
             </div>
-          ))}
+          )}
+          {searchResults.map(m => renderModelCard(m))}
+          
+          {searchResults.length === 0 && (
+            <>
+              <div className="search-results-label">
+                <Brain size={10} /> CURATED ELITE REGISTRY
+              </div>
+              {registry.map(m => renderModelCard(m))}
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="infra-section">
+        <div className="infra-section__title">Mesh Mesh Federation</div>
+        <div className="infra-list">
+          {peers.length === 0 ? (
+            <div className="model-card" style={{ textAlign: "center", color: "var(--text-muted)", fontSize: 10, padding: 10 }}>
+              No peers detected. Enable Mesh to split loads.
+            </div>
+          ) : (
+            peers.map((p) => (
+              <div key={p.url} className={`infra-card ${p.status === "online" ? "infra-card--active" : ""}`}>
+                <div className="infra-card__info">
+                  <div className="infra-card__name">{p.name}</div>
+                  <div className="infra-card__version" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Network size={10} /> {p.url}
+                  </div>
+                </div>
+                <div className="infra-card__actions" style={{ flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                  <span className="task-tag" style={{ background: p.status === 'online' ? 'rgba(46, 204, 113, 0.1)' : 'rgba(255, 69, 58, 0.1)', color: p.status === 'online' ? 'var(--status-done)' : 'var(--status-failed)' }}>
+                    {p.status.toUpperCase()}
+                  </span>
+                  {p.status === 'online' && (
+                    <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>
+                      {p.vram_gb}GB VRAM • {p.latency_ms}ms
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -199,35 +306,17 @@ export function InfraPanel() {
           ))}
         </div>
       </div>
+
       <div className="infra-section">
-        <div className="infra-section__title">Mesh Federation</div>
-        <div className="infra-list">
-          {peers.length === 0 ? (
-            <div className="model-card" style={{ textAlign: "center", color: "var(--text-muted)" }}>
-              No remote nodes connected.
-            </div>
-          ) : (
-            peers.map((p) => (
-              <div key={p.url} className={`infra-card ${p.status === "online" ? "infra-card--active" : ""}`}>
-                <div className="infra-card__info">
-                  <div className="infra-card__name">{p.name}</div>
-                  <div className="infra-card__version" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Network size={10} /> {p.url}
-                  </div>
-                </div>
-                <div className="infra-card__actions" style={{ flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
-                  <span className="task-tag" style={{ background: p.status === 'online' ? 'rgba(46, 204, 113, 0.1)' : 'rgba(255, 69, 58, 0.1)', color: p.status === 'online' ? 'var(--status-done)' : 'var(--status-failed)' }}>
-                    {p.status.toUpperCase()}
-                  </span>
-                  {p.status === 'online' && (
-                    <span style={{ fontSize: 9, color: 'var(--text-muted)' }}>
-                      {p.vram_gb}GB VRAM • {p.ram_total_gb}GB RAM • {p.cpu_percent}% CPU • {p.latency_ms}ms
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))
-          )}
+        <div className="infra-section__title">Storage & Environment</div>
+        <div className="model-card" style={{ padding: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11 }}>
+            <Database size={14} className="text-purple" />
+            <span>Local Model Path: <code>~/.models</code></span>
+          </div>
+          <p style={{ margin: '8px 0 0', fontSize: 10, color: 'var(--text-muted)' }}>
+            All downloaded assets are stored in the persistent volume mounted to LLM_MODELS_PATH.
+          </p>
         </div>
       </div>
     </div>
