@@ -204,6 +204,90 @@
   border: 1px solid var(--border-color) !important;
 }
 
+/* Modals & Model Details */
+.modal-content--large {
+  width: 650px;
+}
+
+.spec-tile {
+  flex: 1;
+  background: var(--bg-app);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.spec-label {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+}
+
+.spec-value {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--purple-light);
+}
+
+.detail-section {
+  margin-bottom: 20px;
+}
+
+.detail-section h4 {
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  letter-spacing: 0.05em;
+}
+
+.detail-section p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.benchmark-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.benchmark-key {
+  width: 80px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.benchmark-bar-bg {
+  flex: 1;
+  height: 6px;
+  background: var(--bg-app);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.benchmark-bar-fill {
+  height: 100%;
+  background: var(--purple-main);
+  box-shadow: 0 0 10px var(--glow-purple);
+  border-radius: 3px;
+}
+
+.benchmark-val {
+  width: 40px;
+  text-align: right;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
 /* Modals */
 .modal-overlay {
   position: fixed;

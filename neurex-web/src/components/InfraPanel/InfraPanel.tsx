@@ -15,9 +15,88 @@ interface ModelProfile {
   context_window: number;
   vram_required_gb: number;
   recommended_tasks: string[];
+  description?: string;
+  benchmarks?: Record<string, string>;
   is_downloaded?: boolean;
   is_community?: boolean;
   downloads?: number;
+}
+
+function ModelDetailsModal({ 
+  show, 
+  model, 
+  onClose,
+  onDeploy,
+  loading
+}: { 
+  show: boolean; 
+  model: ModelProfile | null; 
+  onClose: () => void;
+  onDeploy: (e: string, m: string) => void;
+  loading: boolean;
+}) {
+  if (!show || !model) return null;
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content modal-content--large" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <Brain size={20} className="text-purple" />
+          <h3 style={{ fontSize: 20 }}>{model.name}</h3>
+          <button className="icon-btn" style={{ marginLeft: 'auto' }} onClick={onClose}>
+            <Square size={14} />
+          </button>
+        </div>
+        <div className="modal-body">
+          <div style={{ display: 'flex', gap: 20, marginBottom: 20 }}>
+            <div className="spec-tile">
+              <span className="spec-label">PARAMS</span>
+              <span className="spec-value">{model.params}</span>
+            </div>
+            <div className="spec-tile">
+              <span className="spec-label">VRAM</span>
+              <span className="spec-value">{model.vram_required_gb}GB</span>
+            </div>
+            <div className="spec-tile">
+              <span className="spec-label">CONTEXT</span>
+              <span className="spec-value">{model.context_window.toLocaleString()}</span>
+            </div>
+          </div>
+
+          <div className="detail-section">
+            <h4>Description</h4>
+            <p>{model.description || "Elite model profile with high-consistency performance across specialized tasks."}</p>
+          </div>
+
+          {model.benchmarks && Object.keys(model.benchmarks).length > 0 && (
+            <div className="detail-section">
+              <h4>Benchmarks</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                {Object.entries(model.benchmarks).map(([k, v]) => (
+                  <div key={k} className="benchmark-row">
+                    <span className="benchmark-key">{k}</span>
+                    <div className="benchmark-bar-bg">
+                      <div className="benchmark-bar-fill" style={{ width: `${Math.min(100, parseFloat(v) || 50)}%` }} />
+                    </div>
+                    <span className="benchmark-val">{v}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="modal-footer">
+          <button className="btn btn--muted" onClick={onClose}>Close</button>
+          <button 
+            className={`btn ${model.is_downloaded ? 'btn--disabled' : 'btn--purple'}`}
+            disabled={loading || model.is_downloaded}
+            onClick={() => onDeploy(model.engine, model.name)}
+          >
+            {model.is_downloaded ? "ALREADY INSTALLED" : "DEPLOY TO NODE"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function ConfirmModal({ 
@@ -68,6 +147,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
   
   // Custom Modal State
   const [confirmState, setConfirmState] = useState<{ show: boolean; skillId: string | null }>({ show: false, skillId: null });
+  const [selectedModel, setSelectedModel] = useState<ModelProfile | null>(null);
 
   const hubRef = useRef<HTMLDivElement>(null);
 
@@ -268,6 +348,13 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
         onConfirm={() => confirmState.skillId && handleDeleteSkill(confirmState.skillId)}
         onCancel={() => setConfirmState({ show: false, skillId: null })}
       />
+      <ModelDetailsModal
+        show={!!selectedModel}
+        model={selectedModel}
+        onClose={() => setSelectedModel(null)}
+        onDeploy={(e, m) => { handlePullModel(e, m); setSelectedModel(null); }}
+        loading={loading}
+      />
       <div className="infra-panel__header">
         <Cpu size={16} />
         <span>Infrastructure Hub</span>
@@ -293,7 +380,12 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
         <div className="infra-section__title">Agent Recommendations</div>
         <div className="infra-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12 }}>
           {Object.entries(bestInClass).map(([role, model]) => model && (
-            <div key={role} className="model-card" style={{ padding: 10, borderStyle: 'dashed' }}>
+            <div 
+              key={role} 
+              className="model-card" 
+              style={{ padding: 10, borderStyle: 'dashed', cursor: 'pointer' }}
+              onClick={() => setSelectedModel(model)}
+            >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div style={{ fontSize: 10.5, textTransform: 'uppercase', color: 'var(--purple-light)', fontWeight: 700 }}>{role}</div>
                 <div style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>{model.params} • {model.vram_required_gb}G</div>
@@ -307,7 +399,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
               <button 
                 className={`btn ${model.is_downloaded ? 'btn--disabled' : 'btn--purple'}`}
                 style={{ width: '100%', marginTop: 'auto', fontSize: 10.5, padding: '4px' }}
-                onClick={() => handlePullModel(model.engine, model.name)}
+                onClick={(e) => { e.stopPropagation(); handlePullModel(model.engine, model.name); }}
                 disabled={loading || model.is_downloaded}
               >
                 {model.is_downloaded ? "ACTIVE" : "DEPLOY"}
