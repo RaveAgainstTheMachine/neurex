@@ -1,0 +1,34 @@
+name: Docker Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Login to Gitea Registry
+        uses: actions/login-action@v2
+        with:
+          registry: ${{ github.server_url }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITEA_TOKEN }}
+      - name: Build and push Backend
+        uses: actions/build-push-action@v4
+        with:
+          context: ./neurex-api
+          push: true
+          tags: |
+            ${{ github.repository }}/backend:latest
+            ${{ github.repository }}/backend:${{ github.ref_name }}
+      - name: Build and push Frontend
+        uses: actions/build-push-action@v4
+        with:
+          context: ./neurex-web
+          push: true
+          tags: |
+            ${{ github.repository }}/frontend:latest
+            ${{ github.repository }}/frontend:${{ github.ref_name }}
