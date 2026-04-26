@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Puzzle, Download, Trash2, Globe, Loader2, Plus } from "lucide-react";
 import "./SkillsPanel.css";
+import toast from "react-hot-toast";
 
 const API_BASE = "http://127.0.0.1:8000";
 
@@ -90,7 +91,7 @@ export function SkillsPanel() {
   const handleInstall = async (url: string) => {
     setInstalling(true);
     try {
-      await fetch(`${API_BASE}/api/skills/install`, {
+      const res = await fetch(`${API_BASE}/api/skills/install`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
@@ -98,10 +99,16 @@ export function SkillsPanel() {
         },
         body: JSON.stringify({ url })
       });
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.detail || "Installation failed");
+      }
+      toast.success("Skill installed successfully");
       setNewSkillUrl("");
       setTab("installed");
-    } catch (err) {
-      console.error("Installation failed", err);
+      fetchSkills();
+    } catch (err: any) {
+      toast.error(err.message);
     } finally {
       setInstalling(false);
     }
@@ -115,9 +122,14 @@ export function SkillsPanel() {
           "Authorization": `Bearer ${localStorage.getItem("token")}`
         }
       });
-      if (!res.ok) throw new Error("Failed to delete");
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.detail || "Failed to delete");
+      }
+      toast.success("Skill uninstalled");
       fetchSkills();
-    } catch (err) {
+    } catch (err: any) {
+      toast.error(err.message);
       console.error("Uninstall failed", err);
     } finally {
       setConfirmState({ show: false, skillId: null });
