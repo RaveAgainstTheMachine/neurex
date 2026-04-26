@@ -144,6 +144,10 @@ function SortableActivityItem(props: { id: string; active: boolean; onClick: () 
     </div>
   );
 }
+const API_BASE = window.location.origin.includes(":3000") 
+  ? window.location.origin.replace(":3000", ":8000") 
+  : window.location.origin;
+
 function AppContent() {
   const [sidebarOrder, setSidebarOrder] = useState<string[]>(() => {
     const saved = localStorage.getItem("neurex_sidebar_order");
@@ -218,7 +222,7 @@ function AppContent() {
 
       // Global Onboarding Check
       try {
-        const obRes = await fetch("http://localhost:8000/api/auth/onboarding/status");
+        const obRes = await fetch(`${API_BASE}/api/auth/onboarding/status`);
         const obData = await obRes.json();
         if (obData.onboarding_required) {
           setGlobalOnboardingRequired(true);
