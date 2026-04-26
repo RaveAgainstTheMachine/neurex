@@ -22,14 +22,20 @@ export function AuthOverlay() {
 
   useEffect(() => {
     const checkOnboarding = async () => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
       try {
-        const res = await fetch(`${API_BASE}/api/auth/onboarding/status`);
+        const res = await fetch(`${API_BASE}/api/auth/onboarding/status`, {
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
         const data = await res.json();
         if (data.onboarding_required) {
           setOnboardingRequired(true);
         }
       } catch (err) {
-        console.error("Onboarding check failed:", err);
+        console.error("Onboarding check failed or timed out:", err);
       } finally {
         setCheckingOnboarding(false);
       }
