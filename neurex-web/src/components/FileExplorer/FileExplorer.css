@@ -93,6 +93,11 @@
 .file-item__icon.json { color: #fbc02d; }
 .file-item__icon.md { color: #083fa1; }
 .file-item__icon.yml { color: #cb171e; }
+.file-item__icon.react { color: #61dafb; }
+.file-item__icon.rust { color: #dea584; }
+.file-item__icon.go { color: #00add8; }
+.file-item__icon.src { color: #ffca28; }
+.file-item__icon.core { color: #9c27b0; }
 
 .file-status-tag {
   font-size: 9px;
@@ -103,22 +108,28 @@
   flex-shrink: 0;
 }
 
-.tag--m { color: #cca700; } /* Modified */
-.tag--u { color: #73c991; } /* Untracked */
+.tag--m { color: var(--accent-amber); } /* Modified */
+.tag--u { color: var(--accent-green); } /* Untracked */
+.tag--d { color: var(--accent-red); text-decoration: line-through; } /* Deleted */
 
-.file-item--m .file-item__name { color: #cca700; font-weight: 600; }
-.file-item--u .file-item__name { color: #73c991; }
+.file-item--m .file-item__name { color: var(--accent-amber); font-weight: 500; }
+.file-item--u .file-item__name { color: var(--accent-green); }
+.file-item--d .file-item__name { color: var(--accent-red); opacity: 0.6; }
+.file-item--error .file-item__name { color: var(--accent-red); font-weight: 600; }
 
 .file-error-badge {
-  background: var(--status-failed);
+  background: var(--accent-red);
   color: white;
   font-size: 8px;
   padding: 0 4px;
-  border-radius: 8px;
+  height: 14px;
+  line-height: 14px;
+  border-radius: 7px;
   margin-left: 4px;
   min-width: 14px;
   text-align: center;
-  font-weight: bold;
+  font-weight: 900;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .file-item__icon.vite { color: #646cff; }

@@ -23,8 +23,11 @@ function getLanguage(path: string) {
 
 function getFileIcon(name: string, isDir: boolean, expanded: boolean) {
   if (isDir) {
-    if (name === ".github") return <GitGraph size={13} className="file-item__icon git" />;
-    if (name === "node_modules") return <Database size={13} className="file-item__icon modules" />;
+    const lowerName = name.toLowerCase();
+    if (lowerName === ".github") return <GitGraph size={13} className="file-item__icon git" />;
+    if (lowerName === "node_modules") return <Database size={13} className="file-item__icon modules" />;
+    if (lowerName === "src") return <FolderOpen size={13} className="file-item__icon src" />;
+    if (lowerName === "api" || lowerName === "core") return <Settings size={13} className="file-item__icon core" />;
     return expanded ? <FolderOpen size={13} className="file-item__icon dir" /> : <Folder size={13} className="file-item__icon dir" />;
   }
 
@@ -39,14 +42,15 @@ function getFileIcon(name: string, isDir: boolean, expanded: boolean) {
   if (lowerName.startsWith(".env")) return <FileKey size={13} className="file-item__icon env" />;
   if (lowerName.startsWith(".git")) return <GitGraph size={13} className="file-item__icon git" />;
   if (lowerName.includes("eslint")) return <Settings size={13} className="file-item__icon eslint" />;
+  if (lowerName === "main.py") return <Zap size={13} className="file-item__icon py" />;
 
   // Extension Match
   switch (ext) {
-    case "ts":
-    case "tsx": return <FileCode size={13} className="file-item__icon ts" />;
-    case "js":
-    case "jsx": return <FileCode size={13} className="file-item__icon js" />;
-    case "py": return <TerminalIcon size={13} className="file-item__icon py" />;
+    case "ts": return <FileCode size={13} className="file-item__icon ts" />;
+    case "tsx": return <FileCode size={13} className="file-item__icon react" />;
+    case "js": return <FileCode size={13} className="file-item__icon js" />;
+    case "jsx": return <FileCode size={13} className="file-item__icon react" />;
+    case "py": return <FileCode size={13} className="file-item__icon py" />;
     case "css": return <FileText size={13} className="file-item__icon css" />;
     case "json": return <FileJson size={13} className="file-item__icon json" />;
     case "md": return <FileText size={13} className="file-item__icon md" />;
@@ -55,6 +59,8 @@ function getFileIcon(name: string, isDir: boolean, expanded: boolean) {
     case "yaml": return <Settings size={13} className="file-item__icon yml" />;
     case "html": return <Globe size={13} className="file-item__icon html" />;
     case "sql": return <Database size={13} className="file-item__icon sql" />;
+    case "rs": return <FileCode size={13} className="file-item__icon rust" />;
+    case "go": return <FileCode size={13} className="file-item__icon go" />;
     default: return <File size={13} className="file-item__icon" />;
   }
 }
