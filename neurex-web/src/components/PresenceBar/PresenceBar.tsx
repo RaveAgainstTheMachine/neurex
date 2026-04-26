@@ -11,13 +11,13 @@ export function PresenceBar() {
         <div className="presence-bar__empty">No other collaborators</div>
       ) : (
         <div className="presence-avatars">
-          {presence.map((p) => (
+          {presence.map((p, idx) => (
             <div 
-              key={p.user_id} 
+              key={p.user_id || idx} 
               className="presence-avatar" 
-              title={`${p.user_id} ${p.active_file ? `in ${p.active_file.split('/').pop()}` : ''}`}
+              title={`${p.user_id || 'Unknown'} ${p.active_file ? `in ${p.active_file.split('/').pop()}` : ''}`}
             >
-              {p.user_id.toLowerCase().includes("agent") ? (
+              {(p.user_id || "").toLowerCase().includes("agent") ? (
                 <Bot size={14} className="avatar-icon avatar-icon--agent" />
               ) : (
                 <User size={14} className="avatar-icon" />

@@ -1,42 +1,28 @@
 import { useEffect, useRef } from "react";
-import MonacoEditor, { DiffEditor } from "@monaco-editor/react";
-import { X, Check, RotateCcw } from "lucide-react";
+import MonacoEditor, { Editor, DiffEditor } from "@monaco-editor/react";
 import { useStore } from "../../lib/store";
+import { Files } from "lucide-react";
 import "./EditorPane.css";
 
 export function EditorPane() {
-  const { 
-    openFiles, activeFile, closeFile, setActiveFile, setFileContent, saveFile,
-    acceptDiff, discardDiff, presence
-  } = useStore();
-
-  if (openFiles.length === 0) {
-    return (
-      <div className="editor-empty">
-        <div className="editor-empty__content">
-          <div className="editor-empty__logo">⬡</div>
-          <div className="editor-empty__title">Neurex IDE</div>
-          <div className="editor-empty__subtitle">Open a file from the explorer, or ask the agent to build something.</div>
-        </div>
-      </div>
-    );
-  }
-
-  const active = openFiles.find((f) => f.path === activeFile) ?? openFiles[0];
-  
+  const { openFiles, activeFile, setFileContent, saveFile, presence } = useStore();
   const editorRef = useRef<any>(null);
 
+  const active = openFiles.find((f) => f.path === activeFile) ?? openFiles[0];
+
+  // Sync presence with monaco decorations
   useEffect(() => {
     if (editorRef.current?._presenceObserver) {
       editorRef.current._presenceObserver();
     }
   }, [presence]);
 
-  if (!active || !active.path) {
+  if (!active) {
     return (
       <div className="editor-empty">
-        <div className="editor-empty__content">
-          <div className="editor-empty__title">Loading...</div>
+        <div className="editor-empty__inner">
+          <Files size={48} />
+          <p>Select a file to start coding</p>
         </div>
       </div>
     );
@@ -44,55 +30,47 @@ export function EditorPane() {
 
   return (
     <div className="editor-pane">
-      <div className="editor-tabs">
-        {openFiles.map((file) => {
-          if (!file || !file.path) return null;
-          const name = file.path.split("/").pop() ?? file.path;
-          return (
+      <div className="editor-pane__header">
+        <div className="editor-tabs">
+          {openFiles.map((f) => (
             <div
-              key={file.path}
-              className={`editor-tab ${file.path === activeFile ? "editor-tab--active" : ""}`}
-              onClick={() => setActiveFile(file.path)}
+              key={f.path}
+              className={`editor-tab ${f.path === activeFile ? "active" : ""}`}
+              onClick={() => useStore.getState().setActiveFile(f.path)}
             >
-              <span className="editor-tab__name">{name}</span>
-              {file.isDirty && <span className="editor-tab__dirty" />}
+              <span className="editor-tab__name">{f.path.split("/").pop()}</span>
               <button
                 className="editor-tab__close"
-                onClick={(e) => { e.stopPropagation(); closeFile(file.path); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  useStore.getState().closeFile(f.path);
+                }}
               >
-                <X size={12} />
+                ×
               </button>
             </div>
-          );
-        })}
-      </div>
-
-      <div className="editor-breadcrumb">
-        {active.path.split("/").map((seg, i, arr) => (
-          <span key={i}>
-            <span className={i === arr.length - 1 ? "breadcrumb-active" : "breadcrumb-seg"}>{seg}</span>
-            {i < arr.length - 1 && <span className="breadcrumb-sep"> › </span>}
-          </span>
-        ))}
-        {active.originalContent !== undefined && (
-          <div className="editor-diff-actions">
-            <button className="btn btn--green btn--sm" onClick={() => acceptDiff(active.path)}>
-              <Check size={12} /> Accept
-            </button>
-            <button className="btn btn--red btn--sm" onClick={() => discardDiff(active.path)}>
-              <RotateCcw size={12} /> Discard
-            </button>
-          </div>
-        )}
+          ))}
+        </div>
       </div>
 
       <div className="editor-monaco">
-        {active.originalContent !== undefined ? (
+        {active.diff ? (
           <DiffEditor
-            original={active.originalContent}
-            modified={active.content}
+            height="100%"
+            original={active.diff.original}
+            modified={active.diff.modified}
             language={active.language}
             theme="neurex-dark"
+            beforeMount={(monaco) => {
+              monaco.editor.defineTheme("neurex-dark", {
+                base: "vs-dark",
+                inherit: true,
+                rules: [],
+                colors: {
+                  "editor.background": "#0d0d0f",
+                },
+              });
+            }}
             options={{
               fontSize: 13,
               fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
@@ -102,17 +80,27 @@ export function EditorPane() {
             }}
           />
         ) : (
-          <MonacoEditor
+          <Editor
+            height="100%"
             key={active.path}
             path={active.path}
             language={active.language}
             value={active.content}
             theme="neurex-dark"
+            beforeMount={(monaco) => {
+              monaco.editor.defineTheme("neurex-dark", {
+                base: "vs-dark",
+                inherit: true,
+                rules: [],
+                colors: {
+                  "editor.background": "#0d0d0f",
+                },
+              });
+            }}
             onChange={(val) => setFileContent(active.path, val ?? "")}
             onMount={(editor, monaco) => {
               editorRef.current = editor;
-              // ── Cursor Broadcasting ──
-              // ── Cursor Broadcasting ──
+              
               const { sendPresence } = (window as any).neurexWS || {};
               
               editor.onDidChangeCursorPosition((e) => {
@@ -124,71 +112,50 @@ export function EditorPane() {
                 }
               });
 
-              // ── Remote Cursor Rendering ──
               let decorations: string[] = [];
               const renderRemoteCursors = () => {
                 try {
                   const newDecorations: any[] = [];
                   presence.forEach((p) => {
-                    if (p.active_file === active.path && p.cursor && typeof p.cursor.line === 'number') {
-                      newDecorations.push({
-                        range: new monaco.Range(p.cursor.line, p.cursor.ch, p.cursor.line, p.cursor.ch + 1),
-                        options: {
-                          className: `remote-cursor remote-cursor--${p.user_id.toLowerCase().includes('agent') ? 'agent' : 'user'}`,
-                          hoverMessage: { value: p.user_id }
-                        }
-                      });
-                    }
+                    try {
+                      if (p.active_file === active.path && p.cursor && typeof p.cursor.line === 'number' && p.user_id) {
+                        newDecorations.push({
+                          range: new monaco.Range(p.cursor.line, p.cursor.ch, p.cursor.line, p.cursor.ch + 1),
+                          options: {
+                            className: `remote-cursor remote-cursor--${(p.user_id || '').toLowerCase().includes('agent') ? 'agent' : 'user'}`,
+                            hoverMessage: { value: p.user_id || 'Unknown' }
+                          }
+                        });
+                      }
+                    } catch (innerErr) {}
                   });
                   decorations = editor.deltaDecorations(decorations, newDecorations);
-                } catch (err) {
-                  console.error("Failed to render remote cursors:", err);
-                }
+                } catch (err) {}
               };
 
-              // Re-render when presence changes
               (editor as any)._presenceObserver = renderRemoteCursors;
-
+              
               editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
                 saveFile(active.path);
               });
+
+              return () => {
+                (editor as any)._presenceObserver = null;
+                editorRef.current = null;
+              };
             }}
             options={{
               fontSize: 13,
               fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-              fontLigatures: true,
-              lineHeight: 22,
-              minimap: { enabled: true, scale: 1 },
+              minimap: { enabled: true, scale: 0.75 },
               scrollBeyondLastLine: false,
-              renderLineHighlight: "line",
-              cursorBlinking: "smooth",
-              cursorSmoothCaretAnimation: "on",
-              smoothScrolling: true,
-              padding: { top: 12, bottom: 12 },
-              tabSize: 2,
-              wordWrap: "on",
-            }}
-            beforeMount={(monaco) => {
-              monaco.editor.defineTheme("neurex-dark", {
-                base: "vs-dark",
-                inherit: true,
-                rules: [
-                  { token: "comment", foreground: "55556a", fontStyle: "italic" },
-                  { token: "keyword", foreground: "9c6fff" },
-                  { token: "string", foreground: "3ddc84" },
-                  { token: "number", foreground: "ffc542" },
-                  { token: "type", foreground: "3ddcdc" },
-                ],
-                colors: {
-                  "editor.background": "#131316",
-                  "editor.foreground": "#e8e8f0",
-                  "editor.lineHighlightBackground": "#1a1a1f",
-                  "editor.selectionBackground": "#4c8eff33",
-                  "editorCursor.foreground": "#4c8eff",
-                  "editorLineNumber.foreground": "#2a2a35",
-                  "editorLineNumber.activeForeground": "#55556a",
-                },
-              });
+              automaticLayout: true,
+              padding: { top: 10, bottom: 10 },
+              lineNumbers: "on",
+              glyphMargin: true,
+              folding: true,
+              lineDecorationsWidth: 10,
+              lineNumbersMinChars: 3,
             }}
           />
         )}

@@ -78,7 +78,7 @@
   border: none;
   color: var(--text-muted);
   padding: 2px;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   transition: color 0.1s;

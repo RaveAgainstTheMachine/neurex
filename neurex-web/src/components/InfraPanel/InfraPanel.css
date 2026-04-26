@@ -44,7 +44,7 @@
 .infra-card {
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: 10px;
   display: flex;
   justify-content: space-between;
@@ -71,7 +71,7 @@
 .model-card {
   background: var(--bg-app);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: 12px;
   transition: all 0.2s;
 }

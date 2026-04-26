@@ -83,6 +83,19 @@ export function InfraPanel() {
     }
   };
 
+  const handlePullModel = async (engine: string, model: string) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/infra/model/pull?engine=${engine}&model=${model}`, { method: "POST" });
+      if (!res.ok) throw new Error(await res.text());
+      fetchData();
+    } catch (err) {
+      console.error("Failed to pull model:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="infra-panel">
       <div className="infra-panel__header">
@@ -90,8 +103,8 @@ export function InfraPanel() {
         <span>Inference Infrastructure</span>
         {metrics && (
           <div style={{ marginLeft: "auto", fontSize: 10, color: "var(--text-muted)", display: "flex", gap: 12 }}>
-            <span><Cpu size={10} style={{marginRight: 4}}/>{metrics.cpu_percent}%</span>
-            <span><Database size={10} style={{marginRight: 4}}/>{metrics.ram_used_gb} / {metrics.ram_total_gb} GB</span>
+            <span><Cpu size={10} style={{marginRight: 4}}/>{(metrics.cpu_percent || 0).toFixed(1)}%</span>
+            <span><Database size={10} style={{marginRight: 4}}/>{(metrics.ram_used_gb || 0).toFixed(1)} / {(metrics.ram_total_gb || 0).toFixed(1)} GB</span>
           </div>
         )}
       </div>
@@ -133,14 +146,24 @@ export function InfraPanel() {
               </div>
               <div className="model-card__details">
                 <div className="model-card__detail">
-                  <Database size={10} /> {m.vram_required_gb}GB VRAM
+                  <Database size={10} /> {(m.vram_required_gb || 0)}GB VRAM
                 </div>
                 <div className="model-card__detail">
-                  <RefreshCcw size={10} /> {m.context_window / 1000}k Context
+                  <RefreshCcw size={10} /> {((m.context_window || 0) / 1000).toFixed(0)}k Context
                 </div>
               </div>
-              <div className="model-card__tasks">
-                {m.recommended_tasks.map(t => <span key={t} className="task-tag">{t}</span>)}
+              <div className="model-card__footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div className="model-card__tasks">
+                  {(m.recommended_tasks || []).map(t => <span key={t} className="task-tag">{t}</span>)}
+                </div>
+                <button 
+                  className="btn btn--purple" 
+                  style={{ padding: '4px 10px', fontSize: 10 }}
+                  onClick={() => handlePullModel(m.engine, m.name)}
+                  disabled={loading}
+                >
+                  {loading ? "Pulling..." : "Pull Model"}
+                </button>
               </div>
             </div>
           ))}

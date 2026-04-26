@@ -16,13 +16,14 @@ class PTYManager:
     def __init__(self):
         self.sessions: Dict[str, PTYSession] = {}
 
-    def create_session(self, session_id: str, on_output: Callable[[str], None]) -> PTYSession:
-        if session_id in self.sessions:
-            self.sessions[session_id].close()
+    def get_or_create_session(self, session_id: str, on_output: Callable[[str], None]) -> PTYSession:
+        if session_id not in self.sessions:
+            session = PTYSession(session_id)
+            self.sessions[session_id] = session
+            session.start()
         
-        session = PTYSession(session_id, on_output)
-        self.sessions[session_id] = session
-        session.start()
+        session = self.sessions[session_id]
+        session.attach(on_output)
         return session
 
     def get_session(self, session_id: str) -> Optional[PTYSession]:
@@ -34,17 +35,30 @@ class PTYManager:
         self.sessions.clear()
 
 class PTYSession:
-    def __init__(self, session_id: str, on_output: Callable[[str], None]):
+    def __init__(self, session_id: str):
         self.session_id = session_id
-        self.on_output = on_output
+        self.on_output: Optional[Callable[[str], None]] = None
         self.proc: Optional[PtyProcessUnicode] = None
         self.task: Optional[asyncio.Task] = None
         self.workspace = os.getenv("WORKSPACE_PATH", os.getcwd())
+        self.history = ""
+        self.max_history = 50000 # Keep last 50k chars
+
+    def attach(self, on_output: Callable[[str], None]):
+        self.on_output = on_output
+        if self.history:
+            self.on_output(self.history)
+
+    def _broadcast(self, data: str):
+        self.history += data
+        if len(self.history) > self.max_history:
+            self.history = self.history[-self.max_history:]
+        if self.on_output:
+            self.on_output(data)
 
     def start(self):
         try:
             shell = os.environ.get("SHELL", "/bin/bash")
-            # Spawn the shell in the workspace
             self.proc = PtyProcessUnicode.spawn(
                 [shell],
                 cwd=self.workspace,
@@ -54,19 +68,18 @@ class PTYSession:
             self.task = asyncio.create_task(self._read_loop())
         except Exception as e:
             log.error("pty.start_failed", session=self.session_id, error=str(e))
-            self.on_output(f"\r\n❌ Failed to start terminal: {e}\r\n")
+            self._broadcast(f"\r\n❌ Failed to start terminal: {e}\r\n")
 
     async def _read_loop(self):
         try:
             while self.proc and self.proc.isalive():
-                # read() is blocking, so run it in a thread
                 data = await asyncio.to_thread(self.proc.read, 4096)
                 if data:
-                    self.on_output(data)
+                    self._broadcast(data)
         except EOFError:
             log.info("pty.eof", session=self.session_id)
         except Exception as e:
-            if self.proc: # Only log if not intentional close
+            if self.proc:
                 log.error("pty.read_error", session=self.session_id, error=str(e))
         finally:
             self.close()

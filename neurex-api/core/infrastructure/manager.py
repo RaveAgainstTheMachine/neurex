@@ -34,6 +34,29 @@ class InfrastructureManager:
             })
         return statuses
 
+    async def pull_model(self, engine: str, model_name: str):
+        """Pull (download) a model for a specific engine."""
+        if engine == "ollama":
+            if not shutil.which("ollama"):
+                raise Exception("Ollama not installed")
+            
+            log.info("infra.model_pull_start", engine=engine, model=model_name)
+            process = await asyncio.create_subprocess_exec(
+                "ollama", "pull", model_name,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            stdout, stderr = await process.communicate()
+            if process.returncode != 0:
+                error = stderr.decode()
+                log.error("infra.model_pull_failed", engine=engine, model=model_name, error=error)
+                raise Exception(f"Failed to pull model: {error}")
+            
+            log.info("infra.model_pull_success", engine=engine, model=model_name)
+            return True
+        
+        raise Exception(f"Pulling models for {engine} is not supported yet.")
+
     async def start_engine(self, name: str):
         """Start a specific LLM engine."""
         if name == "ollama":

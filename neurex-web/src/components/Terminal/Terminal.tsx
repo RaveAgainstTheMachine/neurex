@@ -20,11 +20,11 @@ export function Terminal({ onInput, onResize, output }: TerminalProps) {
     if (!terminalRef.current) return;
 
     const term = new XTerm({
-      cursorBlink: true,
+      cursorBlink: false,
       allowTransparency: true,
       scrollback: 5000,
       rows: 1, // Small initial height to prevent layout flicker
-      lineHeight: 1.2,
+      lineHeight: 1.4,
       allowProposedApi: true,
       theme: {
         background: "hsl(240, 10%, 4%)",

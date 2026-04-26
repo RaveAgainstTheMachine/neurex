@@ -46,6 +46,10 @@
   --tabbar-height:    34px;
   --statusbar-height: 24px;
 
+  /* Shapes */
+  --radius:           8px;
+  --radius-sm:        4px;
+
   /* Typography */
   --font-ui:   'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
@@ -72,8 +76,16 @@ html, body, #root {
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #3a3a4a; }
 
-button { font-family: var(--font-ui); cursor: pointer; }
-input, textarea { font-family: var(--font-ui); }
+button { 
+  font-family: var(--font-ui); 
+  cursor: pointer; 
+  border-radius: var(--radius-sm);
+}
+
+input, textarea, select { 
+  font-family: var(--font-ui); 
+  border-radius: var(--radius-sm);
+}
 
 /* Animations */
 @keyframes spin { to { transform: rotate(360deg); } }

@@ -32,7 +32,7 @@
   border: 1px solid var(--border);
   border-left: 3px solid var(--text-muted);
   padding: 8px 10px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   font-family: var(--font-mono);
   font-size: 11px;
 }

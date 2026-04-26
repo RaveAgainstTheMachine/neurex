@@ -79,6 +79,15 @@ async def get_model_registry():
     """List all models known to Neurex and their capabilities."""
     return MODEL_REGISTRY
 
+@router.post("/model/pull", dependencies=[Depends(require_role(UserRole.ADMIN))])
+async def pull_model(engine: str, model: str):
+    """Initiate a model download."""
+    try:
+        success = await infra_manager.pull_model(engine, model)
+        return {"success": success}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ── Mesh Federation ──
 from core.infrastructure.mesh import mesh_router
 from pydantic import BaseModel

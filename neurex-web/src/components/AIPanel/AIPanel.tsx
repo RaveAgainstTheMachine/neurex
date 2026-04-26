@@ -1,4 +1,5 @@
 import { useRef, useEffect, useState, useCallback } from "react";
+import { CustomSelect } from '../CustomSelect/CustomSelect';
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github-dark.css";
@@ -26,6 +27,23 @@ const STATUS_LABEL: Record<string, string> = {
   CANCELLED: "Cancelled", AWAITING_APPROVAL: "Awaiting Approval",
 };
 
+const MODEL_OPTIONS = [
+  { value: "qwen2.5-coder:7b", label: "Qwen 2.5 Coder (Fast)", group: "Local Mesh (GGUF)" },
+  { value: "qwen2.5-coder:14b", label: "Qwen 2.5 Coder 14B (Pro)", group: "Local Mesh (GGUF)" },
+  { value: "qwen2.5-coder:32b", label: "Qwen 2.5 Coder 32B (Elite)", group: "Local Mesh (GGUF)" },
+  { value: "deepseek-r1:7b", label: "DeepSeek R1 7B (Logic)", group: "Local Mesh (GGUF)" },
+  { value: "llama3.1:8b", label: "Llama 3.1 8B (Chat)", group: "Local Mesh (GGUF)" },
+  { value: "gpt-4o", label: "GPT-4o (Frontier)", group: "BYOK Gateway (Cloud)" },
+  { value: "claude-3-5-sonnet-20240620", label: "Claude 3.5 Sonnet", group: "BYOK Gateway (Cloud)" },
+  { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro", group: "BYOK Gateway (Cloud)" }
+];
+
+const AUTONOMY_OPTIONS = [
+  { value: "restricted", label: "Restricted" },
+  { value: "limited", label: "Limited" },
+  { value: "full", label: "Full Auto" }
+];
+
 interface AIPanelProps {
   send: (payload: object) => void;
   conversationId: string;
@@ -45,7 +63,11 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
   const [isListening, setIsListening] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [voicePreset, setVoicePreset] = useState("male");
+  const [mentionQuery, setMentionQuery] = useState("");
+  const [showMentions, setShowMentions] = useState(false);
+  const [mentionIndex, setMentionIndex] = useState(0);
   const recognitionRef = useRef<any>(null);
+  const { fileTree } = useStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -87,8 +109,8 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
     }
   };
 
-  const nodes = Object.values(tasks).sort(
-    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+  const nodes = Object.values(tasks || {}).sort(
+    (a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
   );
 
   const isWorking = nodes.some((t) =>
@@ -120,6 +142,30 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
         .catch(() => {});
     }
   }, [tab, conversationId]);
+
+  const insertMention = (forceValue?: string) => {
+    const val = forceValue || filteredMentions[mentionIndex % filteredMentions.length];
+    if (!val) return;
+    const cursor = inputRef.current?.selectionStart || 0;
+    const textBefore = input.slice(0, cursor).replace(/@\w*$/, "@" + val + " ");
+    const textAfter = input.slice(cursor);
+    setInput(textBefore + textAfter);
+    setShowMentions(false);
+    setTimeout(() => inputRef.current?.focus(), 10);
+  };
+
+  const allFiles: string[] = [];
+  const walk = (nodes: any[]) => {
+    nodes.forEach(n => {
+      if (n.type === "file") allFiles.push(n.name);
+      if (n.children) walk(n.children);
+    });
+  };
+  walk(fileTree);
+
+  const filteredMentions = ["codebase", "workspace", "terminal", "web", ...allFiles]
+    .filter(m => m.toLowerCase().includes(mentionQuery.toLowerCase()))
+    .slice(0, 10);
 
   const handleSend = () => {
     const content = input.trim();
@@ -190,38 +236,35 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
           </button>
         </div>
         <div className="ai-panel__actions">
-           <select 
+           <CustomSelect 
              className="model-selector"
              value={preferredModel}
-             onChange={(e) => setPreferredModel(e.target.value)}
+             onChange={(val) => setPreferredModel(val)}
+             options={MODEL_OPTIONS}
              title="Select Active LLM"
-           >
-             <optgroup label="Local Mesh (GGUF)">
-               <option value="qwen2.5-coder:7b">Qwen 2.5 Coder (Fast)</option>
-               <option value="qwen2.5-coder:14b">Qwen 2.5 Coder 14B (Pro)</option>
-               <option value="qwen2.5-coder:32b">Qwen 2.5 Coder 32B (Elite)</option>
-               <option value="deepseek-r1:7b">DeepSeek R1 7B (Logic)</option>
-               <option value="llama3.1:8b">Llama 3.1 8B (Chat)</option>
-             </optgroup>
-             <optgroup label="BYOK Gateway (Cloud)">
-               <option value="gpt-4o">GPT-4o (Frontier)</option>
-               <option value="claude-3-5-sonnet-20240620">Claude 3.5 Sonnet</option>
-               <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-             </optgroup>
-           </select>
+           />
 
-           <select 
+           <CustomSelect 
              className="autonomy-selector"
-             defaultValue="limited"
-             onChange={(e) => send({ type: "set_autonomy", level: e.target.value })}
+             value="limited"
+             onChange={(val) => send({ type: "set_autonomy", level: val })}
+             options={AUTONOMY_OPTIONS}
              title="Set Autonomy Level"
-           >
-             <option value="restricted">Restricted</option>
-             <option value="limited">Limited</option>
-             <option value="full">Full Auto</option>
-           </select>
+           />
 
-           <select className="voice-selector" value={voicePreset} onChange={(e) => setVoicePreset(e.target.value)} title="TTS Voice Personality"><option value="male">Male</option><option value="female">Female</option><option value="freeman">Freeman</option><option value="attenborough">Attenborough</option><option value="rick">Rick</option></select> <button className="icon-btn" onClick={newConversation} title="New Chat">
+           <CustomSelect 
+             className="voice-selector" 
+             value={voicePreset} 
+             onChange={(val) => setVoicePreset(val)} 
+             options={[
+               { value: "male", label: "Male" },
+               { value: "female", label: "Female" },
+               { value: "freeman", label: "Freeman" },
+               { value: "attenborough", label: "Attenborough" },
+               { value: "rick", label: "Rick" }
+             ]}
+             title="TTS Voice Personality"
+           /> <button className="icon-btn" onClick={newConversation} title="New Chat">
              <Trash2 size={14} style={{ transform: "rotate(45deg)" }} />
            </button>
         </div>
@@ -238,8 +281,8 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
                 className={`history-item ${c.id === conversationId ? "history-item--active" : ""}`}
                 onClick={() => { setActiveConversation(c.id); setTab("chat"); }}
               >
-                <div className="history-item__id">{c.id.slice(0, 8)}...</div>
-                <div className="history-item__date">{new Date(c.last_message).toLocaleString()}</div>
+                <div className="history-item__id">{c.id ? c.id.slice(0, 8) : "unknown"}...</div>
+                <div className="history-item__date">{c.last_message ? new Date(c.last_message).toLocaleString() : "No date"}</div>
               </button>
             ))}
           </div>
@@ -250,6 +293,19 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
       {tab === "chat" && (
         <>
           <div ref={scrollRef} className="ai-messages">
+            {showMentions && filteredMentions.length > 0 && (
+              <div className="ai-mentions">
+                {filteredMentions.map((m, i) => (
+                  <div 
+                    key={m} 
+                    className={`mention-item ${i === (mentionIndex % filteredMentions.length) ? "mention-item--active" : ""}`}
+                    onClick={() => insertMention(m)}
+                  >
+                    {m}
+                  </div>
+                ))}
+              </div>
+            )}
             {messages.length === 0 && (
               <div className="ai-messages__empty">
                 <div className="ai-messages__empty-icon">⬡</div>
@@ -308,7 +364,22 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
                 ref={inputRef}
                 value={input}
                 onChange={(e) => {
-                  setInput(e.target.value);
+                  const val = e.target.value;
+                  setInput(val);
+                  
+                  // Mention detection
+                  const cursor = e.target.selectionStart;
+                  const textBefore = val.slice(0, cursor);
+                  const match = textBefore.match(/@(\w*)$/);
+                  
+                  if (match) {
+                    setMentionQuery(match[1]);
+                    setShowMentions(true);
+                    setMentionIndex(0);
+                  } else {
+                    setShowMentions(false);
+                  }
+
                   // Auto-expand logic
                   const el = inputRef.current;
                   if (el) {
@@ -316,49 +387,75 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
                     el.style.height = Math.min(el.scrollHeight, window.innerHeight * 0.4) + "px";
                   }
                 }}
-                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                onKeyDown={(e) => {
+                  if (showMentions) {
+                    if (e.key === "ArrowDown") { e.preventDefault(); setMentionIndex(i => i + 1); }
+                    if (e.key === "ArrowUp") { e.preventDefault(); setMentionIndex(i => i - 1); }
+                    if (e.key === "Enter" || e.key === "Tab") {
+                      e.preventDefault();
+                      insertMention();
+                    }
+                    if (e.key === "Escape") setShowMentions(false);
+                    return;
+                  }
+                  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
+                }}
                 placeholder={wsStatus !== "connected" ? "Connecting…" : isWorking ? "Agent is working…" : isListening ? "Listening..." : "Ask Neurex anything…"}
                 disabled={wsStatus !== "connected" || isWorking}
-                rows={2}
+                rows={1}
                 className="ai-input__textarea"
               />
-              <button 
-                className={`icon-btn ai-input__mic ${isListening ? "ai-input__mic--active" : ""}`} 
-                onClick={toggleListen}
-                title="Dictate"
-                disabled={!recognitionRef.current}
-              >
-                {isListening ? <Mic className="animate-pulse text-red-500" size={14} color="var(--status-failed)" /> : <Mic size={14} />}
-              </button>
-              <select 
-                className="lang-selector-mini"
-                value={speechLang}
-                onChange={(e) => setSpeechLang(e.target.value)}
-                title="Dictation Language"
-              >
-                <option value="en-US">EN</option>
-                <option value="fr-FR">FR</option>
-                <option value="ar-SA">AR</option>
-                <option value="es-ES">ES</option>
-                <option value="de-DE">DE</option>
-                <option value="it-IT">IT</option>
-                <option value="ja-JP">JA</option>
-                <option value="zh-CN">ZH</option>
-              </select>
-              <button 
-                className="icon-btn ai-input__attach"
-                onClick={() => fileInputRef.current?.click()}
-                title="Upload File"
-                disabled={isUploading}
-              >
-                {isUploading ? <Loader2 className="animate-spin" size={14} /> : <Paperclip size={14} />}
-              </button>
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                style={{ display: 'none' }} 
-                onChange={handleFileUpload}
-              />
+              <div className="ai-input__footer">
+                <div className="ai-input__footer-left">
+                  <CustomSelect 
+                    className="mini"
+                    value={preferredModel}
+                    onChange={(val) => setPreferredModel(val)}
+                    options={MODEL_OPTIONS}
+                    title="Preferred Model"
+                  />
+                  <CustomSelect 
+                    className="mini"
+                    value={speechLang}
+                    onChange={(val) => setSpeechLang(val)}
+                    options={[
+                      { value: "en-US", label: "EN" },
+                      { value: "fr-FR", label: "FR" },
+                      { value: "ar-SA", label: "AR" },
+                      { value: "es-ES", label: "ES" },
+                      { value: "de-DE", label: "DE" },
+                      { value: "it-IT", label: "IT" },
+                      { value: "ja-JP", label: "JA" },
+                      { value: "zh-CN", label: "ZH" },
+                    ]}
+                    title="Dictation Language"
+                  />
+                </div>
+                <div className="ai-input__footer-right">
+                  <button 
+                    className={`icon-btn ai-input__mic ${isListening ? "ai-input__mic--active" : ""}`} 
+                    onClick={toggleListen}
+                    title="Dictate"
+                    disabled={!recognitionRef.current}
+                  >
+                    {isListening ? <Mic className="animate-pulse text-red-500" size={14} color="var(--status-failed)" /> : <Mic size={14} />}
+                  </button>
+                  <button 
+                    className="icon-btn ai-input__attach"
+                    onClick={() => fileInputRef.current?.click()}
+                    title="Upload File"
+                    disabled={isUploading}
+                  >
+                    {isUploading ? <Loader2 className="animate-spin" size={14} /> : <Paperclip size={14} />}
+                  </button>
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    style={{ display: 'none' }} 
+                    onChange={handleFileUpload}
+                  />
+                </div>
+              </div>
             </div>
             <button
               onClick={handleSend}

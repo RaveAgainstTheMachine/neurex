@@ -63,9 +63,9 @@ export function ConversationList() {
           >
             <MessageSquare size={14} className="conv-item__icon" />
             <div className="conv-item__content">
-              <div className="conv-item__id">{c.conversation_id.slice(0, 8)}</div>
+              <div className="conv-item__id">{(c.conversation_id || "").slice(0, 8) || "unknown"}</div>
               <div className="conv-item__date">
-                {new Date(c.last_message).toLocaleDateString()}
+                {c.last_message ? new Date(c.last_message).toLocaleDateString() : "No date"}
               </div>
             </div>
             <button 

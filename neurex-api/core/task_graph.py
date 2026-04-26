@@ -61,6 +61,7 @@ class TaskNode(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 async def init_db():
+    import core.projects.models # Ensure models are registered with SQLModel
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
 

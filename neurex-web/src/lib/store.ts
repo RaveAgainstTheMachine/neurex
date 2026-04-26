@@ -8,6 +8,10 @@ const API_BASE = "http://localhost:8000";
 
 export const useStore = create<NeurexStore>()(
   immer((set, get) => ({
+    // ── Editor ────────────────────────────────────────────────────────
+    openFiles: JSON.parse(localStorage.getItem("neurex_open_files") || "[]"),
+    activeFile: localStorage.getItem("neurex_active_file"),
+
     // ── Speech ────────────────────────────────────────────────────────
     speechLang: localStorage.getItem("neurex_speech_lang") || "en-US",
     setSpeechLang: (lang) => {
@@ -30,19 +34,21 @@ export const useStore = create<NeurexStore>()(
 
     // ── Chat ──────────────────────────────────────────────────────────
     messages: [],
-    activeConversationId: localStorage.getItem("neurex_conv_id") || "default",
+    activeConversationId: (localStorage.getItem("neurex_conv_id") && localStorage.getItem("neurex_conv_id") !== "undefined") ? localStorage.getItem("neurex_conv_id")! : "default",
     preferredModel: localStorage.getItem("neurex_model") || "qwen2.5-coder:7b",
     conversations: [],
     setMessages: (msgs) => set((s) => { s.messages = msgs; }),
     addMessage: (msg) => set((s) => {
-      s.messages.push({ ...msg, id: crypto.randomUUID(), timestamp: new Date() });
+      const id = typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).substring(2);
+      s.messages.push({ ...msg, id, timestamp: new Date() });
     }),
     appendToken: (token) => set((s) => {
       const last = s.messages[s.messages.length - 1];
       if (last?.role === "assistant") {
         last.content += token;
       } else {
-        s.messages.push({ id: crypto.randomUUID(), role: "assistant", content: token, timestamp: new Date() });
+        const id = typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).substring(2);
+        s.messages.push({ id, role: "assistant", content: token, timestamp: new Date() });
       }
     }),
     setActiveConversation: (id) => set((s) => {
@@ -57,13 +63,13 @@ export const useStore = create<NeurexStore>()(
       localStorage.setItem("neurex_model", model);
     }),
     newConversation: () => {
-      const id = crypto.randomUUID();
+      const id = typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).substring(2);
       set((s) => {
         s.activeConversationId = id;
-        localStorage.setItem("neurex_conv_id", id);
         s.messages = [];
         s.tasks = {};
       });
+      localStorage.setItem("neurex_conv_id", id);
     },
 
     // ── Tasks ─────────────────────────────────────────────────────────
@@ -73,32 +79,42 @@ export const useStore = create<NeurexStore>()(
     }),
     clearTasks: () => set((s) => { s.tasks = {}; }),
 
-    // ── Editor ────────────────────────────────────────────────────────
-    openFiles: [],
-    activeFile: null,
-    openFile: (path, content, language) => set((s) => {
+    // ── Editor Actions ───────────────────────────────────────────────
+    openFile: (path, content, language) => {
       if (!path) return;
-      const exists = s.openFiles.some(f => f.path === path);
-      if (!exists) {
-        s.openFiles.push({ path, content, language, isDirty: false });
-      }
-      s.activeFile = path;
-      // Force editor visibility
-      (window as any).hideOverlays?.();
-    }),
+      set((s) => {
+        const exists = s.openFiles.some(f => f.path === path);
+        if (!exists) {
+          s.openFiles.push({ path, content, language, isDirty: false });
+        }
+        s.activeFile = path;
+        localStorage.setItem("neurex_open_files", JSON.stringify(s.openFiles));
+        localStorage.setItem("neurex_active_file", path);
+      });
+      setTimeout(() => (window as any).hideOverlays?.(), 0);
+    },
     closeFile: (path) => set((s) => {
       s.openFiles = s.openFiles.filter(f => f.path !== path);
       if (s.activeFile === path) {
         s.activeFile = s.openFiles[s.openFiles.length - 1]?.path ?? null;
       }
+      localStorage.setItem("neurex_open_files", JSON.stringify(s.openFiles));
+      localStorage.setItem("neurex_active_file", s.activeFile || "");
     }),
-    setActiveFile: (path) => set((s) => { 
-      s.activeFile = path; 
-      (window as any).hideOverlays?.();
-    }),
+    setActiveFile: (path) => { 
+      set((s) => { 
+        s.activeFile = path; 
+        localStorage.setItem("neurex_active_file", path || "");
+      });
+      setTimeout(() => (window as any).hideOverlays?.(), 0);
+    },
     setFileContent: (path, content) => set((s) => {
       const f = s.openFiles.find(f => f.path === path);
-      if (f) { f.content = content; f.isDirty = true; }
+      if (f) { 
+        f.content = content; 
+        f.isDirty = true; 
+        localStorage.setItem("neurex_open_files", JSON.stringify(s.openFiles));
+      }
     }),
     setDiff: (path, original, modified) => set((s) => {
       const f = s.openFiles.find(f => f.path === path);

@@ -76,7 +76,7 @@ async def websocket_endpoint(
                 pass
 
         # Start/Get PTY session
-        pty_session = pty_manager.create_session(
+        pty_session = pty_manager.get_or_create_session(
             conversation_id, 
             lambda data: asyncio.create_task(on_terminal_output(data))
         )

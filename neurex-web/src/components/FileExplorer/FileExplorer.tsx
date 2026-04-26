@@ -72,10 +72,11 @@ function FileItem({ node, depth }: { node: FileNode; depth: number }) {
       </div>
       {isDir && expanded && node.children && (
         <div className="file-item__children">
-          {[...node.children]
-            .sort((a, b) => (a.type === "dir" ? -1 : 1) || a.name.localeCompare(b.name))
+          {(node.children || [])
+            .filter(child => child && child.name)
+            .sort((a, b) => (a.type === "dir" ? -1 : 1) || (a.name || "").localeCompare(b.name || ""))
             .map((child) => (
-              <FileItem key={child.path ?? child.name} node={child} depth={depth + 1} />
+              <FileItem key={child.path || child.name} node={child} depth={depth + 1} />
             ))}
         </div>
       )}
@@ -108,10 +109,11 @@ export function FileExplorer() {
         </button>
       </div>
       <div className="file-explorer__tree">
-        {[...fileTree]
-          .sort((a, b) => (a.type === "dir" ? -1 : 1) || a.name.localeCompare(b.name))
+        {(fileTree || [])
+          .filter(node => node && node.name)
+          .sort((a, b) => (a.type === "dir" ? -1 : 1) || (a.name || "").localeCompare(b.name || ""))
           .map((node) => (
-            <FileItem key={node.path ?? node.name} node={node} depth={0} />
+            <FileItem key={node.path || node.name} node={node} depth={0} />
           ))}
       </div>
     </div>
