@@ -21,6 +21,24 @@ import { useStore } from "./lib/store";
 import { Toaster } from "react-hot-toast";
 import { BrainCircuit } from "lucide-react";
 import { UpdateNotifier } from "./components/UpdateNotifier/UpdateNotifier";
+import { LoadingOverlay } from "./components/LoadingOverlay/LoadingOverlay";
+import { 
+  DndContext, 
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import "./App.css";
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
@@ -58,8 +76,78 @@ export default function App() {
   );
 }
 
+const SIDEBAR_ITEMS: { id: SidebarTab; icon: React.FC<any>; label: string }[] = [
+  { id: "explorer", icon: Files,          label: "Explorer" },
+  { id: "search",   icon: Search,         label: "Search" },
+  { id: "history",  icon: Clock,          label: "History" },
+  { id: "infra",    icon: Cpu,            label: "AI Infrastructure" },
+  { id: "system",   icon: Shield,         label: "System Logs" },
+  { id: "git",      icon: GitBranch,      label: "Source Control" },
+  { id: "skills",   icon: Puzzle,         label: "Skills & Extensions" },
+  { id: "agent",    icon: Bot,            label: "Agents" },
+];
+
+function SortableActivityItem(props: { id: string; active: boolean; onClick: () => void; icon: React.FC<any>; label: string }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: props.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : 1,
+    cursor: 'grab'
+  };
+
+  const Icon = props.icon;
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <button
+        className={`activity-btn ${props.active ? "activity-btn--active" : ""}`}
+        onClick={props.onClick}
+        title={props.label}
+      >
+        <Icon size={20} />
+      </button>
+    </div>
+  );
+}
 function AppContent() {
+  const [sidebarOrder, setSidebarOrder] = useState<string[]>(() => {
+    const saved = localStorage.getItem("neurex_sidebar_order");
+    return saved ? JSON.parse(saved) : SIDEBAR_ITEMS.map(i => i.id);
+  });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleSidebarDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setSidebarOrder((items) => {
+        const oldIndex = items.indexOf(active.id as string);
+        const newIndex = items.indexOf(over.id as string);
+        const next = arrayMove(items, oldIndex, newIndex);
+        localStorage.setItem("neurex_sidebar_order", JSON.stringify(next));
+        return next;
+      });
+    }
+  };
+
   useNotifications();
+  const { wsStatus, fileTree, refreshFileTree } = useStore();
+  const [loadingProgress, setLoadingProgress] = useState(10);
+  const [isInitialized, setIsInitialized] = useState(false);
+
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>(
     (localStorage.getItem("neurex_sidebar_tab") as SidebarTab) || "explorer"
   );
@@ -74,19 +162,24 @@ function AppContent() {
   const [mobileTab, setMobileTab] = useState<MobileTab>("chat");
   const [showSettings, setShowSettings] = useState(false);
   const [showHiveMind, setShowHiveMind] = useState(false);
-  const wsStatus = useStore((s) => s.wsStatus);
   const activeConversationId = useStore((s) => s.activeConversationId);
 
   const { send } = useWebSocket(activeConversationId);
 
-  // Handle window resizing
+  // Workspace Initialization
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth > 768) setShowAIPanel(true);
+    const init = async () => {
+      setLoadingProgress(30);
+      await refreshFileTree();
+      setLoadingProgress(70);
+      // Brief delay for the "premium" feel
+      setTimeout(() => {
+        setLoadingProgress(100);
+        setTimeout(() => setIsInitialized(true), 500);
+      }, 800);
     };
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+    init();
+  }, [refreshFileTree]);
 
   const toggleSettings = () => {
     setShowSettings(v => !v);
@@ -98,7 +191,6 @@ function AppContent() {
     setShowSettings(false);
   };
 
-  // Global handle for store to close overlays
   useEffect(() => {
     (window as any).hideOverlays = () => {
       setShowSettings(false);
@@ -109,6 +201,7 @@ function AppContent() {
   try {
     return (
       <div className="app">
+        {!isInitialized && <LoadingOverlay progress={loadingProgress} />}
         <Toaster position="top-right" toastOptions={{ 
           style: { 
             background: '#1e1e24', 
@@ -120,30 +213,27 @@ function AppContent() {
         
         {/* Activity bar (Hidden on mobile) */}
         <div className="activity-bar">
-          <div className="activity-bar__top">
-            <div className="activity-bar__logo">⬡</div>
-            {(
-              [
-                { id: "explorer", icon: Files,          label: "Explorer" },
-                { id: "search",   icon: Search,         label: "Search" },
-                { id: "history",  icon: Clock,          label: "History" },
-                { id: "infra",    icon: Cpu,            label: "AI Infrastructure" },
-                { id: "system",   icon: Shield,         label: "System Logs" },
-                { id: "git",      icon: GitBranch,      label: "Source Control" },
-                { id: "skills",   icon: Puzzle,         label: "Skills & Extensions" },
-                { id: "agent",    icon: Bot,            label: "Agents" },
-              ] as { id: SidebarTab; icon: React.FC<any>; label: string }[]
-            ).map(({ id, icon: Icon, label }) => (
-              <button
-                key={id}
-                className={`activity-btn ${sidebarTab === id ? "activity-btn--active" : ""}`}
-                onClick={() => updateSidebarTab(id)}
-                title={label}
-              >
-                <Icon size={20} />
-              </button>
-            ))}
-          </div>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSidebarDragEnd}>
+            <div className="activity-bar__top">
+              <div className="activity-bar__logo">⬡</div>
+              <SortableContext items={sidebarOrder} strategy={verticalListSortingStrategy}>
+                {sidebarOrder.map(id => {
+                  const item = SIDEBAR_ITEMS.find(i => i.id === id);
+                  if (!item) return null;
+                  return (
+                    <SortableActivityItem
+                      key={id}
+                      id={id}
+                      icon={item.icon}
+                      label={item.label}
+                      active={sidebarTab === id}
+                      onClick={() => updateSidebarTab(id as SidebarTab)}
+                    />
+                  );
+                })}
+              </SortableContext>
+            </div>
+          </DndContext>
           <div className="activity-bar__bottom">
             <button
               className={`activity-btn ${showHiveMind ? "activity-btn--active" : ""}`}

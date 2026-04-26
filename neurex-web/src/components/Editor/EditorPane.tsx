@@ -54,11 +54,11 @@ export function EditorPane() {
       </div>
 
       <div className="editor-monaco">
-        {active.diff ? (
+        {active.originalContent !== undefined ? (
           <DiffEditor
             height="100%"
-            original={active.diff.original}
-            modified={active.diff.modified}
+            original={active.originalContent}
+            modified={active.content}
             language={active.language}
             theme="neurex-dark"
             beforeMount={(monaco) => {

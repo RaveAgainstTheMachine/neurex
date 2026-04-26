@@ -182,4 +182,4 @@ async def websocket_endpoint(
                 pass
         finally:
             await presence_manager.disconnect(conversation_id, websocket, user_id)
-            pty_session.close()
+            pty_session.detach()

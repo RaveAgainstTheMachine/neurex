@@ -27,6 +27,7 @@
   /* Accents */
   --accent-blue:   hsl(215, 100%, 65%);
   --accent-purple: hsl(260, 90%, 70%);
+  --purple-light:  hsl(260, 95%, 85%);
   --accent-green:  hsl(145, 80%, 50%);
   --accent-red:    hsl(0, 85%, 65%);
   --accent-yellow: hsl(45, 95%, 60%);

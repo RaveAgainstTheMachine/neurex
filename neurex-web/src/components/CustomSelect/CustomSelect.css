@@ -42,7 +42,9 @@
   position: absolute;
   bottom: calc(100% + 4px); /* Default pop UP since it's at the bottom of the screen */
   left: 0;
-  min-width: 160px;
+  min-width: 100%;
+  width: max-content;
+  max-width: 240px;
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);

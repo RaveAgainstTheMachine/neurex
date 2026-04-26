@@ -1,4 +1,21 @@
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useEffect, useState, useCallback, useMemo } from "react";
+import { 
+  DndContext, 
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  horizontalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { CustomSelect } from '../CustomSelect/CustomSelect';
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
@@ -43,6 +60,32 @@ const AUTONOMY_OPTIONS = [
   { value: "limited", label: "Limited" },
   { value: "full", label: "Full Auto" }
 ];
+
+function SortableItem(props: { id: string; children: React.ReactNode }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: props.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    cursor: 'grab',
+    display: 'flex',
+    alignItems: 'center'
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      {props.children}
+    </div>
+  );
+}
 
 interface AIPanelProps {
   send: (payload: object) => void;
@@ -154,18 +197,23 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
     setTimeout(() => inputRef.current?.focus(), 10);
   };
 
-  const allFiles: string[] = [];
-  const walk = (nodes: any[]) => {
-    nodes.forEach(n => {
-      if (n.type === "file") allFiles.push(n.name);
-      if (n.children) walk(n.children);
-    });
-  };
-  walk(fileTree);
+  const allFiles = useMemo(() => {
+    const files: string[] = [];
+    const walk = (nodes: any[]) => {
+      nodes.forEach(n => {
+        if (n.type === "file") files.push(n.name);
+        if (n.children) walk(n.children);
+      });
+    };
+    walk(fileTree || []);
+    return files;
+  }, [fileTree]);
 
-  const filteredMentions = ["codebase", "workspace", "terminal", "web", ...allFiles]
-    .filter(m => m.toLowerCase().includes(mentionQuery.toLowerCase()))
-    .slice(0, 10);
+  const filteredMentions = useMemo(() => {
+    return ["codebase", "workspace", "terminal", "web", ...allFiles]
+      .filter(m => m.toLowerCase().includes(mentionQuery.toLowerCase()))
+      .slice(0, 10);
+  }, [allFiles, mentionQuery]);
 
   const handleSend = () => {
     const content = input.trim();
@@ -220,71 +268,109 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
 
   const doneCount = nodes.filter((n) => n.status === "DONE").length;
 
+  const [headerOrder, setHeaderOrder] = useState<string[]>(() => {
+    const saved = localStorage.getItem("neurex_header_order");
+    return saved ? JSON.parse(saved) : ["tabs", "model", "autonomy", "voice", "actions"];
+  });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setHeaderOrder((items) => {
+        const oldIndex = items.indexOf(active.id as string);
+        const newIndex = items.indexOf(over.id as string);
+        const next = arrayMove(items, oldIndex, newIndex);
+        localStorage.setItem("neurex_header_order", JSON.stringify(next));
+        return next;
+      });
+    }
+  };
+
+  const headerElements: Record<string, React.ReactNode> = {
+    tabs: (
+      <div className="ai-panel__tabs">
+        <button className={`ai-tab ${tab === "chat" ? "ai-tab--active" : ""}`} onClick={() => setTab("chat")}>Chat</button>
+        <button className={`ai-tab ${tab === "tasks" ? "ai-tab--active" : ""}`} onClick={() => setTab("tasks")}>
+          Tasks {nodes.length > 0 && <span className="ai-tab__badge">{doneCount}/{nodes.length}</span>}
+        </button>
+        <button className={`ai-tab ${tab === "history" ? "ai-tab--active" : ""}`} onClick={() => setTab("history")}>History</button>
+      </div>
+    ),
+    model: (
+      <CustomSelect 
+        className="model-selector"
+        value={preferredModel}
+        onChange={(val) => setPreferredModel(val)}
+        options={MODEL_OPTIONS}
+        title="Select Active LLM"
+      />
+    ),
+    autonomy: (
+      <CustomSelect 
+        className="autonomy-selector"
+        value="limited"
+        onChange={(val) => send({ type: "set_autonomy", level: val })}
+        options={AUTONOMY_OPTIONS}
+        title="Set Autonomy Level"
+      />
+    ),
+    voice: (
+      <CustomSelect 
+        className="voice-selector" 
+        value={voicePreset} 
+        onChange={(val) => setVoicePreset(val)} 
+        options={[
+          { value: "male", label: "Male" },
+          { value: "female", label: "Female" },
+          { value: "freeman", label: "Freeman" },
+          { value: "attenborough", label: "Attenborough" },
+          { value: "rick", label: "Rick" }
+        ]}
+        title="TTS Voice Personality"
+      />
+    ),
+    actions: (
+      <button className="icon-btn" onClick={newConversation} title="New Chat">
+        <Trash2 size={14} style={{ transform: "rotate(45deg)" }} />
+      </button>
+    )
+  };
+
   return (
     <div className="ai-panel">
       {/* Header */}
-      <div className="ai-panel__header">
-        <div className="ai-panel__tabs">
-          <button className={`ai-tab ${tab === "chat" ? "ai-tab--active" : ""}`} onClick={() => setTab("chat")}>
-            Chat
-          </button>
-          <button className={`ai-tab ${tab === "tasks" ? "ai-tab--active" : ""}`} onClick={() => setTab("tasks")}>
-            Tasks {nodes.length > 0 && <span className="ai-tab__badge">{doneCount}/{nodes.length}</span>}
-          </button>
-          <button className={`ai-tab ${tab === "history" ? "ai-tab--active" : ""}`} onClick={() => setTab("history")}>
-            History
-          </button>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <div className="ai-panel__header">
+          <SortableContext items={headerOrder} strategy={horizontalListSortingStrategy}>
+            {headerOrder.map(id => (
+              <SortableItem key={id} id={id}>
+                {headerElements[id]}
+              </SortableItem>
+            ))}
+          </SortableContext>
         </div>
-        <div className="ai-panel__actions">
-           <CustomSelect 
-             className="model-selector"
-             value={preferredModel}
-             onChange={(val) => setPreferredModel(val)}
-             options={MODEL_OPTIONS}
-             title="Select Active LLM"
-           />
-
-           <CustomSelect 
-             className="autonomy-selector"
-             value="limited"
-             onChange={(val) => send({ type: "set_autonomy", level: val })}
-             options={AUTONOMY_OPTIONS}
-             title="Set Autonomy Level"
-           />
-
-           <CustomSelect 
-             className="voice-selector" 
-             value={voicePreset} 
-             onChange={(val) => setVoicePreset(val)} 
-             options={[
-               { value: "male", label: "Male" },
-               { value: "female", label: "Female" },
-               { value: "freeman", label: "Freeman" },
-               { value: "attenborough", label: "Attenborough" },
-               { value: "rick", label: "Rick" }
-             ]}
-             title="TTS Voice Personality"
-           /> <button className="icon-btn" onClick={newConversation} title="New Chat">
-             <Trash2 size={14} style={{ transform: "rotate(45deg)" }} />
-           </button>
-        </div>
-      </div>
+      </DndContext>
 
       {/* History tab */}
       {tab === "history" && (
         <div className="ai-history">
           <div className="ai-history__list">
             {conversations.length === 0 && <div className="ai-history__empty">No previous chats.</div>}
-            {conversations.map((c) => (
-              <button 
-                key={c.id} 
-                className={`history-item ${c.id === conversationId ? "history-item--active" : ""}`}
-                onClick={() => { setActiveConversation(c.id); setTab("chat"); }}
-              >
-                <div className="history-item__id">{c.id ? c.id.slice(0, 8) : "unknown"}...</div>
-                <div className="history-item__date">{c.last_message ? new Date(c.last_message).toLocaleString() : "No date"}</div>
-              </button>
-            ))}
+             {conversations.map((c) => (
+               <button 
+                 key={c.conversation_id} 
+                 className={`history-item ${c.conversation_id === conversationId ? "history-item--active" : ""}`}
+                 onClick={() => { setActiveConversation(c.conversation_id); setTab("chat"); }}
+               >
+                 <div className="history-item__id">{c.conversation_id ? c.conversation_id.slice(0, 8) : "unknown"}...</div>
+                 <div className="history-item__date">{c.last_message ? new Date(c.last_message).toLocaleString() : "No date"}</div>
+               </button>
+             ))}
           </div>
         </div>
       )}
@@ -414,8 +500,26 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
                     options={MODEL_OPTIONS}
                     title="Preferred Model"
                   />
+                </div>
+                <div className="ai-input__footer-right">
+                  {/* Voice Personality Selector Trigger Icon */}
                   <CustomSelect 
-                    className="mini"
+                    className="icon-only"
+                    value={voicePreset} 
+                    onChange={(val) => setVoicePreset(val)} 
+                    options={[
+                      { value: "male", label: "Male" },
+                      { value: "female", label: "Female" },
+                      { value: "freeman", label: "Freeman" },
+                      { value: "attenborough", label: "Attenborough" },
+                      { value: "rick", label: "Rick" }
+                    ]}
+                    title="TTS Voice Personality"
+                  />
+
+                  {/* Dictation Language Selector Trigger Icon */}
+                  <CustomSelect 
+                    className="icon-only"
                     value={speechLang}
                     onChange={(val) => setSpeechLang(val)}
                     options={[
@@ -430,8 +534,7 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
                     ]}
                     title="Dictation Language"
                   />
-                </div>
-                <div className="ai-input__footer-right">
+
                   <button 
                     className={`icon-btn ai-input__mic ${isListening ? "ai-input__mic--active" : ""}`} 
                     onClick={toggleListen}
@@ -448,6 +551,14 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
                   >
                     {isUploading ? <Loader2 className="animate-spin" size={14} /> : <Paperclip size={14} />}
                   </button>
+                  <button
+                    onClick={handleSend}
+                    disabled={wsStatus !== "connected" || isWorking || !input.trim()}
+                    className="icon-btn ai-input__send-embedded"
+                    title="Send Message"
+                  >
+                    {isWorking ? <Loader2 size={14} className="animate-spin" /> : <ArrowUp size={14} />}
+                  </button>
                   <input 
                     type="file" 
                     ref={fileInputRef} 
@@ -457,13 +568,6 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
                 </div>
               </div>
             </div>
-            <button
-              onClick={handleSend}
-              disabled={wsStatus !== "connected" || isWorking || !input.trim()}
-              className="ai-input__send"
-            >
-              {isWorking ? <Loader2 size={14} className="animate-spin" /> : <ArrowUp size={14} />}
-            </button>
           </div>
         </>
       )}

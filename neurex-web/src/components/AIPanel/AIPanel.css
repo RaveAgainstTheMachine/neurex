@@ -238,6 +238,20 @@
   gap: 8px;
 }
 
+.ai-input__send-embedded {
+  color: var(--text-muted);
+  transition: color 0.2s, transform 0.1s;
+}
+
+.ai-input__send-embedded:not(:disabled) {
+  color: var(--accent-purple);
+}
+
+.ai-input__send-embedded:not(:disabled):hover {
+  color: var(--purple-light);
+  transform: scale(1.1);
+}
+
 .ai-input__textarea {
   width: 100%;
   background: transparent;
@@ -250,6 +264,7 @@
   padding: 0;
   line-height: 1.5;
   min-height: 20px;
+  max-height: 40vh; /* Don't grow too large */
 }
 
 .ai-input__textarea::placeholder {

@@ -1,7 +1,4 @@
-"""
-core/projects/models.py
-Database models for Project Management, Access Control, and Collaborative state.
-"""
+from __future__ import annotations
 import uuid
 import random
 from datetime import datetime

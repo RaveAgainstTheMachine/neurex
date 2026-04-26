@@ -129,9 +129,23 @@ Do not summarize — paste verbatim. Do not attempt fixes. Report and stop.
 ruff:     zero errors (pre-existing warnings acceptable)
 mypy:     zero `error:` lines
 tsc:      zero errors
+npm build: must pass `npm run build` in neurex-web before finishing.
 pytest:   all collected tests pass
 eval smoke: 2/2 pass
 If any criterion above fails, the task is FAILED.
+
+# ─────────────────────────────────────────────────────────────────────────────
+[governance]
+# ─────────────────────────────────────────────────────────────────────────────
+Neurex follows [Semantic Versioning (SemVer)]:
+- MAJOR: Breaking changes (DB migration, infra overhaul).
+- MINOR: New features (Hive Mind, new panels, collaborative tools).
+- PATCH: Bugfixes, optimizations, UI polish.
+
+The "Persistence Principle":
+- All UI state (tabs, open files, terminal history) must survive browser refreshes.
+- Terminal: use `PTYManager` detach/attach lifecycle.
+- UI: use `localStorage` for tab/order state.
 
 
 # ─────────────────────────────────────────────────────────────────────────────

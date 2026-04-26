@@ -11,6 +11,16 @@ interface SearchResult {
   content: string;
 }
 
+const LANG_MAP: Record<string, string> = {
+  ts: "typescript", tsx: "typescriptreact", js: "javascript", jsx: "javascriptreact",
+  py: "python", css: "css", json: "json", md: "markdown", sh: "shell",
+  yml: "yaml", yaml: "yaml", html: "html", rs: "rust", go: "go",
+};
+
+function getLanguage(path: string) {
+  return LANG_MAP[path.split(".").pop() ?? ""] ?? "plaintext";
+}
+
 export function SearchPanel() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -30,6 +40,17 @@ export function SearchPanel() {
       console.error("Search failed", err);
     } finally {
       setSearching(false);
+    }
+  };
+
+  const handleOpenResult = async (path: string) => {
+    try {
+      const r = await fetch(`${API_BASE}/api/files/read?path=${encodeURIComponent(path)}`);
+      if (!r.ok) throw new Error("Failed to read");
+      const data = await r.json();
+      openFile(path, data.content ?? "", getLanguage(path));
+    } catch (err) {
+      openFile(path, "// Error loading file", getLanguage(path));
     }
   };
 
@@ -59,7 +80,7 @@ export function SearchPanel() {
           <div 
             key={i} 
             className="search-item" 
-            onClick={() => openFile(res.path)}
+            onClick={() => handleOpenResult(res.path)}
           >
             <div className="search-item__header">
               <FileText size={12} className="search-item__icon" />

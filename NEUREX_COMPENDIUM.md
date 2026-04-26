@@ -133,8 +133,16 @@ The `PresenceManager` synchronizes the swarm state across all clients.
 }
 ```
 
-### 5.2 Surgical Editing (apply_diff)
-Neurex avoids rewriting entire files. Instead, it uses an exact-match surgical edit system that ensures 100% preservation of unrelated code blocks.
+### 5.2 Persistent PTY Architecture
+Neurex shell sessions utilize a **Detach/Attach** lifecycle via the `PTYManager`.
+*   **Decoupled Process**: Shell processes are spawned independently of the WebSocket.
+*   **State Buffer**: The last 50,000 characters of I/O are buffered in memory.
+*   **Persistence**: Upon reconnection, the backend re-attaches the user to the active process and replays the buffer, ensuring no work is lost.
+
+### 5.3 Collaborative Projects & Membership
+The collaboration engine uses a relational mapping (`ProjectMember`) to enforce RBAC at the project level.
+*   **Locks**: All filesystem writes are gated by the `CollaborationManager` lock service.
+*   **Roles**: Ownership is immutable; Admin/Member permissions are dynamically evaluated on every API request.
 
 ---
 

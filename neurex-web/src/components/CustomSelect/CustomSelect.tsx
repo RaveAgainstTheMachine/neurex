@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Languages, Volume2, Globe } from 'lucide-react';
 import './CustomSelect.css';
 
 export interface SelectOption {
@@ -21,6 +21,19 @@ export function CustomSelect({ value, onChange, options, className = '', title }
   const containerRef = useRef<HTMLDivElement>(null);
 
   const selectedOption = options.find(o => o.value === value) || options[0];
+
+  const renderTriggerContent = () => {
+    if (className.includes('icon-only')) {
+      if (title?.toLowerCase().includes('voice') || title?.toLowerCase().includes('tts')) {
+        return <Volume2 size={14} />;
+      }
+      if (title?.toLowerCase().includes('lang')) {
+        return <Languages size={14} />;
+      }
+      return <Globe size={14} />;
+    }
+    return <span className="custom-select__label">{selectedOption?.label}</span>;
+  };
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -47,8 +60,8 @@ export function CustomSelect({ value, onChange, options, className = '', title }
         className={`custom-select__trigger ${isOpen ? 'active' : ''}`}
         onClick={() => setIsOpen(!isOpen)}
       >
-        <span className="custom-select__label">{selectedOption?.label}</span>
-        <ChevronDown size={12} className="custom-select__icon" />
+        {renderTriggerContent()}
+        {!className.includes('icon-only') && <ChevronDown size={12} className="custom-select__icon" />}
       </button>
       
       {isOpen && (

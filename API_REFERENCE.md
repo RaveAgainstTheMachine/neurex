@@ -3,13 +3,14 @@
 > **Base URL**: `http://localhost:8000`  
 > **Auth**: Bearer JWT (obtain via `POST /api/auth/token`)  
 > **WebSocket**: `ws://localhost:8000/ws/{conversation_id}`  
-> **Version**: 0.1.0-beta
+> **Version**: 0.5.2-stable
 
 ---
 
 ## Navigation
 
 - [Authentication](#authentication)
+- [Projects & Collaboration](#projects--collaboration)
 - [Chat & Conversations](#chat--conversations)
 - [Task Graph](#task-graph)
 - [Files](#files)
@@ -74,6 +75,44 @@ Returns the current authenticated user's profile.
 **Response `200`**:
 ```json
 { "username": "frosty", "role": "admin", "id": "uuid-..." }
+```
+
+---
+
+## Projects & Collaboration
+
+Manage multi-user workspaces, roles, and project-specific tasks.
+
+### `GET /api/projects/`
+List all projects the current user is a member of.
+
+**Response `200`**: Array of `Project` objects.
+
+---
+
+### `POST /api/projects/`
+Create a new project. The creator is automatically assigned the `owner` role.
+
+**Body**:
+```json
+{ "name": "Project Alpha", "description": "Experimental mesh node" }
+```
+
+---
+
+### `GET /api/projects/{project_id}/members`
+List all members and their roles for a project.
+
+**Roles**: `owner`, `admin`, `member`, `viewer`, `agent`
+
+---
+
+### `POST /api/projects/{project_id}/members`
+Invite or add a user to a project.
+
+**Body**:
+```json
+{ "user_id": "uuid-...", "role": "member" }
 ```
 
 ---

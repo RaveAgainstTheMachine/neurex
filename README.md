@@ -117,7 +117,9 @@ The Node registers with the Master automatically via the heartbeat agent and app
 ### 👥 Real-Time Collaboration
 - WebSocket presence broadcasting (cursors, file locks, status)
 - Collaboration file locking prevents agent/human write conflicts
-- **Mobile Command & Voice**: Integrated Web Speech API for hands-free dictation and text-to-speech (TTS) playback of agent responses.
+- **Persistent PTY**: Shell sessions remain active across browser refreshes and multi-user handoffs.
+- **Project Permissions**: Granular role-based access (Owner, Admin, Member, Viewer, Agent).
+- **Mobile Command & Voice**: Integrated Web Speech API for hands-free dictation and text-to-speech (TTS) playback.
 
 ### 🔄 Self-Update
 - Polls GitHub Releases every 30 minutes
@@ -171,7 +173,7 @@ neurex/
 | Variable                | Default             | Description                                         |
 |:------------------------|:--------------------|:----------------------------------------------------|
 | `NODE_ROLE`             | `master`            | `master` or `node`                                  |
-| `NEUREX_VERSION`        | `0.1.0`             | Used for update comparisons                         |
+| `NEUREX_VERSION`        | `0.5.2`             | Used for update comparisons                         |
 | `WORKSPACE_PATH`        | `/workspace`        | Root for all agent file operations                  |
 | `LLM_MODELS_PATH`       | `./.models`         | Local model storage                                 |
 | `JWT_SECRET`            | *(generated)*       | HS256 signing key                                   |

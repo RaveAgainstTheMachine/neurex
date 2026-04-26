@@ -49,6 +49,9 @@ class PTYSession:
         if self.history:
             self.on_output(self.history)
 
+    def detach(self):
+        self.on_output = None
+
     def _broadcast(self, data: str):
         self.history += data
         if len(self.history) > self.max_history:

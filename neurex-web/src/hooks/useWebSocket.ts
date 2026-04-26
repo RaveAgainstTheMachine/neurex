@@ -93,10 +93,8 @@ export function useWebSocket(conversationId: string) {
 
   // Load tasks on mount or switch
   useEffect(() => {
-    if (!conversationId) return;
-    // We should ideally fetch tasks for this conversation, 
-    // but for now we fetch all and filter in store if needed.
-    fetch(`${API_BASE}/api/tasks/`)
+    // Load tasks for the current conversation
+    fetch(`${API_BASE}/api/tasks/?graph_id=${conversationId}`)
       .then((r) => r.json())
       .then((data: TaskNode[]) => {
         data.forEach(upsertTask);
