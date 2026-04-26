@@ -241,7 +241,10 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
         method: "DELETE",
         headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
       });
-      if (!res.ok) throw new Error("Failed to delete skill");
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.detail || "Failed to delete skill");
+      }
       toast.success("Skill purged");
       fetchData();
     } catch (err: any) {
