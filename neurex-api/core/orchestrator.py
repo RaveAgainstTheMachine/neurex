@@ -27,6 +27,7 @@ from core.agents.tester_agent import TesterAgent
 from core.agents.researcher_agent import ResearcherAgent
 from core.agents.reviewer_agent import ReviewerAgent
 from core.agents.debater_agent import DebaterAgent
+from core.agents.commander_agent import CommanderAgent
 
 from core.context.manager import ContextManager
 from core.context.rules_parser import RulesParser
@@ -43,6 +44,7 @@ AGENT_MAP = {
     "researcher": ResearcherAgent,
     "reviewer":   ReviewerAgent,
     "debater":    DebaterAgent,
+    "commander":  CommanderAgent,
 }
 
 class Orchestrator:
@@ -278,6 +280,54 @@ class Orchestrator:
                                 )
                                 yield {"event": "task_updated", "data": {"id": node.id, "status": TaskStatus.PENDING}}
                                 break
+                            
+                            # 4. Commander Intervention (Pivot Logic)
+                            # If we are approaching max iterations, trigger a Commander review to rewrite the graph
+                            if node.iteration >= node.max_iterations - 1:
+                                log.info("orchestrator.commander_intervention", task_id=node.id)
+                                yield {"event": "status", "data": "Commander is re-evaluating strategy..."}
+                                
+                                c_rec = LLMRecommender.recommend("commander", vram)
+                                commander = CommanderAgent(self.rules, self.ctx, model=c_rec.name if c_rec else None)
+                                
+                                # Gather progress context
+                                full_graph = await get_graph(self.session, graph_id)
+                                progress_summary = "\n".join([f"- {n.title}: {n.status} ({n.result or n.error})" for n in full_graph])
+                                
+                                c_task = {
+                                    "progress_summary": progress_summary,
+                                    "current_error": node_result if "FAIL" in node_result.upper() else node.error
+                                }
+                                
+                                async for cchunk in commander.execute(c_task, conversation_id):
+                                    if cchunk["type"] == "result" and "REWRITTEN_PLAN:" in cchunk["result"]:
+                                        new_tasks = json.loads(cchunk["result"].replace("REWRITTEN_PLAN:", ""))
+                                        
+                                        # 1. Cancel all remaining PENDING tasks in current graph
+                                        cancel_stmt = select(TaskNode).where(
+                                            TaskNode.graph_id == graph_id,
+                                            TaskNode.status == TaskStatus.PENDING
+                                        )
+                                        pending_result = await self.session.exec(cancel_stmt)
+                                        for p_node in pending_result.all():
+                                            p_node.status = TaskStatus.CANCELLED
+                                            self.session.add(p_node)
+                                        
+                                        # 2. Append new Commander-authored tasks
+                                        for t_data in new_tasks:
+                                            await create_task(
+                                                self.session,
+                                                graph_id=graph_id,
+                                                parent_id=node.id,
+                                                agent_type=t_data["agent_type"],
+                                                title=t_data["title"],
+                                                description=t_data["description"]
+                                            )
+                                        
+                                        await self.session.commit()
+                                        log.info("orchestrator.graph_rewritten", graph_id=graph_id, new_tasks=len(new_tasks))
+                                        yield {"event": "plan_updated", "data": {"graph_id": graph_id}}
+                                        break
                             
                             # 3. Special Case: If this was a TESTER and it found failures, 
                             # we should NOT mark it as DONE. We should find the parent CODER task
