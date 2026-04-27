@@ -10,6 +10,7 @@ Neurex utilizes a Master-Worker architecture to pool distributed VRAM and execut
 - **Agent Orchestration**: State-persistent task graphs managed by specialized personas (Planner, Coder, Reviewer).
 - **Collective Memory**: ChromaDB-backed vector store with Tree-Sitter chunking for codebase awareness.
 - **Secure Sandbox**: Docker-isolated terminal and test execution with no network access.
+- **Enterprise Grade License**: Business Source License (BSL 1.1) protecting your code while remaining free for personal and startup use.
 
 ## Quick Start
 
@@ -54,5 +55,14 @@ docker compose -f docker-compose.node.yml up -d
 - **Isolation**: Commands run in restricted Docker containers (no network, read-only mounts).
 - **Control**: Mandatory Human-in-the-loop (HITL) approvals for high-autonomy tasks.
 
+## License
+Neurex is licensed under the **Business Source License 1.1**.
+
+*   **Free for Personal Use**: Anyone can use Neurex for non-commercial projects.
+*   **Startup Friendly**: Free for commercial use by companies with less than $5,000,000 USD in annual gross revenue.
+*   **Eventual Open Source**: Automatically converts to **Apache License 2.0** on 2030-01-01.
+
+See [LICENSE](LICENSE) for the full legal text.
+
 ---
-Built by Steven Frost with the assistance of Antigravity.
+© 2026 Steven Frost. All rights reserved. Built with the assistance of Antigravity.
