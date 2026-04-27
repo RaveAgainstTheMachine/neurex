@@ -617,6 +617,7 @@ The WebSocket is the primary channel for all real-time agent interaction, termin
 |:---|:---|:---|
 | `token` | `{ content: string }` | Streaming LLM token |
 | `task_update` | `TaskNode` | Task status change |
+| `plan_updated` | `{ graph_id }` | The execution graph was rewritten by The Commander |
 | `approval_request` | `{ task_id, reason, command }` | HITL gate — agent is waiting |
 | `terminal_output` | `{ data: string }` | PTY stdout |
 | `presence_update` | `[{ user_id, status, cursor }]` | Swarm presence state |

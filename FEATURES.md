@@ -17,6 +17,7 @@ Neurex is a distributed, agentic integrated development environment (IDE) optimi
     *   **Coder**: Implements code changes using file-system tools (full-file rewrites for validation integrity).
     *   **Reviewer**: Performs static analysis and security auditing on proposed changes.
     *   **Tester**: Generates and executes test suites (`pytest`, `vitest`) within isolated containers.
+    *   **Commander**: Executive supervisor that re-evaluates stalled plans and rewrites the task graph mid-execution.
 *   **State Persistence**: All agent progress is tracked in a relational database, allowing for task resumption after system restarts or network interruptions.
 *   **Iteration Governance**: Enforces staleness detection and iteration caps to prevent infinite tool-call loops.
 
@@ -61,7 +62,12 @@ Neurex is a distributed, agentic integrated development environment (IDE) optimi
 *   **Mesh Awareness**: Agents can query `get_mesh_topology` to understand the distributed health and performance of the federated swarm.
 *   **Semantic RAG**: Conceptual indexing of codebases via a background summarization pass, enabling high-level architectural search.
 
-## 9. Safety Lifecycle: Autonomous Self-Preservation
+## 9. Swarm Governance: The Commander
+*   **Dynamic Graph Rewriting**: Mid-execution re-evaluation of stalled plans. The Commander autonomously cancels failed paths and appends new strategies to the task graph.
+*   **Executive Oversight**: Global status monitoring across all agents to detect logical contradictions or technical blockers.
+*   **Autonomous Strategy Pivoting**: Reactive architectural shifting when an agent hits its iteration limit without success.
+
+## 10. Safety Lifecycle: Autonomous Self-Preservation
 *   **Point-in-Time Snapshots**: Automated backups of the database, configuration, and architectural 'brain' before every system update.
 *   **One-Click Rollback**: Robust recovery path to restore the IDE to a known-stable state if an update fails or state is corrupted.
 *   **Operational Transparency**: Visual tracking of system snapshots directly within the Update Notifier dashboard.
