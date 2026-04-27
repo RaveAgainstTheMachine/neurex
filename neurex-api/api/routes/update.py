@@ -10,8 +10,9 @@ from __future__ import annotations
 import asyncio
 import os
 import structlog
-from fastapi import APIRouter, Depends, BackgroundTasks
+from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
 from api.routes.auth import require_role, UserRole
+from core.infrastructure.lifecycle import snapshot_system_state, rollback_system, list_backups
 
 router = APIRouter(prefix="/api/update", tags=["update"])
 log = structlog.get_logger()
@@ -51,9 +52,19 @@ async def _fetch_latest_version() -> str | None:
 
 
 async def _pull_images():
-    """Pull updated Docker images in the background."""
+    """Pull updated Docker images in the background after creating a snapshot."""
     _update_state["pulling"] = True
     _update_state["error"]   = None
+    
+    # 1. Create Safety Snapshot
+    try:
+        log.info("update.creating_snapshot", version=CURRENT_VERSION)
+        await snapshot_system_state(CURRENT_VERSION)
+    except Exception as e:
+        _update_state["error"] = f"Backup failed: {e}"
+        _update_state["pulling"] = False
+        return
+
     log.info("update.pulling_images")
     try:
         proc = await asyncio.create_subprocess_exec(
@@ -125,3 +136,22 @@ async def apply_update(
 
     background_tasks.add_task(_pull_images)
     return {"status": "pulling_started"}
+
+
+@router.get("/backups")
+async def get_backups(_=Depends(require_role(UserRole.ADMIN))):
+    """List all system snapshots."""
+    return await list_backups()
+
+
+@router.post("/rollback/{name}")
+async def apply_rollback(
+    name: str,
+    _=Depends(require_role(UserRole.ADMIN)),
+):
+    """Roll back to a specific snapshot."""
+    try:
+        result = await rollback_system(name)
+        return {"status": "success", "message": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

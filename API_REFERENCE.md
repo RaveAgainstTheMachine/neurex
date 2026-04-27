@@ -581,6 +581,20 @@ Trigger a background `docker compose pull` to download updated images. The servi
 
 ---
 
+### `GET /api/update/backups`
+List all available system snapshots (backups created before updates).
+
+**Auth**: `admin`
+
+---
+
+### `POST /api/update/rollback/{name}`
+Restore the system state from a specific snapshot.
+
+**Auth**: `admin`
+
+---
+
 ## WebSocket Protocol
 
 **Endpoint**: `ws://localhost:8000/ws/{conversation_id}`

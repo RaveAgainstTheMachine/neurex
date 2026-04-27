@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Download, RefreshCw, CheckCircle, AlertCircle } from "lucide-react";
+import { Download, RefreshCw, CheckCircle, AlertCircle, Shield } from "lucide-react";
 import "./UpdateNotifier.css";
 
 const API = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
@@ -119,12 +119,68 @@ export function UpdateNotifier() {
               </button>
             )}
 
+            <div className="update-backups-section">
+              <div className="update-backups-header">
+                <Shield size={12} /> System Snapshots
+              </div>
+              <BackupsList />
+            </div>
+
             <p className="update-note">
-              Neurex pulls new Docker images in the background. No service interruption until you reload.
+              Neurex pulls new Docker images in the background and creates a safety snapshot before applying updates.
             </p>
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function BackupsList() {
+  const [backups, setBackups] = useState<any[]>([]);
+  const [rollingBack, setRollingBack] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch(`${API}/api/update/backups`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("token") ?? ""}` },
+    }).then(r => r.json()).then(setBackups).catch(() => {});
+  }, []);
+
+  const handleRollback = async (name: string) => {
+    if (!confirm(`Are you sure you want to rollback to ${name}? Current state will be overwritten.`)) return;
+    setRollingBack(name);
+    try {
+      const res = await fetch(`${API}/api/update/rollback/${name}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${localStorage.getItem("token") ?? ""}` },
+      });
+      if (res.ok) {
+        window.location.reload();
+      }
+    } finally {
+      setRollingBack(null);
+    }
+  };
+
+  if (backups.length === 0) return <div className="backup-empty">No snapshots found.</div>;
+
+  return (
+    <div className="backups-list">
+      {backups.slice(0, 3).map(b => (
+        <div key={b.name} className="backup-item">
+          <div className="backup-info">
+            <span className="backup-name">{b.name.split('_')[1]}</span>
+            <span className="backup-date">{new Date(b.created_at).toLocaleDateString()}</span>
+          </div>
+          <button 
+            className="btn-rollback" 
+            onClick={() => handleRollback(b.name)}
+            disabled={!!rollingBack}
+          >
+            {rollingBack === b.name ? <RefreshCw size={10} className="spin" /> : "Rollback"}
+          </button>
+        </div>
+      ))}
     </div>
   );
 }

@@ -61,7 +61,12 @@ Neurex is a distributed, agentic integrated development environment (IDE) optimi
 *   **Mesh Awareness**: Agents can query `get_mesh_topology` to understand the distributed health and performance of the federated swarm.
 *   **Semantic RAG**: Conceptual indexing of codebases via a background summarization pass, enabling high-level architectural search.
 
-## 9. Infrastructure Lifecycle
+## 9. Safety Lifecycle: Autonomous Self-Preservation
+*   **Point-in-Time Snapshots**: Automated backups of the database, configuration, and architectural 'brain' before every system update.
+*   **One-Click Rollback**: Robust recovery path to restore the IDE to a known-stable state if an update fails or state is corrupted.
+*   **Operational Transparency**: Visual tracking of system snapshots directly within the Update Notifier dashboard.
+
+## 10. Infrastructure Lifecycle
 *   **Automated Self-Updates**: Background release monitoring with integrated `docker compose` pull triggers for background versioning.
 *   **Role-Aware Installer**: A unified bootstrap script that detects environment capabilities and configures the node as either a Master or an RPC Worker.
 *   **Observability**: Integrated structured logging (`structlog`) for deep-trace debugging across the entire distributed stack.
