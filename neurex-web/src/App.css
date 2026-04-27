@@ -377,3 +377,36 @@
 .status-intel .text-cyan {
   filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.3));
 }
+
+/* Standard Resize Handles */
+.resize-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  transition: background 0.15s;
+  z-index: 100;
+}
+
+.resize-handle--horizontal {
+  width: 3px;
+  cursor: col-resize;
+  border-left: 1px solid var(--border);
+  margin-left: -1px;
+}
+
+.resize-handle--vertical {
+  height: 3px;
+  cursor: row-resize;
+  border-top: 1px solid var(--border);
+  margin-top: -1px;
+}
+
+.resize-handle:hover,
+.resize-handle[data-is-resizing="true"] {
+  background: var(--border-active);
+}
+
+.resize-handle__inner {
+  display: none;
+}

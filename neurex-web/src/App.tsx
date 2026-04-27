@@ -365,7 +365,7 @@ function AppContent() {
 
       {/* Main layout */}
       <div className="app__body">
-        <PanelGroup direction="horizontal" className="app__panels">
+        <PanelGroup autoSaveId="neurex-main-layout-h" direction="horizontal" className="app__panels">
           {/* Sidebar */}
           <Panel 
             ref={sidebarRef}
@@ -394,7 +394,7 @@ function AppContent() {
               minSize={30} 
               className={`app__main-panel ${mobileTab === "editor" || mobileTab === "terminal" ? "mobile-visible" : ""}`}
             >
-              <PanelGroup direction="vertical">
+              <PanelGroup autoSaveId="neurex-main-layout-v" direction="vertical">
                 <Panel 
                   minSize={25} 
                   className={`app__editor ${mobileTab === "editor" ? "mobile-visible" : ""}`}
