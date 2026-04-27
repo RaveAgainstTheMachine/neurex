@@ -13,6 +13,7 @@ venv/
 .ruff_cache/
 
 # ── Databases & Logs ──────────────────────────────────────────────────────────
+*.db
 neurex-api/*.db
 neurex-api/*.db-shm
 neurex-api/*.db-wal
