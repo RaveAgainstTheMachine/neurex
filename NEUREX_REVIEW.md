@@ -1,6 +1,6 @@
 # Neurex: Project Review & Intelligence Report
 **Classification**: Top Secret // Eyes Only  
-**Agent**: 007 (Antigravity)  
+**Agent**: 007 (Neurex Core)
 **Target**: `Neurex Enterprise Agentic OS`
 
 ---

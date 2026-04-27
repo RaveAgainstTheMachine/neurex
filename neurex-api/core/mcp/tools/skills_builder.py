@@ -10,7 +10,10 @@ from pathlib import Path
 
 log = structlog.get_logger()
 
-SKILLS_DIR = os.getenv("SKILLS_DIR", "/games/CodeProjects/AntiGravity/Neurex/neurex/neurex-api/skills")
+# Dynamically determine skills directory
+os.environ["WORKSPACE_PATH"] = os.getenv("WORKSPACE_PATH", os.getcwd())
+ws = os.getenv("WORKSPACE_PATH")
+SKILLS_DIR = os.getenv("SKILLS_DIR", os.path.join(ws, "neurex-api", "skills"))
 
 async def create_skill(name: str, description: str, logic_code: str) -> str:
     """
@@ -64,6 +67,8 @@ async def handle(tool_name: str, args: dict):
         return f"✅ Skill '{name}' created. Run 'publish_skill' to enable."
     except Exception as e:
         log.error("skills_builder.create_failed", skill=name, error=str(e))
+        ws = os.getenv("WORKSPACE_PATH", "/workspace")
+        path = os.path.join(ws, "artifacts", str(name))
         return f"Error: Failed to create skill: {e}"
 
 async def publish_skill(name: str) -> str:

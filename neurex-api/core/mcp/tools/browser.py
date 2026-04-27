@@ -49,7 +49,8 @@ async def browser_screenshot(browser_type: str = "chromium") -> str:
     
     page = pages[-1]
     filename = f"browser_{uuid.uuid4().hex[:8]}.png"
-    path = f"/games/CodeProjects/AntiGravity/Neurex/neurex/artifacts/{filename}"
+    ws = os.getenv("WORKSPACE_PATH", "/workspace")
+    path = os.path.join(ws, "artifacts", filename)
     
     os.makedirs(os.path.dirname(path), exist_ok=True)
     await page.screenshot(path=path)

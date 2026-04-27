@@ -9,7 +9,8 @@ from core.context.manager import ContextManager
 from core.context.rules_parser import RulesParser
 
 async def trigger():
-    os.environ["WORKSPACE_PATH"] = "/games/CodeProjects/AntiGravity/Neurex/neurex"
+    # Dynamically determine workspace path
+    os.environ["WORKSPACE_PATH"] = os.getenv("WORKSPACE_PATH", os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     os.environ["CHROMA_DB_DIR"] = "/games/AI/chroma_db"
     
     DATABASE_URL = "sqlite+aiosqlite:///./neurex.db"

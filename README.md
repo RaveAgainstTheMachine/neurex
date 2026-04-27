@@ -65,4 +65,4 @@ Neurex is licensed under the **Business Source License 1.1**.
 See [LICENSE](LICENSE) for the full legal text.
 
 ---
-© 2026 Steven Frost. All rights reserved. Built with the assistance of Antigravity.
+© 2026 Steven Frost. All rights reserved.

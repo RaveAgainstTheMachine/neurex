@@ -113,36 +113,40 @@ class SkillManager:
         # Fallback curated skills (Elite/Official)
         fallback = [
             {
-                "id": "neurex-web-search",
-                "name": "Global Web Search",
-                "description": "Grant agents the ability to research the open web, browse URLs, and extract real-time data.",
-                "url": "https://github.com/antigravity/skill-web-search",
-                "author": "Antigravity",
-                "tools_count": 4
+                "id": "web-search",
+                "name": "Web Research",
+                "description": "Exploratory search via Google/Brave API",
+                "url": "https://github.com/neurex-swarm/skill-web-search",
+                "author": "Neurex Authors",
+                "version": "1.0.0",
+                "enabled": True
             },
             {
-                "id": "neurex-fs-elite",
-                "name": "Elite File System",
-                "description": "Advanced file manipulation, bulk renaming, and intelligent directory analysis.",
-                "url": "https://github.com/antigravity/skill-fs-elite",
-                "author": "Antigravity",
-                "tools_count": 8
+                "id": "fs-elite",
+                "name": "FS Elite",
+                "description": "High-integrity filesystem manipulation",
+                "url": "https://github.com/neurex-swarm/skill-fs-elite",
+                "author": "Neurex Authors",
+                "version": "1.2.0",
+                "enabled": True
             },
             {
-                "id": "neurex-python-exec",
-                "name": "Secure Python Exec",
-                "description": "Run arbitrary Python code in a sandboxed environment for data science and automation.",
-                "url": "https://github.com/antigravity/skill-python-exec",
-                "author": "Antigravity",
-                "tools_count": 1
+                "id": "python-exec",
+                "name": "Python Sandbox",
+                "description": "Secure Python execution within Docker",
+                "url": "https://github.com/neurex-swarm/skill-python-exec",
+                "author": "Neurex Authors",
+                "version": "1.0.5",
+                "enabled": True
             },
             {
-                "id": "neurex-vision-core",
+                "id": "vision-core",
                 "name": "Vision Core",
-                "description": "OCR, image classification, and visual reasoning tools for multi-modal agents.",
-                "url": "https://github.com/antigravity/skill-vision-core",
-                "author": "Antigravity",
-                "tools_count": 5
+                "description": "Multimodal analysis of screenshots and images",
+                "url": "https://github.com/neurex-swarm/skill-vision-core",
+                "author": "Neurex Authors",
+                "version": "0.9.0",
+                "enabled": True
             }
         ]
         

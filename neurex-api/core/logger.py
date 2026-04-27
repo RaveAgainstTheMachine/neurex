@@ -5,7 +5,8 @@ import json
 from pathlib import Path
 
 # Use the absolute path to the project root for logs
-BASE_DIR = Path("/games/CodeProjects/AntiGravity/Neurex")
+# Dynamically determine base directory
+BASE_DIR = Path(os.getenv("WORKSPACE_PATH", os.getcwd())).parent
 LOG_FILE = BASE_DIR / ".neurex" / "audit.jsonl"
 
 def setup_logging():
