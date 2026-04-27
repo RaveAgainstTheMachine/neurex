@@ -54,7 +54,7 @@ class BaseAgent(ABC):
 
     # ── Shared helpers ────────────────────────────────────────────────────
 
-    def build_system_prompt(self, extra: str = "") -> str:
+    async def build_system_prompt(self, conversation_id: str, extra: str = "") -> str:
         rules = self.rules.get_merged_rules()
         parts = [self.system_prompt]
         
@@ -71,9 +71,19 @@ class BaseAgent(ABC):
             except Exception:
                 pass
 
-        # 2. Rules and Extra context
-        if rules:
-            parts.append(f"\n\n<rules>\n{rules}\n</rules>")
+        # 3. Scratchpad Injection (Collective Context)
+        from core.context.scratchpad import get_scratchpad
+        try:
+            sp = await get_scratchpad(conversation_id)
+            if sp:
+                import json
+                sp_str = json.dumps(sp, indent=2)
+                parts.append(f"\n\n<shared_scratchpad>\n{sp_str}\n</shared_scratchpad>")
+        except Exception:
+            pass
+            
+        parts.append("\n- SCRATCHPAD RULE: Use `set_scratchpad` to store critical findings (e.g. library bugs, architectural notes) for your sibling agents. Check the `<shared_scratchpad>` block for notes left by others.")
+
         if extra:
             parts.append(f"\n\n{extra}")
         return "\n".join(parts)
@@ -178,9 +188,9 @@ class BaseAgent(ABC):
                     if data.get("done"):
                         yield {"type": "done", "full_text": full_text}
 
-    async def dispatch_tool(self, tool_call: dict) -> str:
+    async def dispatch_tool(self, tool_call: dict, conversation_id: str) -> str:
         """Route a tool_call from the model to the MCP client."""
         name = tool_call.get("function", {}).get("name", "")
         args = tool_call.get("function", {}).get("arguments", {})
         log.info("tool_dispatch", tool=name, args=args, autonomy=self.autonomy_level)
-        return await self.mcp.call(name, args, autonomy_level=self.autonomy_level)
+        return await self.mcp.call(name, args, autonomy_level=self.autonomy_level, conversation_id=conversation_id)

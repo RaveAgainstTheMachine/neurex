@@ -108,4 +108,8 @@ async def clear_conversation(
     for msg in result.all():
         await session.delete(msg)
     await session.commit()
+    # Also clear the shared scratchpad for this conversation
+    from core.context.scratchpad import clear_scratchpad
+    await clear_scratchpad(conversation_id)
+    
     return {"deleted": True, "conversation_id": conversation_id}

@@ -56,7 +56,7 @@ class PlannerAgent(BaseAgent):
         self, user_message: str, conversation_id: str
     ) -> AsyncGenerator[dict, None]:
         rag = await self.rag_context(user_message, n=3)
-        system = self.build_system_prompt(rag)
+        system = await self.build_system_prompt(conversation_id, rag)
 
         messages = [
             {"role": "system", "content": system},

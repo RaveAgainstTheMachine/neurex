@@ -119,7 +119,7 @@ class CoderAgent(BaseAgent):
     ) -> AsyncGenerator[dict, None]:
         description = task.get("description", "")
         rag = await self.rag_context(description, n=5)
-        system = self.build_system_prompt(rag)
+        system = await self.build_system_prompt(conversation_id, rag)
 
         messages = [
             {"role": "system",  "content": system},
@@ -139,7 +139,7 @@ class CoderAgent(BaseAgent):
                     yield {"type": "tool_call", "call": chunk["call"]}
                     yield {"type": "status", "status": TaskStatus.WRITING}
 
-                    tool_result = await self.dispatch_tool(chunk["call"])
+                    tool_result = await self.dispatch_tool(chunk["call"], conversation_id)
 
                     # Append tool exchange to history
                     messages.append({

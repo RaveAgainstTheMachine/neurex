@@ -68,7 +68,7 @@ class TesterAgent(BaseAgent):
         self, task: dict, conversation_id: str
     ) -> AsyncGenerator[dict, None]:
         description = task.get("description", "")
-        system = self.build_system_prompt()
+        system = await self.build_system_prompt(conversation_id)
 
         messages = [
             {"role": "system", "content": system},
@@ -85,7 +85,7 @@ class TesterAgent(BaseAgent):
 
                 elif chunk["type"] == "tool_call":
                     yield {"type": "tool_call", "call": chunk["call"]}
-                    tool_result = await self.dispatch_tool(chunk["call"])
+                    tool_result = await self.dispatch_tool(chunk["call"], conversation_id)
                     messages.append({
                         "role": "assistant",
                         "content": None,

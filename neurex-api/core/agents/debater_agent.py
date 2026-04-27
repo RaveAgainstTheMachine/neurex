@@ -37,9 +37,9 @@ class DebaterAgent(BaseAgent):
 
     async def execute(self, task: dict, conversation_id: str) -> AsyncGenerator[dict, None]:
         persona = task.get("persona", "skeptic")
-        intel = await self.mcp.call("query_project_intel", {})
+        intel = await self.mcp.call("query_project_intel", {}, conversation_id=conversation_id)
         
-        system = DEBATER_SYSTEM.format(persona=persona, intel=intel)
+        system = await self.build_system_prompt(conversation_id, DEBATER_SYSTEM.format(persona=persona, intel=intel))
         messages = [
             {"role": "system", "content": system},
             {"role": "user",   "content": f"Critique this plan: {task['description']}"}

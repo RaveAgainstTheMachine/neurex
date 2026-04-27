@@ -37,7 +37,7 @@ class ReviewerAgent(BaseAgent):
         description = task.get("description", "")
         # Reviewer needs heavy context of what was just written
         rag = await self.rag_context(description, n=10)
-        system = self.build_system_prompt(rag)
+        system = await self.build_system_prompt(conversation_id, rag)
 
         messages = [
             {"role": "system",  "content": system},

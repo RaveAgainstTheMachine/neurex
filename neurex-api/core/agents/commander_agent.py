@@ -39,11 +39,11 @@ class CommanderAgent(BaseAgent):
     agent_type = "commander"
 
     async def execute(self, task: dict, conversation_id: str) -> AsyncGenerator[dict, None]:
-        intel = await self.mcp.call("query_project_intel", {})
+        intel = await self.mcp.call("query_project_intel", {}, conversation_id=conversation_id)
         progress = task.get("progress_summary", "")
         error = task.get("current_error", "")
         
-        system = COMMANDER_SYSTEM.format(intel=intel, progress=progress, error=error)
+        system = await self.build_system_prompt(conversation_id, COMMANDER_SYSTEM.format(intel=intel, progress=progress, error=error))
         messages = [
             {"role": "system", "content": system},
             {"role": "user",   "content": "The current plan is stalled. Re-evaluate and provide the remaining tasks to complete the original objective."}

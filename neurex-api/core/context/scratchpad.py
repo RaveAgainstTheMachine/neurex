@@ -1,0 +1,47 @@
+"""
+core/context/scratchpad.py
+Persistent shared scratchpad for inter-agent communication during graph execution.
+"""
+import os
+import json
+from pathlib import Path
+import structlog
+
+log = structlog.get_logger()
+
+# Scratchpads are stored per-conversation
+SCRATCHPAD_DIR = Path(os.getenv("WORKSPACE_PATH", "/workspace")) / ".neurex" / "scratchpads"
+
+async def set_scratchpad_value(conversation_id: str, key: str, value: str) -> str:
+    """Store a persistent note or variable for the current conversation."""
+    SCRATCHPAD_DIR.mkdir(parents=True, exist_ok=True)
+    file_path = SCRATCHPAD_DIR / f"{conversation_id}.json"
+    
+    data = {}
+    if file_path.exists():
+        with open(file_path, "r") as f:
+            data = json.load(f)
+            
+    data[key] = value
+    
+    with open(file_path, "w") as f:
+        json.dump(data, f, indent=2)
+        
+    log.info("scratchpad.set", conversation_id=conversation_id, key=key)
+    return f"✅ Scratchpad updated: {key} set."
+
+async def get_scratchpad(conversation_id: str) -> dict:
+    """Retrieve all shared notes for the current conversation."""
+    file_path = SCRATCHPAD_DIR / f"{conversation_id}.json"
+    if not file_path.exists():
+        return {}
+        
+    with open(file_path, "r") as f:
+        return json.load(f)
+
+async def clear_scratchpad(conversation_id: str) -> str:
+    """Clear all shared notes for the current conversation."""
+    file_path = SCRATCHPAD_DIR / f"{conversation_id}.json"
+    if file_path.exists():
+        file_path.unlink()
+    return "✅ Scratchpad cleared."

@@ -53,7 +53,7 @@ class ResearcherAgent(BaseAgent):
         # Rule 76: Call rag_context at start of execute
         rag = await self.rag_context(description, n=3)
         # Rule 77: Pass RAG to build_system_prompt
-        system = self.build_system_prompt(rag)
+        system = await self.build_system_prompt(conversation_id, rag)
 
         messages = [
             {"role": "system",  "content": system},
@@ -73,7 +73,7 @@ class ResearcherAgent(BaseAgent):
                 elif chunk["type"] == "tool_call":
                     yield {"type": "tool_call", "call": chunk["call"]}
                     
-                    tool_result = await self.dispatch_tool(chunk["call"])
+                    tool_result = await self.dispatch_tool(chunk["call"], conversation_id)
 
                     # Rule 72: Append both assistant and tool messages
                     messages.append({

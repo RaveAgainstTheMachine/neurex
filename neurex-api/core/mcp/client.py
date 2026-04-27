@@ -19,6 +19,7 @@ from core.mcp.tools.security import security_scan
 from core.mcp.tools.intel import synthesize_project_intel, query_project_intel
 from core.mcp.tools.skills_builder import create_skill, publish_skill
 from core.mcp.tools.mesh_intel import get_mesh_topology, check_peer_suitability
+from core.context.scratchpad import set_scratchpad_value, get_scratchpad, clear_scratchpad
 
 
 log = structlog.get_logger()
@@ -45,6 +46,9 @@ TOOL_REGISTRY: dict[str, callable] = {
     "publish_skill":             publish_skill,
     "get_mesh_topology":         get_mesh_topology,
     "check_peer_suitability":    check_peer_suitability,
+    "set_scratchpad":            set_scratchpad_value,
+    "get_scratchpad":            get_scratchpad,
+    "clear_scratchpad":          clear_scratchpad,
 }
 class MCPClient:
     """
@@ -56,7 +60,7 @@ class MCPClient:
         from core.skills.manager import SkillManager
         self.skills = SkillManager()
 
-    async def call(self, tool_name: str, arguments: dict, autonomy_level: str = "limited") -> str:
+    async def call(self, tool_name: str, arguments: dict, autonomy_level: str = "limited", conversation_id: str | None = None) -> str:
         fn = TOOL_REGISTRY.get(tool_name)
         if fn is None:
             # Check SkillManager for dynamic tools
@@ -68,11 +72,13 @@ class MCPClient:
             log.warning("mcp.unknown_tool", tool=tool_name)
             return f"Error: unknown tool '{tool_name}'"
         try:
-            # Inject autonomy_level into arguments if the tool supports it
+            # Inject context-aware parameters
             import inspect
             sig = inspect.signature(fn)
             if "autonomy_level" in sig.parameters:
                 arguments["autonomy_level"] = autonomy_level
+            if "conversation_id" in sig.parameters and conversation_id:
+                arguments["conversation_id"] = conversation_id
                 
             result = await fn(**arguments)
             return str(result)
