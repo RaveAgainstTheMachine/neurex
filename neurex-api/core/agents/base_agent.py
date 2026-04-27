@@ -116,7 +116,7 @@ class BaseAgent(ABC):
             return
 
         # 2. Otherwise, route to local Mesh (Ollama)
-        ollama_url = await mesh_router.get_best_inference_node()
+        ollama_url = await mesh_router.get_best_inference_node(payload["model"])
         full_text = ""
         # Increase timeout for complex mesh generation
         async with httpx.AsyncClient(timeout=300) as client:

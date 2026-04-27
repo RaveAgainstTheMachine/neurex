@@ -59,6 +59,10 @@ async def lifespan(app: FastAPI):
     await firewall_manager.check_startup()
     asyncio.create_task(firewall_manager.start_sentinel())
 
+    # Start Mesh Monitoring
+    from core.infrastructure.mesh import mesh_router
+    asyncio.create_task(mesh_router.start_monitoring())
+
     log.info("neurex.ready")
     yield
 

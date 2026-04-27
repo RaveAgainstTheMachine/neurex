@@ -19,15 +19,29 @@ from core.task_graph import AsyncSession
 log = structlog.get_logger()
 router = APIRouter()
 
-API_TOKEN = os.getenv("API_TOKEN", "neurex-dev-token")
-
+from api.routes.auth import SECRET_KEY, ALGORITHM
+from jose import jwt, JWTError
 
 async def _authenticate(websocket: WebSocket) -> bool:
     token = websocket.query_params.get("token", "").strip()
-    if token != API_TOKEN.strip():
+    if not token:
         await websocket.close(code=http_status.WS_1008_POLICY_VIOLATION)
         return False
-    return True
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username: str = payload.get("sub")
+        if username is None:
+            await websocket.close(code=http_status.WS_1008_POLICY_VIOLATION)
+            return False
+        log.info("ws.auth_success", user=username)
+        return True
+    except JWTError:
+        await websocket.close(code=http_status.WS_1008_POLICY_VIOLATION)
+        return False
+    except Exception as e:
+        log.error("ws.auth_crash", error=str(e))
+        await websocket.close(code=http_status.WS_1008_POLICY_VIOLATION)
+        return False
 
 
 async def _persist_message(session: AsyncSession, conversation_id: str, role: str, content: str, graph_id: str | None = None):

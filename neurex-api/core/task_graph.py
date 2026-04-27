@@ -30,6 +30,7 @@ class User(SQLModel, table=True):
     is_active: bool = Field(default=True)
     otp_secret: Optional[str] = None
     otp_enabled: bool = Field(default=False)
+    otp_backup_codes: Optional[str] = None # JSON-serialized list of hashed codes
     force_password_change: bool = Field(default=False)
 
 class AutonomyLevel(str, Enum):

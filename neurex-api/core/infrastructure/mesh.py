@@ -104,35 +104,52 @@ class MeshRouter:
             self._save_peers()
             log.warning("mesh.peer_offline", url=url, error=str(e))
 
-    async def get_best_inference_node(self) -> str:
+    async def get_best_inference_node(self, model_name: str | None = None) -> str:
         """
         Returns the Ollama base URL to use.
         Uses a Weighted-Load algorithm to calculate node capability scores.
+        If model_name is provided, filters for nodes that already have the model.
         """
         from core.infrastructure.manager import infrastructure_manager
         local_metrics = infrastructure_manager.get_system_metrics()
         local_vram = local_metrics.get("vram_gb", 8.0)
         local_cpu = local_metrics.get("cpu_percent", 0.0)
         
-        # 1. Start with local node as default
-        # Local Score calculation: (VRAM) / (CPU Load + 1)
-        best_score = (local_vram * 2) / (local_cpu + 1)
+        # 1. Start with local node
+        local_models = await infrastructure_manager.get_installed_models("ollama")
+        has_model_locally = not model_name or any(model_name in m for m in local_models)
+        
+        # Boost local score if it has the model; penalize if it doesn't
+        local_multiplier = 2.0 if has_model_locally else 0.1
+        best_score = (local_vram * local_multiplier) / (local_cpu + 1)
         best_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
         
         for peer in self.peers.values():
             if peer.status != "online":
                 continue
             
-            # 2. Peer Score = (VRAM * 2) / ((CPU + Latency/10 + Queue*20) + 1)
-            # High VRAM boosts score; high load, latency, or queue depth penalizes it.
-            load_factor = peer.cpu_percent + (peer.latency_ms / 10) + (peer.queue_depth * 20)
-            score = (peer.vram_gb * 2) / (load_factor + 1)
+            # 2. Check if peer has the model
+            has_model_on_peer = not model_name or any(model_name in m for m in peer.models)
+            peer_multiplier = 2.0 if has_model_on_peer else 0.1
+            
+            # 3. Peer Score calculation
+            load_factor = peer.cpu_percent + (peer.latency_ms / 10) + (getattr(peer, 'queue_depth', 0) * 20)
+            score = (peer.vram_gb * peer_multiplier) / (load_factor + 1)
             
             if score > best_score:
                 best_score = score
                 best_url = f"{peer.url}/api/infra/ollama_proxy"
-                log.info("mesh.routing_optimized", node=peer.name, score=round(score, 2))
                 
+        log.info("mesh.routing_decided", target=best_url, model=model_name, score=round(best_score, 2))
         return best_url
+
+    async def start_monitoring(self, interval_seconds: int = 60):
+        """Background task to periodically refresh peer health and telemetry."""
+        log.info("mesh.monitor_started", interval=interval_seconds)
+        while True:
+            tasks = [self.check_health(url) for url in self.peers.keys()]
+            if tasks:
+                await asyncio.gather(*tasks)
+            await asyncio.sleep(interval_seconds)
 
 mesh_router = MeshRouter()

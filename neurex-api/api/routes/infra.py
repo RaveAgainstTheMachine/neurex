@@ -117,7 +117,7 @@ class PeerRequest(BaseModel):
     token: str
     name: str
 
-@router.get("/mesh/peers")
+@router.get("/mesh/peers", dependencies=[Depends(require_role(UserRole.ADMIN))])
 async def list_peers():
     return [p.to_dict() for p in mesh_router.peers.values()]
 
@@ -157,7 +157,7 @@ async def ollama_proxy(path: str, request: Request):
 
     return StreamingResponse(stream_generator(), media_type="application/json")
 
-@router.get("/logs")
+@router.get("/logs", dependencies=[Depends(require_role(UserRole.ADMIN))])
 async def get_system_logs():
     """Retrieve the latest system audit logs."""
     from core.logger import get_audit_logs

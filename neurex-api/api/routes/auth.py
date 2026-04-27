@@ -19,7 +19,7 @@ router = APIRouter()
 # Configuration
 SECRET_KEY = os.getenv("JWT_SECRET", "neurex-super-secret-key-007")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 480 # 8 hours
+ACCESS_TOKEN_EXPIRE_MINUTES = 1440 # 24 hours
 
 pwd_context = CryptContext(schemes=["pbkdf2_sha256", "bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/token")
@@ -32,7 +32,10 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
-    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=15))
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -195,16 +198,36 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), session: Async
 @router.post("/token-otp")
 async def login_otp(username: str, code: str, session: AsyncSession = Depends(get_session)):
     import pyotp
+    import json
     statement = select(User).where(User.username == username)
     result = await session.exec(statement)
     user = result.first()
     
-    if not user or not user.otp_enabled or not user.otp_secret:
+    if not user or not user.otp_enabled:
         raise HTTPException(status_code=400, detail="Invalid request")
     
-    totp = pyotp.TOTP(user.otp_secret)
-    if not totp.verify(code):
-        raise HTTPException(status_code=401, detail="Invalid OTP code")
+    # Try TOTP first
+    authenticated = False
+    if user.otp_secret:
+        totp = pyotp.TOTP(user.otp_secret)
+        if totp.verify(code):
+            authenticated = True
+            
+    # Try backup codes if not authenticated
+    if not authenticated and user.otp_backup_codes:
+        hashed_codes = json.loads(user.otp_backup_codes)
+        for i, hashed in enumerate(hashed_codes):
+            if verify_password(code.upper(), hashed):
+                authenticated = True
+                # Remove the used code
+                hashed_codes.pop(i)
+                user.otp_backup_codes = json.dumps(hashed_codes)
+                session.add(user)
+                await session.commit()
+                break
+
+    if not authenticated:
+        raise HTTPException(status_code=401, detail="Invalid OTP or backup code")
     
     if user.force_password_change:
         return {"password_change_required": True, "username": user.username}
@@ -261,15 +284,26 @@ async def setup_otp(current_user: User = Depends(get_current_user), session: Asy
 @router.post("/verify-otp")
 async def verify_otp(code: str, current_user: User = Depends(get_current_user), session: AsyncSession = Depends(get_session)):
     import pyotp
+    import secrets
+    import json
     if not current_user.otp_secret:
         raise HTTPException(status_code=400, detail="OTP not setup")
     
     totp = pyotp.TOTP(current_user.otp_secret)
     if totp.verify(code):
         current_user.otp_enabled = True
+        
+        # Generate 8 backup codes
+        plain_codes = [secrets.token_hex(4).upper() for _ in range(8)]
+        hashed_codes = [hash_password(c) for c in plain_codes]
+        current_user.otp_backup_codes = json.dumps(hashed_codes)
+        
         session.add(current_user)
         await session.commit()
-        return {"status": "enabled"}
+        return {
+            "status": "enabled",
+            "backup_codes": plain_codes
+        }
     else:
         raise HTTPException(status_code=400, detail="Invalid code")
 
