@@ -2,21 +2,22 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
-## [v0.7.6-beta] - 2026-04-27
+## [v0.8.0-beta] - 2026-04-27
 
 ### Added
-- **UI Stabilization**: Implemented a robust, state-driven resize handle system using native `react-resizable-panels` attributes (`data-resize-handle-state`).
-- **Premium Aesthetics**: Added a layered violet glow effect (`--glow-purple`) to panel dividers on hover and drag.
-- **Enhanced Visibility**: Combined the 6px hit-area with a 2px high-contrast core line to ensure interaction zones are unmistakable and premium.
+- **Advanced Search Panel**: Re-implemented the Search Activity Bar tab with `ripgrep` (`rg`) integration.
+  - Added support for Case Sensitivity, Regex, and Whole Word toggles.
+  - Implemented Glob-based include/exclude filtering.
+  - High-density result rendering with code snippets and line numbers.
+- **Memory Worker Resilience**: Improved the background indexing service to gracefully handle outages of external services (Ollama, ChromaDB).
+- **Backend Cleanup**: Optimized `files.py` imports and set dynamic `WORKSPACE_PATH` defaults for local development.
 
 ### Fixed
-- **Cursor Lock**: Resolved a regression where the cursor would get "permanently stuck" in a resize state after interacting with the bottom panel.
-- **Cursor Style**: Replaced the "fist" (`grabbing`) cursor with the standard 4-point star (`move`) for all panel dividers.
-- **Style Specificity**: Cleaned up overlapping CSS selectors in `App.css` to prevent flickering and inconsistent state rendering.
+- **Database Schema**: Fixed a bug where the `chatmessage` table was not initialized during project startup.
 
 ---
 
-## [v0.7.5-beta] - 2026-04-26
+## [v0.7.6-beta] - 2026-04-27
 
 ### Added
 - **Federated Governance**: Implemented DB-backed file locking and WebSocket-based presence broadcasting to prevent concurrent agent/user edit collisions.

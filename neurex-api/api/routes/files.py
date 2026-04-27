@@ -1,15 +1,15 @@
 """api/routes/files.py — Workspace file browser endpoints."""
 import os
+import json
+import shutil
+import subprocess
 from pathlib import Path
 from fastapi import APIRouter, HTTPException, UploadFile, File
 from pydantic import BaseModel
-import shutil
-import subprocess
-import ast
 from core.collaboration.manager import CollaborationManager
 
 router = APIRouter()
-WORKSPACE = Path(os.getenv("WORKSPACE_PATH", "/workspace"))
+WORKSPACE = Path(os.getenv("WORKSPACE_PATH", os.getcwd()))
 IGNORED = {".git", "node_modules", "__pycache__", ".neurex_trash"}
 
 collab_manager = CollaborationManager()
@@ -122,32 +122,108 @@ async def upload_file(file: UploadFile = File(...), path: str = "uploads"):
 import subprocess
 
 @router.get("/search")
-async def search_files(query: str):
-    """Global grep search in workspace."""
+async def search_files(
+    query: str, 
+    case_sensitive: bool = False, 
+    use_regex: bool = False, 
+    whole_word: bool = False,
+    include_glob: str = "",
+    exclude_glob: str = ""
+):
+    """Global search in workspace using ripgrep or grep."""
     if not query:
         return []
         
-    try:
-        # Run grep -rnI (recursive, line number, ignore binary)
-        result = subprocess.run(
-            ["grep", "-rnI", query, str(WORKSPACE)],
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
+    # Prefer ripgrep (rg) if available
+    rg_path = shutil.which("rg")
+    
+    if rg_path:
+        cmd = [rg_path, "--column", "--line-number", "--no-heading", "--color", "never", "--json"]
         
-        matches = []
-        for line in result.stdout.splitlines():
-            if ":" in line:
-                parts = line.split(":", 2)
-                if len(parts) >= 3:
-                    full_path, line_num, content = parts
-                    rel_path = str(Path(full_path).relative_to(WORKSPACE))
-                    matches.append({
-                        "path": rel_path,
-                        "line": int(line_num),
-                        "content": content.strip()
-                    })
-        return matches[:200]  # Limit to 200 results
-    except Exception as e:
-        return {"error": str(e)}
+        if not case_sensitive:
+            cmd.append("--ignore-case")
+        if not use_regex:
+            cmd.append("--fixed-strings")
+        if whole_word:
+            cmd.append("--word-regexp")
+        
+        if include_glob:
+            for g in include_glob.split(","):
+                cmd.extend(["--glob", g.strip()])
+        if exclude_glob:
+            for g in exclude_glob.split(","):
+                cmd.extend(["--glob", f"!{g.strip()}"])
+                
+        cmd.append(query)
+        cmd.append(str(WORKSPACE))
+        
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+            matches = []
+            
+            # rg --json output is a stream of JSON objects per line
+            for line in result.stdout.splitlines():
+                try:
+                    data = json.loads(line)
+                    if data.get("type") == "match":
+                        payload = data["data"]
+                        full_path = payload["path"]["text"]
+                        
+                        # Handle absolute vs relative path resolution
+                        try:
+                            f_path = Path(full_path)
+                            if f_path.is_absolute():
+                                rel_path = str(f_path.relative_to(WORKSPACE))
+                            else:
+                                # rg with relative path
+                                rel_path = full_path
+                        except ValueError:
+                            # Not under workspace, skip or use absolute
+                            rel_path = full_path
+                            
+                        line_num = payload["line_number"]
+                        content = payload["lines"]["text"]
+                        matches.append({
+                            "path": rel_path,
+                            "line": line_num,
+                            "content": content.strip()
+                        })
+                except:
+                    continue
+            return matches[:500]
+        except Exception as e:
+            return {"error": str(e)}
+    else:
+        # Fallback to grep
+        cmd = ["grep", "-rnI"]
+        if not case_sensitive:
+            cmd.append("-i")
+        if not use_regex:
+            cmd.append("-F")
+        if whole_word:
+            cmd.append("-w")
+            
+        # Grep globbing is limited, we just use standard grep
+        cmd.extend([query, str(WORKSPACE)])
+        
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+            matches = []
+            for line in result.stdout.splitlines():
+                if ":" in line:
+                    parts = line.split(":", 2)
+                    if len(parts) >= 3:
+                        full_path, line_num, content = parts
+                        try:
+                            rel_path = str(Path(full_path).relative_to(WORKSPACE))
+                            matches.append({
+                                "path": rel_path,
+                                "line": int(line_num),
+                                "content": content.strip()
+                            })
+                        except:
+                            continue
+            return matches[:200]
+        except Exception as e:
+            return {"error": str(e)}
+

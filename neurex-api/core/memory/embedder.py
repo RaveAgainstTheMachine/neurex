@@ -24,15 +24,19 @@ class Embedder:
     async def embed_batch(self, texts: list[str]) -> list[list[float]]:
         """Embed a batch of texts via Ollama."""
         embeddings = []
-        async with httpx.AsyncClient(timeout=60) as client:
-            for text in texts:
-                r = await client.post(
-                    f"{get_ollama_base()}/api/embeddings",
-                    json={"model": get_embed_model(), "prompt": text},
-
-                )
-                r.raise_for_status()
-                embeddings.append(r.json()["embedding"])
+        try:
+            async with httpx.AsyncClient(timeout=60) as client:
+                for text in texts:
+                    r = await client.post(
+                        f"{get_ollama_base()}/api/embeddings",
+                        json={"model": get_embed_model(), "prompt": text},
+                    )
+                    r.raise_for_status()
+                    embeddings.append(r.json()["embedding"])
+        except Exception as e:
+            log.error("embedder.failed", error=str(e))
+            # Return empty list or zeros? Empty list is safer for the caller to handle as "failure"
+            return []
         return embeddings
 
 

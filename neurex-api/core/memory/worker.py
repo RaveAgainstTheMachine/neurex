@@ -129,16 +129,24 @@ class MemoryWorker:
                     documents.append(chunk["text"])
 
             embeddings = await self.embedder.embed_batch(documents)
+            if not embeddings:
+                log.warning("memory_worker.skip_file", file=str(path), reason="Embedding failed")
+                return
+
             ids       = [f"{path}::{c['id']}" for c in chunks]
             metadatas = [c["metadata"] for c in chunks]
 
             def upsert_sync():
-                self._collection.upsert(
-                    ids=ids,
-                    embeddings=embeddings,
-                    documents=documents,
-                    metadatas=metadatas,
-                )
+                try:
+                    self._collection.upsert(
+                        ids=ids,
+                        embeddings=embeddings,
+                        documents=documents,
+                        metadatas=metadatas,
+                    )
+                except Exception as e:
+                    log.error("memory_worker.upsert_failed", file=str(path), error=str(e))
+
             await asyncio.to_thread(upsert_sync)
             log.debug("memory_worker.indexed", file=str(path), chunks=len(chunks))
         except Exception as e:
@@ -155,19 +163,24 @@ class MemoryWorker:
         return True
 
 
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
+try:
+    from watchdog.observers import Observer
+    from watchdog.events import FileSystemEventHandler
 
-class _ChangeHandler(FileSystemEventHandler):
-    """Watchdog event handler that enqueues changed files for re-indexing."""
-    def __init__(self, queue: asyncio.Queue, loop: asyncio.AbstractEventLoop):
-        self._queue = queue
-        self._loop = loop
+    class _ChangeHandler(FileSystemEventHandler):
+        """Watchdog event handler that enqueues changed files for re-indexing."""
+        def __init__(self, queue: asyncio.Queue, loop: asyncio.AbstractEventLoop):
+            self._queue = queue
+            self._loop = loop
 
-    def on_modified(self, event):
-        if not event.is_directory:
-            self._loop.call_soon_threadsafe(self._queue.put_nowait, Path(event.src_path))
+        def on_modified(self, event):
+            if not event.is_directory:
+                self._loop.call_soon_threadsafe(self._queue.put_nowait, Path(event.src_path))
 
-    def on_created(self, event):
-        if not event.is_directory:
-            self._loop.call_soon_threadsafe(self._queue.put_nowait, Path(event.src_path))
+        def on_created(self, event):
+            if not event.is_directory:
+                self._loop.call_soon_threadsafe(self._queue.put_nowait, Path(event.src_path))
+except ImportError:
+    Observer = None
+    FileSystemEventHandler = object
+    _ChangeHandler = None

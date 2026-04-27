@@ -84,6 +84,7 @@ class DecisionEvent(SQLModel, table=True):
 
 async def init_db():
     import core.projects.models # Ensure models are registered with SQLModel
+    from api.routes.chat import ChatMessage # Register ChatMessage
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
 
