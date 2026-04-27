@@ -380,54 +380,66 @@
 
 /* Standard Resize Handles */
 .resize-handle {
+  position: relative;
+  z-index: 100;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: visible;
   background: transparent;
-  transition: background 0.15s;
-  z-index: 100;
+  transition: all 0.2s ease;
 }
 
 .resize-handle--horizontal {
-  width: 10px;
-  cursor: col-resize;
-  margin-left: -5px;
+  width: 6px;
+  cursor: move;
+  margin-left: -3px;
 }
 
 .resize-handle--vertical {
-  height: 10px;
-  cursor: row-resize;
-  margin-top: -5px;
+  height: 6px;
+  cursor: move;
+  margin-top: -3px;
 }
 
-.resize-handle::after {
+.resize-handle__highlight {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  transition: all 0.2s ease;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.resize-handle__highlight::after {
   content: '';
   position: absolute;
   background: transparent;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
 }
 
-.resize-handle--horizontal::after {
-  top: 0; bottom: 0;
-  left: 4px; right: 4px;
+.resize-handle--horizontal .resize-handle__highlight::after {
+  width: 2px;
+  height: 100%;
 }
 
-.resize-handle--vertical::after {
-  left: 0; right: 0;
-  top: 4px; bottom: 4px;
+.resize-handle--vertical .resize-handle__highlight::after {
+  width: 100%;
+  height: 2px;
 }
 
-.resize-handle:hover::after,
-.resize-handle[data-active="true"]::after {
-  background: var(--purple-main);
-  box-shadow: 0 0 12px var(--glow-purple);
-}
-
+/* State-driven styling using library attributes */
 .resize-handle:hover,
-.resize-handle[data-active="true"] {
-  z-index: 1000;
+.resize-handle[data-resize-handle-state="hover"],
+.resize-handle[data-resize-handle-state="drag"] {
+  background: hsla(260, 90%, 65%, 0.1);
 }
 
-.resize-handle__inner {
-  display: none;
+.resize-handle:hover .resize-handle__highlight::after,
+.resize-handle[data-resize-handle-state="hover"] .resize-handle__highlight::after,
+.resize-handle[data-resize-handle-state="drag"] .resize-handle__highlight::after {
+  background: var(--purple-main);
+  box-shadow: 0 0 15px var(--glow-purple), 0 0 5px var(--purple-main);
 }
