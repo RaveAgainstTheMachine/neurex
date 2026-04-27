@@ -134,7 +134,7 @@ export const useStore = create<NeurexStore>()(
     refreshFileTree: async () => {
       try {
         const token = get().token;
-        const r = await fetch(`${API_BASE}/api/files/tree`, {
+        const r = await fetch(`${API_BASE}/api/files/tree?depth=2`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
         const data = await r.json();
@@ -143,7 +143,30 @@ export const useStore = create<NeurexStore>()(
         console.error("Failed to fetch file tree:", err);
       }
     },
-
+    fetchSubtree: async (path: string) => {
+      try {
+        const token = get().token;
+        const r = await fetch(`${API_BASE}/api/files/tree?path=${encodeURIComponent(path)}&depth=1`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        const data = await r.json();
+        set((s) => {
+          const updateNode = (nodes: any[]) => {
+            for (const node of nodes) {
+              if (node.path === path) {
+                node.children = data.children;
+                return true;
+              }
+              if (node.children && updateNode(node.children)) return true;
+            }
+            return false;
+          };
+          updateNode(s.fileTree);
+        });
+      } catch (err) {
+        console.error("Failed to fetch subtree:", err);
+      }
+    },
     // ── Chat ──────────────────────────────────────────────────────────
     messages: [],
     activeConversationId: (localStorage.getItem("neurex_conv_id") && localStorage.getItem("neurex_conv_id") !== "undefined") ? localStorage.getItem("neurex_conv_id")! : "default",

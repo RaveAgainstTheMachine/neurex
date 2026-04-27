@@ -107,9 +107,10 @@ function SortableItem(props: { id: string; children: React.ReactNode }) {
 interface AIPanelProps {
   send: (payload: object) => void;
   conversationId: string;
+  isActive?: boolean;
 }
 
-export function AIPanel({ send, conversationId }: AIPanelProps) {
+export function AIPanel({ send, conversationId, isActive = true }: AIPanelProps) {
   const [tab, setTab] = useState<"chat" | "tasks" | "history">("chat");
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -183,7 +184,7 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
 
   // Fetch conversation list when history tab is opened
   useEffect(() => {
-    if (tab === "history") {
+    if (tab === "history" && isActive) {
       fetch(`${API_BASE}/api/chat/conversations`)
         .then(r => r.json())
         .then(data => {
@@ -191,11 +192,11 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
         })
         .catch(() => {});
     }
-  }, [tab, setConversations]);
+  }, [tab, setConversations, isActive]);
 
   // Fetch tasks for the current conversation
   useEffect(() => {
-    if (tab === "tasks") {
+    if (tab === "tasks" && isActive) {
       fetch(`${API_BASE}/api/tasks/?graph_id=${conversationId}`)
         .then(r => r.json())
         .then(ts => {
@@ -205,7 +206,7 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
         })
         .catch(() => {});
     }
-  }, [tab, conversationId]);
+  }, [tab, conversationId, isActive]);
 
   const insertMention = (forceValue?: string) => {
     const val = forceValue || filteredMentions[mentionIndex % filteredMentions.length];

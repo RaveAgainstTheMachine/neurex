@@ -16,73 +16,49 @@ collab_manager = CollaborationManager()
 
 
 @router.get("/tree")
-async def file_tree():
+async def file_tree(path: str = ".", depth: int = 2):
     from core.logger import log
-    log.info("files.tree_request", workspace=str(WORKSPACE))
-    # Fetch Git Status
+    log.info("files.tree_request", path=path, depth=depth, workspace=str(WORKSPACE))
+    target_path = (WORKSPACE / path).resolve()
+    if not str(target_path).startswith(str(WORKSPACE)):
+        raise HTTPException(status_code=403, detail="Path traversal blocked")
     git_status = {}
     try:
         res = subprocess.run(
             ["git", "status", "--porcelain"], 
-            cwd=WORKSPACE, capture_output=True, text=True, timeout=5
+            cwd=WORKSPACE, capture_output=True, text=True, timeout=2
         )
-        log.info("files.git_status_raw", stdout=res.stdout[:200])
         for line in res.stdout.splitlines():
             if len(line) > 3:
                 status = line[:2].strip()
-                path = line[3:].strip()
-                git_status[path] = "M" if "M" in status else "U" if "??" in status else None
-        log.info("files.git_status_parsed", count=len(git_status), keys=list(git_status.keys())[:5])
-    except Exception as e:
-        log.error("files.git_status_error", error=str(e))
-
-    def _walk(path: Path) -> dict:
+                p = line[3:].strip()
+                git_status[p] = "M" if "M" in status else "U" if "??" in status else None
+    except Exception:
+        pass
+    def _walk(current_path: Path, current_depth: int) -> dict:
         try:
-            rel_path = str(path.relative_to(WORKSPACE))
-            if rel_path == ".":
-                rel_path = ""
-        except ValueError:
-            rel_path = path.name
-        
-        name = path.name
-        if path.is_dir():
+            rel_path = str(current_path.relative_to(WORKSPACE))
+            if rel_path == ".": rel_path = ""
+        except ValueError: rel_path = current_path.name
+        name = current_path.name
+        if current_path.is_dir():
+            if current_depth <= 0:
+                return {"name": name, "type": "dir", "path": rel_path, "has_children": True}
             children = []
-            has_m = False
-            has_u = False
+            has_m, has_u = False, False
             try:
-                for entry in os.scandir(path):
+                for entry in os.scandir(current_path):
                     if entry.name not in IGNORED:
-                        child = _walk(Path(entry.path))
+                        child = _walk(Path(entry.path), current_depth - 1)
                         children.append(child)
-                        # Bubble up status
-                        if child.get("status") == "M" or child.get("has_m"):
-                            has_m = True
-                        if child.get("status") == "U" or child.get("has_u"):
-                            has_u = True
+                        if child.get("status") == "M" or child.get("has_m"): has_m = True
+                        if child.get("status") == "U" or child.get("has_u"): has_u = True
                 children.sort(key=lambda x: (x["type"] != "dir", x["name"].lower()))
-            except PermissionError:
-                pass
-            return {
-                "name": name, 
-                "type": "dir", 
-                "path": rel_path,
-                "children": children,
-                "has_m": has_m,
-                "has_u": has_u
-            }
-        
-        return {
-            "name": name, 
-            "type": "file", 
-            "path": rel_path,
-            "status": git_status.get(rel_path)
-        }
-
-    if not WORKSPACE.exists():
-        return {"name": "root", "type": "dir", "children": [], "error": "Workspace not found"}
-        
-    return _walk(WORKSPACE)
-
+            except PermissionError: pass
+            return {"name": name, "type": "dir", "path": rel_path, "children": children, "has_m": has_m, "has_u": has_u}
+        return {"name": name, "type": "file", "path": rel_path, "status": git_status.get(rel_path)}
+    if not target_path.exists(): return {"name": "root", "type": "dir", "children": [], "error": "Path not found"}
+    return _walk(target_path, depth)
 
 @router.get("/read")
 async def read_file(path: str):

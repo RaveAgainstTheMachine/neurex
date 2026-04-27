@@ -2,6 +2,27 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
+## [v0.8.5-beta] - 2026-04-27
+
+### Added
+- **Lazy-Loading File Explorer**: Implemented a shallow-load architecture for the workspace tree. The system now only fetches root structure on boot and lazy-loads subdirectories on-demand, making the explorer instant even for massive codebases.
+- **Background Startup**: Decoupled UI rendering from heavy backend initialization (File Tree, Infrastructure Scanning). The IDE now transitions to the dashboard immediately while data fetches asynchronously.
+
+### Fixed
+- **Loading Bar Accuracy**: Removed artificial 10ms animation delays and "smooth catch-up" loops. The loading progress bar now accurately reflects the real-time initialization state.
+- **Instant UI Boot**: Reprioritized the `LoadingOverlay` in the render tree to ensure it appears the absolute microsecond the page is requested, eliminating the 2-3s "blank screen" flicker.
+- **Poll Management**: Gated the `FlightRecorder` and `AIPanel` fetching logic to only run when their respective tabs/panels are active, reducing initial server load and log noise.
+
+---
+
+## [v0.8.4-beta] - 2026-04-27
+
+### Fixed
+- **Database Resilience**: Manually added missing `is_checkpoint` column to the `tasknode` table in `neurex.db` to prevent 500 errors during agent task execution.
+- **App Syntax**: Resolved a series of JSX and brace-matching errors in `App.tsx` caused by aggressive automated editing.
+
+---
+
 ## [v0.8.3-beta] - 2026-04-27
 
 ### Added
@@ -47,7 +68,7 @@ All notable changes to the Neurex project will be documented in this file.
 
 ---
 
-## [v0.7.6-beta] - 2026-04-27
+## [v0.8.6-beta] - 2026-04-27
 
 ### Added
 - **Federated Governance**: Implemented DB-backed file locking and WebSocket-based presence broadcasting to prevent concurrent agent/user edit collisions.

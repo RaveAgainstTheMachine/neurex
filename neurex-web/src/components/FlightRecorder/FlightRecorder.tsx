@@ -12,7 +12,7 @@ interface Decision {
   created_at: string;
 }
 
-export function FlightRecorder({ conversationId }: { conversationId: string }) {
+export function FlightRecorder({ conversationId, isActive = true }: { conversationId: string; isActive?: boolean }) {
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -32,10 +32,11 @@ export function FlightRecorder({ conversationId }: { conversationId: string }) {
   };
 
   useEffect(() => {
+    if (!isActive) return;
     fetchLog();
     const interval = setInterval(fetchLog, 10000); // Poll every 10s
     return () => clearInterval(interval);
-  }, [conversationId]);
+  }, [conversationId, isActive]);
 
   return (
     <div className="flight-recorder">

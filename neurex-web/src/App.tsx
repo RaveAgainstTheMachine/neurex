@@ -150,6 +150,8 @@ const API_BASE = window.location.origin.includes(":3000")
   : window.location.origin;
 
 function AppContent() {
+  try {
+  
   const [sidebarOrder, setSidebarOrder] = useState<string[]>(() => {
     const saved = localStorage.getItem("neurex_sidebar_order");
     return saved ? JSON.parse(saved) : SIDEBAR_ITEMS.map(i => i.id);
@@ -177,20 +179,8 @@ function AppContent() {
   const wsStatus = useStore(s => s.wsStatus);
   const refreshFileTree = useStore(s => s.refreshFileTree);
   const refreshInfra = useStore(s => s.refreshInfra);
-  
-  const [targetProgress, setTargetProgress] = useState(10);
-  const [visualProgress, setVisualProgress] = useState(0);
+  const [visualProgress, setVisualProgress] = useState(5);
   const [isInitialized, setIsInitialized] = useState(false);
-
-  // Smooth visual progress catch-up
-  useEffect(() => {
-    if (visualProgress < targetProgress) {
-      const timer = setTimeout(() => {
-        setVisualProgress(prev => Math.min(prev + 1, targetProgress));
-      }, 10);
-      return () => clearTimeout(timer);
-    }
-  }, [visualProgress, targetProgress]);
 
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>(
     (localStorage.getItem("neurex_sidebar_tab") as SidebarTab) || "explorer"
@@ -217,23 +207,6 @@ function AppContent() {
 
   const token = useStore(s => s.token);
 
-  // Global Onboarding Check
-  useEffect(() => {
-    const check = async () => {
-      try {
-        const obRes = await fetch(`${API_BASE}/api/auth/onboarding/status`);
-        const obData = await obRes.json();
-        if (obData.onboarding_required) {
-          setOnboardingRequired(true);
-          useStore.getState().logout();
-        }
-      } catch (err) {
-        console.error("Critical: Onboarding check failed", err);
-      }
-    };
-    check();
-  }, []);
-
   // Workspace Initialization
   useEffect(() => {
     if (!token || onboardingRequired) return;
@@ -242,25 +215,18 @@ function AppContent() {
     const init = async () => {
       const state = useStore.getState();
 
-      // Start a steady ramp towards 40% immediately
+      // Start a faster ramp towards 40% immediately
       const rampInterval = setInterval(() => {
-        setTargetProgress(prev => prev < 40 ? prev + 2 : prev);
-      }, 100);
+        setVisualProgress(prev => prev < 40 ? prev + 10 : prev);
+      }, 50);
 
       try {
-        await Promise.allSettled([
-          state.refreshFileTree(),
-          state.refreshInfra()
-        ]);
-        setTargetProgress(70);
-        
-        // Finalize
-        setTimeout(() => {
-          setTargetProgress(100);
-        }, 300);
+        state.refreshFileTree();
+        state.refreshInfra();
+        setVisualProgress(100);
       } catch (err) {
         console.error("Initialization warning:", err);
-        setTargetProgress(100);
+        setVisualProgress(100);
       } finally {
         clearInterval(rampInterval);
       }
@@ -268,11 +234,10 @@ function AppContent() {
     init();
   }, [token, onboardingRequired, isInitialized]);
 
-  // Finish initialization only when visual progress reaches 100
+  // Finish initialization immediately when visual progress reaches 100
   useEffect(() => {
-    if (visualProgress === 100 && !isInitialized) {
-      const t = setTimeout(() => setIsInitialized(true), 400);
-      return () => clearTimeout(t);
+    if (visualProgress >= 100 && !isInitialized) {
+      setIsInitialized(true);
     }
   }, [visualProgress, isInitialized]);
 
@@ -299,15 +264,11 @@ function AppContent() {
     };
   }, []);
 
-  try {
-
-  const token = useStore(s => s.token);
-
   return (
     <div className={`app ${modalOpen ? "modal-open" : ""}`}>
+      {!isInitialized && <LoadingOverlay progress={visualProgress} />}
       {(!token || onboardingRequired) && <AuthOverlay />}
-      {!isInitialized && token && !onboardingRequired && <LoadingOverlay progress={visualProgress} />}
-      <Toaster position="top-right" toastOptions={{ 
+      <Toaster position="top-right" toastOptions={{
         style: { 
           background: '#1e1e24', 
           color: '#e8e8f0', 
@@ -423,7 +384,7 @@ function AppContent() {
                   defaultSize={24} minSize={16} maxSize={45} 
                   className={`app__ai ${mobileTab === "chat" ? "mobile-visible" : ""}`}
                 >
-                  <AIPanel send={send} conversationId={activeConversationId} />
+                  <AIPanel send={send} conversationId={activeConversationId} isActive={showAIPanel || mobileTab === "chat"} />
                 </Panel>
               </>
             )}
@@ -481,6 +442,7 @@ function AppContent() {
               <span>Files</span>
             </button>
           </div>
+          </div>
         </div>
       </div>
     );
@@ -503,12 +465,11 @@ function ResizeHandle({ vertical = false }: { vertical?: boolean }) {
 function PlaceholderPanel({ label }: { label: string }) {
   return (
     <div className="placeholder-panel">
-      <div className="placeholder-panel__label">{label.toUpperCase()}</div>
-      <div className="placeholder-panel__hint">Coming soon</div>
+      <div className="placeholder-panel_label">{label.toUpperCase()}</div>
+      <div className="placeholder-panel_hint">Coming soon</div>
     </div>
   );
 }
-
 function BottomPanel({ send }: { send: (p: any) => void }) {
   const [tab, setTab] = useState<"terminal" | "output" | "flight">("terminal");
   const activeConversationId = useStore(s => s.activeConversationId);
@@ -548,7 +509,7 @@ function BottomPanel({ send }: { send: (p: any) => void }) {
         </div>
         <div className="bottom-panel__tab-content" hidden={tab !== "flight"}>
           {activeConversationId ? (
-            <FlightRecorder conversationId={activeConversationId} />
+            <FlightRecorder conversationId={activeConversationId} isActive={tab === "flight"} />
           ) : (
             <div className="flight-empty">Select a conversation to view reasoning traces.</div>
           )}

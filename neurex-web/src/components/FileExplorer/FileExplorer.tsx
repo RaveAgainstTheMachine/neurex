@@ -72,8 +72,10 @@ function FileItem({ node, depth }: { node: FileNode; depth: number }) {
   const openFiles = useStore((s) => s.openFiles);
   const activeFile = useStore((s) => s.activeFile);
   const locks = useStore((s) => s.locks);
+  const fetchSubtree = useStore((s) => s.fetchSubtree);
   
   const isDir = node.type === "dir";
+  const [fetching, setFetching] = useState(false);
   const isActive = activeFile === node.path;
   const lock = node.path ? locks[node.path] : null;
   
@@ -99,6 +101,11 @@ function FileItem({ node, depth }: { node: FileNode; depth: number }) {
 
   const handleClick = async () => {
     if (isDir) {
+      if (!expanded && node.path && (!node.children || node.children.length === 0)) {
+        setFetching(true);
+        await fetchSubtree(node.path);
+        setFetching(false);
+      }
       setExpanded((v) => !v);
     } else if (node.path) {
       const alreadyOpen = openFiles.find(f => f.path === node.path);
@@ -127,7 +134,7 @@ function FileItem({ node, depth }: { node: FileNode; depth: number }) {
       >
         {isDir ? (
           <span className="file-item__arrow">
-            {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+            {fetching ? <Loader2 size={10} className="animate-spin" /> : (expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />)}
           </span>
         ) : (
           <span className="file-item__arrow" />

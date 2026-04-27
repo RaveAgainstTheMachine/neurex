@@ -26,7 +26,7 @@ export function AuthOverlay() {
   useEffect(() => {
     const checkOnboarding = async () => {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const timeoutId = setTimeout(() => controller.abort(), 1500);
 
       try {
         const res = await fetch(`${API_BASE}/api/auth/onboarding/status`, {

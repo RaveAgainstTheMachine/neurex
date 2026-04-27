@@ -5,8 +5,8 @@ import { registerSW } from "virtual:pwa-register";
 import App from "./App";
 import "./index.css";
 
-// Register PWA Service Worker for offline capabilities and native installation prompts
-registerSW({ immediate: true });
+// Register PWA Service Worker
+registerSW({ immediate: false });
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
