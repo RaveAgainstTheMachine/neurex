@@ -69,10 +69,15 @@ async def get_infra_status():
         except Exception:
             pass
     
+    # Include distributed info
+    from core.infrastructure.distributed import distributed_manager
+    distributed = distributed_manager.get_status()
+    
     return {
         "engines": engines,
         "metrics": metrics,
-        "local_models": local_models
+        "local_models": local_models,
+        "distributed": distributed
     }
 
 @router.post("/engine/{name}/start", dependencies=[Depends(require_role(UserRole.ADMIN))])

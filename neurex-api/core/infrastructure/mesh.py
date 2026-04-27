@@ -28,6 +28,8 @@ class PeerNode:
         self.latency_ms = 0
         self.queue_depth = 0
         self.tps = 0.0
+        self.rpc_endpoint = None
+        self.distributed_status = {}
 
     def to_dict(self):
         return {
@@ -41,7 +43,9 @@ class PeerNode:
             "models": self.models,
             "latency_ms": self.latency_ms,
             "queue_depth": self.queue_depth,
-            "tps": self.tps
+            "tps": self.tps,
+            "rpc_endpoint": self.rpc_endpoint,
+            "distributed": self.distributed_status
         }
 
 class MeshRouter:
@@ -102,6 +106,11 @@ class MeshRouter:
                 peer.queue_depth = data.get("queue_depth", 0)
                 peer.tps = metrics.get("benchmarks", {}).get("tps", 0.0)
                 peer.latency_ms = int((time.time() - start) * 1000)
+                
+                # RPC Info
+                dist = data.get("distributed", {})
+                peer.rpc_endpoint = dist.get("rpc_endpoint")
+                peer.distributed_status = dist
                 self._save_peers()
                 log.debug("mesh.peer_healthy", url=url, latency=peer.latency_ms)
         except Exception as e:
@@ -116,48 +125,75 @@ class MeshRouter:
         If model_name is provided, filters for nodes that already have the model.
         """
         from core.infrastructure.manager import infrastructure_manager
+        from core.infrastructure.benchmarker import benchmarker
+        import random
+
+        candidates = []
+
+        # 1. Evaluate Local Node
         local_metrics = infrastructure_manager.get_system_metrics()
         local_vram = local_metrics.get("vram_gb", 8.0)
         local_cpu = local_metrics.get("cpu_percent", 0.0)
-        
-        # 1. Start with local node
         local_models = await infrastructure_manager.get_installed_models("ollama")
         has_model_locally = not model_name or any(model_name in m for m in local_models)
         
-        # Boost local score if it has the model; penalize if it doesn't
-        from core.infrastructure.benchmarker import benchmarker
         local_tps = benchmarker.last_results.get("tps", 0.0)
         local_tps_boost = 1 + (local_tps / 10.0)
-        
         local_multiplier = 2.0 if has_model_locally else 0.1
-        best_score = (local_vram * local_multiplier * local_tps_boost) / (local_cpu + 1)
-        best_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
         
+        # Local node has 0 latency and usually 0 queue depth if we just started, 
+        # but we should ideally track it. For now, assume 0 latency.
+        local_load = (local_cpu / 2) + 0 # queue_depth not tracked locally yet
+        local_score = (local_vram * local_multiplier * local_tps_boost) / (max(0.1, local_load))
+        
+        candidates.append({
+            "url": os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+            "score": local_score,
+            "name": "Local Node"
+        })
+
+        # 2. Evaluate Peer Nodes
         for peer in self.peers.values():
             if peer.status != "online":
                 continue
             
-            # 2. Check if peer has the model
             has_model_on_peer = not model_name or any(model_name in m for m in peer.models)
             peer_multiplier = 2.0 if has_model_on_peer else 0.1
-            
-            # 3. Peer Score calculation
-            # Factor in real-world benchmark performance (TPS)
             tps_boost = 1 + (peer.tps / 10.0)
             
             # Penalize by latency, CPU load, and current task queue
-            # queue_depth weight is high (20) to prevent dogpiling a single fast node
+            # queue_depth weight is high (25) to prevent dogpiling
             load_factor = (peer.cpu_percent / 2) + (peer.latency_ms / 20) + (peer.queue_depth * 25)
-            
-            # Final capability score
             score = (peer.vram_gb * peer_multiplier * tps_boost) / (max(0.1, load_factor))
             
-            if score > best_score:
-                best_score = score
-                best_url = f"{peer.url}/api/infra/ollama_proxy"
-                
-        log.info("mesh.routing_decided", target=best_url, model=model_name, score=round(best_score, 2))
-        return best_url
+            candidates.append({
+                "url": f"{peer.url}/api/infra/ollama_proxy",
+                "score": score,
+                "name": peer.name
+            })
+
+        if not candidates:
+            return os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+
+        # 3. Selection Logic (Balanced)
+        # Sort by score descending
+        candidates.sort(key=lambda x: x["score"], reverse=True)
+        
+        # To prevent 'dogpiling', if the top few nodes have scores within 5% of each other,
+        # pick randomly among them.
+        best_score = candidates[0]["score"]
+        top_tier = [c for c in candidates if c["score"] >= best_score * 0.95]
+        
+        selected = random.choice(top_tier)
+        
+        log.info("mesh.routing_decided", 
+                 target=selected["url"], 
+                 node=selected["name"],
+                 model=model_name, 
+                 score=round(selected["score"], 2),
+                 tier_size=len(top_tier))
+        
+        return selected["url"]
 
     async def start_monitoring(self, interval_seconds: int = 60):
         """Background task to periodically refresh peer health and telemetry."""

@@ -25,7 +25,7 @@ class PresenceManager:
         from core.infrastructure.distributed import distributed_manager
         while True:
             await asyncio.sleep(15) # Pulse every 15 seconds
-            caps = distributed_manager.get_capabilities()
+            caps = distributed_manager.get_status()
             
             # Update local state and broadcast to all conversations
             for conv_id in list(self.active_connections.keys()):
@@ -77,16 +77,19 @@ class PresenceManager:
             self.presence_state[conversation_id][user_id]["last_ping"] = time.time()
 
     async def _sweep_zombies(self):
-        """Continuously clean up connections that haven't pinged in 30 seconds."""
+        """Continuously clean up connections that haven't pinged in 25 seconds."""
         while True:
-            await asyncio.sleep(30)
+            await asyncio.sleep(10) # More frequent sweeps
             now = time.time()
             for conv_id, users in list(self.presence_state.items()):
-                zombies = [uid for uid, data in users.items() if now - data.get("last_ping", now) > 35]
+                # If no ping for 25s, they are likely gone (frontend pings every 15s)
+                zombies = [uid for uid, data in users.items() if now - data.get("last_ping", now) > 25]
                 if zombies:
                     for z in zombies:
                         del self.presence_state[conv_id][z]
                         log.info("ws.zombie_swept", user_id=z, conversation_id=conv_id)
+                    
+                    # Update all remaining participants
                     await self.broadcast(conv_id, {
                         "event": "presence_update",
                         "data": list(self.presence_state[conv_id].values())

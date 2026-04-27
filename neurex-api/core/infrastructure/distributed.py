@@ -46,14 +46,14 @@ class DistributedManager:
             self.rpc_process = None
             log.info("mesh.rpc_server_stopped")
 
-    def get_capabilities(self) -> dict:
-        """Returns the node's current compute capacity for the mesh."""
+    def get_status(self) -> dict:
+        """Returns the node's current compute capacity and RPC status."""
         from core.infrastructure.manager import infrastructure_manager
         metrics = infrastructure_manager.get_system_metrics()
         
         return {
             "is_rpc_worker": self.rpc_process is not None,
-            "rpc_endpoint": self.get_rpc_address(),
+            "rpc_endpoint": self.get_rpc_address() if self.rpc_process else None,
             "vram_gb": metrics.get("vram_gb", 0),
             "ram_total_gb": metrics.get("ram_total_gb", 0),
             "ram_free_gb": metrics.get("ram_total_gb", 0) - metrics.get("ram_used_gb", 0)

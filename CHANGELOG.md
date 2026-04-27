@@ -2,6 +2,18 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
+## [v0.8.3-beta] - 2026-04-27
+
+### Added
+- **Intelligent Mesh Balancing**: Refactored `MeshRouter` to use a uniform scoring algorithm for local and peer nodes. Introduced a 5% jitter tier to prevent "dogpiling" and ensure balanced load distribution across the federated mesh.
+- **Distributed MPI Discovery (Phase 10.5)**: Finalized the `llama.cpp` RPC master/worker handshake. The system now dynamically aggregates compute nodes from both real-time presence and the persistent mesh peer registry when launching distributed inference.
+- **In-Depth Infra Status**: Enhanced `/api/infra/status` to report real-time RPC worker metrics and endpoints.
+
+### Fixed
+- **WebSocket Resilience**: Implemented more aggressive "zombie" connection sweeping (10s intervals) and reduced timeout to 25s to improve presence accuracy during micro-disconnects.
+
+---
+
 ## [v0.8.2-beta] - 2026-04-27
 
 ### Added

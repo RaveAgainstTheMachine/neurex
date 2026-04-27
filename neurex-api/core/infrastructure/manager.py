@@ -43,14 +43,20 @@ class InfrastructureManager:
                 elif engine == "llama.cpp":
                     details = "Ensure 'llama-server' is in PATH"
             
-            statuses.append({
+            status_data = {
                 "name": engine,
                 "status": status_text,
                 "version": version if version != "unknown" else ("Installed" if path else "n/a"),
                 "installed": path is not None,
                 "details": details,
                 "path": path or "Not found"
-            })
+            }
+
+            if engine == "llama.cpp" and is_running:
+                from core.infrastructure.distributed import distributed_manager
+                status_data["rpc_endpoint"] = distributed_manager.get_rpc_address() if distributed_manager.rpc_process else None
+            
+            statuses.append(status_data)
         return statuses
 
     async def pull_model(self, engine: str, model_name: str):
@@ -117,14 +123,25 @@ class InfrastructureManager:
         elif name == "llama.cpp":
             from core.collaboration.presence import presence_manager
             
-            # 1. Discover all RPC workers in the mesh
+            # 1. Discover all RPC workers in the mesh (Presence + Peer Registry)
             rpc_hosts = []
+            
+            # Discovery via Presence (Active WebSocket sessions)
             for conv_state in presence_manager.presence_state.values():
                 for user_state in conv_state.values():
                     if user_state.get("type") == "compute_node":
                         caps = user_state.get("capabilities", {})
                         if caps.get("is_rpc_worker") and caps.get("rpc_endpoint"):
                             rpc_hosts.append(caps["rpc_endpoint"])
+            
+            # Discovery via Mesh Router (Persistent Peers)
+            from core.infrastructure.mesh import mesh_router
+            for peer in mesh_router.peers.values():
+                if peer.status == "online" and getattr(peer, "rpc_endpoint", None):
+                    rpc_hosts.append(peer.rpc_endpoint)
+            
+            # Deduplicate
+            rpc_hosts = list(set(rpc_hosts))
             
             # 2. Construct the --rpc flag (comma-separated list)
             rpc_flag = ",".join(rpc_hosts)
