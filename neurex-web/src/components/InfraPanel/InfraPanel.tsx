@@ -351,7 +351,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
           {metrics && (
             <div style={{ fontSize: 10, color: "var(--text-muted)", display: "flex", gap: 12 }}>
               <span title="GPU VRAM"><Zap size={10} style={{marginRight: 4, color: metrics.vram_gb > 0 ? 'var(--status-done)' : 'var(--text-muted)'}}/>{metrics.vram_gb}GB</span>
-              <span title="System RAM"><Database size={10} style={{marginRight: 4}}/>{metrics.ram_used_gb}G</span>
+              <span title="System RAM"><Database size={10} style={{marginRight: 4}}/>{metrics.ram_available_gb}G Free</span>
             </div>
           )}
           <button className="icon-btn" onClick={() => setExpanded(!expanded)}>
@@ -395,9 +395,15 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
                 <div className="infra-card__version">{e.status.toUpperCase()}</div>
               </div>
               <div className="infra-card__actions">
-                <button className={`icon-btn ${e.status === "running" ? 'icon-btn--red' : 'icon-btn--green'}`} onClick={() => handleControl(e.name, e.status === "running" ? "stop" : "start")} disabled={loading}>
-                  {e.status === "running" ? <Square size={14} /> : <Play size={14} />}
-                </button>
+                {e.status === "missing" ? (
+                  <button className="btn btn--purple btn--sm" onClick={() => window.open(e.details.match(/https?:\/\/[^\s']+/)?.[0] || "#")}>
+                    INSTALL
+                  </button>
+                ) : (
+                  <button className={`icon-btn ${e.status === "running" ? 'icon-btn--red' : 'icon-btn--green'}`} onClick={() => handleControl(e.name, e.status === "running" ? "stop" : "start")} disabled={loading}>
+                    {e.status === "running" ? <Square size={14} /> : <Play size={14} />}
+                  </button>
+                )}
               </div>
             </div>
           ))}

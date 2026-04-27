@@ -34,9 +34,12 @@ export function EditorPane() {
   if (!active) {
     return (
       <div className="editor-empty">
-        <div className="editor-empty__inner">
-          <Files size={48} />
-          <p>Select a file to start coding</p>
+        <div className="editor-empty__content">
+          <div className="editor-empty__logo">
+            <Files size={64} />
+          </div>
+          <h1 className="editor-empty__title">Neurex Editor</h1>
+          <p className="editor-empty__subtitle">Select a file from the explorer to start coding with AI-powered intelligence.</p>
         </div>
       </div>
     );

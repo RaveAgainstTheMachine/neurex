@@ -27,6 +27,7 @@ interface SettingsState {
   theme_preset: string;
   accent_color: string;
   glow_color: string;
+  enable_swarm_glow: boolean;
   // LLM Advanced
   llm_temperature: number;
   llm_context_length: number;
@@ -423,6 +424,19 @@ export function SettingsPanel() {
               <div className="setting-control">
                 <label className={`toggle-switch ${isViewer ? 'disabled' : ''}`}>
                   <input type="checkbox" checked={settings.enable_animations} onChange={(e) => handleChange("enable_animations", e.target.checked)} disabled={isViewer} />
+                  <span className="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div className="setting-row">
+              <div className="setting-info">
+                <label>Status Bar Swarm Glow</label>
+                <p>Enable the neural pulse animation when nodes are active.</p>
+              </div>
+              <div className="setting-control">
+                <label className={`toggle-switch ${isViewer ? 'disabled' : ''}`}>
+                  <input type="checkbox" checked={settings.enable_swarm_glow} onChange={(e) => handleChange("enable_swarm_glow", e.target.checked)} disabled={isViewer} />
                   <span className="toggle-slider"></span>
                 </label>
               </div>

@@ -5,11 +5,22 @@ Neurex is a distributed, agentic integrated development environment (IDE) optimi
 ## 1. Distributed Inference & Resource Management
 *   **VRAM Aggregation**: Utilizes `llama-rpc-server` to pool VRAM across multiple physical nodes. This enables the execution of large parameter models (e.g., Llama-3-70B+) that exceed the capacity of a single consumer GPU.
 *   **MeshRouter Engine**: A dynamic load-balancing system that calculates node suitability scores based on:
-    *   Available VRAM and System RAM.
+    *   **Available System RAM**: Real-time detection of free memory (Total - Used) to prevent OOM during heavy RAG indexing.
     *   CPU pressure and thermal headroom.
     *   Real-time network latency (heartbeat telemetry).
     *   Current task queue depth.
 *   **Automatic Peer Discovery**: Nodes broadcast capabilities every 15 seconds via a UDP/WebSocket heartbeat agent, allowing the Master node to maintain an up-to-date registry of the compute mesh.
+
+## 11. Ultra Mode & Kinetic Personalization
+Neurex features a high-fidelity, state-aware interface designed for elite focus:
+*   **Dynamic Identity**: Real-time customization of primary accent colors and glow intensity across the entire IDE.
+*   **Glassmorphism (Frosted Architecture)**: GPU-accelerated backdrop blurs and transparency layers for an immersive workspace.
+*   **Kinetic Transitions**: Micro-animations and kinetic interactions for all UI elements (collapsibles, modals, status indicators).
+*   **Swarm Pulse**: Visual neural pulse in the status bar indicating the real-time activity of the federated mesh (toggable).
+*   **Specialty Model Branding**: Automated specialty tagging (coding, thinking, vision) in the model selection panel for rapid cognitive identification.
+*   **Bubbling Folder Indicators**: Visual "breadcrumb" indicators in the File Explorer that bubble up emphasized items from collapsed subdirectories.
+*   **Token-Optimized Communication (Caveman Skill)**: Integrated "Caveman Ultra" mode for extreme token efficiency (up to 75% reduction) while maintaining technical precision.
+*   **Intelligent UI Flow**: Refined AI Panel with non-truncating headers, standard navigation, and context-aware settings placement for an uncompromised user experience.
 
 ## 2. Multi-Agent Orchestration
 *   **Specialized Agent Personas**:

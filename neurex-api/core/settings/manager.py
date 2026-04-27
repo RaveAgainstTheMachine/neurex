@@ -42,6 +42,7 @@ DEFAULT_SETTINGS = {
     "theme_preset": "obsidian",
     "accent_color": "hsl(260, 90%, 70%)",
     "glow_color": "hsla(260, 90%, 70%, 0.4)",
+    "enable_swarm_glow": True,
 
     # LLM Advanced
     "llm_temperature": 0.7,

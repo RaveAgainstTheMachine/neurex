@@ -18,6 +18,12 @@ Neurex is built as a distributed Master-Worker system composed of a centralized 
 4.  **Pooling**: If a model is split across nodes, the RPC layer synchronizes tensors across the network backplane.
 5.  **Stream**: Tokens are streamed back to the `neurex-api` and broadcast via WebSocket to the frontend.
 
+### 1.3 Network & Port Governance
+Neurex implements a dynamic, zero-trust network model:
+- **Port Mapping**: All core services (API, Web, RPC, ChromaDB) have user-configurable ports persisted in the node registry.
+- **Dynamic Firewall**: The `SettingsManager` automatically re-applies host-level firewall rules (using `iptables` or `ufw` abstractions) when ports or security toggles (LAN Isolation) are modified.
+- **Zero-Trust Toggles**: Optional restriction of all Neurex traffic to the local network subnet (LAN-only mode) for high-security environments.
+
 ## 2. Agentic Framework & Task Graph
 
 ### 2.1 Task Graph (SQLite)

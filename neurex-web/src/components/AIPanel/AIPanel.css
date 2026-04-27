@@ -16,12 +16,20 @@
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
   height: 36px;
-  gap: 8px;
 }
 
-.ai-panel__header .custom-select__dropdown {
-  bottom: auto;
-  top: calc(100% + 4px);
+.ai-panel__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ai-input__footer-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
 }
 
 .ai-panel__tabs { display: flex; gap: 2px; }
@@ -226,7 +234,6 @@
   gap: 8px;
   padding: 10px;
   background: var(--bg-sidebar);
-  border-top: 1px solid var(--border);
   flex-shrink: 0;
   align-items: center;
 }

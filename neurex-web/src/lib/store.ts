@@ -64,7 +64,8 @@ export const useStore = create<NeurexStore>()(
       accent_color: "hsl(260, 90%, 70%)", 
       glow_color: "hsla(260, 90%, 70%, 0.4)",
       enable_glassmorphism: true,
-      enable_animations: true
+      enable_animations: true,
+      enable_swarm_glow: true
     },
     setTheme: (theme) => set((s) => { 
       s.theme = { ...s.theme, ...theme };
@@ -82,7 +83,8 @@ export const useStore = create<NeurexStore>()(
             accent_color: data.accent_color,
             glow_color: data.glow_color,
             enable_glassmorphism: data.enable_glassmorphism,
-            enable_animations: data.enable_animations
+            enable_animations: data.enable_animations,
+            enable_swarm_glow: data.enable_swarm_glow
           });
         }
       } catch (err) {

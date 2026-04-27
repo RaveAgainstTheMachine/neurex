@@ -203,7 +203,7 @@ export interface NeurexStore {
   // Hive
   hiveStats: { total_nodes: number; memory_count: number };
   // Theme
-  theme: { accent_color: string; glow_color: string; enable_glassmorphism: boolean; enable_animations: boolean };
+  theme: { accent_color: string; glow_color: string; enable_glassmorphism: boolean; enable_animations: boolean; enable_swarm_glow: boolean };
   setTheme: (theme: any) => void;
   refreshTheme: () => Promise<void>;
 }

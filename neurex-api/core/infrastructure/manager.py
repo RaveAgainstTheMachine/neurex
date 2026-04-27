@@ -179,6 +179,7 @@ class InfrastructureManager:
             "vram_gb": self.get_system_vram(),
             "ram_total_gb": round(ram.total / (1024 ** 3), 1),
             "ram_used_gb": round(ram.used / (1024 ** 3), 1),
+            "ram_available_gb": round(ram.available / (1024 ** 3), 1),
             "ram_percent": ram.percent,
             "cpu_percent": psutil.cpu_percent(interval=0.1)
         }

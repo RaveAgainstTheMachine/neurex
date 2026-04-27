@@ -21,7 +21,7 @@ import { VoiceLangSelect } from '../CustomSelect/VoiceLangSelect';
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github-dark.css";
-import { Send, Loader2, Trash2, CheckCircle2, XCircle, ArrowUp, Mic, MicOff, Volume2, Paperclip, Shield } from "lucide-react";
+import { Send, Loader2, Trash2, CheckCircle2, XCircle, ArrowUp, Mic, MicOff, Volume2, Paperclip, Shield, Plus } from "lucide-react";
 import { useStore } from "../../lib/store";
 import type { TaskNode } from "../../lib/types";
 import "./AIPanel.css";
@@ -365,17 +365,14 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
   return (
     <div className="ai-panel">
       {/* Header */}
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <div className="ai-panel__header">
-          <SortableContext items={headerOrder} strategy={horizontalListSortingStrategy}>
-            {headerOrder.map(id => (
-              <SortableItem key={id} id={id}>
-                {headerElements[id]}
-              </SortableItem>
-            ))}
-          </SortableContext>
+      <div className="ai-panel__header">
+        {headerElements.tabs}
+        <div className="ai-panel__header-actions">
+          <button className="icon-btn" onClick={newConversation} title="New Chat">
+            <Plus size={14} />
+          </button>
         </div>
-      </DndContext>
+      </div>
 
       {/* History tab */}
       {tab === "history" && (
@@ -518,11 +515,18 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
               <div className="ai-input__footer">
                 <div className="ai-input__footer-left">
                   <CustomSelect 
-                    className="mini"
+                    className="mini model-selector-footer"
                     value={preferredModel}
                     onChange={(val) => setPreferredModel(val)}
                     options={MODEL_OPTIONS}
                     title="Preferred Model"
+                  />
+                  <CustomSelect 
+                    className="mini autonomy-selector-footer"
+                    value="limited"
+                    onChange={(val) => send({ type: "set_autonomy", level: val })}
+                    options={AUTONOMY_OPTIONS}
+                    title="Set Autonomy Level"
                   />
                 </div>
                 <div className="ai-input__footer-right">

@@ -42,8 +42,10 @@
 }
 
 .editor-empty__logo {
-  font-size: 64px;
-  margin-bottom: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 24px;
   color: var(--accent-purple);
   filter: drop-shadow(0 0 20px rgba(156, 111, 255, 0.2));
   animation: float 4s ease-in-out infinite;

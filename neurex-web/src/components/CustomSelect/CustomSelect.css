@@ -1,7 +1,9 @@
 .custom-select {
   position: relative;
-  display: inline-block;
+  display: flex;
+  flex-direction: column;
   font-family: var(--font-ui);
+  min-width: max-content;
 }
 
 .custom-select__trigger {
@@ -18,6 +20,7 @@
   cursor: pointer;
   transition: all 0.2s;
   outline: none;
+  width: 100%;
 }
 
 .custom-select__trigger:hover, .custom-select__trigger.active {

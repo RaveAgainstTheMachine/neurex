@@ -439,7 +439,7 @@ function AppContent() {
 
               {/* Swarm State */}
               <div className="status-intel animate-slide-up">
-                <div className={`swarm-pulse ${useStore.getState().hiveStats.total_nodes > 0 ? 'swarm-pulse--active' : ''}`} />
+                <div className={`swarm-pulse ${useStore.getState().hiveStats.total_nodes > 0 && useStore.getState().theme.enable_swarm_glow ? 'swarm-pulse--active' : ''}`} />
                 <span className="hide-mobile">
                   {useStore.getState().hiveStats.total_nodes} NODES • {useStore.getState().hiveStats.memory_count} FRAGMENTS
                 </span>
