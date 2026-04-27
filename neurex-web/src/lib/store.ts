@@ -236,5 +236,7 @@ export const useStore = create<NeurexStore>()(
     setWsStatus: (status) => set((s) => { s.wsStatus = status; }),
     presence: [],
     setPresence: (presence) => set((s) => { s.presence = presence; }),
+    locks: {},
+    setLocks: (locks) => set((s) => { s.locks = locks; }),
   }))
 );

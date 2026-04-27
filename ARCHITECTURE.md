@@ -94,3 +94,17 @@ Execution tools run inside a Docker container using the `neurex-sandbox` image.
 - **HS256 JWT**: Tokens contain `sub` (username) and `exp` (expiration).
 - **Session Lifespan**: Hard-coded 8-hour expiry.
 - **MFA Enforcement**: TOTP tokens are required for all non-GET requests to `/api/settings` and `/api/auth/admin`.
+
+## 6. Federated Governance
+
+### 6.1 Collaboration Manager (Distributed Locking)
+To prevent mutation collisions in the federated mesh, Neurex implements a distributed locking system:
+- **Lock Registry**: A DB-backed (SQLite) table `FileLock` tracks exclusive ownership of codebase assets.
+- **Auto-Acquisition**: Agents automatically attempt to acquire a lock before executing `write` or `delete` tools.
+- **Collision Handling**: If a file is locked by another node or user, the agent receives a `MUTATION_BLOCKED` response, ensuring atomic integrity.
+
+### 6.2 Presence & Synchronization
+Real-time state is synchronized across the mesh via WebSockets:
+- **Presence Bar**: Displays active users and agent personas in the current session.
+- **Visual Locking**: The File Explorer renders pulsing lock badges for files currently being mutated by the swarm.
+- **Shared Scratchpad**: A collective in-memory buffer allowing agents to pass technical "gotchas" and findings to their swarm siblings.

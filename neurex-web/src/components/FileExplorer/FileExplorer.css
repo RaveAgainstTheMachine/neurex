@@ -141,3 +141,19 @@
 .file-item__icon.sql { color: #336791; }
 .file-item__icon.html { color: #e34f26; }
 .file-item__icon.modules { color: #8bc34a; opacity: 0.6; }
+
+.file-lock-badge {
+  margin-left: auto;
+  color: var(--accent-amber);
+  display: flex;
+  align-items: center;
+  opacity: 0.8;
+  animation: pulse-lock 2s infinite ease-in-out;
+  padding: 0 4px;
+}
+
+@keyframes pulse-lock {
+  0% { opacity: 0.4; transform: scale(0.9); }
+  50% { opacity: 1; transform: scale(1.1); }
+  100% { opacity: 0.4; transform: scale(0.9); }
+}

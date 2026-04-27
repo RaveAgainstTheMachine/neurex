@@ -63,6 +63,24 @@ class TaskNode(SQLModel, table=True):
     max_iterations: int = 10
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
+    is_checkpoint: bool = Field(default=False)
+
+class FileLock(SQLModel, table=True):
+    path: str = Field(primary_key=True)
+    locked_by: str # user_id or agent_id
+    owner_node: str # Which node instance holds the lock
+    expires_at: datetime
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class DecisionEvent(SQLModel, table=True):
+    """Reasoning Trace Event for the Flight Recorder"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
+    graph_id: str = Field(index=True)
+    agent_type: str
+    decision: str # e.g. "REWRITE_PLAN", "CANCEL_TASK"
+    rationale: str
+    metadata_json: Optional[str] = None # JSON string of extra context
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
 async def init_db():
     import core.projects.models # Ensure models are registered with SQLModel

@@ -18,6 +18,7 @@ from core.context.manager import ContextManager
 from core.context.rules_parser import RulesParser
 from core.mcp.client import MCPClient
 from core.skills.manager import SkillManager
+from core.collaboration.manager import collaboration_manager
 
 log = structlog.get_logger()
 
@@ -194,8 +195,22 @@ class BaseAgent(ABC):
         await record_decision(conversation_id, self.agent_type, decision, rationale, task_id=task_id)
 
     async def dispatch_tool(self, tool_call: dict, conversation_id: str) -> str:
-        """Route a tool_call from the model to the MCP client."""
+        """Route a tool_call from the model to the MCP client with Federated Governance."""
         name = tool_call.get("function", {}).get("name", "")
         args = tool_call.get("function", {}).get("arguments", {})
+        
+        # 1. Federated Governance: Mutation Locking
+        mutation_tools = ["write_file", "delete_file", "replace_file_content", "multi_replace_file_content"]
+        if name in mutation_tools:
+            path = args.get("path") or args.get("TargetFile")
+            if path:
+                # Try to auto-acquire lock for the agent
+                requester = f"agent:{self.agent_type}"
+                locked = await collaboration_manager.acquire_lock(path, requester, conversation_id=conversation_id)
+                if not locked:
+                    msg = f"MUTATION_BLOCKED: The file '{path}' is currently locked by another entity. Wait or choose another task."
+                    log.warn("collaboration.dispatch_blocked", tool=name, path=path, requester=requester)
+                    return msg
+
         log.info("tool_dispatch", tool=name, args=args, autonomy=self.autonomy_level)
         return await self.mcp.call(name, args, autonomy_level=self.autonomy_level, conversation_id=conversation_id)

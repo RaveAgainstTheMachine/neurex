@@ -96,6 +96,12 @@ export interface Presence {
   status: string;
 }
 
+export interface FileLock {
+  path: string;
+  locked_by: string;
+  expires_at: string;
+}
+
 export interface User {
   id: string;
   username: string;
@@ -163,4 +169,6 @@ export interface NeurexStore {
   setWsStatus: (s: NeurexStore["wsStatus"]) => void;
   presence: Presence[];
   setPresence: (p: Presence[]) => void;
+  locks: Record<string, FileLock>;
+  setLocks: (l: Record<string, FileLock>) => void;
 }

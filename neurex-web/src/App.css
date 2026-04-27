@@ -404,7 +404,8 @@
 
 .resize-handle:hover,
 .resize-handle[data-is-resizing="true"] {
-  background: var(--border-active);
+  background: var(--purple-main);
+  box-shadow: 0 0 10px var(--glow-purple);
 }
 
 .resize-handle__inner {

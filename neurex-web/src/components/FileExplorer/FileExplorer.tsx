@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { 
   ChevronRight, ChevronDown, File, Folder, FolderOpen, RefreshCw,
   FileJson, FileCode, FileText, Settings, FileKey, GitGraph, 
-  Container, Zap, Database, Terminal as TerminalIcon, Globe
+  Container, Zap, Database, Terminal as TerminalIcon, Globe, Lock
 } from "lucide-react";
 import { useStore } from "../../lib/store";
 import type { FileNode } from "../../lib/types";
@@ -71,9 +71,11 @@ function FileItem({ node, depth }: { node: FileNode; depth: number }) {
   const setActiveFile = useStore((s) => s.setActiveFile);
   const openFiles = useStore((s) => s.openFiles);
   const activeFile = useStore((s) => s.activeFile);
+  const locks = useStore((s) => s.locks);
   
   const isDir = node.type === "dir";
   const isActive = activeFile === node.path;
+  const lock = node.path ? locks[node.path] : null;
 
   const handleClick = async () => {
     if (isDir) {
@@ -118,6 +120,12 @@ function FileItem({ node, depth }: { node: FileNode; depth: number }) {
         {node.status && (
           <span className={`file-status-tag tag--${node.status.toLowerCase()}`}>
             {node.status}
+          </span>
+        )}
+
+        {lock && (
+          <span className="file-lock-badge" title={`Locked by ${lock.locked_by}`}>
+            <Lock size={10} />
           </span>
         )}
 

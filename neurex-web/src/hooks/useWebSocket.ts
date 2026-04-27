@@ -71,6 +71,14 @@ export function useWebSocket(conversationId: string) {
           case "terminal_output":
             window.dispatchEvent(new CustomEvent("terminal_write", { detail: data }));
             break;
+          case "lock_update":
+            s.setLocks({ ...s.locks, [data.path]: data });
+            break;
+          case "lock_release":
+            const nextLocks = { ...s.locks };
+            delete nextLocks[data.path];
+            s.setLocks(nextLocks);
+            break;
           case "error":
             s.addMessage({ role: "assistant", content: `❌ Error: ${data}` });
             break;
