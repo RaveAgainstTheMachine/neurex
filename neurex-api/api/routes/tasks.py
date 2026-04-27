@@ -48,9 +48,33 @@ async def approve_all_tasks(graph_id: str, session: AsyncSession = Depends(get_s
     await session.commit()
     return {"approved_count": len(tasks)}
 
-@router.get("/{graph_id}", response_model=List[dict])
-
 async def get_task_graph(graph_id: str, session: AsyncSession = Depends(get_session)):
     nodes = await get_graph(session, graph_id)
     return [n.model_dump() for n in nodes]
+
+@router.post("/{graph_id}/cancel")
+async def cancel_graph(graph_id: str, session: AsyncSession = Depends(get_session)):
+    """Cancel all non-completed tasks in a graph."""
+    from sqlmodel import select
+    from core.task_graph import TaskNode, TaskStatus
+    
+    stmt = select(TaskNode).where(
+        TaskNode.graph_id == graph_id,
+        TaskNode.status.in_([
+            TaskStatus.PENDING, 
+            TaskStatus.THINKING, 
+            TaskStatus.AWAITING_APPROVAL,
+            TaskStatus.WRITING,
+            TaskStatus.TESTING
+        ])
+    )
+    result = await session.exec(stmt)
+    tasks = result.all()
+    
+    for task in tasks:
+        task.status = TaskStatus.CANCELLED
+        session.add(task)
+        
+    await session.commit()
+    return {"cancelled_count": len(tasks)}
 

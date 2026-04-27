@@ -172,7 +172,18 @@ class Orchestrator:
         last_tool_calls: dict[str, dict | None] = {}
 
         while True:
-            # Re-fetch tasks that are PENDING and belong to this graph
+            # 0. Check if graph has been cancelled
+            cancel_stmt = select(TaskNode).where(
+                TaskNode.graph_id == graph_id,
+                TaskNode.status == TaskStatus.CANCELLED
+            )
+            cancel_result = await self.session.exec(cancel_stmt)
+            if cancel_result.first():
+                log.info("orchestrator.halted", graph_id=graph_id, reason="cancelled")
+                yield {"event": "graph_cancelled", "data": {"graph_id": graph_id}}
+                break
+
+            # 1. Re-fetch tasks that are PENDING and belong to this graph
             stmt = select(TaskNode).where(
                 TaskNode.graph_id == graph_id,
                 TaskNode.agent_type != "planner",

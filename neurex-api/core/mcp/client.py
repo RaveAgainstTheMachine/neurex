@@ -14,6 +14,8 @@ from core.mcp.tools.researcher import web_search
 from core.mcp.tools.browser import (
     browser_navigate, browser_screenshot, browser_click, browser_type, browser_get_content
 )
+from core.mcp.tools.workspace import deep_clean, analyze_project_structure
+from core.mcp.tools.security import security_scan
 
 
 log = structlog.get_logger()
@@ -31,6 +33,9 @@ TOOL_REGISTRY: dict[str, callable] = {
     "browser_click":       browser_click,
     "browser_type":        browser_type,
     "browser_get_content": browser_get_content,
+    "deep_clean":               deep_clean,
+    "analyze_project_structure": analyze_project_structure,
+    "security_scan":             security_scan,
 }
 class MCPClient:
     """
