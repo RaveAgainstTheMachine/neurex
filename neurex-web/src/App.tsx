@@ -484,7 +484,19 @@ function AppContent() {
 function ResizeHandle({ vertical = false }: { vertical?: boolean }) {
   return (
     <PanelResizeHandle className={`resize-handle ${vertical ? "resize-handle--vertical" : "resize-handle--horizontal"}`}>
-      <div className="resize-handle__inner" />
+      {({ isDragging }) => (
+        <div 
+          className="resize-handle__highlight" 
+          data-active={isDragging} 
+          style={{ 
+            width: vertical ? '100%' : '2px', 
+            height: vertical ? '2px' : '100%',
+            background: isDragging ? 'var(--purple-main)' : 'transparent',
+            boxShadow: isDragging ? '0 0 12px var(--glow-purple)' : 'none',
+            transition: 'all 0.2s'
+          }} 
+        />
+      )}
     </PanelResizeHandle>
   );
 }
