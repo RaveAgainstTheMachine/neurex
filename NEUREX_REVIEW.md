@@ -29,14 +29,14 @@ Neurex has evolved significantly beyond a standard Large Language Model (LLM) wr
 While the architecture is incredibly sound, I have identified a few areas that require reinforcement before a wide enterprise rollout:
 
 1.  **VRAM Fragmentation (Mesh Load Balancing)**:
-    *   *Current State*: The `MeshRouter` routes the *entire* prompt to the node with the highest VRAM.
-    *   *Risk*: In a highly concurrent environment, sending all tasks to the single "best" node will bottleneck it, leaving weaker nodes idle.
-    *   *Recommendation*: Implement a "Round-Robin" or "Weighted-Load" algorithm in `MeshRouter.get_best_inference_node()` that accounts for current queue depth, not just raw VRAM limits.
+    *   *Status*: **RESOLVED** (v0.8.3-beta).
+    *   *Implementation*: Refactored `MeshRouter.get_best_inference_node()` to use a unified scoring algorithm with a 5% jitter tier, effectively preventing dogpiling and distributing load across the mesh.
 2.  **WebSocket Reconnection Handling**:
-    *   *Current State*: `useWebSocket.ts` attempts to reconnect, but `presence_update` arrays might temporarily ghost if a user has micro-disconnects.
-    *   *Recommendation*: Implement a heartbeat/ping system in `presence.py` to aggressively cull "zombie" connections that didn't fire a clean `disconnect` event.
+    *   *Status*: **RESOLVED** (v0.8.3-beta).
+    *   *Implementation*: Increased `_sweep_zombies` frequency to 10s and reduced timeout to 25s for aggressive stale connection culling.
 3.  **Distributed MPI Scaffolding (Phase 10.5)**:
-    *   *Current State*: The scaffolding exists in `manager.py`, but it currently lacks the logic to dynamically discover *other* worker nodes and feed their IP addresses into the `llama-server` master launch command.
+    *   *Status*: **RESOLVED** (v0.8.3-beta).
+    *   *Implementation*: Integrated peer discovery via both `presence_manager` and `mesh_router` into the `llama-server` master launch command.
 
 ---
 
