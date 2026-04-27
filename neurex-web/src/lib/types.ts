@@ -127,6 +127,12 @@ export interface SearchState {
 }
 
 export interface NeurexStore {
+  // App Lifecycle
+  isInitialized: boolean;
+  isInitializing: boolean;
+  setIsInitialized: (val: boolean) => void;
+  setIsInitializing: (val: boolean) => void;
+
   // Auth
   onboardingRequired: boolean;
   setOnboardingRequired: (val: boolean) => void;

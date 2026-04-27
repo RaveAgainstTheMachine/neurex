@@ -145,9 +145,6 @@ function SortableActivityItem(props: { id: string; active: boolean; onClick: () 
     </div>
   );
 }
-const API_BASE = window.location.origin.includes(":3000") 
-  ? window.location.origin.replace(":3000", ":8000") 
-  : window.location.origin;
 
 function AppContent() {
   const [sidebarOrder, setSidebarOrder] = useState<string[]>(() => {
@@ -175,13 +172,18 @@ function AppContent() {
 
   useNotifications();
   const wsStatus = useStore(s => s.wsStatus);
-  const [visualProgress, setVisualProgress] = useState(5);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [visualProgress, setVisualProgress] = useState(25);
+  const isInitialized = useStore(s => s.isInitialized);
+  const setIsInitialized = useStore(s => s.setIsInitialized);
+  const token = useStore(s => s.token);
+  const onboardingRequired = useStore(s => s.onboardingRequired);
+  const modalOpen = useStore(s => s.modalOpen);
+  const activeConversationId = useStore((s) => s.activeConversationId);
+  const { send } = useWebSocket(activeConversationId);
 
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>(
     (localStorage.getItem("neurex_sidebar_tab") as SidebarTab) || "explorer"
   );
-  const onboardingRequired = useStore(s => s.onboardingRequired);
 
   const updateSidebarTab = (tab: SidebarTab) => {
     setSidebarTab(tab);
@@ -189,47 +191,45 @@ function AppContent() {
     setShowSettings(false); 
     setShowHiveMind(false);
   };
+
   const [showAIPanel, setShowAIPanel] = useState(window.innerWidth > 768);
   const [mobileTab, setMobileTab] = useState<MobileTab>("chat");
   const [showSettings, setShowSettings] = useState(false);
   const [showHiveMind, setShowHiveMind] = useState(false);
-  const activeConversationId = useStore((s) => s.activeConversationId);
-  const modalOpen = useStore(s => s.modalOpen);
 
-  const { send } = useWebSocket(activeConversationId);
-  const token = useStore(s => s.token);
-
-  // Workspace Initialization
+  // Workspace Initialization Hook
   useEffect(() => {
-    if (!token || onboardingRequired) return;
-    if (isInitialized) return;
+    if (!token || onboardingRequired || isInitialized || useStore.getState().isInitializing) return;
 
     const init = async () => {
       const state = useStore.getState();
-
-      const rampInterval = setInterval(() => {
-        setVisualProgress(prev => prev < 40 ? prev + 10 : prev);
-      }, 50);
+      state.setIsInitializing(true);
 
       try {
-        state.refreshFileTree();
-        state.refreshInfra();
+        await Promise.all([
+          state.refreshFileTree(),
+          state.refreshInfra()
+        ]);
         setVisualProgress(100);
+        setIsInitialized(true);
+        if (window.hidePreloader) window.hidePreloader();
       } catch (err) {
-        console.error("Initialization warning:", err);
+        console.error("Initialization failed:", err);
         setVisualProgress(100);
+        setIsInitialized(true);
       } finally {
-        clearInterval(rampInterval);
+        state.setIsInitializing(false);
       }
     };
     init();
-  }, [token, onboardingRequired, isInitialized]);
+  }, [token, onboardingRequired, isInitialized, setIsInitialized]);
 
+  // Auth/Onboarding Guard for Preloader
   useEffect(() => {
-    if (visualProgress >= 100 && !isInitialized) {
-      setIsInitialized(true);
+    if (!token || onboardingRequired) {
+      if (window.hidePreloader) window.hidePreloader();
     }
-  }, [visualProgress, isInitialized]);
+  }, [token, onboardingRequired]);
 
   const toggleSettings = () => {
     setShowSettings(v => !v);
@@ -257,8 +257,9 @@ function AppContent() {
   try {
     return (
       <div className={`app ${modalOpen ? "modal-open" : ""}`}>
-        {!isInitialized && <LoadingOverlay progress={visualProgress} />}
         {(!token || onboardingRequired) && <AuthOverlay />}
+        {!isInitialized && <LoadingOverlay progress={visualProgress} />}
+        
         <Toaster position="top-right" toastOptions={{
           style: { 
             background: '#1e1e24', 
