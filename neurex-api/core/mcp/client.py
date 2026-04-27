@@ -17,6 +17,7 @@ from core.mcp.tools.browser import (
 from core.mcp.tools.workspace import deep_clean, analyze_project_structure
 from core.mcp.tools.security import security_scan
 from core.mcp.tools.intel import synthesize_project_intel, query_project_intel
+from core.mcp.tools.skills_builder import create_skill, publish_skill
 
 
 log = structlog.get_logger()
@@ -39,6 +40,8 @@ TOOL_REGISTRY: dict[str, callable] = {
     "security_scan":             security_scan,
     "synthesize_project_intel":  synthesize_project_intel,
     "query_project_intel":       query_project_intel,
+    "create_skill":              create_skill,
+    "publish_skill":             publish_skill,
 }
 class MCPClient:
     """

@@ -100,6 +100,12 @@ class SkillManager:
         # Ensure we've scanned
         if not hasattr(self, "_tool_to_skill"):
             self.get_enabled_tools()
+            
+        # Hot-rescan if tool is missing (allows immediate use of newly published skills)
+        if tool_name not in self._tool_to_skill:
+            log.info("skill.hot_rescan", tool=tool_name)
+            self.get_enabled_tools()
+            
         return self._tool_to_skill.get(tool_name)
 
     def fetch_curated_list(self) -> List[Dict[str, Any]]:

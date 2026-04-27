@@ -34,7 +34,8 @@ class MemoryWorker:
         self._collection = None
         self._queue: asyncio.Queue[Path] = asyncio.Queue()
         self._loop: asyncio.AbstractEventLoop | None = None
-        self._enabled = False  # start disabled, enable only if ChromaDB connects
+        self._enabled = False
+        self.summarizer = None
 
     async def start(self):
         self._loop = asyncio.get_event_loop()
@@ -56,6 +57,8 @@ class MemoryWorker:
 
             self._chroma, self._collection = await asyncio.to_thread(init_sync)
             self.embedder = Embedder()
+            from core.memory.summarizer import Summarizer
+            self.summarizer = Summarizer()
             self._enabled = True
             log.info("memory_worker.chroma_connected")
 
@@ -113,10 +116,20 @@ class MemoryWorker:
             chunks = chunk_file(path)
             if not chunks:
                 return
-            embeddings = await self.embedder.embed_batch([c["text"] for c in chunks])
+            documents = []
+            for i, chunk in enumerate(chunks):
+                # Enrich first chunk (headers) and definitions (class/def)
+                if i == 0 or "class " in chunk["text"] or "def " in chunk["text"]:
+                    summary = await self.summarizer.summarize_chunk(chunk["text"])
+                    if summary:
+                        documents.append(f"ANALYSIS: {summary}\n\nCODE:\n{chunk['text']}")
+                    else:
+                        documents.append(chunk["text"])
+                else:
+                    documents.append(chunk["text"])
 
+            embeddings = await self.embedder.embed_batch(documents)
             ids       = [f"{path}::{c['id']}" for c in chunks]
-            documents = [c["text"] for c in chunks]
             metadatas = [c["metadata"] for c in chunks]
 
             def upsert_sync():
