@@ -1,0 +1,163 @@
+# .antigravityrules — Rules for Antigravity working on Neurex
+# These rules ensure consistency and quality while developing the Neurex IDE.
+
+# ─────────────────────────────────────────────────────────────────────────────
+[always]
+# ─────────────────────────────────────────────────────────────────────────────
+
+# File discipline
+Always write complete file contents — never emit "..." or partial diffs.
+Read a file with read_file before editing it; never assume its current state.
+Preserve the module-level docstring at the top of every Python file you touch.
+USE BROWSER SUBAGENT ONLY WHEN TESTING UI/UX.
+GIT: always use git. commit every significant change with a descriptive message.
+
+# Imports
+# Python: use explicit imports only — never `from module import *`.
+# Python: group stdlib → third-party → local, one blank line between groups.
+# TypeScript: use `@/` path aliases (e.g. `@/lib/store`, `@/components/X/X`).
+# TypeScript: never use default React import — use named hooks: `import { useState } from "react"`.
+
+# Types
+All Python function signatures must have type hints on every argument and return value.
+Use `from __future__ import annotations` at the top of every new Python file.
+TypeScript: strict mode — no implicit `any`, no non-null assertion (`!`) without a comment.
+
+# Logging
+Use `structlog.get_logger()` — never `print()` or `logging.getLogger()` in the API.
+Log at the start and end of every significant operation with structured key=value pairs.
+Correct: `log.info("memory_worker.indexed", file=str(path), chunks=len(chunks))`
+Wrong:   `print(f"Indexed {path}")`
+
+# Error handling
+Catch specific exceptions before generic `Exception` — most specific first.
+Always include `error=str(e)` in structlog error calls.
+In MCP tools: catch `PermissionError` separately — it must never be swallowed.
+In FastAPI routes: raise `HTTPException` with an explicit status_code and detail string.
+
+# Security — never relax these
+All workspace file paths must go through `_safe_path()` in core/mcp/tools/filesystem.py.
+All terminal commands must pass `_check_allowlist()` in core/mcp/tools/terminal.py before exec.
+New MCP tools that touch the filesystem must import and call `_safe_path`.
+Never bind services to `0.0.0.0` without also enforcing `API_TOKEN`.
+
+# ─────────────────────────────────────────────────────────────────────────────
+[coder]
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Python / FastAPI backend conventions
+New DB models must subclass `SQLModel` with `table=True`.
+After `session.add(obj)` always call `await session.commit()` then `await session.refresh(obj)`.
+New FastAPI routes belong in `neurex-api/api/routes/`. Register the router in `main.py`.
+Use `Depends(get_session)` for DB access in route handlers — never create a bare engine session in a route.
+
+# Agent streaming protocol — DO NOT deviate from these dict shapes
+Agent internal chunks (yielded between agents and the orchestrator):
+  {"type": "token",     "text": str}
+  {"type": "status",    "status": TaskStatus}
+  {"type": "tool_call", "call": dict}
+  {"type": "result",    "result": str}
+  {"type": "done",      "full_text": str}
+WebSocket events (sent to the frontend):
+  {"event": "task_created",  "data": TaskNode.model_dump()}
+  {"event": "task_updated",  "data": {"id": str, "status": TaskStatus}}
+  {"event": "token",         "data": str}
+  {"event": "done",          "data": {"graph_id": str, "tasks": list}}
+  {"event": "error",         "data": str}
+Never add new keys to these shapes without updating `src/lib/types.ts` in the same task.
+
+# Agentic loops
+Every agent tool loop needs a `max_rounds` guard (default 8 for coder, 5 for tester).
+After a tool call, always append both the assistant tool_call message AND the tool result message to `messages` before the next stream call.
+Stall detection lives in `core/task_graph.is_stalled()` — call it, don't reimplement it.
+
+# Context and RAG
+Call `await self.rag_context(description, n=5)` at the start of every agent `execute()` method.
+Pass RAG output into `self.build_system_prompt(rag)` — don't concatenate it manually.
+Tool outputs over 1000 tokens must go through `self.ctx.truncate_tool_output()`.
+
+# Memory / indexing
+New indexable extensions must be added to `INDEXABLE_EXTENSIONS` in `core/memory/worker.py`.
+Code files must use tree-sitter chunking via `_ast_chunks()` — never split on line count alone.
+New language support: add the extension→language mapping to `LANG_MAP` in `core/memory/chunker.py`.
+
+# MCP tools
+Register new tools in `TOOL_REGISTRY` in `core/mcp/client.py`.
+Every new tool needs: (1) async signature, (2) explicit PermissionError handling, (3) structlog call.
+Terminal tool: only add to `ALLOWED_COMMANDS` in terminal.py — never remove existing entries.
+
+# TypeScript / Next.js frontend
+Styling: use inline `style={{}}` with CSS variables — NOT Tailwind className. Be consistent with existing components.
+State reads: always use selector functions — `useStore((s) => s.field)` — never destructure the whole store.
+State writes: use named store actions (`addMessage`, `upsertTask`) — never call `set` directly from a component.
+New Zustand actions must be added to both `NeurexStore` in `src/lib/types.ts` AND `src/lib/store.ts` in the same task.
+New components go in `src/components/<Name>/<Name>.tsx` — one component per directory.
+All client components need `"use client";` as the first line.
+
+# CSS variables — never use raw color values
+Background: var(--bg-base)  var(--bg-surface)  var(--bg-elevated)  var(--bg-hover)
+Text:        var(--text-primary)  var(--text-secondary)  var(--text-muted)
+Borders:     var(--border)  var(--border-active)
+Accents:     var(--accent-blue)  var(--accent-green)  var(--accent-amber)  var(--accent-red)  var(--accent-purple)
+Agent:       var(--agent-planner)  var(--agent-coder)  var(--agent-tester)
+Status:      var(--status-thinking)  var(--status-writing)  var(--status-testing)  var(--status-done)  var(--status-failed)
+Fonts:       'JetBrains Mono', monospace  for code;  'Inter', sans-serif  for UI
+
+# ─────────────────────────────────────────────────────────────────────────────
+[tester]
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Commands to run (in order)
+Python backend: `ruff check neurex-api/` → `mypy neurex-api/ --ignore-missing-imports` → `pytest neurex-api/tests/ -v`
+Frontend:       `tsc --noEmit` in `neurex-web/`  →  `eslint src/` (if configured)
+After any change to `core/task_graph.py` or `api/routes/`: `python eval/run_evals.py --only smoke`
+After any agent change: `python eval/run_evals.py`
+
+# Reporting rules
+Always include the exact command, its exit code, and the full raw failure output.
+If ruff or mypy produce errors, list each one with file:line.
+Do not summarize — paste verbatim. Do not attempt fixes. Report and stop.
+
+# Pass criteria
+ruff:     zero errors (pre-existing warnings acceptable)
+mypy:     zero `error:` lines
+tsc:      zero errors
+npm build: must pass `npm run build` in neurex-web before finishing.
+pytest:   all collected tests pass
+eval smoke: 2/2 pass
+If any criterion above fails, the task is FAILED.
+
+# ─────────────────────────────────────────────────────────────────────────────
+[governance]
+# ─────────────────────────────────────────────────────────────────────────────
+Neurex follows [Semantic Versioning (SemVer)]:
+- MAJOR: Breaking changes (DB migration, infra overhaul).
+- MINOR: New features (Hive Mind, new panels, collaborative tools).
+- PATCH: Bugfixes, optimizations, UI polish.
+
+The "Persistence Principle":
+- All UI state (tabs, open files, terminal history) must survive browser refreshes.
+- Terminal: use `PTYManager` detach/attach lifecycle.
+- UI: use `localStorage` for tab/order state.
+
+# ─────────────────────────────────────────────────────────────────────────────
+[planner]
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Task decomposition for this codebase
+Tasks touching both `neurex-api/` and `neurex-web/` must be split: backend first, then frontend.
+Adding a new agent requires steps to: (1) create the agent file in `core/agents/`, (2) register in `AGENT_MAP` in `orchestrator.py`, (3) add eval cases in `eval/run_evals.py`.
+Adding a new MCP tool requires a step to register it in `core/mcp/client.py`.
+Changing the WS event schema or agent chunk protocol requires a frontend types update step for `src/lib/types.ts`.
+Adding a new DB model requires a step to verify `init_db()` handles the new table (run the app and check startup logs).
+
+# Step sizing
+One file per coder step for files over 100 lines.
+Multiple small files (e.g. `__init__.py`, type stubs) may share one coder step.
+Always end plans that modify Python with a tester step running ruff + mypy.
+Always end plans that modify TypeScript with a tester step running tsc.
+
+# Context handoff between steps
+Include the target file path in every step's description — the coder has no memory of prior steps.
+If a step depends on a class or function created in a prior step, quote its name and file path explicitly.
+Do not write "as created above" — write "as defined in `core/agents/base_agent.py::BaseAgent`".

@@ -147,6 +147,15 @@ class SkillManager:
                 "author": "Neurex Authors",
                 "version": "0.9.0",
                 "enabled": True
+            },
+            {
+                "id": "caveman",
+                "name": "Caveman Ultra",
+                "description": "Ultra-compressed communication mode. Cuts token usage ~75% while keeping full technical accuracy.",
+                "url": "https://github.com/JuliusBrussee/caveman",
+                "author": "Julius Brussee",
+                "version": "1.1.0",
+                "enabled": false
             }
         ]
         
