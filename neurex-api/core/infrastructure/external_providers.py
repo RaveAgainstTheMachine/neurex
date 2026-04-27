@@ -78,15 +78,24 @@ class ExternalInferenceEngine:
         if tools:
             payload["tools"] = tools
 
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(120.0, connect=5.0)) as client:
             try:
                 async with client.stream(
                     "POST", "https://api.openai.com/v1/chat/completions",
                     headers={"Authorization": f"Bearer {api_key}"},
                     json=payload,
-                    timeout=120.0
                 ) as resp:
-                    resp.raise_for_status()
+                    if resp.status_code == 401:
+                        yield {"type": "error", "data": "OpenAI Error: Invalid API Key. Please check your settings."}
+                        return
+                    elif resp.status_code == 429:
+                        yield {"type": "error", "data": "OpenAI Error: Rate limit exceeded. Try again in a few seconds."}
+                        return
+                    elif resp.status_code != 200:
+                        err_body = await resp.aread()
+                        yield {"type": "error", "data": f"OpenAI Error ({resp.status_code}): {err_body.decode()}"}
+                        return
+
                     full_text = ""
                     async for line in resp.aiter_lines():
                         if not line.startswith("data: "): continue
@@ -102,7 +111,6 @@ class ExternalInferenceEngine:
                         # Handle Tool Calls
                         if delta.get("tool_calls"):
                             for tc in delta["tool_calls"]:
-                                # OpenAI yields partial tool calls in stream
                                 yield {"type": "tool_call", "call": tc}
                         
                         # Handle Content
@@ -112,6 +120,12 @@ class ExternalInferenceEngine:
                             yield {"type": "token", "text": content}
                     
                     yield {"type": "done", "full_text": full_text}
+            except httpx.ConnectError:
+                log.error("byok.openai_connect_failed")
+                yield {"type": "error", "data": "OpenAI Error: Could not connect to API server."}
+            except httpx.TimeoutException:
+                log.error("byok.openai_timeout")
+                yield {"type": "error", "data": "OpenAI Error: Request timed out."}
             except Exception as e:
                 log.error("byok.openai_error", error=str(e))
                 yield {"type": "error", "data": f"OpenAI Error: {str(e)}"}

@@ -238,5 +238,37 @@ export const useStore = create<NeurexStore>()(
     setPresence: (presence) => set((s) => { s.presence = presence; }),
     locks: {},
     setLocks: (locks) => set((s) => { s.locks = locks; }),
+
+    // ── Search ────────────────────────────────────────────────────────
+    search: {
+      query: "",
+      results: [],
+      includeGlob: "",
+      excludeGlob: "",
+      caseSensitive: false,
+      useRegex: false,
+      wholeWord: false,
+    },
+    setSearch: (patch) => set((s) => {
+      s.search = { ...s.search, ...patch };
+    }),
+    clearSearch: () => set((s) => {
+      s.search = {
+        query: "",
+        results: [],
+        includeGlob: "",
+        excludeGlob: "",
+        caseSensitive: false,
+        useRegex: false,
+        wholeWord: false,
+      };
+    }),
+
+    // ── Navigation ───────────────────────────────────────────────────
+    pendingJump: null,
+    setPendingJump: (path, line) => set((s) => {
+      s.pendingJump = { path, line, timestamp: Date.now() };
+    }),
+    clearPendingJump: () => set((s) => { s.pendingJump = null; }),
   }))
 );

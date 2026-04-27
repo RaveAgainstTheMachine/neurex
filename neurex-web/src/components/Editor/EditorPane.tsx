@@ -5,10 +5,24 @@ import { Files } from "lucide-react";
 import "./EditorPane.css";
 
 export function EditorPane() {
-  const { openFiles, activeFile, setFileContent, saveFile, presence } = useStore();
+  const { openFiles, activeFile, setFileContent, saveFile, presence, pendingJump, clearPendingJump } = useStore();
   const editorRef = useRef<any>(null);
 
   const active = openFiles.find((f) => f.path === activeFile) ?? openFiles[0];
+
+  // Handle line jumps (e.g. from search)
+  useEffect(() => {
+    if (pendingJump && editorRef.current && pendingJump.path === activeFile) {
+      const editor = editorRef.current;
+      // Small delay to ensure monaco has loaded the content
+      setTimeout(() => {
+        editor.revealLineInCenter(pendingJump.line);
+        editor.setPosition({ lineNumber: pendingJump.line, column: 1 });
+        editor.focus();
+        clearPendingJump();
+      }, 50);
+    }
+  }, [pendingJump, activeFile, clearPendingJump]);
 
   // Sync presence with monaco decorations
   useEffect(() => {

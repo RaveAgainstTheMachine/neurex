@@ -33,8 +33,8 @@ export interface FileNode {
   type: "file" | "dir";
   path?: string;
   children?: FileNode[];
-  status?: "M" | "U" | "D" | null; // Modified, Untracked, Deleted
-  errors?: number; // Lint error count
+  status?: "M" | "U" | "D" | null;
+  errors?: number;
 }
 
 export interface ChatMessage {
@@ -48,7 +48,7 @@ export interface ChatMessage {
 export interface OpenFile {
   path: string;
   content: string;
-  originalContent?: string; // For diff view
+  originalContent?: string;
   language: string;
   isDirty: boolean;
 }
@@ -108,6 +108,22 @@ export interface User {
   role: "admin" | "developer" | "viewer";
 }
 
+export interface SearchResult {
+  path: string;
+  line: number;
+  content: string;
+}
+
+export interface SearchState {
+  query: string;
+  results: SearchResult[];
+  includeGlob: string;
+  excludeGlob: string;
+  caseSensitive: boolean;
+  useRegex: boolean;
+  wholeWord: boolean;
+}
+
 export interface NeurexStore {
   // Auth
   onboardingRequired: boolean;
@@ -163,6 +179,9 @@ export interface NeurexStore {
   acceptDiff: (path: string) => void;
   discardDiff: (path: string) => void;
   saveFile: (path: string) => Promise<void>;
+  pendingJump: { path: string; line: number; timestamp: number } | null;
+  setPendingJump: (path: string, line: number) => void;
+  clearPendingJump: () => void;
 
   // WS
   wsStatus: "connecting" | "connected" | "disconnected";
@@ -171,4 +190,9 @@ export interface NeurexStore {
   setPresence: (p: Presence[]) => void;
   locks: Record<string, FileLock>;
   setLocks: (l: Record<string, FileLock>) => void;
+
+  // Search
+  search: SearchState;
+  setSearch: (state: Partial<SearchState>) => void;
+  clearSearch: () => void;
 }

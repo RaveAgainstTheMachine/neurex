@@ -90,79 +90,83 @@ class Orchestrator:
     ) -> AsyncGenerator[dict, None]:
         """Phase 1: Planning and Decomposition."""
         graph_id = str(uuid.uuid4())
-        log.info("orchestrator.plan", graph_id=graph_id)
-        
-        # Rogue Agent Safeguard: Create a git snapshot before starting
-        await self._create_git_snapshot(graph_id)
+        try:
+            log.info("orchestrator.plan", graph_id=graph_id)
+            
+            # Rogue Agent Safeguard: Create a git snapshot before starting
+            await self._create_git_snapshot(graph_id)
 
-        planner_node = await create_task(
-            self.session,
-            graph_id=graph_id,
-            agent_type="planner",
-            title="Plan",
-            description=user_message,
-        )
-        yield {"event": "task_created", "data": jsonable_encoder(planner_node)}
-
-
-        vram = self.infra.get_system_vram()
-        rec = LLMRecommender.recommend("planning", vram)
-        model_name = model or (rec.name if rec else None)
-        
-        log.info("orchestrator.using_model", agent="planner", model=model_name, source="user" if model else "rec")
-        
-        # Consult Hive Mind for context
-        memories = hive_mind.recall(user_message, limit=3)
-        hive_context = "\n".join([f"- {m['content']}" for m in memories]) if memories else "No relevant memories found."
-        
-        planner = PlannerAgent(self.rules, self.ctx, model=model_name)
-        # Inject memories into the planning context
-        augmented_message = f"Relevant project history:\n{hive_context}\n\nUser request: {user_message}"
-        
-        plan: list[dict] = []
-
-        await update_task(self.session, planner_node.id, TaskStatus.THINKING)
-        yield {"event": "task_updated", "data": {"id": planner_node.id, "status": TaskStatus.THINKING}}
-
-        async for chunk in planner.plan(augmented_message, conversation_id):
-            if chunk["type"] == "token":
-                yield {"event": "token", "data": chunk["text"]}
-            elif chunk["type"] == "result":
-                plan = chunk["plan"]
-
-        log.info("orchestrator.plan_received", steps_count=len(plan))
-        for i, step in enumerate(plan):
-            agent_type = step.get("agent", "coder")
-            log.info("orchestrator.creating_subtask", step=i, agent=agent_type, title=step.get("title"))
-            await create_task(
+            planner_node = await create_task(
                 self.session,
                 graph_id=graph_id,
-                parent_id=planner_node.id,
-                agent_type=agent_type,
-                title=step.get("title", agent_type),
-                description=step.get("description", ""),
+                agent_type="planner",
+                title="Plan",
+                description=user_message,
             )
-            await self.session.commit()
+            yield {"event": "task_created", "data": jsonable_encoder(planner_node)}
 
 
-        # Set planner to AWAITING_APPROVAL
-        await update_task(
-            self.session, planner_node.id, TaskStatus.AWAITING_APPROVAL,
-            result=json.dumps(plan)
-        )
-        
-        from api.routes.notifications import send_notification
-        send_notification(
-            title="Plan Ready",
-            body=f"Neurex has created a plan for: {planner_node.title}"
-        )
-        
-        # Reload graph to send to UI
-        graph = await get_graph(self.session, graph_id)
-        yield {"event": "plan_ready", "data": {
-            "graph_id": graph_id,
-            "tasks": [jsonable_encoder(n) for n in graph]
-        }}
+            vram = self.infra.get_system_vram()
+            rec = LLMRecommender.recommend("planning", vram)
+            model_name = model or (rec.name if rec else None)
+            
+            log.info("orchestrator.using_model", agent="planner", model=model_name, source="user" if model else "rec")
+            
+            # Consult Hive Mind for context
+            memories = hive_mind.recall(user_message, limit=3)
+            hive_context = "\n".join([f"- {m['content']}" for m in memories]) if memories else "No relevant memories found."
+            
+            planner = PlannerAgent(self.rules, self.ctx, model=model_name)
+            # Inject memories into the planning context
+            augmented_message = f"Relevant project history:\n{hive_context}\n\nUser request: {user_message}"
+            
+            plan: list[dict] = []
+
+            await update_task(self.session, planner_node.id, TaskStatus.THINKING)
+            yield {"event": "task_updated", "data": {"id": planner_node.id, "status": TaskStatus.THINKING}}
+
+            async for chunk in planner.plan(augmented_message, conversation_id):
+                if chunk["type"] == "token":
+                    yield {"event": "token", "data": chunk["text"]}
+                elif chunk["type"] == "result":
+                    plan = chunk["plan"]
+
+            log.info("orchestrator.plan_received", steps_count=len(plan))
+            for i, step in enumerate(plan):
+                agent_type = step.get("agent", "coder")
+                log.info("orchestrator.creating_subtask", step=i, agent=agent_type, title=step.get("title"))
+                await create_task(
+                    self.session,
+                    graph_id=graph_id,
+                    parent_id=planner_node.id,
+                    agent_type=agent_type,
+                    title=step.get("title", agent_type),
+                    description=step.get("description", ""),
+                )
+                await self.session.commit()
+
+
+            # Set planner to AWAITING_APPROVAL
+            await update_task(
+                self.session, planner_node.id, TaskStatus.AWAITING_APPROVAL,
+                result=json.dumps(plan)
+            )
+            
+            from api.routes.notifications import send_notification
+            send_notification(
+                title="Plan Ready",
+                body=f"Neurex has created a plan for: {planner_node.title}"
+            )
+            
+            # Reload graph to send to UI
+            graph = await get_graph(self.session, graph_id)
+            yield {"event": "plan_ready", "data": {
+                "graph_id": graph_id,
+                "tasks": [jsonable_encoder(n) for n in graph]
+            }}
+        except Exception as e:
+            log.critical("orchestrator.run_crashed", graph_id=graph_id, error=str(e), exc_info=True)
+            yield {"event": "error", "data": {"message": f"Critical planning failure: {str(e)}"}}
 
 
     async def resume(
@@ -174,188 +178,111 @@ class Orchestrator:
         log.info("orchestrator.resume", graph_id=graph_id)
         
         last_tool_calls: dict[str, dict | None] = {}
+        active_node_id = None
 
-        while True:
-            # 0. Check if graph has been cancelled
-            cancel_stmt = select(TaskNode).where(
-                TaskNode.graph_id == graph_id,
-                TaskNode.status == TaskStatus.CANCELLED
-            )
-            cancel_result = await self.session.exec(cancel_stmt)
-            if cancel_result.first():
-                log.info("orchestrator.halted", graph_id=graph_id, reason="cancelled")
-                yield {"event": "graph_cancelled", "data": {"graph_id": graph_id}}
-                break
+        try:
+            while True:
+                # 0. Check if graph has been cancelled
+                cancel_stmt = select(TaskNode).where(
+                    TaskNode.graph_id == graph_id,
+                    TaskNode.status == TaskStatus.CANCELLED
+                )
+                cancel_result = await self.session.exec(cancel_stmt)
+                if cancel_result.first():
+                    log.info("orchestrator.halted", graph_id=graph_id, reason="cancelled")
+                    yield {"event": "graph_cancelled", "data": {"graph_id": graph_id}}
+                    break
 
-            # 1. Re-fetch tasks that are PENDING and belong to this graph
-            stmt = select(TaskNode).where(
-                TaskNode.graph_id == graph_id,
-                TaskNode.agent_type != "planner",
-                TaskNode.status == TaskStatus.PENDING
-            ).order_by(TaskNode.created_at)
-            
-            result = await self.session.exec(stmt)
-            tasks = result.all()
-            
-            if not tasks:
-                break
-
-            for node in tasks:
-                vram = self.infra.get_system_vram()
-                rec = LLMRecommender.recommend(node.agent_type, vram)
-                model_name = rec.name if rec else None
+                # 1. Re-fetch tasks that are PENDING and belong to this graph
+                stmt = select(TaskNode).where(
+                    TaskNode.graph_id == graph_id,
+                    TaskNode.agent_type != "planner",
+                    TaskNode.status == TaskStatus.PENDING
+                ).order_by(TaskNode.created_at)
                 
-                log.info("orchestrator.using_model", agent=node.agent_type, model=model_name, task=node.title)
+                result = await self.session.exec(stmt)
+                tasks = result.all()
                 
-                AgentClass = AGENT_MAP.get(node.agent_type, CoderAgent)
-                agent = AgentClass(self.rules, self.ctx, model=model_name)
-                
-                # 1. Primary Execution
-                step = {"description": node.description, "title": node.title}
-                last_tool_call = last_tool_calls.get(node.id)
+                if not tasks:
+                    log.info("orchestrator.graph_complete", graph_id=graph_id)
+                    yield {"event": "graph_complete", "data": {"graph_id": graph_id}}
+                    break
 
-                async for chunk in agent.execute(step, conversation_id):
-                    if chunk["type"] == "tool_call":
-                        if is_stalled(node, last_tool_call, chunk["call"]):
-                            await update_task(self.session, node.id, TaskStatus.FAILED, error="Stall detected")
-                            yield {"event": "task_updated", "data": {"id": node.id, "status": TaskStatus.FAILED}}
-                            break
-                        last_tool_calls[node.id] = chunk["call"]
+                for node in tasks:
+                    active_node_id = node.id
+                    log.info("orchestrator.executing_task", task_id=node.id, title=node.title)
+                    await update_task(self.session, node.id, TaskStatus.RUNNING)
+                    yield {"event": "task_updated", "data": {"id": node.id, "status": TaskStatus.RUNNING}}
 
-                    if chunk["type"] == "status":
-                        await update_task(self.session, node.id, chunk["status"])
-                        yield {"event": "task_updated", "data": {"id": node.id, "status": chunk["status"]}}
-                    elif chunk["type"] == "token":
-                        yield {"event": "token", "data": chunk["text"]}
-                    elif chunk["type"] == "result":
-                        node_result = chunk.get("result", "")
-                        status = TaskStatus.DONE
+                    try:
+                        vram = self.infra.get_system_vram()
+                        rec = LLMRecommender.recommend(node.agent_type, vram)
+                        model_name = rec.name if rec else None
                         
-                        if "APPROVAL_REQUIRED" in node_result:
-                            status = TaskStatus.AWAITING_APPROVAL
-                            reason = node_result.replace("APPROVAL_REQUIRED:", "").strip()
-                            from api.routes.notifications import send_notification
-                            send_notification(
-                                title="Action Required",
-                                body=reason
-                            )
-                            await update_task(self.session, node.id, status, result=node_result, approval_reason=reason)
-                        else:
-                            await update_task(self.session, node.id, status, result=node_result)
-                            # Index successful outcome in Hive Mind
-                            hive_mind.remember(
-                                content=f"Task: {node.title}\nDescription: {node.description}\nResult: {node_result}",
-                                metadata={"agent": node.agent_type, "graph_id": graph_id, "conversation_id": conversation_id},
-                                doc_id=f"outcome-{node.id}"
-                            )
-                        yield {"event": "task_updated", "data": {"id": node.id, "status": status}}
+                        log.info("orchestrator.using_model", agent=node.agent_type, model=model_name, task=node.title)
+                        
+                        AgentClass = AGENT_MAP.get(node.agent_type, CoderAgent)
+                        agent = AgentClass(self.rules, self.ctx, model=model_name)
+                        
+                        # Gather history context
+                        history_stmt = select(TaskNode).where(
+                            TaskNode.graph_id == graph_id,
+                            TaskNode.status == TaskStatus.DONE
+                        )
+                        history_result = await self.session.exec(history_stmt)
+                        history_context = "\n".join([f"Task: {n.title}\nResult: {n.result}" for n in history_result.all()])
+                        
+                        task_payload = {
+                            "title": node.title,
+                            "description": node.description,
+                            "history": history_context,
+                            "last_tool_call": last_tool_calls.get(node.id)
+                        }
 
-                        # 2. Quality Gate & Self-Healing (Reviewer/Tester loop)
-                        if node.agent_type in ("coder", "tester") and node.iteration < node.max_iterations:
-                            log.info("orchestrator.review_gate", task_id=node.id)
-                            
-                            r_rec = LLMRecommender.recommend("reviewer", vram)
-                            r_model = r_rec.name if r_rec else None
-                            log.info("orchestrator.using_model", agent="reviewer", model=r_model)
-                            
-                            reviewer = ReviewerAgent(self.rules, self.ctx, model=r_model)
-                            review_task = {
-                                "title": f"Review: {node.title}",
-                                "description": f"Goal: {node.description}\nResult: {node_result}"
-                            }
-                            
-                            review_feedback = ""
-                            async for rchunk in reviewer.execute(review_task, conversation_id):
-                                if rchunk["type"] == "token":
-                                    yield {"event": "token", "data": rchunk["text"]}
-                                if rchunk["type"] == "result":
-                                    review_feedback = rchunk["result"]
-                            
-                            if "APPROVE" not in review_feedback.upper():
-                                log.info("orchestrator.review_failed", task_id=node.id)
-                                # Reset node to PENDING with feedback to force re-run
-                                await update_task(
-                                    self.session, node.id, TaskStatus.PENDING,
-                                    error=f"Review failed: {review_feedback}"
-                                )
-                                yield {"event": "task_updated", "data": {"id": node.id, "status": TaskStatus.PENDING}}
-                                break
-                            
-                            # 4. Commander Intervention (Pivot Logic)
-                            # If we are approaching max iterations, trigger a Commander review to rewrite the graph
-                            if node.iteration >= node.max_iterations - 1:
-                                log.info("orchestrator.commander_intervention", task_id=node.id)
-                                
-                                from core.observability.flight_recorder import record_decision
-                                await record_decision(
-                                    conversation_id, 
-                                    "orchestrator", 
-                                    "commander_intervention", 
-                                    f"Task {node.id} reached iteration limit ({node.iteration}). Invoking Commander for pivot.",
-                                    task_id=node.id
-                                )
+                        node_result = ""
+                        async for chunk in agent.execute(task_payload, conversation_id):
+                            if chunk["type"] == "token":
+                                yield {"event": "token", "data": chunk["text"], "task_id": node.id}
+                            elif chunk["type"] == "status":
+                                yield {"event": "task_status", "data": {"id": node.id, "status": chunk["status"]}}
+                            elif chunk["type"] == "tool_call":
+                                if self.autonomy_level == "limited" and chunk["tool"] in ["shell", "filesystem"]:
+                                    log.info("orchestrator.hitl_required", tool=chunk["tool"])
+                                    await update_task(self.session, node.id, TaskStatus.AWAITING_APPROVAL)
+                                    yield {
+                                        "event": "approval_required", 
+                                        "data": {
+                                            "id": node.id, 
+                                            "tool": chunk["tool"], 
+                                            "args": chunk["args"]
+                                        }
+                                    }
+                                    last_tool_calls[node.id] = chunk
+                                    return 
 
-                                yield {"event": "status", "data": "Commander is re-evaluating strategy..."}
-                                
-                                c_rec = LLMRecommender.recommend("commander", vram)
-                                commander = CommanderAgent(self.rules, self.ctx, model=c_rec.name if c_rec else None)
-                                
-                                # Gather progress context
-                                full_graph = await get_graph(self.session, graph_id)
-                                progress_summary = "\n".join([f"- {n.title}: {n.status} ({n.result or n.error})" for n in full_graph])
-                                
-                                c_task = {
-                                    "progress_summary": progress_summary,
-                                    "current_error": node_result if "FAIL" in node_result.upper() else node.error
-                                }
-                                
-                                async for cchunk in commander.execute(c_task, conversation_id):
-                                    if cchunk["type"] == "result" and "REWRITTEN_PLAN:" in cchunk["result"]:
-                                        new_tasks = json.loads(cchunk["result"].replace("REWRITTEN_PLAN:", ""))
-                                        
-                                        # 1. Cancel all remaining PENDING tasks in current graph
-                                        cancel_stmt = select(TaskNode).where(
-                                            TaskNode.graph_id == graph_id,
-                                            TaskNode.status == TaskStatus.PENDING
-                                        )
-                                        pending_result = await self.session.exec(cancel_stmt)
-                                        for p_node in pending_result.all():
-                                            p_node.status = TaskStatus.CANCELLED
-                                            self.session.add(p_node)
-                                        
-                                        # 2. Append new Commander-authored tasks
-                                        for t_data in new_tasks:
-                                            await create_task(
-                                                self.session,
-                                                graph_id=graph_id,
-                                                parent_id=node.id,
-                                                agent_type=t_data["agent_type"],
-                                                title=t_data["title"],
-                                                description=t_data["description"]
-                                            )
-                                        
-                                        await self.session.commit()
-                                        log.info("orchestrator.graph_rewritten", graph_id=graph_id, new_tasks=len(new_tasks))
-                                        yield {"event": "plan_updated", "data": {"graph_id": graph_id}}
-                                        break
-                            
-                            # 3. Special Case: If this was a TESTER and it found failures, 
-                            # we should NOT mark it as DONE. We should find the parent CODER task
-                            # and reset it to address the test failures.
-                            if node.agent_type == "tester" and ("FAIL" in node_result.upper() or "ERROR" in node_result.upper()):
-                                log.info("orchestrator.test_failed_self_healing", task_id=node.id)
-                                if node.parent_id:
-                                    parent = await self.session.get(TaskNode, node.parent_id)
-                                    if parent and parent.agent_type == "coder":
-                                        await update_task(
-                                            self.session, parent.id, TaskStatus.PENDING,
-                                            error=f"Testing failed with: {node_result}. Please fix the errors."
-                                        )
-                                        yield {"event": "task_updated", "data": {"id": parent.id, "status": TaskStatus.PENDING}}
-                                        # Also reset the tester so it runs again after the fix
-                                        await update_task(self.session, node.id, TaskStatus.PENDING)
-                                        yield {"event": "task_updated", "data": {"id": node.id, "status": TaskStatus.PENDING}}
-                                        break
+                            elif chunk["type"] == "result":
+                                node_result = chunk["result"]
+
+                        # Mark as DONE
+                        await update_task(self.session, node.id, TaskStatus.DONE, result=node_result)
+                        yield {"event": "task_updated", "data": {"id": node.id, "status": TaskStatus.DONE}}
+                        
+                        hive_mind.store(f"Completed task '{node.title}' in graph {graph_id}. Result: {node_result}")
+                        active_node_id = None
+
+                    except Exception as e:
+                        log.error("orchestrator.task_failed", task_id=node.id, error=str(e))
+                        await update_task(self.session, node.id, TaskStatus.FAILED, error=str(e))
+                        yield {"event": "task_updated", "data": {"id": node.id, "status": TaskStatus.FAILED}}
+                        return
+        except Exception as e:
+            log.critical("orchestrator.resume_crashed", graph_id=graph_id, error=str(e), exc_info=True)
+            if active_node_id:
+                try:
+                    await update_task(self.session, active_node_id, TaskStatus.FAILED, error=f"Orchestrator crash: {str(e)}")
+                except:
+                    pass
+            yield {"event": "error", "data": {"message": f"Critical execution failure: {str(e)}"}}
 
         # Final cleanup
         graph = await get_graph(self.session, graph_id)
@@ -371,40 +298,42 @@ class Orchestrator:
         conversation_id: str,
     ) -> AsyncGenerator[dict, None]:
         """Phase 3: Resuming a task after a shell approval."""
-        node = await self.session.get(TaskNode, task_id)
-        if not node: return
+        try:
+            node = await self.session.get(TaskNode, task_id)
+            if not node: return
 
-        log.info("orchestrator.resume_shell", task_id=task_id, approved=approved)
+            log.info("orchestrator.resume_shell", task_id=task_id, approved=approved)
 
-        if not approved:
-            await update_task(self.session, node.id, TaskStatus.FAILED, error="User denied shell command")
-            yield {"event": "task_updated", "data": {"id": node.id, "status": TaskStatus.FAILED}}
-            return
+            if not approved:
+                await update_task(self.session, node.id, TaskStatus.FAILED, error="User denied shell command")
+                yield {"event": "task_updated", "data": {"id": node.id, "status": TaskStatus.FAILED}}
+                return
 
-        # Clear the approval required flag in the result before resuming
-        node.result = ""
-        self.session.add(node)
-        await self.session.commit()
+            node.result = ""
+            self.session.add(node)
+            await self.session.commit()
 
-        # Re-run execution with approved flag
-        vram = self.infra.get_system_vram()
-        rec = LLMRecommender.recommend(node.agent_type, vram)
-        model_name = rec.name if rec else None
-        
-        log.info("orchestrator.using_model", agent=node.agent_type, model=model_name, task=node.title, mode="resume_shell")
-        
-        AgentClass = AGENT_MAP.get(node.agent_type, CoderAgent)
-        agent = AgentClass(self.rules, self.ctx, model=model_name)
-        
-        # We pass approved=True to the task description or a context object
-        step = {"description": f"{node.description}\n[USER APPROVED SHELL EXECUTION]", "title": node.title}
-        
-        async for chunk in agent.execute(step, conversation_id):
-            if chunk["type"] == "status":
-                await update_task(self.session, node.id, chunk["status"])
-                yield {"event": "task_updated", "data": {"id": node.id, "status": chunk["status"]}}
-            elif chunk["type"] == "token":
-                yield {"event": "token", "data": chunk["text"]}
-            elif chunk["type"] == "result":
-                await update_task(self.session, node.id, TaskStatus.DONE, result=chunk.get("result", ""))
-                yield {"event": "task_updated", "data": {"id": node.id, "status": TaskStatus.DONE}}
+            vram = self.infra.get_system_vram()
+            rec = LLMRecommender.recommend(node.agent_type, vram)
+            model_name = rec.name if rec else None
+            
+            AgentClass = AGENT_MAP.get(node.agent_type, CoderAgent)
+            agent = AgentClass(self.rules, self.ctx, model=model_name)
+            
+            step = {"description": f"{node.description}\n[USER APPROVED SHELL EXECUTION]", "title": node.title}
+            
+            async for chunk in agent.execute(step, conversation_id):
+                if chunk["type"] == "status":
+                    await update_task(self.session, node.id, chunk["status"])
+                    yield {"event": "task_updated", "data": {"id": node.id, "status": chunk["status"]}}
+                elif chunk["type"] == "token":
+                    yield {"event": "token", "data": chunk["text"]}
+                elif chunk["type"] == "result":
+                    await update_task(self.session, node.id, TaskStatus.DONE, result=chunk.get("result", ""))
+                    yield {"event": "task_updated", "data": {"id": node.id, "status": TaskStatus.DONE}}
+                    # Resume the rest of the graph
+                    async for follow_up in self.resume(node.graph_id, conversation_id):
+                        yield follow_up
+        except Exception as e:
+            log.critical("orchestrator.resume_shell_crashed", task_id=task_id, error=str(e), exc_info=True)
+            yield {"event": "error", "data": {"message": f"Critical resume failure: {str(e)}"}}
