@@ -3,7 +3,7 @@
 > **Base URL**: `http://localhost:8000`  
 > **Auth**: Bearer JWT (obtain via `POST /api/auth/token`)  
 > **WebSocket**: `ws://localhost:8000/ws/{conversation_id}`  
-> **Version**: 0.5.2-stable
+> **Version**: 0.6.0-stable
 
 ---
 
@@ -48,7 +48,7 @@ Register a new user. The **first** user registered is automatically granted `adm
 ---
 
 ### `POST /api/auth/token`
-Authenticate and receive a JWT. Token lifetime: **8 hours**.
+Authenticate and receive a JWT. Token lifetime: **24 hours**.
 
 **Body** (`application/x-www-form-urlencoded`):
 | Field | Type |
@@ -232,6 +232,13 @@ Approve all `awaiting_approval` and `pending` tasks in a graph, transitioning th
 
 ---
 
+### `POST /api/tasks/{graph_id}/cancel`
+Cancel all non-completed tasks in a graph. Immediately halts orchestrator execution for this graph.
+
+**Auth**: `developer` or higher
+
+---
+
 ### `DELETE /api/tasks/`
 Purge all task records. Useful for cleanup.
 
@@ -292,7 +299,7 @@ Search for files matching a query (filename substring).
 ## Infrastructure & Mesh
 
 ### `GET /api/infra/status`
-Returns full infrastructure status: LLM engine states, system metrics (CPU, RAM, VRAM), and active mesh peers.
+Returns full infrastructure status: LLM engine states, system metrics (CPU, RAM, VRAM), hardware benchmarks, and project intelligence.
 
 **Response `200`**:
 ```json
@@ -304,7 +311,9 @@ Returns full infrastructure status: LLM engine states, system metrics (CPU, RAM,
     "cpu_percent": 12.4,
     "ram_total_gb": 64.0,
     "ram_used_gb": 22.1,
-    "vram_gb": 10.2
+    "vram_gb": 10.2,
+    "benchmarks": { "tps": 45.2, "load_ms": 1200 },
+    "intel": { "tech_stack": ["Python", "Docker"], "architecture": "..." }
   },
   "peers": [],
   "queue_depth": 0

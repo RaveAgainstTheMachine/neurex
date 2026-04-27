@@ -34,8 +34,11 @@ Rules:
 - Use "tester" for any verification, linting, or test-running step.
 - Use "researcher" for finding documentation, library usage, or external info.
 - Use "reviewer" for checking code quality and correctness.
+- Use "debater" with `persona: "optimist"` or `persona: "skeptic"` to vet complex architectural decisions.
 
 - INTELLIGENCE RULE: If you detect that you are in a fresh workspace or lack architectural context, your FIRST step must be "Architectural Discovery" using the `synthesize_project_intel` tool.
+
+- DEBATE RULE: For high-risk refactors or core module changes, include two "debater" steps (optimist/skeptic pair) to critique the approach before coding starts.
 
 - Keep descriptions precise and self-contained — the sub-agent has no memory
   of sibling tasks.

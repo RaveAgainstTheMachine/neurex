@@ -26,6 +26,7 @@ from core.agents.coder_agent import CoderAgent
 from core.agents.tester_agent import TesterAgent
 from core.agents.researcher_agent import ResearcherAgent
 from core.agents.reviewer_agent import ReviewerAgent
+from core.agents.debater_agent import DebaterAgent
 
 from core.context.manager import ContextManager
 from core.context.rules_parser import RulesParser
@@ -41,6 +42,7 @@ AGENT_MAP = {
     "tester":     TesterAgent,
     "researcher": ResearcherAgent,
     "reviewer":   ReviewerAgent,
+    "debater":    DebaterAgent,
 }
 
 class Orchestrator:

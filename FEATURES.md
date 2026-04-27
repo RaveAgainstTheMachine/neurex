@@ -42,8 +42,20 @@ Neurex is a distributed, agentic integrated development environment (IDE) optimi
 *   **WebSocket Presence**: Synchronizes cursor positions, active file locks, and agent statuses across all connected clients in real-time.
 *   **Dynamic API Resolution**: Automatically derives API and WebSocket endpoints from the origin URL, enabling seamless multi-device access (Desktop/Mobile) without configuration changes.
 *   **Mobile Web Interface**: A PWA-optimized control center for monitoring mesh telemetry and issuing remote task approvals.
+*   **Graph Cancellation**: Reactive 'Panic Button' capability to immediately halt complex multi-agent workflows.
 
-## 6. Infrastructure Lifecycle
+## 6. The Forge: Workspace Integrity
+*   **Deep Cleaning**: Automated purging of environment debris (`__pycache__`, caches) and `git` pruning.
+*   **Auto-Linting**: Integrated `ruff --fix` for instantaneous code hygiene.
+*   **Project Intelligence**: Autonomous synthesis of an architectural 'brain' (`intel.json`) by parsing documentation and source code.
+*   **Self-Onboarding**: The Planner automatically force-injects architectural discovery steps for new or un-profiled workspaces.
+
+## 7. The Sentinel: Security Auditing
+*   **Static Analysis**: Integrated `bandit` scanning for Python security vulnerabilities.
+*   **Vulnerability Tracking**: `safety` check for known exploits in the dependency tree.
+*   **Leak Detection**: Automated scanning of the Git index for accidental secret leaks (`.env`, `.pem`).
+
+## 8. Infrastructure Lifecycle
 *   **Automated Self-Updates**: Background release monitoring with integrated `docker compose` pull triggers for background versioning.
 *   **Role-Aware Installer**: A unified bootstrap script that detects environment capabilities and configures the node as either a Master or an RPC Worker.
 *   **Observability**: Integrated structured logging (`structlog`) for deep-trace debugging across the entire distributed stack.
