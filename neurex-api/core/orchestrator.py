@@ -248,8 +248,8 @@ class Orchestrator:
                             )
                         yield {"event": "task_updated", "data": {"id": node.id, "status": status}}
 
-                        # 2. Quality Gate (Reviewer loop)
-                        if node.agent_type in ("coder", "tester") and node.iteration < 3:
+                        # 2. Quality Gate & Self-Healing (Reviewer/Tester loop)
+                        if node.agent_type in ("coder", "tester") and node.iteration < node.max_iterations:
                             log.info("orchestrator.review_gate", task_id=node.id)
                             
                             r_rec = LLMRecommender.recommend("reviewer", vram)
@@ -277,8 +277,25 @@ class Orchestrator:
                                     error=f"Review failed: {review_feedback}"
                                 )
                                 yield {"event": "task_updated", "data": {"id": node.id, "status": TaskStatus.PENDING}}
-                                # Task is now PENDING again, while loop will catch it in next iteration
                                 break
+                            
+                            # 3. Special Case: If this was a TESTER and it found failures, 
+                            # we should NOT mark it as DONE. We should find the parent CODER task
+                            # and reset it to address the test failures.
+                            if node.agent_type == "tester" and ("FAIL" in node_result.upper() or "ERROR" in node_result.upper()):
+                                log.info("orchestrator.test_failed_self_healing", task_id=node.id)
+                                if node.parent_id:
+                                    parent = await self.session.get(TaskNode, node.parent_id)
+                                    if parent and parent.agent_type == "coder":
+                                        await update_task(
+                                            self.session, parent.id, TaskStatus.PENDING,
+                                            error=f"Testing failed with: {node_result}. Please fix the errors."
+                                        )
+                                        yield {"event": "task_updated", "data": {"id": parent.id, "status": TaskStatus.PENDING}}
+                                        # Also reset the tester so it runs again after the fix
+                                        await update_task(self.session, node.id, TaskStatus.PENDING)
+                                        yield {"event": "task_updated", "data": {"id": node.id, "status": TaskStatus.PENDING}}
+                                        break
 
         # Final cleanup
         graph = await get_graph(self.session, graph_id)

@@ -55,7 +55,13 @@ Neurex is a distributed, agentic integrated development environment (IDE) optimi
 *   **Vulnerability Tracking**: `safety` check for known exploits in the dependency tree.
 *   **Leak Detection**: Automated scanning of the Git index for accidental secret leaks (`.env`, `.pem`).
 
-## 8. Infrastructure Lifecycle
+## 8. The Immune System: Self-Healing Loops
+*   **Iterative Debugging**: The Orchestrator automatically detects test failures and re-activates preceding coding tasks with failure logs as context.
+*   **Quality Gates**: Multi-pass architectural review and testing cycles (up to 10 iterations) to ensure structural integrity without human intervention.
+*   **Mesh Awareness**: Agents can query `get_mesh_topology` to understand the distributed health and performance of the federated swarm.
+*   **Semantic RAG**: Conceptual indexing of codebases via a background summarization pass, enabling high-level architectural search.
+
+## 9. Infrastructure Lifecycle
 *   **Automated Self-Updates**: Background release monitoring with integrated `docker compose` pull triggers for background versioning.
 *   **Role-Aware Installer**: A unified bootstrap script that detects environment capabilities and configures the node as either a Master or an RPC Worker.
 *   **Observability**: Integrated structured logging (`structlog`) for deep-trace debugging across the entire distributed stack.

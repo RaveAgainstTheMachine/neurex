@@ -18,6 +18,7 @@ from core.mcp.tools.workspace import deep_clean, analyze_project_structure
 from core.mcp.tools.security import security_scan
 from core.mcp.tools.intel import synthesize_project_intel, query_project_intel
 from core.mcp.tools.skills_builder import create_skill, publish_skill
+from core.mcp.tools.mesh_intel import get_mesh_topology, check_peer_suitability
 
 
 log = structlog.get_logger()
@@ -42,6 +43,8 @@ TOOL_REGISTRY: dict[str, callable] = {
     "query_project_intel":       query_project_intel,
     "create_skill":              create_skill,
     "publish_skill":             publish_skill,
+    "get_mesh_topology":         get_mesh_topology,
+    "check_peer_suitability":    check_peer_suitability,
 }
 class MCPClient:
     """

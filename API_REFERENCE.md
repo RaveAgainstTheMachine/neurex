@@ -413,6 +413,16 @@ Proxy an Ollama API request to the best available mesh node (selected by MeshRou
 
 ---
 
+### `GET /api/infra/mesh/topology`
+Returns a detailed breakdown of swarm health, VRAM utilization, and queue depth for all connected nodes.
+
+---
+
+### `POST /api/infra/mesh/suitability`
+Verify which mesh node is optimal for a specific model requirement.
+
+---
+
 ## Hive Mind (Memory)
 
 The Hive Mind is a ChromaDB-backed semantic vector store. All code written by agents and humans is automatically indexed by the `MemoryWorker`.
