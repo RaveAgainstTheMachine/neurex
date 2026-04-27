@@ -177,6 +177,7 @@ export interface NeurexStore {
   clearTasks: () => void;
 
   // Editor
+  setFileLanguage: (path: string, language: string) => void;
   openFiles: OpenFile[];
   activeFile: string | null;
   openFile: (path: string, content: string, language: string) => void;

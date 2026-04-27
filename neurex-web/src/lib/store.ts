@@ -102,7 +102,6 @@ export const useStore = create<NeurexStore>()(
       if (!token) return;
       
       try {
-        // Fast status
         const statusProm = fetch(`${API_BASE}/api/infra/status`, { headers: { "Authorization": `Bearer ${token}` } }).then(r => r.json()).then(data => {
           set((s) => {
             s.infraEngines = Array.isArray(data.engines) ? data.engines : [];
@@ -110,12 +109,10 @@ export const useStore = create<NeurexStore>()(
           });
         });
         
-        // Registry
         const regProm = fetch(`${API_BASE}/api/infra/registry`, { headers: { "Authorization": `Bearer ${token}` } }).then(r => r.json()).then(data => {
           set((s) => { s.infraRegistry = Array.isArray(data) ? data : []; });
         });
 
-        // Background tasks (don't block on these)
         fetch(`${API_BASE}/api/infra/skills`, { headers: { "Authorization": `Bearer ${token}` } }).then(r => r.json()).then(data => {
           set((s) => { s.infraSkills = Array.isArray(data) ? data : []; });
         }).catch(e => console.warn("Skills fetch failed"));
@@ -138,6 +135,10 @@ export const useStore = create<NeurexStore>()(
     // ── Editor ────────────────────────────────────────────────────────
     openFiles: JSON.parse(localStorage.getItem("neurex_open_files") || "[]"),
     activeFile: localStorage.getItem("neurex_active_file"),
+    setFileLanguage: (path, language) => set((s) => {
+      const f = s.openFiles.find(x => x.path === path);
+      if (f) f.language = language;
+    }),
 
     // ── Speech ────────────────────────────────────────────────────────
     speechLang: localStorage.getItem("neurex_speech_lang") || "en-US",
