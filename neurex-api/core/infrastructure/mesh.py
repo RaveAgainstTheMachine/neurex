@@ -96,6 +96,7 @@ class MeshRouter:
                 peer.cpu_percent = metrics.get("cpu_percent", 0.0)
                 peer.models = data.get("local_models", [])
                 peer.queue_depth = data.get("queue_depth", 0)
+                peer.tps = metrics.get("benchmarks", {}).get("tps", 0.0)
                 peer.latency_ms = int((time.time() - start) * 1000)
                 self._save_peers()
                 log.debug("mesh.peer_healthy", url=url, latency=peer.latency_ms)
@@ -120,8 +121,12 @@ class MeshRouter:
         has_model_locally = not model_name or any(model_name in m for m in local_models)
         
         # Boost local score if it has the model; penalize if it doesn't
+        from core.infrastructure.benchmarker import benchmarker
+        local_tps = benchmarker.last_results.get("tps", 0.0)
+        local_tps_boost = 1 + (local_tps / 10.0)
+        
         local_multiplier = 2.0 if has_model_locally else 0.1
-        best_score = (local_vram * local_multiplier) / (local_cpu + 1)
+        best_score = (local_vram * local_multiplier * local_tps_boost) / (local_cpu + 1)
         best_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
         
         for peer in self.peers.values():
@@ -133,8 +138,10 @@ class MeshRouter:
             peer_multiplier = 2.0 if has_model_on_peer else 0.1
             
             # 3. Peer Score calculation
+            # Factor in real-world benchmark performance (TPS)
+            tps_boost = 1 + (getattr(peer, 'tps', 0) / 10.0)
             load_factor = peer.cpu_percent + (peer.latency_ms / 10) + (getattr(peer, 'queue_depth', 0) * 20)
-            score = (peer.vram_gb * peer_multiplier) / (load_factor + 1)
+            score = (peer.vram_gb * peer_multiplier * tps_boost) / (load_factor + 1)
             
             if score > best_score:
                 best_score = score

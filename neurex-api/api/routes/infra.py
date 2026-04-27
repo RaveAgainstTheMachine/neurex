@@ -54,6 +54,10 @@ async def get_infra_status():
     engines = await infra_manager.get_status()
     metrics = infra_manager.get_system_metrics()
     local_models = await infra_manager.get_installed_models("ollama")
+    
+    # Include latest benchmark if available
+    metrics["benchmarks"] = benchmarker.last_results
+    
     return {
         "engines": engines,
         "metrics": metrics,

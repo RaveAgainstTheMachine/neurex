@@ -115,17 +115,16 @@ async def run_command(command: str, cwd: str = ".", approved: bool = False, auto
         return f"{status}\n{output}"
 
     except FileNotFoundError:
-        # Docker not available — fall back to direct host exec (dev only)
-        log.warning("terminal.docker_not_found", fallback="host_exec")
-        return await _host_exec_fallback(command, cwd)
-
+        # Docker not available
+        log.error("terminal.docker_not_found", error="Docker is required for sandboxed execution.")
+        if os.getenv("NEUREX_ALLOW_HOST_FALLBACK", "false").lower() == "true":
+             log.warning("terminal.host_fallback_active", warning="UNSAFE: Running on host!")
+             return await _host_exec_fallback(command, cwd)
+        
+        return "Error: Docker not found. Sandboxed execution is mandatory for security. Please start the Docker daemon."
 
 async def _host_exec_fallback(command: str, cwd: str) -> str:
-    """
-    DEV ONLY fallback when Docker is not available.
-    Runs directly on the host — never use in production.
-    """
-    import os
+    """UNSAFE: Directly execute on host. Requires NEUREX_ALLOW_HOST_FALLBACK=true"""
     workspace = os.getenv("WORKSPACE_PATH", "/workspace")
     work_dir  = os.path.join(workspace, cwd.lstrip("/"))
 
@@ -143,4 +142,4 @@ async def _host_exec_fallback(command: str, cwd: str) -> str:
 
     output = stdout.decode(errors="replace")
     rc = proc.returncode
-    return f"[HOST EXEC - DEV ONLY] exit {rc}\n{output}"
+    return f"[HOST EXEC - UNSAFE] exit {rc}\n{output}"

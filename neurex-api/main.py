@@ -63,6 +63,10 @@ async def lifespan(app: FastAPI):
     from core.infrastructure.mesh import mesh_router
     asyncio.create_task(mesh_router.start_monitoring())
 
+    # Trigger initial hardware benchmark
+    from core.infrastructure.benchmarker import benchmarker
+    asyncio.create_task(benchmarker.run_benchmark())
+
     log.info("neurex.ready")
     yield
 
