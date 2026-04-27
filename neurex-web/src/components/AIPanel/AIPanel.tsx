@@ -46,14 +46,11 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const MODEL_OPTIONS = [
-  { value: "qwen2.5-coder:7b", label: "Qwen 2.5 Coder 7B (Alibaba)", group: "Local Mesh (GGUF)" },
-  { value: "qwen2.5-coder:14b", label: "Qwen 2.5 Coder 14B (Alibaba)", group: "Local Mesh (GGUF)" },
-  { value: "qwen2.5-coder:32b", label: "Qwen 2.5 Coder 32B (Alibaba)", group: "Local Mesh (GGUF)" },
-  { value: "deepseek-r1:7b", label: "DeepSeek R1 7B (DeepSeek-AI)", group: "Local Mesh (GGUF)" },
-  { value: "llama3.1:8b", label: "Llama 3.1 8B (Meta AI)", group: "Local Mesh (GGUF)" },
-  { value: "gpt-4o", label: "GPT-4o (OpenAI)", group: "BYOK Gateway (Cloud)" },
-  { value: "claude-3-5-sonnet-20240620", label: "Claude 3.5 Sonnet (Anthropic)", group: "BYOK Gateway (Cloud)" },
-  { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro (Google DeepMind)", group: "BYOK Gateway (Cloud)" }
+  { value: "qwen2.5-coder:7b", label: "Qwen 2.5 Coder 7B (general)", group: "Open Source" },
+  { value: "qwen2.5-coder:14b", label: "Qwen 2.5 Coder 14B (coding)", group: "Open Source" },
+  { value: "qwen2.5-coder:32b", label: "Qwen 2.5 Coder 32B (multi)", group: "Open Source" },
+  { value: "deepseek-r1:7b", label: "DeepSeek R1 7B (thinking)", group: "Open Source" },
+  { value: "llama3.1:8b", label: "Llama 3.1 8B (general)", group: "Open Source" },
 ];
 
 const AUTONOMY_OPTIONS = [
@@ -189,7 +186,9 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
     if (tab === "history") {
       fetch(`${API_BASE}/api/chat/conversations`)
         .then(r => r.json())
-        .then(setConversations)
+        .then(data => {
+          if (Array.isArray(data)) setConversations(data);
+        })
         .catch(() => {});
     }
   }, [tab, setConversations]);
@@ -200,7 +199,9 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
       fetch(`${API_BASE}/api/tasks/?graph_id=${conversationId}`)
         .then(r => r.json())
         .then(ts => {
-          ts.forEach((t: TaskNode) => useStore.getState().upsertTask(t));
+          if (Array.isArray(ts)) {
+            ts.forEach((t: TaskNode) => useStore.getState().upsertTask(t));
+          }
         })
         .catch(() => {});
     }
@@ -417,7 +418,7 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
                 <div className="ai-messages__empty-icon">⬡</div>
                 <div>Ask Neurex anything</div>
                 <div className="ai-messages__attribution">
-                  Powered by Alibaba Qwen, Meta Llama, and OpenAI Whisper.
+                  Powered by Open Source Intelligence.
                 </div>
               </div>
             )}

@@ -106,7 +106,7 @@
   flex-direction: column;
 }
 
-.model-card:hover {
+.infra-panel:not([data-modal-open="true"]) .model-card:hover {
   border-color: var(--purple-main);
 }
 
@@ -167,7 +167,7 @@
   color: var(--status-done);
 }
 
-.icon-btn--green:hover {
+.infra-panel:not([data-modal-open="true"]) .icon-btn--green:hover {
   background: rgba(78, 204, 163, 0.1);
 }
 
@@ -175,8 +175,17 @@
   color: var(--status-failed);
 }
 
-.icon-btn--red:hover {
+.infra-panel:not([data-modal-open="true"]) .icon-btn--red:hover {
   background: rgba(255, 69, 58, 0.1);
+}
+
+/* Specific fix for panel container borders and child interactions */
+.infra-panel[data-modal-open="true"] {
+  pointer-events: none;
+}
+
+.infra-panel[data-modal-open="true"] .modal-overlay {
+  pointer-events: auto;
 }
 
 .model-card--downloaded {

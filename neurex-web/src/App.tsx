@@ -209,6 +209,7 @@ function AppContent() {
   const [showSettings, setShowSettings] = useState(false);
   const [showHiveMind, setShowHiveMind] = useState(false);
   const activeConversationId = useStore((s) => s.activeConversationId);
+  const modalOpen = useStore(s => s.modalOpen);
 
   const { send } = useWebSocket(activeConversationId);
 
@@ -303,7 +304,7 @@ function AppContent() {
   const token = useStore(s => s.token);
 
   return (
-    <div className="app">
+    <div className={`app ${modalOpen ? "modal-open" : ""}`}>
       {(!token || onboardingRequired) && <AuthOverlay />}
       {!isInitialized && token && !onboardingRequired && <LoadingOverlay progress={visualProgress} />}
       <Toaster position="top-right" toastOptions={{ 
@@ -435,6 +436,14 @@ function AppContent() {
                 <Activity size={10} />
                 <span className="hide-mobile">{wsStatus === "connected" ? "Neurex Mesh Active" : wsStatus}</span>
               </span>
+
+              {/* Swarm State */}
+              <div className="status-intel animate-slide-up">
+                <div className={`swarm-pulse ${useStore.getState().hiveStats.total_nodes > 0 ? 'swarm-pulse--active' : ''}`} />
+                <span className="hide-mobile">
+                  {useStore.getState().hiveStats.total_nodes} NODES • {useStore.getState().hiveStats.memory_count} FRAGMENTS
+                </span>
+              </div>
               
               {/* Project Intelligence Indicator */}
               {useStore.getState().infraMetrics?.intel && (

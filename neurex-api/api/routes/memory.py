@@ -7,7 +7,7 @@ from typing import List, Dict, Any
 from core.memory.hive import hive_mind
 from api.routes.auth import require_role, UserRole
 
-router = APIRouter(prefix="/api/memory", tags=["memory"])
+router = APIRouter()
 
 @router.get("/search")
 async def search_memory(

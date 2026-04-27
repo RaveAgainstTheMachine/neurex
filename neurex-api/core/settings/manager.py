@@ -36,10 +36,20 @@ DEFAULT_SETTINGS = {
     "neurex_trash_path": ".neurex/trash",
     "enable_push_notifications": True,
 
-    # BYOK (Bring Your Own Key) for External Providers
-    "openai_api_key": "",
-    "anthropic_api_key": "",
-    "google_api_key": "",
+    # Appearance
+    "enable_glassmorphism": True,
+    "enable_animations": True,
+    "theme_preset": "obsidian",
+    "accent_color": "hsl(260, 90%, 70%)",
+    "glow_color": "hsla(260, 90%, 70%, 0.4)",
+
+    # LLM Advanced
+    "llm_temperature": 0.7,
+    "llm_context_length": 8192,
+
+    # Workspace
+    "auto_save_files": True,
+    "show_hidden_files": False,
 
     # System Lifecycle
     "enable_insomnia": True,

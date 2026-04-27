@@ -128,18 +128,6 @@ class BaseAgent(ABC):
             payload["tools"] = final_tools
 
         from core.infrastructure.mesh import mesh_router
-        from core.infrastructure.external_providers import external_engine
-
-        # 1. Check if model is external (BYOK)
-        if external_engine.is_external(payload["model"]):
-            async for chunk in external_engine.stream_chat(
-                payload["model"], 
-                payload["messages"], 
-                tools=payload.get("tools"),
-                temperature=0.2
-            ):
-                yield chunk
-            return
 
         # 2. Otherwise, route to local Mesh (Ollama)
         ollama_url = await mesh_router.get_best_inference_node(payload["model"])

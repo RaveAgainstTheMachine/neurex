@@ -1,5 +1,5 @@
 // src/components/FileExplorer/FileExplorer.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { 
   ChevronRight, ChevronDown, File, Folder, FolderOpen, RefreshCw,
   FileJson, FileCode, FileText, Settings, FileKey, GitGraph, 
@@ -76,6 +76,26 @@ function FileItem({ node, depth }: { node: FileNode; depth: number }) {
   const isDir = node.type === "dir";
   const isActive = activeFile === node.path;
   const lock = node.path ? locks[node.path] : null;
+  
+  // Aggregate status for collapsed folders
+  const aggregate = useMemo(() => {
+    const status = { 
+      m: node.has_m || false, 
+      u: node.has_u || false, 
+      error: false, 
+      dirty: false 
+    };
+    const walk = (n: FileNode) => {
+      if (!n) return;
+      if ((n.errors || 0) > 0) status.error = true;
+      if (n.path && openFiles.some(f => f.path === n.path && f.isDirty)) status.dirty = true;
+      if (n.children) n.children.forEach(walk);
+    };
+    if (isDir && node.children && node.children.length > 0) {
+      node.children.forEach(walk);
+    }
+    return status;
+  }, [node, openFiles, isDir]);
 
   const handleClick = async () => {
     if (isDir) {
@@ -101,7 +121,7 @@ function FileItem({ node, depth }: { node: FileNode; depth: number }) {
   return (
     <div>
       <div
-        className={`file-item ${isActive ? "file-item--active" : ""} ${node.status ? `file-item--${node.status.toLowerCase()}` : ""}`}
+        className={`file-item ${isActive ? "file-item--active" : ""} ${node.status ? `file-item--${node.status.toLowerCase()}` : ""} ${node.has_m ? 'file-item--m' : ''} ${node.has_u ? 'file-item--u' : ''}`}
         style={{ paddingLeft: 8 + depth * 12 }}
         onClick={handleClick}
       >
@@ -134,6 +154,15 @@ function FileItem({ node, depth }: { node: FileNode; depth: number }) {
             {node.errors}
           </span>
         )}
+
+        {isDir && !expanded && (
+          <div className="folder-indicators">
+            {aggregate.error && <span className="indicator-dot indicator-dot--error" title="Errors inside" />}
+            {aggregate.dirty && <span className="indicator-dot indicator-dot--dirty" title="Unsaved changes inside" />}
+            {aggregate.m && <span className="indicator-dot indicator-dot--m" title="Modified files inside" />}
+            {aggregate.u && <span className="indicator-dot indicator-dot--u" title="New files inside" />}
+          </div>
+        )}
       </div>
       {isDir && expanded && node.children && (
         <div className="file-item__children">
@@ -150,7 +179,8 @@ function FileItem({ node, depth }: { node: FileNode; depth: number }) {
 }
 
 export function FileExplorer() {
-  const { fileTree, refreshFileTree } = useStore();
+  const fileTree = useStore((s) => s.fileTree);
+  const refreshFileTree = useStore((s) => s.refreshFileTree);
   const [loading, setLoading] = useState(false);
 
   const handleRefresh = async () => {

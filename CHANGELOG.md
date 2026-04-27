@@ -2,6 +2,24 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
+## [v0.8.2-beta] - 2026-04-27
+
+### Added
+- **Open Source Only Policy**: Formally purged all BYOK (Bring Your Own Key) integrations for closed-source models (OpenAI, Anthropic, Gemini). Neurex is now exclusively powered by open-source weights.
+- **Model Specialty Tags**: Refactored the AI Panel (InfraPanel) to display specialty tags like `(coding)`, `(thinking)`, and `(vision)` in the Agent Recommendations section, improving UI readability.
+
+### Fixed
+- **UI Interaction**: Resolved a bug where panel borders were reacting to mouse movement while models were open.
+- **Store Consistency**: Unified `API_BASE` and improved auth state cleanup.
+
+---
+
+## [v0.8.1-beta] - 2026-04-27
+
+### Fixed
+- **Infra Hub**: Background borders no longer react to hover when model modal is open.
+- **Search Panel**: Query and results now persist across navigation and refreshes via localStorage.
+
 ## [v0.8.0-beta] - 2026-04-27
 
 ### Added

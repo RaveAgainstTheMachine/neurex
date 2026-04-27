@@ -152,6 +152,27 @@
   padding: 0 4px;
 }
 
+.folder-indicators {
+  display: flex;
+  gap: 3px;
+  margin-left: auto;
+  padding-right: 4px;
+  align-items: center;
+}
+
+.indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.indicator-dot--m { background: var(--accent-amber); }
+.indicator-dot--u { background: var(--accent-green); }
+.indicator-dot--error { background: var(--accent-red); box-shadow: 0 0 4px rgba(255, 69, 58, 0.4); }
+.indicator-dot--dirty { background: var(--accent-blue); box-shadow: 0 0 4px rgba(64, 156, 255, 0.4); }
+
 @keyframes pulse-lock {
   0% { opacity: 0.4; transform: scale(0.9); }
   50% { opacity: 1; transform: scale(1.1); }

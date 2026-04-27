@@ -7,6 +7,14 @@
   overflow: hidden;
   background: var(--bg-app);
 }
+.app.modal-open .activity-bar,
+.app.modal-open .app__body {
+  pointer-events: none;
+  filter: blur(2px) brightness(0.7);
+}
+.app.modal-open .modal-overlay {
+  pointer-events: auto !important;
+}
 
 /* Activity bar */
 .activity-bar {
@@ -376,6 +384,34 @@
 
 .status-intel .text-cyan {
   filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.3));
+}
+
+.swarm-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  position: relative;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+.swarm-pulse--active {
+  background: var(--accent-cyan);
+  box-shadow: 0 0 8px var(--accent-cyan);
+}
+
+.swarm-pulse--active::after {
+  content: '';
+  position: absolute;
+  top: -2px; left: -2px; right: -2px; bottom: -2px;
+  border-radius: 50%;
+  border: 1px solid var(--accent-cyan);
+  animation: swarm-ripple 2s infinite;
+}
+
+@keyframes swarm-ripple {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(2.5); opacity: 0; }
 }
 
 /* Standard Resize Handles */

@@ -4,7 +4,7 @@ import { immer } from "zustand/middleware/immer";
 import toast from "react-hot-toast";
 import type { NeurexStore, TaskNode } from "./types";
 
-const API_BASE = "http://127.0.0.1:8000";
+import { API_BASE } from "./config";
 
 export const useStore = create<NeurexStore>()(
   immer((set, get) => ({
@@ -19,12 +19,21 @@ export const useStore = create<NeurexStore>()(
         if (age > 8 * 60 * 60 * 1000) { // 8 hours
           localStorage.removeItem("token");
           localStorage.removeItem("token_timestamp");
+          localStorage.removeItem("user");
           return null;
         }
       }
       return t;
     })(),
-    user: JSON.parse(localStorage.getItem("user") || "null"),
+    user: (() => {
+      const u = localStorage.getItem("user");
+      const t = localStorage.getItem("token");
+      if (!t) {
+        localStorage.removeItem("user");
+        return null;
+      }
+      return JSON.parse(u || "null");
+    })(),
     setAuth: (token, user) => {
       const now = Date.now().toString();
       localStorage.setItem("token", token);
@@ -50,26 +59,60 @@ export const useStore = create<NeurexStore>()(
     infraRegistry: [],
     infraSkills: [],
     infraPeers: [],
+    hiveStats: { total_nodes: 0, memory_count: 0 },
+    theme: { 
+      accent_color: "hsl(260, 90%, 70%)", 
+      glow_color: "hsla(260, 90%, 70%, 0.4)",
+      enable_glassmorphism: true,
+      enable_animations: true
+    },
+    setTheme: (theme) => set((s) => { 
+      s.theme = { ...s.theme, ...theme };
+      const root = document.documentElement;
+      if (theme.accent_color) root.style.setProperty('--accent-purple', theme.accent_color);
+      if (theme.accent_color) root.style.setProperty('--purple-main', theme.accent_color);
+      if (theme.glow_color) root.style.setProperty('--glow-purple', theme.glow_color);
+    }),
+    refreshTheme: async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/settings/`);
+        const data = await res.json();
+        if (data.accent_color) {
+          get().setTheme({
+            accent_color: data.accent_color,
+            glow_color: data.glow_color,
+            enable_glassmorphism: data.enable_glassmorphism,
+            enable_animations: data.enable_animations
+          });
+        }
+      } catch (err) {
+        console.error("Theme sync failed", err);
+      }
+    },
     refreshInfra: async () => {
       const token = get().token;
       // Fast status
       fetch(`${API_BASE}/api/infra/status`, { headers: { "Authorization": `Bearer ${token}` } }).then(r => r.json()).then(data => {
         set((s) => {
-          s.infraEngines = data.engines || [];
+          s.infraEngines = Array.isArray(data.engines) ? data.engines : [];
           s.infraMetrics = data.metrics || null;
         });
       });
       // Registry
       fetch(`${API_BASE}/api/infra/registry`, { headers: { "Authorization": `Bearer ${token}` } }).then(r => r.json()).then(data => {
-        set((s) => { s.infraRegistry = data; });
+        set((s) => { s.infraRegistry = Array.isArray(data) ? data : []; });
       });
       // Background skills/peers
       fetch(`${API_BASE}/api/infra/skills`, { headers: { "Authorization": `Bearer ${token}` } }).then(r => r.json()).then(data => {
-        set((s) => { s.infraSkills = data; });
+        set((s) => { s.infraSkills = Array.isArray(data) ? data : []; });
       });
       fetch(`${API_BASE}/api/infra/mesh/peers`, { headers: { "Authorization": `Bearer ${token}` } }).then(r => r.json()).then(data => {
-        set((s) => { s.infraPeers = data; });
+        set((s) => { s.infraPeers = Array.isArray(data) ? data : []; });
       });
+      fetch(`${API_BASE}/api/memory/stats`).then(r => r.json()).then(data => {
+        set((s) => { s.hiveStats = data; });
+      });
+      get().refreshTheme();
     },
 
     // ── Editor ────────────────────────────────────────────────────────
@@ -240,17 +283,28 @@ export const useStore = create<NeurexStore>()(
     setLocks: (locks) => set((s) => { s.locks = locks; }),
 
     // ── Search ────────────────────────────────────────────────────────
-    search: {
-      query: "",
-      results: [],
-      includeGlob: "",
-      excludeGlob: "",
-      caseSensitive: false,
-      useRegex: false,
-      wholeWord: false,
-    },
+    search: (() => {
+      const saved = localStorage.getItem("neurex_search");
+      if (saved) {
+        try {
+          return JSON.parse(saved);
+        } catch (e) {
+          console.error("Failed to parse saved search", e);
+        }
+      }
+      return {
+        query: "",
+        results: [],
+        includeGlob: "",
+        excludeGlob: "",
+        caseSensitive: false,
+        useRegex: false,
+        wholeWord: false,
+      };
+    })(),
     setSearch: (patch) => set((s) => {
       s.search = { ...s.search, ...patch };
+      localStorage.setItem("neurex_search", JSON.stringify(s.search));
     }),
     clearSearch: () => set((s) => {
       s.search = {
@@ -262,6 +316,7 @@ export const useStore = create<NeurexStore>()(
         useRegex: false,
         wholeWord: false,
       };
+      localStorage.removeItem("neurex_search");
     }),
 
     // ── Navigation ───────────────────────────────────────────────────
@@ -270,5 +325,8 @@ export const useStore = create<NeurexStore>()(
       s.pendingJump = { path, line, timestamp: Date.now() };
     }),
     clearPendingJump: () => set((s) => { s.pendingJump = null; }),
+    // ── Modals ───────────────────────────────────────────────────────
+    modalOpen: false,
+    setModalOpen: (val) => set((s) => { s.modalOpen = val; }),
   }))
 );

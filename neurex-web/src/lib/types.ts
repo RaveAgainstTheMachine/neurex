@@ -34,6 +34,8 @@ export interface FileNode {
   path?: string;
   children?: FileNode[];
   status?: "M" | "U" | "D" | null;
+  has_m?: boolean;
+  has_u?: boolean;
   errors?: number;
 }
 
@@ -195,4 +197,13 @@ export interface NeurexStore {
   search: SearchState;
   setSearch: (state: Partial<SearchState>) => void;
   clearSearch: () => void;
+  // Modals
+  modalOpen: boolean;
+  setModalOpen: (val: boolean) => void;
+  // Hive
+  hiveStats: { total_nodes: number; memory_count: number };
+  // Theme
+  theme: { accent_color: string; glow_color: string; enable_glassmorphism: boolean; enable_animations: boolean };
+  setTheme: (theme: any) => void;
+  refreshTheme: () => Promise<void>;
 }

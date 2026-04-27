@@ -8,6 +8,7 @@ from pathlib import Path
 # Dynamically determine base directory
 BASE_DIR = Path(os.getenv("WORKSPACE_PATH", os.getcwd())).parent
 LOG_FILE = BASE_DIR / ".neurex" / "audit.jsonl"
+log = structlog.get_logger()
 
 def setup_logging():
     LOG_FILE.parent.mkdir(parents=True, exist_ok=True)

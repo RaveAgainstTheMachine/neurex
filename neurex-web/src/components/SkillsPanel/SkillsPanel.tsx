@@ -62,7 +62,7 @@ export function SkillsPanel() {
     try {
       const resp = await fetch(`${API_BASE}/api/skills/`);
       const data = await resp.json();
-      setSkills(data);
+      if (Array.isArray(data)) setSkills(data);
     } catch (err) {
       console.error("Failed to fetch skills", err);
     } finally {
@@ -75,7 +75,7 @@ export function SkillsPanel() {
     try {
       const resp = await fetch(`${API_BASE}/api/skills/curated`);
       const data = await resp.json();
-      setCurated(data);
+      if (Array.isArray(data)) setCurated(data);
     } catch (err) {
       console.error("Failed to fetch curated list", err);
     } finally {

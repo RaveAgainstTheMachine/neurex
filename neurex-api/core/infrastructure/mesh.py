@@ -26,6 +26,8 @@ class PeerNode:
         self.cpu_percent = 0.0
         self.models = []
         self.latency_ms = 0
+        self.queue_depth = 0
+        self.tps = 0.0
 
     def to_dict(self):
         return {
@@ -37,7 +39,9 @@ class PeerNode:
             "ram_total_gb": self.ram_total_gb,
             "cpu_percent": self.cpu_percent,
             "models": self.models,
-            "latency_ms": self.latency_ms
+            "latency_ms": self.latency_ms,
+            "queue_depth": self.queue_depth,
+            "tps": self.tps
         }
 
 class MeshRouter:
@@ -139,9 +143,14 @@ class MeshRouter:
             
             # 3. Peer Score calculation
             # Factor in real-world benchmark performance (TPS)
-            tps_boost = 1 + (getattr(peer, 'tps', 0) / 10.0)
-            load_factor = peer.cpu_percent + (peer.latency_ms / 10) + (getattr(peer, 'queue_depth', 0) * 20)
-            score = (peer.vram_gb * peer_multiplier * tps_boost) / (load_factor + 1)
+            tps_boost = 1 + (peer.tps / 10.0)
+            
+            # Penalize by latency, CPU load, and current task queue
+            # queue_depth weight is high (20) to prevent dogpiling a single fast node
+            load_factor = (peer.cpu_percent / 2) + (peer.latency_ms / 20) + (peer.queue_depth * 25)
+            
+            # Final capability score
+            score = (peer.vram_gb * peer_multiplier * tps_boost) / (max(0.1, load_factor))
             
             if score > best_score:
                 best_score = score

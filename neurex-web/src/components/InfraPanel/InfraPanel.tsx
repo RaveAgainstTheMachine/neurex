@@ -11,6 +11,29 @@ import toast from "react-hot-toast";
 
 import { API_BASE } from "../../lib/config";
 
+const getSpecialtyTag = (m: ModelProfile) => {
+  const tasks = (m.recommended_tasks || []).join(" ").toLowerCase();
+  if (tasks.includes("coding") || tasks.includes("code")) return "(coding)";
+  if (tasks.includes("logic") || tasks.includes("thinking") || tasks.includes("deep_thinking")) return "(thinking)";
+  if (tasks.includes("vision")) return "(vision)";
+  if (tasks.includes("audio") || tasks.includes("transcription")) return "(transcribe)";
+  if (tasks.includes("video")) return "(video)";
+  if (tasks.includes("image")) return "(image)";
+  if (tasks.includes("multi")) return "(multi)";
+  return "(general)";
+};
+
+const formatModelName = (name: string, m: ModelProfile, simplify: boolean) => {
+  let displayName = name.split(':').shift() || name;
+  if (simplify) {
+    // Remove anything in brackets
+    displayName = displayName.replace(/\s*\([^)]*\)/g, "").trim();
+    // Add specialty tag
+    displayName += ` ${getSpecialtyTag(m)}`;
+  }
+  return displayName;
+};
+
 function ModelDetailsModal({ 
   show, 
   model, 
@@ -150,6 +173,11 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
   // Custom Modal State
   const [confirmState, setConfirmState] = useState<{ show: boolean; skillId: string | null }>({ show: false, skillId: null });
   const [selectedModel, setSelectedModel] = useState<ModelProfile | null>(null);
+  const setGlobalModalOpen = useStore(s => s.setModalOpen);
+
+  useEffect(() => {
+    setGlobalModalOpen(!!selectedModel || confirmState.show);
+  }, [selectedModel, confirmState.show, setGlobalModalOpen]);
 
   const hubRef = useRef<HTMLDivElement>(null);
 
@@ -172,8 +200,20 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
   useEffect(() => {
     fetchData();
     const timer = setInterval(fetchData, 10000);
-    return () => clearInterval(timer);
-  }, [fetchData]);
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (selectedModel) setSelectedModel(null);
+        if (confirmState.show) setConfirmState({ show: false, skillId: null });
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [fetchData, selectedModel, confirmState.show]);
 
   const bestInClass = useMemo(() => {
     const roles = {
@@ -284,7 +324,11 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
   };
 
   return (
-    <div ref={hubRef} className={`infra-panel ${expanded ? 'infra-panel--expanded' : ''}`}>
+    <div 
+      ref={hubRef} 
+      className={`infra-panel ${expanded ? 'infra-panel--expanded' : ''}`}
+      data-modal-open={!!selectedModel || confirmState.show}
+    >
       <ConfirmModal 
         show={confirmState.show}
         title="Purge Skill"
@@ -326,7 +370,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
                 <div style={{ fontSize: 10.5, textTransform: 'uppercase', color: 'var(--purple-light)', fontWeight: 700 }}>{role}</div>
                 <div style={{ fontSize: 9.5, color: 'var(--text-muted)' }}>{model.params} • {model.vram_required_gb}G VRAM</div>
               </div>
-              <div style={{ fontSize: 12.5, fontWeight: 600, margin: '4px 0' }}>{model.name.split(':').shift()}</div>
+              <div style={{ fontSize: 12.5, fontWeight: 600, margin: '4px 0' }}>{formatModelName(model.name, model, true)}</div>
               <button 
                 className={`btn ${model.is_downloaded ? 'btn--disabled' : 'btn--purple'}`}
                 style={{ width: '100%', marginTop: 'auto', fontSize: 10.5, padding: '4px' }}

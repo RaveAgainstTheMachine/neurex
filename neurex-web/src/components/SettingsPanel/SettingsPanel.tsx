@@ -25,12 +25,23 @@ interface SettingsState {
   enable_glassmorphism: boolean;
   enable_animations: boolean;
   theme_preset: string;
+  accent_color: string;
+  glow_color: string;
   // LLM Advanced
   llm_temperature: number;
   llm_context_length: number;
   // Workspace
   auto_save_files: boolean;
   show_hidden_files: boolean;
+  // Network
+  api_port: number;
+  web_port: number;
+  chromadb_port: number;
+  ollama_port: number;
+  rpc_port: number;
+  firewall_enabled: boolean;
+  firewall_lan_only: boolean;
+  enable_insomnia: boolean;
   [key: string]: any;
 }
 
@@ -121,6 +132,14 @@ export function SettingsPanel() {
         toast.error("Operation denied: Admin privileges required.");
         return;
       }
+
+      // Sync global theme immediately
+      useStore.getState().setTheme({
+        accent_color: settings.accent_color,
+        glow_color: settings.glow_color,
+        enable_glassmorphism: settings.enable_glassmorphism,
+        enable_animations: settings.enable_animations
+      });
 
       toast.success("Settings saved successfully");
     } catch (err) {
@@ -408,6 +427,34 @@ export function SettingsPanel() {
                 </label>
               </div>
             </div>
+
+            <div className="setting-row">
+              <div className="setting-info">
+                <label>Primary Accent Color</label>
+                <p>Personalize the core visual identity of the node.</p>
+              </div>
+              <div className="setting-control color-picker-group">
+                <input 
+                  type="color" 
+                  value={settings.accent_color.startsWith('hsl') ? '#9c6fff' : settings.accent_color} 
+                  onChange={(e) => {
+                    const hex = e.target.value;
+                    handleChange("accent_color", hex);
+                    // Update glow as well with alpha
+                    handleChange("glow_color", hex + '66'); 
+                  }} 
+                  disabled={isViewer}
+                />
+                <input 
+                  type="text" 
+                  value={settings.accent_color} 
+                  onChange={(e) => handleChange("accent_color", e.target.value)}
+                  className="settings-input settings-input--sm"
+                  placeholder="hex or hsl"
+                  disabled={isViewer}
+                />
+              </div>
+            </div>
           </div>
         </section>
 
@@ -578,6 +625,92 @@ export function SettingsPanel() {
                   <input type="checkbox" checked={settings.enable_push_notifications} onChange={(e) => handleChange("enable_push_notifications", e.target.checked)} disabled={isViewer} />
                   <span className="toggle-slider"></span>
                 </label>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* NETWORK & PORTS */}
+        <section className="settings-group">
+          <div className="settings-group__header">
+            <Network size={16} /> <h3>Network Configuration</h3>
+          </div>
+          <div className="settings-group__body">
+            <div className="setting-grid">
+              <div className="setting-col">
+                <label>API Port</label>
+                <input type="number" value={settings.api_port} onChange={e => handleChange("api_port", parseInt(e.target.value))} className="settings-input" />
+              </div>
+              <div className="setting-col">
+                <label>Web Port</label>
+                <input type="number" value={settings.web_port} onChange={e => handleChange("web_port", parseInt(e.target.value))} className="settings-input" />
+              </div>
+              <div className="setting-col">
+                <label>RPC Port</label>
+                <input type="number" value={settings.rpc_port} onChange={e => handleChange("rpc_port", parseInt(e.target.value))} className="settings-input" />
+              </div>
+            </div>
+            
+            <div className="setting-row">
+              <div className="setting-info">
+                <label>Zero-Trust Firewall</label>
+                <p>Enforce platform-specific firewall rules on this node.</p>
+              </div>
+              <div className="setting-control">
+                <label className={`toggle-switch ${isViewer ? 'disabled' : ''}`}>
+                  <input type="checkbox" checked={settings.firewall_enabled} onChange={(e) => handleChange("firewall_enabled", e.target.checked)} disabled={isViewer} />
+                  <span className="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div className="setting-row">
+              <div className="setting-info">
+                <label>LAN Isolation</label>
+                <p>Restrict Neurex ports to the local network subnet only.</p>
+              </div>
+              <div className="setting-control">
+                <label className={`toggle-switch ${isViewer ? 'disabled' : ''}`}>
+                  <input type="checkbox" checked={settings.firewall_lan_only} onChange={(e) => handleChange("firewall_lan_only", e.target.checked)} disabled={isViewer} />
+                  <span className="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* SYSTEM LIFECYCLE */}
+        <section className="settings-group">
+          <div className="settings-group__header">
+            <Zap size={16} /> <h3>System Lifecycle</h3>
+          </div>
+          <div className="settings-group__body">
+            <div className="setting-row">
+              <div className="setting-info">
+                <label>Insomnia Mode</label>
+                <p>Prevent system sleep while Neurex core is running.</p>
+              </div>
+              <div className="setting-control">
+                <label className={`toggle-switch ${isViewer ? 'disabled' : ''}`}>
+                  <input type="checkbox" checked={settings.enable_insomnia} onChange={(e) => handleChange("enable_insomnia", e.target.checked)} disabled={isViewer} />
+                  <span className="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div className="setting-row setting-row--vertical">
+              <div className="setting-info">
+                <label>Neural Trash Path</label>
+                <p>Base path for temporarily holding purged codebase fragments.</p>
+              </div>
+              <div className="setting-control full-width">
+                <input 
+                  type="text" 
+                  value={settings.neurex_trash_path}
+                  onChange={(e) => handleChange("neurex_trash_path", e.target.value)}
+                  className="settings-input"
+                  disabled={isViewer}
+                />
               </div>
             </div>
           </div>

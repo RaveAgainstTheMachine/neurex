@@ -55,6 +55,13 @@ docker compose -f docker-compose.node.yml up -d
 - **Isolation**: Commands run in restricted Docker containers (no network, read-only mounts).
 - **Control**: Mandatory Human-in-the-loop (HITL) approvals for high-autonomy tasks.
 
+## UI Customization
+Neurex features a high-fidelity, customizable interface:
+- **Dynamic Accent Colors**: Change the platform's visual identity (accents, glows, pulses) in real-time.
+- **Glassmorphism**: GPU-accelerated backdrop blurs for a premium, immersive workspace.
+- **Motion System**: Smooth kinetic transitions and neural animations (can be toggled for performance).
+- **Persistent State**: All theme and layout preferences are saved to the backend node registry.
+
 ## License
 Neurex is licensed under the **Business Source License 1.1**.
 

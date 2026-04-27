@@ -72,15 +72,7 @@ class FileLock(SQLModel, table=True):
     expires_at: datetime
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
-class DecisionEvent(SQLModel, table=True):
-    """Reasoning Trace Event for the Flight Recorder"""
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
-    graph_id: str = Field(index=True)
-    agent_type: str
-    decision: str # e.g. "REWRITE_PLAN", "CANCEL_TASK"
-    rationale: str
-    metadata_json: Optional[str] = None # JSON string of extra context
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+# DecisionEvent moved to core.observability.flight_recorder
 
 async def init_db():
     import core.projects.models # Ensure models are registered with SQLModel

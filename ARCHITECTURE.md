@@ -48,11 +48,13 @@ Before every agent execution, the `MemoryWorker` performs a semantic search agai
 
 Neurex is built upon the foundational work of the global AI and Open Source research community. We gratefully acknowledge the following sources:
 
-### 9.1 Model Weights & Architectures
+### 9.1 Model Weights & Architectures (Open Source Policy)
+Neurex adheres to a strict **Open Source Only** policy. We do not support or integrate with closed-source, paid API providers (OpenAI, Anthropic, etc.). We rely on the following elite open weights:
 - **Qwen2.5-Coder Series**: Alibaba Cloud / Qwen Team (Alibaba Group).
 - **Llama 3 Series**: Meta AI (Meta Platforms, Inc.).
-- **Whisper & Clip**: OpenAI.
-- **Stable Diffusion XL**: Stability AI.
+- **Mistral & Mixtral**: Mistral AI.
+- **DeepSeek Series**: DeepSeek AI.
+- **Whisper**: OpenAI (Open Weights).
 
 ### 9.2 Performance Benchmarks
 Static performance metrics (MMLU, HumanEval, etc.) utilized by the `LLMRecommender` system are sourced from:

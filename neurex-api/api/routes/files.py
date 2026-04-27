@@ -17,7 +17,8 @@ collab_manager = CollaborationManager()
 
 @router.get("/tree")
 async def file_tree():
-    """Return a nested JSON file tree of the workspace with Git status."""
+    from core.logger import log
+    log.info("files.tree_request", workspace=str(WORKSPACE))
     # Fetch Git Status
     git_status = {}
     try:
@@ -25,32 +26,50 @@ async def file_tree():
             ["git", "status", "--porcelain"], 
             cwd=WORKSPACE, capture_output=True, text=True, timeout=5
         )
+        log.info("files.git_status_raw", stdout=res.stdout[:200])
         for line in res.stdout.splitlines():
             if len(line) > 3:
                 status = line[:2].strip()
                 path = line[3:].strip()
                 git_status[path] = "M" if "M" in status else "U" if "??" in status else None
-    except:
-        pass
+        log.info("files.git_status_parsed", count=len(git_status), keys=list(git_status.keys())[:5])
+    except Exception as e:
+        log.error("files.git_status_error", error=str(e))
 
     def _walk(path: Path) -> dict:
-        name = path.name
         try:
             rel_path = str(path.relative_to(WORKSPACE))
+            if rel_path == ".":
+                rel_path = ""
         except ValueError:
-            rel_path = name
+            rel_path = path.name
         
+        name = path.name
         if path.is_dir():
             children = []
+            has_m = False
+            has_u = False
             try:
-                # Use os.scandir for better performance on large directories
                 for entry in os.scandir(path):
                     if entry.name not in IGNORED:
-                        children.append(_walk(Path(entry.path)))
+                        child = _walk(Path(entry.path))
+                        children.append(child)
+                        # Bubble up status
+                        if child.get("status") == "M" or child.get("has_m"):
+                            has_m = True
+                        if child.get("status") == "U" or child.get("has_u"):
+                            has_u = True
                 children.sort(key=lambda x: (x["type"] != "dir", x["name"].lower()))
             except PermissionError:
                 pass
-            return {"name": name, "type": "dir", "children": children}
+            return {
+                "name": name, 
+                "type": "dir", 
+                "path": rel_path,
+                "children": children,
+                "has_m": has_m,
+                "has_u": has_u
+            }
         
         return {
             "name": name, 
