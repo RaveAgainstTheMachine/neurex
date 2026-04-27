@@ -1,9 +1,13 @@
 """
 core/infrastructure/registry.py
-Model profiles and recommendation logic.
+Model Registry and Resource Definitions.
+Data Sources: 
+- Hugging Face Open LLM Leaderboard (https://huggingface.co/spaces/HuggingFaceH4/open_llm_leaderboard)
+- Artificial Analysis (https://artificialanalysis.ai)
+- Official Model Cards: Alibaba (Qwen), Meta (Llama), Stability AI, OpenAI (Whisper)
 """
 from enum import Enum
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from pydantic import BaseModel
 
 class ModelCapability(str, Enum):

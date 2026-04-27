@@ -25,7 +25,10 @@
 
 ---
 
-## Authentication
+*   **Swarm Telemetry**: Real-time observability via the **Flight Recorder**, capturing every architectural pivot and tool reasoning trace.
+*   **Operational Transparency**: Visual audit trail of autonomous decisions directly within the IDE.
+
+## 1. Authentication
 
 All endpoints (except `/health`, `/api/auth/register`, `/api/auth/token`) require a Bearer JWT.
 
@@ -592,6 +595,13 @@ List all available system snapshots (backups created before updates).
 Restore the system state from a specific snapshot.
 
 **Auth**: `admin`
+
+---
+
+### `GET /api/observability/flight-log/{conversation_id}`
+Retrieve the structured reasoning trace for a specific conversation.
+
+**Auth**: `any`
 
 ---
 

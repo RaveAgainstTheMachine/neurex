@@ -1,0 +1,116 @@
+.flight-recorder {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-deep);
+  border-left: 1px solid var(--border);
+  font-family: var(--font-mono);
+}
+
+.flight-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(20, 20, 20, 0.5);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.pulse-icon {
+  color: var(--accent-green);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
+}
+
+.btn-refresh {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: var(--accent-blue);
+  font-size: 10px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.flight-feed {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.flight-empty {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 40px;
+  font-style: italic;
+}
+
+.decision-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 8px;
+  border-left: 2px solid var(--border);
+  transition: border-color 0.3s ease;
+}
+
+.decision-card:hover {
+  border-left-color: var(--accent-blue);
+}
+
+.decision-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.agent-tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.agent-tag--orchestrator { background: rgba(130, 80, 255, 0.1); color: #a371ff; }
+.agent-tag--commander { background: rgba(255, 80, 130, 0.1); color: #ff5082; }
+.agent-tag--coder { background: rgba(80, 200, 255, 0.1); color: #50c8ff; }
+
+.decision-time {
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+.decision-title {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: capitalize;
+}
+
+.decision-rationale {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  white-space: pre-wrap;
+}

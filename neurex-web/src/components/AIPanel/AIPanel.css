@@ -110,6 +110,20 @@
   align-self: flex-end;
 }
 
+.ai-messages__empty-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.3;
+}
+
+.ai-messages__attribution {
+  margin-top: 24px;
+  font-size: 10px;
+  color: var(--text-muted);
+  opacity: 0.6;
+  font-family: var(--font-mono);
+}
+
 .message__content {
   font-size: 13px;
   padding: 8px 12px;

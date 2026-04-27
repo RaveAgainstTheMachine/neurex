@@ -285,6 +285,16 @@ class Orchestrator:
                             # If we are approaching max iterations, trigger a Commander review to rewrite the graph
                             if node.iteration >= node.max_iterations - 1:
                                 log.info("orchestrator.commander_intervention", task_id=node.id)
+                                
+                                from core.observability.flight_recorder import record_decision
+                                await record_decision(
+                                    conversation_id, 
+                                    "orchestrator", 
+                                    "commander_intervention", 
+                                    f"Task {node.id} reached iteration limit ({node.iteration}). Invoking Commander for pivot.",
+                                    task_id=node.id
+                                )
+
                                 yield {"event": "status", "data": "Commander is re-evaluating strategy..."}
                                 
                                 c_rec = LLMRecommender.recommend("commander", vram)

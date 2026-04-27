@@ -20,6 +20,7 @@ from core.mcp.tools.intel import synthesize_project_intel, query_project_intel
 from core.mcp.tools.skills_builder import create_skill, publish_skill
 from core.mcp.tools.mesh_intel import get_mesh_topology, check_peer_suitability
 from core.context.scratchpad import set_scratchpad_value, get_scratchpad, clear_scratchpad
+from core.observability.flight_recorder import record_decision, get_flight_log
 
 
 log = structlog.get_logger()
@@ -49,6 +50,8 @@ TOOL_REGISTRY: dict[str, callable] = {
     "set_scratchpad":            set_scratchpad_value,
     "get_scratchpad":            get_scratchpad,
     "clear_scratchpad":          clear_scratchpad,
+    "record_decision":           record_decision,
+    "get_flight_log":            get_flight_log,
 }
 class MCPClient:
     """

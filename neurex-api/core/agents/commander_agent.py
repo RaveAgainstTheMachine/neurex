@@ -62,6 +62,15 @@ class CommanderAgent(BaseAgent):
                     end = full_text.rfind("]") + 1
                     if start != -1 and end != -1:
                         tasks = json.loads(full_text[start:end])
+                        
+                        # Record the pivot decision
+                        await self.record_decision(
+                            conversation_id, 
+                            "graph_rewrite", 
+                            f"Rewrote plan with {len(tasks)} new tasks. Reason: Previous strategy stalled at iteration limit.",
+                            task_id=task.get("id")
+                        )
+
                         yield {"type": "result", "result": f"REWRITTEN_PLAN:{json.dumps(tasks)}"}
                     else:
                         yield {"type": "result", "result": full_text}

@@ -23,6 +23,7 @@ import { useStore } from "./lib/store";
 import { Toaster } from "react-hot-toast";
 import { BrainCircuit } from "lucide-react";
 import { UpdateNotifier } from "./components/UpdateNotifier/UpdateNotifier";
+import { FlightRecorder } from "./components/FlightRecorder/FlightRecorder";
 import { LoadingOverlay } from "./components/LoadingOverlay/LoadingOverlay";
 import { 
   DndContext, 
@@ -498,7 +499,8 @@ function PlaceholderPanel({ label }: { label: string }) {
 }
 
 function BottomPanel({ send }: { send: (p: any) => void }) {
-  const [tab, setTab] = useState<"terminal" | "output">("terminal");
+  const [tab, setTab] = useState<"terminal" | "output" | "flight">("terminal");
+  const activeConversationId = useStore(s => s.activeConversationId);
   const tasks = useStore((s) => s.tasks);
   
   const lines = Object.values(tasks)
@@ -516,6 +518,7 @@ function BottomPanel({ send }: { send: (p: any) => void }) {
         <div className="bottom-panel__tabs">
           <button className={`bottom-tab ${tab === "terminal" ? "active" : ""}`} onClick={() => setTab("terminal")}>TERMINAL</button>
           <button className={`bottom-tab ${tab === "output" ? "active" : ""}`} onClick={() => setTab("output")}>OUTPUT</button>
+          <button className={`bottom-tab ${tab === "flight" ? "active" : ""}`} onClick={() => setTab("flight")}>FLIGHT LOG</button>
         </div>
       </div>
       <div className="bottom-panel__content">
@@ -530,6 +533,13 @@ function BottomPanel({ send }: { send: (p: any) => void }) {
             <span className="bottom-panel__empty">No output yet.</span>
           ) : (
             lines.map((l, i) => <div key={i} className="bottom-panel__line">{l}</div>)
+          )}
+        </div>
+        <div className="bottom-panel__tab-content" hidden={tab !== "flight"}>
+          {activeConversationId ? (
+            <FlightRecorder conversationId={activeConversationId} />
+          ) : (
+            <div className="flight-empty">Select a conversation to view reasoning traces.</div>
           )}
         </div>
       </div>

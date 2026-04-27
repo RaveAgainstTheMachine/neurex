@@ -188,6 +188,11 @@ class BaseAgent(ABC):
                     if data.get("done"):
                         yield {"type": "done", "full_text": full_text}
 
+    async def record_decision(self, conversation_id: str, decision: str, rationale: str, task_id: str | None = None):
+        """Helper to log an agentic decision to the flight recorder."""
+        from core.observability.flight_recorder import record_decision
+        await record_decision(conversation_id, self.agent_type, decision, rationale, task_id=task_id)
+
     async def dispatch_tool(self, tool_call: dict, conversation_id: str) -> str:
         """Route a tool_call from the model to the MCP client."""
         name = tool_call.get("function", {}).get("name", "")

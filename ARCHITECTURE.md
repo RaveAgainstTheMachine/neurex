@@ -44,6 +44,30 @@ Agents inherit from a `BaseAgent` class providing RAG context, tool-calling loop
 ### 3.2 Retrieval (RAG)
 Before every agent execution, the `MemoryWorker` performs a semantic search against the prompt. The top-$N$ results are injected into the agent's system prompt as "Project Context," reducing hallucination and providing architectural awareness.
 
+## 9. Attributions & Citations
+
+Neurex is built upon the foundational work of the global AI and Open Source research community. We gratefully acknowledge the following sources:
+
+### 9.1 Model Weights & Architectures
+- **Qwen2.5-Coder Series**: Alibaba Cloud / Qwen Team (Alibaba Group).
+- **Llama 3 Series**: Meta AI (Meta Platforms, Inc.).
+- **Whisper & Clip**: OpenAI.
+- **Stable Diffusion XL**: Stability AI.
+
+### 9.2 Performance Benchmarks
+Static performance metrics (MMLU, HumanEval, etc.) utilized by the `LLMRecommender` system are sourced from:
+- **Hugging Face Open LLM Leaderboard**: Managed by the Hugging Face H4 team.
+- **Artificial Analysis**: Performance and quality metrics for frontier models (https://artificialanalysis.ai).
+- **LMSYS Chatbot Arena**: Crowdsourced evaluation platform (https://chat.lmsys.org).
+
+### 9.3 Infrastructure & Protocols
+- **llama.cpp / llama-rpc-server**: Georgi Gerganov and the `llama.cpp` contributors.
+- **MCP (Model Context Protocol)**: Anthropic PBC.
+- **Tree-Sitter**: Max Brunsfeld and the Tree-Sitter community.
+
+---
+© 2026 Steven Frost. All rights reserved.
+
 ## 4. Real-Time Communication
 
 ### 4.1 WebSocket Protocol

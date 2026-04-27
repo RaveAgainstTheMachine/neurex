@@ -46,14 +46,14 @@ const STATUS_LABEL: Record<string, string> = {
 };
 
 const MODEL_OPTIONS = [
-  { value: "qwen2.5-coder:7b", label: "Qwen 2.5 Coder (Fast)", group: "Local Mesh (GGUF)" },
-  { value: "qwen2.5-coder:14b", label: "Qwen 2.5 Coder 14B (Pro)", group: "Local Mesh (GGUF)" },
-  { value: "qwen2.5-coder:32b", label: "Qwen 2.5 Coder 32B (Elite)", group: "Local Mesh (GGUF)" },
-  { value: "deepseek-r1:7b", label: "DeepSeek R1 7B (Logic)", group: "Local Mesh (GGUF)" },
-  { value: "llama3.1:8b", label: "Llama 3.1 8B (Chat)", group: "Local Mesh (GGUF)" },
-  { value: "gpt-4o", label: "GPT-4o (Frontier)", group: "BYOK Gateway (Cloud)" },
-  { value: "claude-3-5-sonnet-20240620", label: "Claude 3.5 Sonnet", group: "BYOK Gateway (Cloud)" },
-  { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro", group: "BYOK Gateway (Cloud)" }
+  { value: "qwen2.5-coder:7b", label: "Qwen 2.5 Coder 7B (Alibaba)", group: "Local Mesh (GGUF)" },
+  { value: "qwen2.5-coder:14b", label: "Qwen 2.5 Coder 14B (Alibaba)", group: "Local Mesh (GGUF)" },
+  { value: "qwen2.5-coder:32b", label: "Qwen 2.5 Coder 32B (Alibaba)", group: "Local Mesh (GGUF)" },
+  { value: "deepseek-r1:7b", label: "DeepSeek R1 7B (DeepSeek-AI)", group: "Local Mesh (GGUF)" },
+  { value: "llama3.1:8b", label: "Llama 3.1 8B (Meta AI)", group: "Local Mesh (GGUF)" },
+  { value: "gpt-4o", label: "GPT-4o (OpenAI)", group: "BYOK Gateway (Cloud)" },
+  { value: "claude-3-5-sonnet-20240620", label: "Claude 3.5 Sonnet (Anthropic)", group: "BYOK Gateway (Cloud)" },
+  { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro (Google DeepMind)", group: "BYOK Gateway (Cloud)" }
 ];
 
 const AUTONOMY_OPTIONS = [
@@ -416,6 +416,9 @@ export function AIPanel({ send, conversationId }: AIPanelProps) {
               <div className="ai-messages__empty">
                 <div className="ai-messages__empty-icon">⬡</div>
                 <div>Ask Neurex anything</div>
+                <div className="ai-messages__attribution">
+                  Powered by Alibaba Qwen, Meta Llama, and OpenAI Whisper.
+                </div>
               </div>
             )}
             {messages.map((msg) => (
