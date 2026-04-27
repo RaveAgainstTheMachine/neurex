@@ -6,24 +6,44 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end; /* Anchor to bottom */
+  justify-content: flex-end;
   padding-bottom: 6px;
+  position: relative;
+  border: 1px solid var(--border);
+  box-shadow: inset 0 0 40px rgba(100, 50, 255, 0.05); /* Subtle inner glow */
+}
+
+/* Cyberpunk scanline effect overlay */
+.terminal-container::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(circle at 50% 120%, rgba(130, 80, 255, 0.07) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 5;
 }
 
 .xterm {
   width: 100%;
-  padding: 0;
+  padding: 8px;
   height: auto !important;
+  z-index: 10;
 }
 
 .xterm-viewport, 
 .xterm-screen,
 .xterm-rows {
-  background-color: var(--bg-app) !important;
+  background-color: transparent !important;
 }
 
 .xterm-rows {
   font-family: var(--font-mono) !important;
+  font-size: var(--font-size-sm) !important;
+  letter-spacing: -0.2px;
+}
+
+.xterm-cursor {
+  box-shadow: 0 0 8px var(--accent-purple);
 }
 
 .xterm-helper-textarea {

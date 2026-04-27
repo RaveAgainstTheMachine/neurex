@@ -16,6 +16,7 @@ from core.mcp.tools.browser import (
 )
 from core.mcp.tools.workspace import deep_clean, analyze_project_structure
 from core.mcp.tools.security import security_scan
+from core.mcp.tools.intel import synthesize_project_intel, query_project_intel
 
 
 log = structlog.get_logger()
@@ -36,6 +37,8 @@ TOOL_REGISTRY: dict[str, callable] = {
     "deep_clean":               deep_clean,
     "analyze_project_structure": analyze_project_structure,
     "security_scan":             security_scan,
+    "synthesize_project_intel":  synthesize_project_intel,
+    "query_project_intel":       query_project_intel,
 }
 class MCPClient:
     """

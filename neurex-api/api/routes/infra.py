@@ -57,6 +57,17 @@ async def get_infra_status():
     
     # Include latest benchmark if available
     metrics["benchmarks"] = benchmarker.last_results
+
+    # Include project intelligence if available
+    import os, json
+    ws = os.getenv("WORKSPACE_PATH", "/workspace")
+    intel_path = os.path.join(ws, ".neurex", "intel.json")
+    if os.path.exists(intel_path):
+        try:
+            with open(intel_path, "r") as f:
+                metrics["intel"] = json.load(f)
+        except Exception:
+            pass
     
     return {
         "engines": engines,

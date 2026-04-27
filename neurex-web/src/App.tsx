@@ -432,8 +432,18 @@ function AppContent() {
             <div className="status-bar__left">
               <span className={`status-ws status-ws--${wsStatus}`}>
                 <Activity size={10} />
-                <span className="hide-mobile">{wsStatus === "connected" ? "Neurex connected" : wsStatus}</span>
+                <span className="hide-mobile">{wsStatus === "connected" ? "Neurex Mesh Active" : wsStatus}</span>
               </span>
+              
+              {/* Project Intelligence Indicator */}
+              {useStore.getState().infraMetrics?.intel && (
+                <div className="status-intel animate-slide-up">
+                  <BrainCircuit size={10} className="text-cyan" />
+                  <span className="hide-mobile">
+                    {useStore.getState().infraMetrics?.intel.tech_stack?.join(", ") || "Analyzing..."}
+                  </span>
+                </div>
+              )}
             </div>
             <div className="status-bar__right">
               <UpdateNotifier />

@@ -362,3 +362,18 @@
 .bottom-panel__tab-content[hidden] {
   display: none !important;
 }
+
+.status-intel {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 16px;
+  padding-left: 16px;
+  border-left: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 11px;
+}
+
+.status-intel .text-cyan {
+  filter: drop-shadow(0 0 4px rgba(0, 255, 255, 0.3));
+}

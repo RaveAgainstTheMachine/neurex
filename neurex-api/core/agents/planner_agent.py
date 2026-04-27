@@ -35,6 +35,7 @@ Rules:
 - Use "researcher" for finding documentation, library usage, or external info.
 - Use "reviewer" for checking code quality and correctness.
 
+- INTELLIGENCE RULE: If you detect that you are in a fresh workspace or lack architectural context, your FIRST step must be "Architectural Discovery" using the `synthesize_project_intel` tool.
 
 - Keep descriptions precise and self-contained — the sub-agent has no memory
   of sibling tasks.
@@ -65,8 +66,26 @@ class PlannerAgent(BaseAgent):
                 full_text += chunk["text"]
                 yield {"type": "token", "text": chunk["text"]}
             elif chunk["type"] == "done":
+                # Check for project intelligence
+                import os
+                ws = os.getenv("WORKSPACE_PATH", "/workspace")
+                intel_path = os.path.join(ws, ".neurex", "intel.json")
+                needs_intel = not os.path.exists(intel_path)
+
                 plan = self._parse_plan(full_text)
-                log.info("planner.done", steps=len(plan))
+                
+                if needs_intel:
+                    # Inject discovery as the first step
+                    discovery_step = {
+                        "agent": "planner",
+                        "title": "Architectural Discovery",
+                        "description": "Synthesize project intelligence to establish the architectural brain for this workspace."
+                    }
+                    # Avoid double discovery if the model already added it
+                    if not any("Discovery" in s.get("title", "") for s in plan):
+                        plan.insert(0, discovery_step)
+
+                log.info("planner.done", steps=len(plan), needs_intel=needs_intel)
                 yield {"type": "result", "plan": plan}
 
     async def execute(self, task: dict, conversation_id: str):

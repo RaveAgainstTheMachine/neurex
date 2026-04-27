@@ -57,6 +57,21 @@ class BaseAgent(ABC):
     def build_system_prompt(self, extra: str = "") -> str:
         rules = self.rules.get_merged_rules()
         parts = [self.system_prompt]
+        
+        # 1. Project Intelligence Injection
+        ws = os.getenv("WORKSPACE_PATH", "/workspace")
+        intel_path = os.path.join(ws, ".neurex", "intel.json")
+        if os.path.exists(intel_path):
+            try:
+                import json
+                with open(intel_path, "r") as f:
+                    intel = json.load(f)
+                    intel_str = json.dumps(intel, indent=2)
+                    parts.append(f"\n\n<project_architecture>\n{intel_str}\n</project_architecture>")
+            except Exception:
+                pass
+
+        # 2. Rules and Extra context
         if rules:
             parts.append(f"\n\n<rules>\n{rules}\n</rules>")
         if extra:
