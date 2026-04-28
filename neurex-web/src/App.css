@@ -15,6 +15,10 @@
   overflow: hidden;
 }
 
+.app__root.with-horizontal-menu {
+  flex-direction: column;
+}
+
 .app__main-layout {
   display: flex;
   flex: 1;
@@ -215,7 +219,13 @@
 .bottom-panel__content {
   flex: 1;
   overflow: hidden;
-  background: #050507; /* Ultra dark terminal background */
+  background: #050507;
+  position: relative;
+}
+
+.bottom-panel__tab-content {
+  height: 100%;
+  width: 100%;
 }
 
 /* ── Status Bar ──────────────────────────────────────────────────── */

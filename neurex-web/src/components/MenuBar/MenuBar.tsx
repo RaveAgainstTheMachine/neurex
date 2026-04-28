@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useStore } from "../../lib/store";
-import { Check } from "lucide-react";
+import { Check, ChevronRight } from "lucide-react";
 import "./MenuBar.css";
+import { NeurexLogo } from "../Icons/NeurexLogo";
 
 interface MenuOption {
   label?: string;
@@ -18,8 +19,14 @@ interface MenuSection {
   options: MenuOption[];
 }
 
-export function MenuBar() {
+interface MenuBarProps {
+  mode?: "vertical" | "horizontal";
+}
+
+export function MenuBar({ mode = "horizontal" }: MenuBarProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [expandedSections, setExpandedSections] = useState<string[]>(["File"]);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const { logout, saveFile, activeFile, setTheme, theme } = useStore();
   const menuRef = useRef<HTMLDivElement>(null);
@@ -28,7 +35,7 @@ export function MenuBar() {
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setIsOpen(false);
-        setActiveSubmenu(null);
+        setActiveSection(null);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -75,74 +82,122 @@ export function MenuBar() {
     }
   ];
 
+  const renderOptions = (options: MenuOption[], onSelect: () => void) => (
+    <div className="menu-options">
+      {options.map((opt, i) => (
+        opt.separator ? (
+          <div key={i} className="menu-separator" />
+        ) : (
+          <div key={i} className="menu-option-wrapper">
+            <button
+              className={`menu-option ${opt.submenu ? "has-submenu" : ""}`}
+              onClick={() => {
+                if (!opt.submenu) {
+                  opt.action?.();
+                  onSelect();
+                } else {
+                  setActiveSubmenu(activeSubmenu === opt.label ? null : (opt.label || null));
+                }
+              }}
+            >
+              <div className="menu-option__left">
+                <div className="check-placeholder">
+                  {opt.checked && <Check size={12} />}
+                </div>
+                <span>{opt.label}</span>
+              </div>
+              {opt.shortcut && <span className="menu-shortcut">{opt.shortcut}</span>}
+              {opt.submenu && <ChevronRight size={12} className="submenu-chevron" />}
+            </button>
+
+            {opt.submenu && activeSubmenu === opt.label && (
+              <div className="menu-submenu">
+                {opt.submenu.map((sub, j) => (
+                  <button
+                    key={j}
+                    className="menu-option"
+                    onClick={() => {
+                      sub.action?.();
+                      onSelect();
+                    }}
+                  >
+                    <div className="menu-option__left">
+                      <div className="check-placeholder">
+                        {sub.checked && <Check size={12} />}
+                      </div>
+                      <span>{sub.label}</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )
+      ))}
+    </div>
+  );
+
   return (
     <div className="menu-bar" ref={menuRef}>
       <button 
         className={`burger-trigger logo-trigger ${isOpen ? "active" : ""}`}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => {
+          setIsOpen(!isOpen);
+          setActiveSection(null);
+        }}
         title="Neurex Main Menu"
       >
-        <span className="neurex-symbol">⬡</span>
+        <NeurexLogo size={22} className="neurex-logo-svg" />
       </button>
 
-      {isOpen && (
-        <div className="burger-dropdown animate-slide-up">
-          {menus.map((section) => (
-            <div key={section.title} className="burger-section">
-              <div className="burger-section__title">{section.title}</div>
-              <div className="burger-section__options">
-                {section.options.map((opt, i) => (
-                  opt.separator ? (
-                    <div key={i} className="burger-separator" />
-                  ) : (
-                    <div key={i} className="burger-option-container">
-                      <button
-                        className={`burger-option ${opt.submenu ? "has-submenu" : ""} ${activeSubmenu === opt.label ? "active" : ""}`}
-                        onMouseEnter={() => opt.submenu ? setActiveSubmenu(opt.label || null) : setActiveSubmenu(null)}
-                        onClick={() => {
-                          if (!opt.submenu) {
-                            opt.action?.();
-                            setIsOpen(false);
-                          }
-                        }}
-                        title={opt.label}
-                      >
-                        <div className="burger-option__left">
-                          <div className="check-placeholder">
-                            {opt.checked && <Check size={12} />}
-                          </div>
-                          <span>{opt.label}</span>
-                        </div>
-                        {opt.shortcut && <span className="burger-shortcut">{opt.shortcut}</span>}
-                      </button>
-                      
-                      {opt.submenu && activeSubmenu === opt.label && (
-                        <div className="burger-submenu">
-                          {opt.submenu.map((sub, j) => (
-                            <button
-                              key={j}
-                              className="burger-option"
-                              onClick={() => {
-                                sub.action?.();
-                                setIsOpen(false);
-                                setActiveSubmenu(null);
-                              }}
-                              title={sub.label}
-                            >
-                              <div className="burger-option__left">
-                                <div className="check-placeholder">
-                                  {sub.checked && <Check size={12} />}
-                                </div>
-                                <span>{sub.label}</span>
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )
-                ))}
+      {isOpen && mode === "vertical" && (
+        <div className="menu-drawer animate-slide-right">
+          <div className="menu-drawer__header">
+            <NeurexLogo size={18} />
+            <span>NEUREX TREE</span>
+          </div>
+          <div className="menu-drawer__content">
+            {menus.map(section => (
+              <div key={section.title} className={`menu-section ${expandedSections.includes(section.title) ? "expanded" : ""}`}>
+                <button 
+                  className="menu-section__header"
+                  onClick={() => setExpandedSections(prev => prev.includes(section.title) ? [] : [section.title])}
+                  onMouseEnter={() => {
+                    if (expandedSections.length > 0) {
+                      setExpandedSections([section.title]);
+                    }
+                  }}
+                >
+                  <div className="chevron-icon">›</div>
+                  <span>{section.title}</span>
+                </button>
+                {expandedSections.includes(section.title) && renderOptions(section.options, () => setIsOpen(false))}
               </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {isOpen && mode === "horizontal" && (
+        <div className="menu-horizontal-bar animate-slide-down">
+          {menus.map(section => (
+            <div key={section.title} className="menu-horizontal-item">
+              <button 
+                className={`menu-horizontal-btn ${activeSection === section.title ? "active" : ""}`}
+                onClick={() => setActiveSection(activeSection === section.title ? null : section.title)}
+                onMouseEnter={() => {
+                  if (activeSection) {
+                    setActiveSection(section.title);
+                  }
+                }}
+              >
+                {section.title}
+              </button>
+              {activeSection === section.title && (
+                <div className="menu-horizontal-dropdown animate-fade-in">
+                   {renderOptions(section.options, () => { setIsOpen(false); setActiveSection(null); })}
+                </div>
+              )}
             </div>
           ))}
         </div>

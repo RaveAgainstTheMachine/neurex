@@ -3,6 +3,7 @@ import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import {
   Files, MessageSquare, Settings, GitBranch, Search, Bot, Activity, Clock, Cpu, Shield, Puzzle, Layout, AlertTriangle, BrainCircuit, Braces, Terminal as TerminalIcon, Plus, RefreshCw, LogOut, Moon, Sun, Save, X
 } from "lucide-react";
+import { NeurexLogo } from "./components/Icons/NeurexLogo";
 import { FileExplorer } from "./components/FileExplorer/FileExplorer";
 import { ConversationList } from "./components/ConversationList/ConversationList";
 import { InfraPanel } from "./components/InfraPanel/InfraPanel";
@@ -104,6 +105,7 @@ function SortableActivityItem({ id, active, onClick, icon: Icon, label, badge }:
     transition,
     opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 10 : 1,
+    cursor: "pointer",
   };
 
   return (
@@ -209,14 +211,24 @@ function AppContent() {
         // 3. If we DO have a token, proceed with full workspace initialization
         if (!isInitialized && !state.isInitializing) {
           state.setIsInitializing(true);
-          const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Init Timeout")), 5000));
+          
+          // Use a race to ensure we don't hang forever
+          const initPromise = Promise.all([
+            state.refreshFileTree(), 
+            state.refreshInfra()
+          ]);
+
+          const timeoutPromise = new Promise((resolve) => {
+            setTimeout(() => {
+              console.warn("Workspace init timed out, forcing entry...");
+              resolve("timeout");
+            }, 5000); // 5 second hard limit for pre-auth init
+          });
+
           try {
-            await Promise.race([
-              Promise.all([state.refreshFileTree(), state.refreshInfra()]),
-              timeout
-            ]);
+            await Promise.race([initPromise, timeoutPromise]);
           } catch (err) {
-            console.warn("Workspace init timed out/failed", err);
+            console.warn("Workspace init failed", err);
           } finally {
             setVisualProgress(100);
             setIsInitialized(true);
@@ -312,7 +324,7 @@ function AppContent() {
           <div className="app__main-layout">
             <div className="activity-bar">
               <div className="activity-bar__top">
-                <MenuBar />
+                <MenuBar mode={theme.menu_mode} />
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSidebarDragEnd}>
                   <SortableContext items={sidebarOrder} strategy={verticalListSortingStrategy}>
                     {sidebarOrder.map(id => {
@@ -434,7 +446,7 @@ function ResizeHandle({ vertical = false }: { vertical?: boolean }) {
 
 function BottomPanel({ send }: { send: (p: any) => void }) {
   const [activeTab, setActiveTab] = useState<"terminal" | "output" | "flight">("terminal");
-  const { terminalSessions, activeTerminalId, setActiveTerminalId, addTerminalSession, closeTerminalSession, tasks } = useStore();
+  const { terminalSessions, activeTerminalId, setActiveTerminalId, addTerminalSession, closeTerminalSession, tasks, activeConversationId } = useStore();
   
   const lines = Object.values(tasks).filter((t) => t.result || t.error).flatMap((t) => {
     const out = [];
@@ -467,14 +479,23 @@ function BottomPanel({ send }: { send: (p: any) => void }) {
         )}
       </div>
       <div className="bottom-panel__content">
-        <div className="bottom-panel__tab-content" hidden={activeTab !== "terminal"}>
-          <Terminal 
-            sessionId={activeTerminalId}
-            onInput={(data) => send({ type: "terminal_input", sessionId: activeTerminalId, data })} 
-            onResize={(rows, cols) => send({ type: "terminal_resize", sessionId: activeTerminalId, rows, cols })} 
-          />
+        <div 
+          className="bottom-panel__tab-content" 
+          style={{ display: activeTab === "terminal" ? "block" : "none" }}
+        >
+          {activeConversationId && (
+            <Terminal 
+              sessionId={activeConversationId}
+              isActive={activeTab === "terminal"}
+              onInput={(data) => send({ type: "terminal_input", sessionId: activeConversationId, data })} 
+              onResize={(rows, cols) => send({ type: "terminal_resize", sessionId: activeConversationId, rows, cols })} 
+            />
+          )}
         </div>
-        <div className="bottom-panel__tab-content output-log" hidden={activeTab !== "output"}>
+        <div 
+          className="bottom-panel__tab-content output-log"
+          style={{ display: activeTab === "output" ? "block" : "none" }}
+        >
           {lines.map((l, i) => <div key={i} className="bottom-panel__line">{l}</div>)}
         </div>
       </div>
