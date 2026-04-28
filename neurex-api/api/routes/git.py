@@ -5,7 +5,7 @@ import subprocess
 import os
 
 from .auth import get_current_user
-from ..lib.git_manager import GitManager # Assuming we have a manager or use subprocess
+# subprocess-based git management
 
 router = APIRouter(prefix="/api/git", tags=["git"])
 
