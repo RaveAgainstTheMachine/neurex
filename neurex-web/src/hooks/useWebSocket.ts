@@ -3,7 +3,7 @@ import { useEffect, useRef, useCallback } from "react";
 import { useStore } from "../lib/store";
 import type { TaskNode } from "../lib/types";
 
-import { API_BASE } from "../lib/config";
+import { API_BASE, WS_BASE } from "../lib/config";
 export function useWebSocket(conversationId: string) {
   const ws = useRef<WebSocket | null>(null);
   const token = useStore(s => s.token);
@@ -34,8 +34,7 @@ export function useWebSocket(conversationId: string) {
     if (!conversationId || conversationId === "undefined" || !token) return;
     const state = useStore.getState();
 
-    const wsBase = API_BASE.replace(/^http/, "ws");
-    const url = `${wsBase}/ws/${conversationId}?token=${token}&user_id=${userId}`;
+    const url = `${WS_BASE}/ws/${conversationId}?token=${token}&user_id=${userId}`;
     const socket = new WebSocket(url);
     ws.current = socket;
     (window as any).neurexWS = { send, sendPresence };
@@ -69,7 +68,9 @@ export function useWebSocket(conversationId: string) {
             (data.tasks as TaskNode[]).forEach(s.upsertTask);
             break;
           case "terminal_output":
-            window.dispatchEvent(new CustomEvent("terminal_write", { detail: data }));
+            window.dispatchEvent(new CustomEvent("terminal_write", { 
+              detail: { sessionId: conversationId, data } 
+            }));
             break;
           case "lock_update":
             s.setLocks({ ...s.locks, [data.path]: data });

@@ -8,9 +8,7 @@ import toast from "react-hot-toast";
 import "./SettingsPanel.css";
 import { useStore } from "../../lib/store";
 
-const API_BASE = window.location.origin.includes(":3000") 
-  ? window.location.origin.replace(":3000", ":8000") 
-  : window.location.origin;
+import { API_BASE } from "../../lib/config";
 
 interface SettingsState {
   autonomy_level: string;
@@ -28,6 +26,8 @@ interface SettingsState {
   accent_color: string;
   glow_color: string;
   enable_swarm_glow: boolean;
+  menu_mode: "vertical" | "horizontal";
+  terminal_line_height: number;
   // LLM Advanced
   llm_temperature: number;
   llm_context_length: number;
@@ -85,6 +85,8 @@ export function SettingsPanel() {
         llm_context_length: 8192,
         auto_save_files: true,
         show_hidden_files: false,
+        menu_mode: "horizontal",
+        terminal_line_height: 1.2,
         ...settingsData
       };
 
@@ -139,7 +141,9 @@ export function SettingsPanel() {
         accent_color: settings.accent_color,
         glow_color: settings.glow_color,
         enable_glassmorphism: settings.enable_glassmorphism,
-        enable_animations: settings.enable_animations
+        enable_animations: settings.enable_animations,
+        menu_mode: settings.menu_mode,
+        terminal_line_height: settings.terminal_line_height
       });
 
       toast.success("Settings saved successfully");
@@ -439,6 +443,41 @@ export function SettingsPanel() {
                   <input type="checkbox" checked={settings.enable_swarm_glow} onChange={(e) => handleChange("enable_swarm_glow", e.target.checked)} disabled={isViewer} />
                   <span className="toggle-slider"></span>
                 </label>
+              </div>
+            </div>
+
+            <div className="setting-row">
+              <div className="setting-info">
+                <label>Main Menu Layout</label>
+                <p>Toggle between a horizontal top bar and a vertical tree menu.</p>
+              </div>
+              <div className="setting-control">
+                <select 
+                  value={settings.menu_mode} 
+                  onChange={(e) => handleChange("menu_mode", e.target.value)}
+                  className="settings-select"
+                  disabled={isViewer}
+                >
+                  <option value="horizontal">Top Horizontal (Standard)</option>
+                  <option value="vertical">Side Tree (Advanced)</option>
+                </select>
+              </div>
+            </div>
+            <div className="setting-row">
+              <div className="setting-info">
+                <label>Terminal Line Height</label>
+                <p>Adjust vertical spacing between lines in the integrated terminal.</p>
+              </div>
+              <div className="setting-control">
+                <div className="slider-group">
+                  <input 
+                    type="range" min="1.0" max="2.0" step="0.25" 
+                    value={settings.terminal_line_height} 
+                    onChange={(e) => handleChange("terminal_line_height", parseFloat(e.target.value))}
+                    disabled={isViewer}
+                  />
+                  <span className="slider-value">{settings.terminal_line_height.toFixed(2)}</span>
+                </div>
               </div>
             </div>
 

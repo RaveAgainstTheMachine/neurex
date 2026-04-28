@@ -1,7 +1,7 @@
 // neurex-web/src/components/SearchPanel/SearchPanel.tsx
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { 
   Search, FileText, Loader2, X, ChevronDown, ChevronRight, CaseSensitive, 
   WholeWord, Regex as RegexIcon, Replace as ReplaceIcon, Check, MoreHorizontal

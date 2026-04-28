@@ -5,46 +5,54 @@
   background: #050507;
   box-sizing: border-box;
   overflow: hidden;
-  display: flex;
-  flex-direction: column;
   position: relative;
-  /* No borders or padding for a seamless flush look */
-}
-
-/* Cyberpunk scanline effect overlay */
-.terminal-container::after {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: radial-gradient(circle at 50% 120%, rgba(130, 80, 255, 0.07) 0%, transparent 70%);
-  pointer-events: none;
-  z-index: 5;
+  /* Apply padding here instead of on xterm directly */
+  padding: 4px 4px 0 8px;
 }
 
 .xterm {
   width: 100%;
   height: 100%;
-  padding: 12px 12px 14px 12px; /* Adding 2px extra to the bottom for descender clearance */
-  z-index: 10;
 }
 
-.xterm-viewport, 
-.xterm-screen,
-.xterm-rows {
+.xterm-viewport {
+  background-color: transparent !important;
+}
+
+.xterm-screen {
   background-color: transparent !important;
 }
 
 .xterm-rows {
-  font-family: var(--font-mono) !important;
-  font-size: var(--font-size-sm) !important;
+  font-family: 'JetBrains Mono', 'Fira Code', var(--font-mono) !important;
+  font-size: 13px !important;
+  line-height: 1.4 !important;
   letter-spacing: -0.2px;
 }
 
 .xterm-cursor {
-  box-shadow: 0 0 8px var(--accent-purple);
+  box-shadow: 0 0 10px var(--accent-purple);
 }
 
 .xterm-helper-textarea {
   outline: none !important;
   box-shadow: none !important;
+}
+
+/* Scrollbar styling for xterm */
+.xterm-viewport::-webkit-scrollbar {
+  width: 8px;
+}
+
+.xterm-viewport::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.xterm-viewport::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.xterm-viewport::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }

@@ -7,32 +7,70 @@ import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import "@xterm/xterm/css/xterm.css";
 import "./Terminal.css";
+import { useStore } from "../../lib/store";
 
 interface TerminalProps {
   sessionId: string;
   onInput: (data: string) => void;
   onResize: (rows: number, cols: number) => void;
+  isActive?: boolean;
 }
 
-export function Terminal({ sessionId, onInput, onResize }: TerminalProps) {
+export function Terminal({ sessionId, onInput, onResize, isActive }: TerminalProps) {
   const terminalRef = useRef<HTMLDivElement>(null);
-  const xtermRef = useRef<XTerm | null>(null);
+  const xtermRef   = useRef<XTerm | null>(null);
+  const fitAddonRef = useRef<FitAddon | null>(null);
 
+  // Stable refs for callbacks — never stale, never trigger re-renders
+  const onInputRef  = useRef(onInput);
+  const onResizeRef = useRef(onResize);
+  useEffect(() => { onInputRef.current  = onInput;  }, [onInput]);
+  useEffect(() => { onResizeRef.current = onResize; }, [onResize]);
+
+  // Read line height once via getState — no subscription, no re-renders
+  const lineHeightRef = useRef(useStore.getState().theme.terminal_line_height ?? 1.2);
+
+  // Keep lineHeight in sync without re-rendering
+  useEffect(() => {
+    return useStore.subscribe(
+      (state) => {
+        const lh = state.theme.terminal_line_height ?? 1.2;
+        if (lh !== lineHeightRef.current) {
+          lineHeightRef.current = lh;
+          if (xtermRef.current) {
+            xtermRef.current.options.lineHeight = lh;
+            fitAddonRef.current?.fit();
+          }
+        }
+      }
+    );
+  }, []);
+
+  // isActive: re-fit + focus without destroying anything
+  useEffect(() => {
+    if (!isActive || !xtermRef.current) return;
+    const t = setTimeout(() => {
+      fitAddonRef.current?.fit();
+      xtermRef.current?.scrollToBottom();
+      xtermRef.current?.focus();
+    }, 50);
+    return () => clearTimeout(t);
+  }, [isActive]);
+
+  // Mount once per sessionId
   useEffect(() => {
     if (!terminalRef.current) return;
 
     const term = new XTerm({
       cursorBlink: true,
+      cursorStyle: "block",
       allowTransparency: true,
       scrollback: 5000,
-      rows: 24,
-      lineHeight: 1.4,
-      allowProposedApi: true,
       theme: {
         background: "#050507",
         foreground: "#e8e8f0",
-        cursor: "hsl(240, 6%, 45%)",
-        selectionBackground: "rgba(255, 255, 255, 0.1)",
+        cursor: "hsl(260, 90%, 70%)",
+        selectionBackground: "rgba(139, 92, 246, 0.3)",
         black: "#0d0d0f",
         red: "hsl(0, 85%, 65%)",
         green: "hsl(145, 80%, 50%)",
@@ -42,71 +80,89 @@ export function Terminal({ sessionId, onInput, onResize }: TerminalProps) {
         cyan: "hsl(185, 85%, 55%)",
         white: "#e8e8f0",
       },
-      fontFamily: "var(--font-mono)",
-      fontSize: 12,
-      convertEol: true
+      fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+      fontSize: 13,
+      lineHeight: lineHeightRef.current,
+      allowProposedApi: true,
+      convertEol: true,
+      scrollOnUserInput: true,
     });
 
     const fitAddon = new FitAddon();
+    fitAddonRef.current = fitAddon;
     term.loadAddon(fitAddon);
     term.loadAddon(new WebLinksAddon());
 
     term.open(terminalRef.current);
+    xtermRef.current = term;
 
     const doFit = () => {
+      if (!terminalRef.current || !xtermRef.current || !fitAddonRef.current) return;
       try {
-        fitAddon.fit();
-        onResize(term.rows, term.cols);
-      } catch (e) {}
+        fitAddonRef.current.fit();
+        if (xtermRef.current.rows > 0 && xtermRef.current.cols > 0) {
+          onResizeRef.current(xtermRef.current.rows, xtermRef.current.cols);
+        }
+        setTimeout(() => xtermRef.current?.scrollToBottom(), 10);
+      } catch (_) {}
     };
 
-    // Initial fit and request buffer sync
-    setTimeout(() => {
-      doFit();
-      onInput("\x12"); // Sending Ctrl+R as a heartbeat/buffer sync request
-    }, 100);
-
+    let resizeTimer: any;
     const observer = new ResizeObserver(() => {
-      doFit();
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(doFit, 100);
     });
     observer.observe(terminalRef.current);
 
+    // Route keystrokes to PTY unconditionally bypassing React closures
     term.onData((data) => {
-      onInput(data);
+      const ws = (window as any).neurexWS;
+      if (ws && ws.send) {
+        ws.send({ type: "terminal_input", sessionId, data });
+      } else {
+        onInputRef.current(data); // Fallback to prop
+      }
+    });
+    
+    // Fallback: intercept keys directly if onData misses them (rare but possible in some electron/iframe envs)
+    term.onKey(({ key, domEvent }) => {
+      if (term.options.disableStdin) return;
+      // We don't want to double-send, so we rely on onData, 
+      // but keeping this hook in case we need to debug or intercept.
     });
 
-    xtermRef.current = term;
-
-    // Listen for writes specific to THIS session
     const handleWrite = (e: any) => {
       if (e.detail.sessionId === sessionId) {
-        const term = xtermRef.current;
-        if (term) {
-          term.write(e.detail.data);
-          term.scrollToBottom();
-        }
+        term.write(e.detail.data, () => term.scrollToBottom());
       }
     };
     window.addEventListener("terminal_write", handleWrite);
-    
-    // Force focus
+
     term.focus();
 
     return () => {
+      clearTimeout(resizeTimer);
       observer.disconnect();
       window.removeEventListener("terminal_write", handleWrite);
       term.dispose();
+      xtermRef.current  = null;
+      fitAddonRef.current = null;
     };
-  }, [sessionId]); // Re-init when sessionId changes
+  }, [sessionId]); // mount once per session — nothing else
 
-  return <div ref={terminalRef} className="terminal-container" />;
+  return (
+    <div
+      ref={terminalRef}
+      className="terminal-container"
+      onClick={() => xtermRef.current?.focus()}
+      style={{ height: "100%", width: "100%", background: "#050507", outline: "none", paddingBottom: "1px" }}
+      tabIndex={-1}
+    />
+  );
 }
 
 export const terminalEvents = {
   write: (sessionId: string, data: string) => {
-    const event = new CustomEvent("terminal_write", { 
-      detail: { sessionId, data } 
-    });
-    window.dispatchEvent(event);
-  }
+    window.dispatchEvent(new CustomEvent("terminal_write", { detail: { sessionId, data } }));
+  },
 };

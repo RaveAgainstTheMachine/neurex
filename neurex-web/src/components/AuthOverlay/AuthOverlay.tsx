@@ -4,9 +4,7 @@ import { Lock, User, Shield, ArrowRight, Loader2, Cpu } from "lucide-react";
 import "./AuthOverlay.css";
 import toast from "react-hot-toast";
 
-const API_BASE = window.location.origin.includes(":3000") 
-  ? window.location.origin.replace(":3000", ":8000") 
-  : window.location.origin;
+import { API_BASE } from "../../lib/config";
 
 export function AuthOverlay() {
   const [isLogin, setIsLogin] = useState(true);
