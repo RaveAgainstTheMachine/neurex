@@ -37,9 +37,19 @@ if [ "$(docker ps -q -f name=neurex-api)" ]; then
     exit 0
 fi
 
+# Determine Docker Compose command
+if docker compose version &> /dev/null; then
+    DOCKER_COMPOSE="docker compose"
+elif docker-compose --version &> /dev/null; then
+    DOCKER_COMPOSE="docker-compose"
+else
+    echo -e "${RED}Error: Docker Compose is not installed.${NC}" >&2
+    exit 1
+fi
+
 # Launch
 echo -e "${PURPLE}Deploying Local Swarm...${NC}"
-docker compose up -d
+$DOCKER_COMPOSE up -d
 
 echo -e ""
 echo -e "  ⬡ ${GREEN}NEUREX IS ONLINE${NC}"
@@ -50,5 +60,5 @@ echo -e "  Mesh Port: ${CYAN}http://localhost:5000 (RPC)${NC}"
 echo -e "  --------------------------------"
 echo -e ""
 
-# Tail logs to keep process alive and show feedback
-docker compose logs -f --tail 50
+# Tail logs
+$DOCKER_COMPOSE logs -f --tail 50

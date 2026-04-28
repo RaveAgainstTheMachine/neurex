@@ -42,7 +42,11 @@ export function PresenceBar() {
               </div>
               <div className="avatar-label">
                 <span className="avatar-name">{p.user_id.split('@')[0]}</span>
-                {isSameFile && <Eye size={10} className="text-cyan" title="Viewing this file" />}
+                {isSameFile && (
+                  <span title="Viewing this file">
+                    <Eye size={10} className="text-cyan" />
+                  </span>
+                )}
               </div>
               <span className="avatar-pulse"></span>
             </div>

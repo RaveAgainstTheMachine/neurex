@@ -278,8 +278,23 @@ export const useStore = create<NeurexStore>()(
       if (f) {
         f.originalContent = original;
         f.content = modified;
+      } else {
+        s.openFiles.push({ path, content: modified, originalContent: original, language: "typescript", isDirty: false });
       }
+      s.activeFile = path;
     }),
+    diffFile: async (path: string) => {
+      try {
+        const token = get().token;
+        const res = await fetch(`${API_BASE}/api/git/diff?path=${encodeURIComponent(path)}`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        const data = await res.json();
+        get().setDiff(path, data.original, data.modified);
+      } catch (err) {
+        toast.error("Failed to load diff");
+      }
+    },
     acceptDiff: (path) => set((s) => {
       const f = s.openFiles.find(f => f.path === path);
       if (f) {

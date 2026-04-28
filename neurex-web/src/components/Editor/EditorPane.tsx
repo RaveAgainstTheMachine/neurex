@@ -1,22 +1,26 @@
-// src/components/Editor/EditorPane.tsx
+// neurex-web/src/components/Editor/EditorPane.tsx
+"use client";
+
 import { useEffect, useRef, useState, useCallback } from "react";
 import MonacoEditor, { Editor, DiffEditor } from "@monaco-editor/react";
 import { useStore } from "../../lib/store";
 import { 
   Files, ChevronDown, Save, FileCode, Check, AlertCircle, 
-  Sparkles, X, CornerDownLeft, Loader2 
+  Sparkles, X, CornerDownLeft, Loader2, Activity, Cpu, Zap, Layout 
 } from "lucide-react";
+import toast from "react-hot-toast";
 import "./EditorPane.css";
 
 export function EditorPane() {
   const { 
     openFiles, activeFile, setFileContent, saveFile, 
-    presence, pendingJump, clearPendingJump, setFileLanguage,
-    setCursorPosition, upsertTask
+    presence, pendingJump, clearPendingJump, 
+    setCursorPosition, upsertTask, hiveStats, infraMetrics,
+    acceptDiff, discardDiff
   } = useStore();
   
   const editorRef = useRef<any>(null);
-  const active = openFiles.find((f) => f.path === activeFile) ?? openFiles[0];
+  const active = openFiles.find((f) => f.path === activeFile);
   
   // Inline AI Edit State
   const [inlinePrompt, setInlinePrompt] = useState("");
@@ -26,7 +30,7 @@ export function EditorPane() {
 
   // Auto-Save / Debounced Sync
   useEffect(() => {
-    if (!active) return;
+    if (!active || active.originalContent !== undefined) return;
     const timer = setTimeout(() => {
       if (active.isDirty) {
         saveFile(active.path);
@@ -54,7 +58,7 @@ export function EditorPane() {
   }, [presence]);
 
   const handleInlineSubmit = useCallback(async () => {
-    if (!inlinePrompt.trim() || isProcessing || !editorRef.current) return;
+    if (!inlinePrompt.trim() || isProcessing || !editorRef.current || !active) return;
     
     setIsProcessing(true);
     const editor = editorRef.current;
@@ -99,8 +103,7 @@ export function EditorPane() {
   }, [inlinePrompt, isProcessing, active, upsertTask]);
 
   if (!active) {
-    const activeTasks = Object.values(useStore.getState().tasks).filter(t => ["THINKING", "WRITING"].includes(t.status)).length;
-    const { hiveStats, infraMetrics } = useStore.getState();
+    const activeTasksCount = Object.values(useStore.getState().tasks).filter(t => ["THINKING", "WRITING"].includes(t.status)).length;
 
     return (
       <div className="editor-empty">
@@ -138,7 +141,7 @@ export function EditorPane() {
                 <span>AGENT ACTIVITY</span>
               </div>
               <div className="dashboard-card__body">
-                <div className="big-stat">{activeTasks}</div>
+                <div className="big-stat">{activeTasksCount}</div>
                 <div className="stat-label">RUNNING TASKS</div>
               </div>
             </div>
@@ -161,7 +164,7 @@ export function EditorPane() {
           {openFiles.map((f) => (
             <div
               key={f.path}
-              className={`editor-tab ${f.path === activeFile ? "active" : ""} ${f.isDirty ? "is-dirty" : ""}`}
+              className={`editor-tab ${f.path === activeFile ? "active" : ""} ${f.isDirty ? "is-dirty" : ""} ${f.originalContent !== undefined ? "is-diff" : ""}`}
               onClick={() => useStore.getState().setActiveFile(f.path)}
             >
               <FileCode size={13} className="editor-tab__icon" />
@@ -181,7 +184,16 @@ export function EditorPane() {
         </div>
         
         <div className="editor-controls">
-          {active.isDirty && (
+          {active.originalContent !== undefined ? (
+            <div className="diff-actions">
+              <button className="btn btn--green btn--sm" onClick={() => acceptDiff(active.path)}>
+                <Check size={14} /> Accept
+              </button>
+              <button className="btn btn--red btn--sm" onClick={() => discardDiff(active.path)}>
+                <X size={14} /> Discard
+              </button>
+            </div>
+          ) : active.isDirty && (
             <button className="editor-control-btn save-btn" onClick={() => saveFile(active.path)} title="Save Changes (Cmd+S)">
               <Save size={14} />
               <span>Save</span>
@@ -294,7 +306,7 @@ export function EditorPane() {
                 if (!coords) return;
                 setInlineCoords({ 
                   top: coords.top + 30, 
-                  left: Math.min(coords.left, editor.getDomNode()?.clientWidth ?? 0 - 320) 
+                  left: Math.min(coords.left, (editor.getDomNode()?.clientWidth ?? 800) - 320) 
                 });
                 setIsInlineVisible(true);
               });

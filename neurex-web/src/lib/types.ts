@@ -195,9 +195,11 @@ export interface NeurexStore {
   acceptDiff: (path: string) => void;
   discardDiff: (path: string) => void;
   saveFile: (path: string) => Promise<void>;
+  diffFile: (path: string) => Promise<void>;
   pendingJump: { path: string; line: number; timestamp: number } | null;
   setPendingJump: (path: string, line: number) => void;
   clearPendingJump: () => void;
+  fetchSubtree: (path: string) => Promise<void>;
 
   // WS
   wsStatus: "connecting" | "connected" | "disconnected";
