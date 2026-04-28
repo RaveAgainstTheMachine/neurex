@@ -163,6 +163,10 @@ function AppContent() {
         e.preventDefault();
         setPaletteMode("global");
       }
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "F") {
+        e.preventDefault();
+        updateSidebarTab("search");
+      }
       if ((e.metaKey || e.ctrlKey) && e.key === "s") {
         e.preventDefault();
         if (activeFile) {

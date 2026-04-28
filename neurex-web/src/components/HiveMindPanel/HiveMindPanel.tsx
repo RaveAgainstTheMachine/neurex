@@ -1,5 +1,12 @@
+// neurex-web/src/components/HiveMindPanel/HiveMindPanel.tsx
+"use client";
+
 import { useState, useEffect } from "react";
-import { Database, Search, Cpu, Clock, ExternalLink, BrainCircuit } from "lucide-react";
+import { 
+  Database, Search, Cpu, Clock, ExternalLink, 
+  BrainCircuit, Pin, Check, RefreshCw 
+} from "lucide-react";
+import toast from "react-hot-toast";
 import "./HiveMindPanel.css";
 
 import { API_BASE } from "../../lib/config";
@@ -21,12 +28,18 @@ export function HiveMindPanel() {
   const [results, setResults] = useState<MemoryEntry[]>([]);
   const [searching, setSearching] = useState(false);
   const [stats, setStats] = useState({ total_nodes: 0, memory_count: 0 });
+  const [pinned, setPinned] = useState<string[]>([]);
+
+  const fetchStats = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/memory/stats`);
+      const data = await res.json();
+      setStats(data);
+    } catch (err) {}
+  };
 
   useEffect(() => {
-    // Initial fetch of recent memories and stats
-    fetch(`${API_BASE}/api/memory/stats`)
-      .then(res => res.json())
-      .then(data => setStats(data));
+    fetchStats();
   }, []);
 
   const handleSearch = async () => {
@@ -37,9 +50,19 @@ export function HiveMindPanel() {
       const data = await res.json();
       setResults(data.results || []);
     } catch (err) {
-      console.error("Search failed", err);
+      toast.error("Swarm recall failed");
     } finally {
       setSearching(false);
+    }
+  };
+
+  const handlePin = (id: string) => {
+    if (pinned.includes(id)) {
+      setPinned(pinned.filter(p => p !== id));
+      toast("Context unpinned", { icon: "📍" });
+    } else {
+      setPinned([...pinned, id]);
+      toast.success("Added to AI context");
     }
   };
 
@@ -47,47 +70,56 @@ export function HiveMindPanel() {
     <div className="hive-panel">
       <div className="hive-panel__header">
         <div className="hive-panel__title-bar">
-          <BrainCircuit size={24} className="text-cyan animate-pulse-slow" />
+          <BrainCircuit size={24} className="text-purple animate-pulse-slow" />
           <div>
-            <h2>Collective Memory</h2>
-            <p className="text-muted">Querying the Swarm's decentralized knowledge base</p>
+            <h2>HIVE MIND</h2>
+            <p className="text-muted">Collective Swarm Knowledge</p>
           </div>
+          <button className="refresh-btn" onClick={fetchStats} title="Refresh Hive Stats">
+            <RefreshCw size={14} />
+          </button>
         </div>
         <div className="hive-stats">
-          <div className="stat-pill">
-            <Cpu size={14} /> <span>{stats.total_nodes} Active Nodes</span>
+          <div className="stat-pill" title="Connected AI Nodes">
+            <Cpu size={12} /> <span>{stats.total_nodes} NODES</span>
           </div>
-          <div className="stat-pill">
-            <Database size={14} /> <span>{stats.memory_count} Indexed Fragments</span>
+          <div className="stat-pill" title="Total Indexed Context">
+            <Database size={12} /> <span>{stats.memory_count} FRAGMENTS</span>
           </div>
         </div>
       </div>
 
       <div className="hive-search-bar">
-        <Search className="search-icon" size={18} />
+        <Search className="search-icon" size={16} />
         <input 
           type="text" 
-          placeholder="Semantic search (e.g. 'How did we handle JWT auth in previous project?')" 
+          placeholder="Search collective memory..." 
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSearch()}
         />
-        <button onClick={handleSearch} disabled={searching}>
-          {searching ? "Recalling..." : "Query Hive"}
+        <button className="query-btn" onClick={handleSearch} disabled={searching}>
+          {searching ? <RefreshCw className="animate-spin" size={14} /> : "QUERY"}
         </button>
       </div>
 
       <div className="hive-results">
         {results.length > 0 ? (
           results.map((entry) => (
-            <div key={entry.id} className="memory-card glass">
+            <div key={entry.id} className={`memory-card glass ${pinned.includes(entry.id) ? 'pinned' : ''}`}>
               <div className="memory-card__header">
                 <div className="memory-meta">
-                  <Clock size={12} />
-                  <span>{new Date(entry.metadata.timestamp * 1000).toLocaleString()}</span>
-                  <span className="relevance">{(1 - (entry.distance || 0)).toFixed(2)} Relevance</span>
+                  <Clock size={10} />
+                  <span>{new Date(entry.metadata.timestamp * 1000).toLocaleTimeString()}</span>
+                  <span className="relevance">Match: {Math.round((1 - (entry.distance || 0)) * 100)}%</span>
                 </div>
-                <ExternalLink size={14} className="link-icon" />
+                <button 
+                  className={`pin-btn ${pinned.includes(entry.id) ? 'pinned' : ''}`} 
+                  onClick={() => handlePin(entry.id)}
+                  title="Pin to current AI context"
+                >
+                  {pinned.includes(entry.id) ? <Check size={14} /> : <Pin size={14} />}
+                </button>
               </div>
               <div className="memory-content">
                 <pre><code>{entry.content}</code></pre>
@@ -106,7 +138,7 @@ export function HiveMindPanel() {
             <div className="empty-icon-box">
               <Database size={48} className="text-muted opacity-20" />
             </div>
-            <p>No precedents found. Start a conversation to index new knowledge.</p>
+            <p>No precedents found in collective memory.</p>
           </div>
         )}
       </div>
