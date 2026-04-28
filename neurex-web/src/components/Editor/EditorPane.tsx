@@ -102,7 +102,7 @@ export function EditorPane() {
                 base: "vs-dark",
                 inherit: true,
                 rules: [],
-                colors: { "editor.background": "transparent" },
+                colors: { "editor.background": "#0a0a0c" },
               });
             }}
             options={{
@@ -127,7 +127,7 @@ export function EditorPane() {
                 base: "vs-dark",
                 inherit: true,
                 rules: [],
-                colors: { "editor.background": "transparent" },
+                colors: { "editor.background": "#0a0a0c" },
               });
             }}
             onChange={(val) => setFileContent(active.path, val ?? "")}

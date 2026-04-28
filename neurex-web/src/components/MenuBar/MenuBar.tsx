@@ -4,7 +4,7 @@ import { Check } from "lucide-react";
 import "./MenuBar.css";
 
 interface MenuOption {
-  label: string;
+  label?: string;
   shortcut?: string;
   action?: () => void;
   checked?: boolean;

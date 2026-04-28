@@ -163,7 +163,7 @@ function AppContent() {
         await Promise.all([state.refreshFileTree(), state.refreshInfra()]);
         setVisualProgress(100);
         setIsInitialized(true);
-        if (window.hidePreloader) window.hidePreloader();
+        if ((window as any).hidePreloader) (window as any).hidePreloader();
       } catch (err) {
         setVisualProgress(100);
         setIsInitialized(true);
@@ -176,7 +176,7 @@ function AppContent() {
 
   useEffect(() => {
     if (!token || onboardingRequired) {
-      if (window.hidePreloader) window.hidePreloader();
+      if ((window as any).hidePreloader) (window as any).hidePreloader();
     }
   }, [token, onboardingRequired]);
 
