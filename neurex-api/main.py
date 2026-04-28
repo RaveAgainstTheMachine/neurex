@@ -31,9 +31,9 @@ async def lifespan(app: FastAPI):
     # Initialise SQLite task-graph DB
     await init_db()
 
-    # Start file-watcher + indexing worker
+    # Start file-watcher + indexing worker (non-blocking)
     memory_worker = MemoryWorker()
-    await memory_worker.start()
+    asyncio.create_task(memory_worker.start())
     app.state.memory_worker = memory_worker
 
     # Load .neurexrules on startup
