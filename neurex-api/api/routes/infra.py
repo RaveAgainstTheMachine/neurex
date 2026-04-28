@@ -137,7 +137,7 @@ class PeerRequest(BaseModel):
     token: str
     name: str
 
-@router.get("/mesh/peers", dependencies=[Depends(require_role(UserRole.ADMIN))])
+@router.get("/mesh/peers", dependencies=[Depends(require_role(UserRole.DEVELOPER))])
 async def list_peers():
     return [p.to_dict() for p in mesh_router.peers.values()]
 
