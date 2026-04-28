@@ -20,11 +20,15 @@ if ! [ -x "$(command -v docker)" ]; then
   exit 1
 fi
 
-# Check for NVIDIA Toolkit (if GPU is present)
+# Hardware Acceleration Detection
 if command -v nvidia-smi &> /dev/null; then
-    echo -e "${GREEN}NVIDIA GPU detected. Optimal performance enabled.${NC}"
+    echo -e "${GREEN}NVIDIA GPU detected. CUDA acceleration enabled.${NC}"
+elif command -v rocm-smi &> /dev/null; then
+    echo -e "${GREEN}AMD GPU detected. ROCm acceleration enabled.${NC}"
+elif command -v xpu-smi &> /dev/null || clinfo &> /dev/null; then
+    echo -e "${GREEN}Intel/OpenCL GPU detected. SYCL/OpenCL acceleration enabled.${NC}"
 else
-    echo -e "${CYAN}Warning: No NVIDIA GPU detected. Running in CPU-only mode.${NC}"
+    echo -e "${CYAN}Note: No dedicated GPU detected via standard drivers. Defaulting to optimized CPU/Shared-Memory mode.${NC}"
 fi
 
 # Health Check / Setup
