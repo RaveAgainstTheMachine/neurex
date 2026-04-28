@@ -135,6 +135,8 @@ export const useStore = create<NeurexStore>()(
     // ── Editor ────────────────────────────────────────────────────────
     openFiles: JSON.parse(localStorage.getItem("neurex_open_files") || "[]"),
     activeFile: localStorage.getItem("neurex_active_file"),
+    cursorPosition: { line: 1, ch: 1 },
+    setCursorPosition: (line, ch) => set((s) => { s.cursorPosition = { line, ch }; }),
     setFileLanguage: (path, language) => set((s) => {
       const f = s.openFiles.find(x => x.path === path);
       if (f) f.language = language;

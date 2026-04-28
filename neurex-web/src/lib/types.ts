@@ -178,6 +178,8 @@ export interface NeurexStore {
 
   // Editor
   setFileLanguage: (path: string, language: string) => void;
+  cursorPosition: { line: number, ch: number };
+  setCursorPosition: (line: number, ch: number) => void;
   openFiles: OpenFile[];
   activeFile: string | null;
   openFile: (path: string, content: string, language: string) => void;

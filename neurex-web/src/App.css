@@ -7,6 +7,19 @@
   color: var(--text-primary);
 }
 
+.app__root {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  height: 100%;
+}
+
+.app__main-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
 .app.modal-open .activity-bar,
 .app.modal-open .app__body {
   pointer-events: none;
@@ -140,6 +153,7 @@
   font-size: 11px;
   color: var(--text-muted);
   font-weight: 500;
+  backdrop-filter: var(--glass-blur);
 }
 
 .status-bar__left, .status-bar__right {
@@ -167,12 +181,34 @@
   border-left: 1px solid var(--border);
 }
 
+.status-segments {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-segment {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  border-right: 1px solid hsla(0, 0%, 100%, 0.05);
+  cursor: default;
+  transition: color 0.15s;
+}
+
+.status-segment:last-child { border-right: none; }
+
+.status-segment--interactive:hover {
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
 .swarm-pulse {
   width: 7px;
   height: 7px;
   border-radius: 50%;
   background: var(--text-muted);
-  box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.2);
 }
 
 .swarm-pulse--active {

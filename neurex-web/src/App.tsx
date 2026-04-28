@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import {
-  Files, MessageSquare, Settings, GitBranch, Search, Bot, Activity, Clock, Cpu, Shield, Puzzle, Layout, AlertTriangle, BrainCircuit
+  Files, MessageSquare, Settings, GitBranch, Search, Bot, Activity, Clock, Cpu, Shield, Puzzle, Layout, AlertTriangle, BrainCircuit, Braces
 } from "lucide-react";
 import { FileExplorer } from "./components/FileExplorer/FileExplorer";
 import { ConversationList } from "./components/ConversationList/ConversationList";
@@ -17,6 +17,7 @@ import { SettingsPanel } from "./components/SettingsPanel/SettingsPanel";
 import { HiveMindPanel } from "./components/HiveMindPanel/HiveMindPanel";
 import { PresenceBar } from "./components/PresenceBar/PresenceBar";
 import { AuthOverlay } from "./components/AuthOverlay/AuthOverlay";
+import { MenuBar } from "./components/MenuBar/MenuBar";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useNotifications } from "./hooks/useNotifications";
 import { useStore } from "./lib/store";
@@ -138,7 +139,12 @@ function AppContent() {
   };
 
   useNotifications();
-  const { wsStatus, isInitialized, setIsInitialized, onboardingRequired, token, activeConversationId, modalOpen, tasks, hiveStats, infraMetrics, theme } = useStore();
+  const { 
+    wsStatus, isInitialized, setIsInitialized, onboardingRequired, 
+    token, activeConversationId, modalOpen, tasks, hiveStats, 
+    infraMetrics, theme, cursorPosition, openFiles, activeFile 
+  } = useStore();
+  
   const [visualProgress, setVisualProgress] = useState(25);
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>((localStorage.getItem("neurex_sidebar_tab") as SidebarTab) || "explorer");
   const [showAIPanel, setShowAIPanel] = useState(window.innerWidth > 768);
@@ -185,14 +191,8 @@ function AppContent() {
     sidebarRef.current?.resize(size);
   }, []);
 
-  useEffect(() => {
-    (window as any).hideOverlays = () => {
-      setShowSettings(false);
-      setShowHiveMind(false);
-    };
-  }, []);
-
   const activeTaskCount = Object.values(tasks).filter(t => t.status === "THINKING" || t.status === "WRITING" || t.status === "TESTING").length;
+  const activeFileLanguage = openFiles.find(f => f.path === activeFile)?.language || "plaintext";
 
   try {
     return (
@@ -202,108 +202,120 @@ function AppContent() {
         
         <Toaster position="top-right" toastOptions={{ style: { background: '#1e1e24', color: '#e8e8f0', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)' } }} />
         
-        <div className="activity-bar">
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSidebarDragEnd}>
-            <div className="activity-bar__top">
-              <div className="activity-bar__logo" onClick={() => window.location.reload()}>⬡</div>
-              <SortableContext items={sidebarOrder} strategy={verticalListSortingStrategy}>
-                {sidebarOrder.map(id => {
-                  const item = SIDEBAR_ITEMS.find(i => i.id === id);
-                  if (!item) return null;
-                  let badge = undefined;
-                  if (id === "agent" && activeTaskCount > 0) badge = activeTaskCount;
-                  return (
-                    <SortableActivityItem
-                      key={id} id={id} icon={item.icon} label={item.label}
-                      active={sidebarTab === id && !showSettings && !showHiveMind}
-                      onClick={() => updateSidebarTab(id as SidebarTab)}
-                      badge={badge}
-                    />
-                  );
-                })}
-              </SortableContext>
+        <div className="app__root">
+          <MenuBar />
+          
+          <div className="app__main-layout">
+            <div className="activity-bar">
+              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSidebarDragEnd}>
+                <div className="activity-bar__top">
+                  <div className="activity-bar__logo" onClick={() => window.location.reload()}>⬡</div>
+                  <SortableContext items={sidebarOrder} strategy={verticalListSortingStrategy}>
+                    {sidebarOrder.map(id => {
+                      const item = SIDEBAR_ITEMS.find(i => i.id === id);
+                      if (!item) return null;
+                      let badge = undefined;
+                      if (id === "agent" && activeTaskCount > 0) badge = activeTaskCount;
+                      return (
+                        <SortableActivityItem
+                          key={id} id={id} icon={item.icon} label={item.label}
+                          active={sidebarTab === id && !showSettings && !showHiveMind}
+                          onClick={() => updateSidebarTab(id as SidebarTab)}
+                          badge={badge}
+                        />
+                      );
+                    })}
+                  </SortableContext>
+                </div>
+              </DndContext>
+              <div className="activity-bar__bottom">
+                <button className={`activity-btn ${showHiveMind ? "active" : ""}`} onClick={() => { setShowHiveMind(!showHiveMind); setShowSettings(false); }} title="Hive Mind (Collective Memory)">
+                  <BrainCircuit size={20} className="text-cyan" />
+                  {showHiveMind && <div className="activity-indicator" />}
+                </button>
+                <button className={`activity-btn ${showAIPanel ? "active" : ""}`} onClick={() => setShowAIPanel(!showAIPanel)} title="Toggle AI Panel">
+                  <MessageSquare size={20} />
+                </button>
+                <button className={`activity-btn ${showSettings ? "active" : ""}`} onClick={() => { setShowSettings(!showSettings); setShowHiveMind(false); }} title="Settings">
+                  <Settings size={20} />
+                  {showSettings && <div className="activity-indicator" />}
+                </button>
+              </div>
             </div>
-          </DndContext>
-          <div className="activity-bar__bottom">
-            <button className={`activity-btn ${showHiveMind ? "active" : ""}`} onClick={() => { setShowHiveMind(!showHiveMind); setShowSettings(false); }} title="Hive Mind (Collective Memory)">
-              <BrainCircuit size={20} className="text-cyan" />
-              {showHiveMind && <div className="activity-indicator" />}
-            </button>
-            <button className={`activity-btn ${showAIPanel ? "active" : ""}`} onClick={() => setShowAIPanel(!showAIPanel)} title="Toggle AI Panel">
-              <MessageSquare size={20} />
-            </button>
-            <button className={`activity-btn ${showSettings ? "active" : ""}`} onClick={() => { setShowSettings(!showSettings); setShowHiveMind(false); }} title="Settings">
-              <Settings size={20} />
-              {showSettings && <div className="activity-indicator" />}
-            </button>
+
+            <div className="app__body">
+              <PanelGroup autoSaveId="neurex-main-layout-h" direction="horizontal" className="app__panels">
+                <Panel ref={sidebarRef} defaultSize={16} minSize={10} maxSize={45} className={`app__sidebar ${mobileTab === "explorer" ? "mobile-visible" : ""}`}>
+                  {sidebarTab === "explorer" && <FileExplorer />}
+                  {sidebarTab === "history"  && <ConversationList />}
+                  {sidebarTab === "infra"    && <InfraPanel onExpand={handleInfraExpand} currentSize={sidebarRef.current?.getSize() || 16} />}
+                  {sidebarTab === "system"   && <SystemLogsPanel />}
+                  {sidebarTab === "search"   && <SearchPanel />}
+                  {sidebarTab === "git"      && <PlaceholderPanel label="Source Control" />}
+                  {sidebarTab === "skills"   && <SkillsPanel />}
+                  {sidebarTab === "agent"    && <AgentPanel />}
+                </Panel>
+                <ResizeHandle />
+                <Panel minSize={30} className={`app__main-panel ${mobileTab === "editor" || mobileTab === "terminal" ? "mobile-visible" : ""}`}>
+                  <PanelGroup autoSaveId="neurex-main-layout-v" direction="vertical">
+                    <Panel minSize={25} className={`app__editor ${mobileTab === "editor" ? "mobile-visible" : ""}`}>
+                      <PresenceBar />
+                      {showSettings ? <SettingsPanel /> : showHiveMind ? <HiveMindPanel /> : <EditorPane />}
+                    </Panel>
+                    <ResizeHandle vertical />
+                    <Panel defaultSize={25} minSize={10} className={`app__bottom ${mobileTab === "terminal" ? "mobile-visible" : ""}`}>
+                      <BottomPanel send={send} />
+                    </Panel>
+                  </PanelGroup>
+                </Panel>
+                {(showAIPanel || mobileTab === "chat") && (
+                  <>
+                    <ResizeHandle />
+                    <Panel defaultSize={24} minSize={16} maxSize={45} className={`app__ai ${mobileTab === "chat" ? "mobile-visible" : ""}`}>
+                      <AIPanel send={send} conversationId={activeConversationId} isActive={showAIPanel || mobileTab === "chat"} />
+                    </Panel>
+                  </>
+                )}
+              </PanelGroup>
+
+              <div className="status-bar">
+                <div className="status-bar__left">
+                  <span className={`status-ws status-ws--${wsStatus}`} title={`WebSocket: ${wsStatus}`}>
+                    <Activity size={10} />
+                    <span className="hide-mobile">{wsStatus === "connected" ? "NEUREX MESH ACTIVE" : wsStatus.toUpperCase()}</span>
+                  </span>
+                  <div className="status-intel animate-slide-up">
+                    <div className={`swarm-pulse ${hiveStats.total_nodes > 0 && theme.enable_swarm_glow ? 'swarm-pulse--active' : ''}`} />
+                    <span className="hide-mobile">{hiveStats.total_nodes} NODES • {hiveStats.memory_count} FRAGMENTS</span>
+                  </div>
+                </div>
+                <div className="status-bar__right">
+                  <div className="status-segments">
+                    <span className="status-segment">Ln {cursorPosition.line}, Col {cursorPosition.ch}</span>
+                    <span className="status-segment">Spaces: 2</span>
+                    <span className="status-segment">UTF-8</span>
+                    <span className="status-segment">LF</span>
+                    <span className="status-segment status-segment--interactive">
+                      <Braces size={10} />
+                      <span>{activeFileLanguage.toUpperCase()}</span>
+                    </span>
+                    <span className="status-segment">
+                      <Activity size={10} className="text-cyan" />
+                      <span>Compose</span>
+                    </span>
+                  </div>
+                  <UpdateNotifier />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="app__body">
-          <PanelGroup autoSaveId="neurex-main-layout-h" direction="horizontal" className="app__panels">
-            <Panel ref={sidebarRef} defaultSize={16} minSize={10} maxSize={45} className={`app__sidebar ${mobileTab === "explorer" ? "mobile-visible" : ""}`}>
-              {sidebarTab === "explorer" && <FileExplorer />}
-              {sidebarTab === "history"  && <ConversationList />}
-              {sidebarTab === "infra"    && <InfraPanel onExpand={handleInfraExpand} currentSize={sidebarRef.current?.getSize() || 16} />}
-              {sidebarTab === "system"   && <SystemLogsPanel />}
-              {sidebarTab === "search"   && <SearchPanel />}
-              {sidebarTab === "git"      && <PlaceholderPanel label="Source Control" />}
-              {sidebarTab === "skills"   && <SkillsPanel />}
-              {sidebarTab === "agent"    && <AgentPanel />}
-            </Panel>
-            <ResizeHandle />
-            <Panel minSize={30} className={`app__main-panel ${mobileTab === "editor" || mobileTab === "terminal" ? "mobile-visible" : ""}`}>
-              <PanelGroup autoSaveId="neurex-main-layout-v" direction="vertical">
-                <Panel minSize={25} className={`app__editor ${mobileTab === "editor" ? "mobile-visible" : ""}`}>
-                  <PresenceBar />
-                  {showSettings ? <SettingsPanel /> : showHiveMind ? <HiveMindPanel /> : <EditorPane />}
-                </Panel>
-                <ResizeHandle vertical />
-                <Panel defaultSize={25} minSize={10} className={`app__bottom ${mobileTab === "terminal" ? "mobile-visible" : ""}`}>
-                  <BottomPanel send={send} />
-                </Panel>
-              </PanelGroup>
-            </Panel>
-            {(showAIPanel || mobileTab === "chat") && (
-              <>
-                <ResizeHandle />
-                <Panel defaultSize={24} minSize={16} maxSize={45} className={`app__ai ${mobileTab === "chat" ? "mobile-visible" : ""}`}>
-                  <AIPanel send={send} conversationId={activeConversationId} isActive={showAIPanel || mobileTab === "chat"} />
-                </Panel>
-              </>
-            )}
-          </PanelGroup>
-
-          <div className="status-bar">
-            <div className="status-bar__left">
-              <span className={`status-ws status-ws--${wsStatus}`} title={`WebSocket: ${wsStatus}`}>
-                <Activity size={10} />
-                <span className="hide-mobile">{wsStatus === "connected" ? "NEUREX MESH ACTIVE" : wsStatus.toUpperCase()}</span>
-              </span>
-              <div className="status-intel animate-slide-up">
-                <div className={`swarm-pulse ${hiveStats.total_nodes > 0 && theme.enable_swarm_glow ? 'swarm-pulse--active' : ''}`} />
-                <span className="hide-mobile">{hiveStats.total_nodes} NODES • {hiveStats.memory_count} FRAGMENTS</span>
-              </div>
-              {infraMetrics?.intel && (
-                <div className="status-intel animate-slide-up">
-                  <BrainCircuit size={10} className="text-cyan" />
-                  <span className="hide-mobile">{infraMetrics?.intel.tech_stack?.join(", ") || "Analyzing..."}</span>
-                </div>
-              )}
-            </div>
-            <div className="status-bar__right">
-              <UpdateNotifier />
-              <span className="hide-mobile">UTF-8</span>
-              <span className="hide-mobile">Spaces: 2</span>
-            </div>
-          </div>
-
-          <div className="mobile-nav">
-            <button className={`mobile-nav-btn ${mobileTab === "chat" ? "active" : ""}`} onClick={() => setMobileTab("chat")}><MessageSquare size={20} /><span>Chat</span></button>
-            <button className={`mobile-nav-btn ${mobileTab === "editor" ? "active" : ""}`} onClick={() => setMobileTab("editor")}><Layout size={20} /><span>Code</span></button>
-            <button className={`mobile-nav-btn ${mobileTab === "terminal" ? "active" : ""}`} onClick={() => setMobileTab("terminal")}><Activity size={20} /><span>Run</span></button>
-            <button className={`mobile-nav-btn ${mobileTab === "explorer" ? "active" : ""}`} onClick={() => setMobileTab("explorer")}><Files size={20} /><span>Files</span></button>
-          </div>
+        <div className="mobile-nav">
+          <button className={`mobile-nav-btn ${mobileTab === "chat" ? "active" : ""}`} onClick={() => setMobileTab("chat")}><MessageSquare size={20} /><span>Chat</span></button>
+          <button className={`mobile-nav-btn ${mobileTab === "editor" ? "active" : ""}`} onClick={() => setMobileTab("editor")}><Layout size={20} /><span>Code</span></button>
+          <button className={`mobile-nav-btn ${mobileTab === "terminal" ? "active" : ""}`} onClick={() => setMobileTab("terminal")}><Activity size={20} /><span>Run</span></button>
+          <button className={`mobile-nav-btn ${mobileTab === "explorer" ? "active" : ""}`} onClick={() => setMobileTab("explorer")}><Files size={20} /><span>Files</span></button>
         </div>
       </div>
     );

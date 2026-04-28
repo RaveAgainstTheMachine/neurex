@@ -12,7 +12,8 @@ const LANGUAGES = [
 export function EditorPane() {
   const { 
     openFiles, activeFile, setFileContent, saveFile, 
-    presence, pendingJump, clearPendingJump, setFileLanguage 
+    presence, pendingJump, clearPendingJump, setFileLanguage,
+    setCursorPosition
   } = useStore();
   
   const editorRef = useRef<any>(null);
@@ -20,7 +21,6 @@ export function EditorPane() {
 
   const active = openFiles.find((f) => f.path === activeFile) ?? openFiles[0];
 
-  // Handle line jumps (e.g. from search)
   useEffect(() => {
     if (pendingJump && editorRef.current && pendingJump.path === activeFile) {
       const editor = editorRef.current;
@@ -33,7 +33,6 @@ export function EditorPane() {
     }
   }, [pendingJump, activeFile, clearPendingJump]);
 
-  // Sync presence with monaco decorations
   useEffect(() => {
     if (editorRef.current?._presenceObserver) {
       editorRef.current._presenceObserver();
@@ -103,7 +102,7 @@ export function EditorPane() {
                 base: "vs-dark",
                 inherit: true,
                 rules: [],
-                colors: { "editor.background": "#0d0d0f" },
+                colors: { "editor.background": "transparent" },
               });
             }}
             options={{
@@ -128,7 +127,7 @@ export function EditorPane() {
                 base: "vs-dark",
                 inherit: true,
                 rules: [],
-                colors: { "editor.background": "#0d0d0f" },
+                colors: { "editor.background": "transparent" },
               });
             }}
             onChange={(val) => setFileContent(active.path, val ?? "")}
@@ -137,6 +136,7 @@ export function EditorPane() {
               const { sendPresence } = (window as any).neurexWS || {};
               
               editor.onDidChangeCursorPosition((e) => {
+                setCursorPosition(e.position.lineNumber, e.position.column);
                 if (sendPresence) {
                   sendPresence({
                     active_file: active.path,
@@ -188,43 +188,8 @@ export function EditorPane() {
         )}
       </div>
 
-      <div className="editor-status-bar">
-        <div className="editor-status-left">
-          <span className="status-item">
-            {active.isDirty ? <AlertCircle size={12} className="text-orange" /> : <Check size={12} className="text-green" />}
-            {active.isDirty ? "Unsaved Changes" : "Synchronized"}
-          </span>
-        </div>
-        <div className="editor-status-right">
-          <div className="language-selector">
-            <button 
-              className="lang-select-btn" 
-              onClick={() => setShowLangMenu(!showLangMenu)}
-            >
-              <span>{active.language.toUpperCase()}</span>
-              <ChevronDown size={12} />
-            </button>
-            
-            {showLangMenu && (
-              <div className="lang-menu animate-slide-up">
-                {LANGUAGES.map(lang => (
-                  <button 
-                    key={lang} 
-                    className={`lang-option ${active.language === lang ? "active" : ""}`}
-                    onClick={() => {
-                      setFileLanguage(active.path, lang);
-                      setShowLangMenu(false);
-                    }}
-                  >
-                    {lang.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <span className="status-item">UTF-8</span>
-          <span className="status-item">Ln {editorRef.current?.getPosition()?.lineNumber || 1}, Col {editorRef.current?.getPosition()?.column || 1}</span>
-        </div>
+      <div className="editor-status-bar" style={{ display: 'none' }}>
+        {/* Hiding old status bar as it moved to global app status bar */}
       </div>
     </div>
   );

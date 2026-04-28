@@ -1,0 +1,109 @@
+/* src/components/MenuBar/MenuBar.css */
+.menu-bar {
+  height: 30px;
+  background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  gap: 2px;
+  user-select: none;
+  z-index: 1000;
+  backdrop-filter: var(--glass-blur);
+}
+
+.menu-item {
+  position: relative;
+  height: 100%;
+}
+
+.menu-trigger {
+  height: 100%;
+  padding: 0 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s, color 0.15s;
+}
+
+.menu-trigger:hover, .menu-trigger.active {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* ── Dropdown ────────────────────────────────────────────────────── */
+.menu-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 240px;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 0;
+  box-shadow: 0 12px 24px rgba(0,0,0,0.4), 0 0 0 1px var(--glass-border);
+  backdrop-filter: var(--glass-blur);
+  z-index: 1001;
+  animation: menu-slide 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes menu-slide {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.menu-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-align: left;
+  gap: 32px;
+  transition: background 0.1s, color 0.1s;
+}
+
+.menu-option:hover {
+  background: var(--accent-purple);
+  color: white;
+}
+
+.menu-option__label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.menu-option__shortcut {
+  font-size: 10px;
+  opacity: 0.6;
+  font-family: var(--font-mono);
+}
+
+.menu-separator {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+  opacity: 0.5;
+}
+
+.menu-option.has-submenu::after {
+  content: '›';
+  font-size: 14px;
+  opacity: 0.6;
+}
+
+.menu-option.disabled {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.menu-option .check-mark {
+  width: 12px;
+  display: flex;
+  justify-content: center;
+}
