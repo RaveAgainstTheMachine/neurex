@@ -367,12 +367,14 @@ export const useStore = create<NeurexStore>()(
     }),
 
     // ── Terminal ──────────────────────────────────────────────────────
-    terminalSessions: [{ id: "default", name: "bash" }],
-    activeTerminalId: "default",
+    terminalSessions: JSON.parse(localStorage.getItem("neurex_terminal_sessions") || '[{"id":"default","name":"bash"}]'),
+    activeTerminalId: localStorage.getItem("neurex_active_terminal") || "default",
     addTerminalSession: (name = "bash") => set((s) => {
       const id = Math.random().toString(36).substring(7);
       s.terminalSessions.push({ id, name });
       s.activeTerminalId = id;
+      localStorage.setItem("neurex_terminal_sessions", JSON.stringify(s.terminalSessions));
+      localStorage.setItem("neurex_active_terminal", id);
     }),
     closeTerminalSession: (id) => set((s) => {
       if (s.terminalSessions.length <= 1) return;
@@ -380,8 +382,13 @@ export const useStore = create<NeurexStore>()(
       if (s.activeTerminalId === id) {
         s.activeTerminalId = s.terminalSessions[s.terminalSessions.length - 1].id;
       }
+      localStorage.setItem("neurex_terminal_sessions", JSON.stringify(s.terminalSessions));
+      localStorage.setItem("neurex_active_terminal", s.activeTerminalId);
     }),
-    setActiveTerminalId: (id) => set((s) => { s.activeTerminalId = id; }),
+    setActiveTerminalId: (id) => set((s) => { 
+      s.activeTerminalId = id;
+      localStorage.setItem("neurex_active_terminal", id);
+    }),
 
     // ── Navigation ───────────────────────────────────────────────────
     pendingJump: null,

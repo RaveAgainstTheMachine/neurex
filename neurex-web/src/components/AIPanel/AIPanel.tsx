@@ -423,7 +423,41 @@ export function AIPanel({ send, conversationId, isActive = true }: AIPanelProps)
             {messages.map((msg) => (
               <div key={msg.id} className={`message message--${msg.role}`}>
                 <div className="message__content">
-                  <ReactMarkdown rehypePlugins={[rehypeHighlight]}>
+                  <ReactMarkdown 
+                    rehypePlugins={[rehypeHighlight]}
+                    components={{
+                      code({ node, inline, className, children, ...props }: any) {
+                        const match = /language-(\w+)/.exec(className || "");
+                        const codeContent = String(children).replace(/\n$/, "");
+                        
+                        if (!inline && match) {
+                          return (
+                            <div className="code-block-container">
+                              <div className="code-block-header">
+                                <span className="code-block-lang">{match[1]}</span>
+                                <button 
+                                  className="code-block-apply" 
+                                  onClick={() => {
+                                    if (activeFile) {
+                                      useStore.getState().setFileContent(activeFile, codeContent);
+                                      toast.success("Code applied to editor");
+                                    }
+                                  }}
+                                  title="Apply to active file"
+                                >
+                                  <ArrowUp size={12} /> Apply
+                                </button>
+                              </div>
+                              <pre className={className} {...props}>
+                                <code>{children}</code>
+                              </pre>
+                            </div>
+                          );
+                        }
+                        return <code className={className} {...props}>{children}</code>;
+                      }
+                    }}
+                  >
                     {msg.content}
                   </ReactMarkdown>
                 </div>
