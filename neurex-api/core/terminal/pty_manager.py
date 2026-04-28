@@ -16,14 +16,16 @@ class PTYManager:
     def __init__(self):
         self.sessions: Dict[str, PTYSession] = {}
 
-    def get_or_create_session(self, session_id: str, on_output: Callable[[str], None]) -> PTYSession:
+    def get_or_create_session(self, session_id: str, on_output: Optional[Callable[[str], None]] = None) -> PTYSession:
         if session_id not in self.sessions:
+            log.info("pty.create_session", session_id=session_id)
             session = PTYSession(session_id)
             self.sessions[session_id] = session
             session.start()
         
         session = self.sessions[session_id]
-        session.attach(on_output)
+        if on_output:
+            session.attach(on_output)
         return session
 
     def get_session(self, session_id: str) -> Optional[PTYSession]:
@@ -61,8 +63,14 @@ class PTYSession:
 
     def start(self):
         try:
-            shell = os.environ.get("SHELL", "/bin/bash")
-            # Enhance environment for modern shells like fish/zsh
+            shell_candidates = [os.environ.get("SHELL", "/bin/bash"), "/bin/bash", "/bin/sh", "/usr/bin/bash"]
+            shell = "/bin/bash" # Default
+            for c in shell_candidates:
+                if os.path.exists(c):
+                    shell = c
+                    break
+            
+            # Enhance environment for modern shells
             env = {
                 **os.environ,
                 "TERM": "xterm-256color",

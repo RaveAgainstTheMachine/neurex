@@ -94,6 +94,10 @@ async def websocket_endpoint(
             conversation_id, 
             lambda data: asyncio.create_task(on_terminal_output(data))
         )
+        
+        # Manually trigger history send for new connection
+        if pty_session.history:
+            await on_terminal_output(pty_session.history)
 
         try:
             while True:
