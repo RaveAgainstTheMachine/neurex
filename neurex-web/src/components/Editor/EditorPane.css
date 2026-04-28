@@ -113,17 +113,92 @@
 }
 
 .editor-empty__logo {
-  width: 120px; height: 120px;
-  background: var(--bg-sidebar);
-  border-radius: 30px;
-  display: flex; align-items: center; justify-content: center;
+  font-size: 80px;
   color: var(--accent-purple);
-  box-shadow: 0 0 40px rgba(0,0,0,0.5);
-  border: 1px solid var(--border);
+  margin-bottom: 24px;
+  text-shadow: 0 0 30px rgba(100, 50, 255, 0.4);
 }
 
-.editor-empty__title { font-size: 24px; color: var(--text-primary); }
-.editor-empty__subtitle { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+.editor-empty__title {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: white;
+  margin-bottom: 8px;
+}
+
+.editor-empty__subtitle {
+  color: var(--text-muted);
+  font-size: 14px;
+  max-width: 400px;
+  margin: 0 auto 40px;
+  line-height: 1.6;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  width: 100%;
+  max-width: 800px;
+  margin-bottom: 40px;
+}
+
+.dashboard-card {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dashboard-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+  transform: translateY(-4px);
+  border-color: var(--accent-purple);
+}
+
+.dashboard-card__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+}
+
+.big-stat {
+  font-size: 48px;
+  font-weight: 900;
+  color: white;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.quick-actions {
+  display: flex;
+  gap: 16px;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
 
 /* ── Inline AI Prompt ────────────────────────────────────────────── */
 .inline-ai-prompt {

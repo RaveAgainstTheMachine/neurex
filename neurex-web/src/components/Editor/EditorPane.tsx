@@ -99,14 +99,56 @@ export function EditorPane() {
   }, [inlinePrompt, isProcessing, active, upsertTask]);
 
   if (!active) {
+    const activeTasks = Object.values(useStore.getState().tasks).filter(t => ["THINKING", "WRITING"].includes(t.status)).length;
+    const { hiveStats, infraMetrics } = useStore.getState();
+
     return (
       <div className="editor-empty">
         <div className="editor-empty__content">
-          <div className="editor-empty__logo">
-            <Files size={64} />
+          <div className="editor-empty__logo animate-float">⬡</div>
+          <h1 className="editor-empty__title">NEUREX SYSTEM ACTIVE</h1>
+          <p className="editor-empty__subtitle">The Distributed Intelligence Mesh is synchronized and awaiting instructions.</p>
+          
+          <div className="dashboard-grid">
+            <div className="dashboard-card glass">
+              <div className="dashboard-card__header">
+                <Activity size={14} className="text-cyan" />
+                <span>SWARM STATUS</span>
+              </div>
+              <div className="dashboard-card__body">
+                <div className="big-stat">{hiveStats.total_nodes}</div>
+                <div className="stat-label">ACTIVE NODES</div>
+              </div>
+            </div>
+            
+            <div className="dashboard-card glass">
+              <div className="dashboard-card__header">
+                <Cpu size={14} className="text-purple" />
+                <span>RESOURCE LOAD</span>
+              </div>
+              <div className="dashboard-card__body">
+                <div className="big-stat">{infraMetrics?.vram_gb || 0}GB</div>
+                <div className="stat-label">VRAM UTILIZED</div>
+              </div>
+            </div>
+
+            <div className="dashboard-card glass">
+              <div className="dashboard-card__header">
+                <Zap size={14} className="text-amber" />
+                <span>AGENT ACTIVITY</span>
+              </div>
+              <div className="dashboard-card__body">
+                <div className="big-stat">{activeTasks}</div>
+                <div className="stat-label">RUNNING TASKS</div>
+              </div>
+            </div>
           </div>
-          <h1 className="editor-empty__title">Neurex Editor</h1>
-          <p className="editor-empty__subtitle">Select a file from the explorer to start coding with AI-powered intelligence.</p>
+
+          <div className="quick-actions">
+            <button className="btn btn--purple" onClick={() => window.dispatchEvent(new CustomEvent('open_command_palette'))}>
+              <Layout size={14} /> Open Command Palette
+            </button>
+          </div>
         </div>
       </div>
     );

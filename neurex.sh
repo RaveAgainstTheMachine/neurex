@@ -1,0 +1,54 @@
+#!/bin/bash
+
+# ⬡ NEUREX MASTER LAUNCHER
+# The entry point for the Agentic Operating System.
+
+set -e
+
+# Colors for professional output
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+echo -e "${PURPLE}Starting Neurex Mesh Hub...${NC}"
+
+# Check for Docker
+if ! [ -x "$(command -v docker)" ]; then
+  echo -e "${RED}Error: Docker is not installed.${NC}" >&2
+  exit 1
+fi
+
+# Check for NVIDIA Toolkit (if GPU is present)
+if command -v nvidia-smi &> /dev/null; then
+    echo -e "${GREEN}NVIDIA GPU detected. Optimal performance enabled.${NC}"
+else
+    echo -e "${CYAN}Warning: No NVIDIA GPU detected. Running in CPU-only mode.${NC}"
+fi
+
+# Health Check / Setup
+echo -e "${CYAN}Performing System Health Check...${NC}"
+
+# Check if containers are already running
+if [ "$(docker ps -q -f name=neurex-api)" ]; then
+    echo -e "${GREEN}Neurex is already running. Refreshing logs...${NC}"
+    docker compose logs -f --tail 100
+    exit 0
+fi
+
+# Launch
+echo -e "${PURPLE}Deploying Local Swarm...${NC}"
+docker compose up -d
+
+echo -e ""
+echo -e "  ⬡ ${GREEN}NEUREX IS ONLINE${NC}"
+echo -e "  --------------------------------"
+echo -e "  Frontend:  ${CYAN}http://localhost:3000${NC}"
+echo -e "  API:       ${CYAN}http://localhost:8000${NC}"
+echo -e "  Mesh Port: ${CYAN}http://localhost:5000 (RPC)${NC}"
+echo -e "  --------------------------------"
+echo -e ""
+
+# Tail logs to keep process alive and show feedback
+docker compose logs -f --tail 50
