@@ -19,24 +19,31 @@ While traditional AI IDEs (Cursor, Windsurf) act as "Assistants," Neurex acts as
 - Python 3.14+
 - Node.js 20+
 
-### 2. Installation
+### 2. Installation & Setup
+
+**Linux / macOS:**
 ```bash
 git clone https://github.com/USERNAME/neurex.git
 cd neurex
 bash install.sh
 ```
-Follow the prompts to configure your node as a **Master** or **RPC Worker**.
 
-### 3. Launch
-**Master Node:**
-```bash
-docker compose up -d
+**Windows (Docker Desktop + WSL2):**
+Ensure Docker Desktop is running, then run in PowerShell:
+```powershell
+.\neurex.ps1
 ```
-Access the interface at `http://localhost:3000`.
 
-**Worker Node:**
+### 3. Launching the OS
+
+**Linux / macOS:**
 ```bash
-docker compose -f docker-compose.node.yml up -d
+./neurex/neurex.sh
+```
+
+**Windows:**
+```powershell
+.\neurex.ps1
 ```
 
 ## Technical Documentation
