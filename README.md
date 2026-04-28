@@ -1,16 +1,15 @@
-# Neurex — Federated Agentic IDE
+# ⬡ NEUREX — The Agentic Operating System
 
-Neurex is an open-source development platform that aggregates local compute resources into a federated mesh for large-scale model inference and multi-agent software engineering.
+Neurex is a next-generation development environment designed not just as a code editor, but as a **Distributed Intelligence Mesh**. It aggregates local compute resources into a federated swarm, enabling autonomous agents to plan, execute, and refactor code within a high-trust, observed ecosystem.
 
-## Architecture Overview
+## 🧠 Why Neurex?
 
-Neurex utilizes a Master-Worker architecture to pool distributed VRAM and execute agentic workflows:
+While traditional AI IDEs (Cursor, Windsurf) act as "Assistants," Neurex acts as a **Hive Mind**. It is built on three core pillars:
 
-- **Distributed Inference**: Uses `llama-rpc-server` to pool GPU resources across the local network.
-- **Agent Orchestration**: State-persistent task graphs managed by specialized personas (Planner, Coder, Reviewer).
-- **Collective Memory**: ChromaDB-backed vector store with Tree-Sitter chunking for codebase awareness.
-- **Secure Sandbox**: Docker-isolated terminal and test execution with no network access.
-- **Enterprise Grade License**: Business Source License (BSL 1.1) protecting your code while remaining free for personal and startup use.
+1.  **Agentic Autonomy**: A multi-agent orchestrator (Planner, Coder, Researcher) that iterates on tasks in loops, not just one-shot completions.
+2.  **Distributed Swarm**: Pool VRAM across your local network to run massive models (32B+) that would normally require a server farm.
+3.  **Total Observability**: The **Flight Recorder** streams every reasoning trace and tool-call in real-time. No "Black Box" magic—just transparent intelligence.
+4.  **Collective Memory**: A decentralized vector-memory that allows agents to "recall" architectural precedents across projects and sessions.
 
 ## Quick Start
 

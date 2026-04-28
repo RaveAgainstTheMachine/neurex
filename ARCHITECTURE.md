@@ -50,6 +50,37 @@ Agents inherit from a `BaseAgent` class providing RAG context, tool-calling loop
 ### 3.2 Retrieval (RAG)
 Before every agent execution, the `MemoryWorker` performs a semantic search against the prompt. The top-$N$ results are injected into the agent's system prompt as "Project Context," reducing hallucination and providing architectural awareness.
 
+## 7. The Reasoning Economy
+
+Neurex operates on a "Reasoning Economy" where intelligence is treated as a managed resource.
+
+### 7.1 Iterative Loops vs. One-Shot
+Unlike traditional IDE completions, Neurex utilizes **Iterative Reasoning Loops**. 
+- **The Planning Phase**: High-context models (32B+) generate a DAG (Directed Acyclic Graph) of sub-tasks.
+- **The Execution Phase**: Smaller, specialized models (7B/14B) execute atomic code changes.
+- **The Verification Phase**: Agents perform self-critique using the `test_execution` tool in the sandbox.
+- **Correction**: If a test fails, the graph is dynamically re-routed to a "Fix" node.
+
+### 7.2 Resource Management
+The "Agentic OS" treats compute (VRAM) and context (tokens) as finite assets:
+- **Telemetry-Aware Dispatch**: The system monitors GPU temperatures and memory pressure on all Mesh nodes.
+- **Dynamic Context Pruning**: RAG results are filtered by semantic density, ensuring the "Brain" (LLM) is not overloaded with noise.
+
+## 8. Distributed Context (The Hive)
+
+Neurex implements a **Decentralized Memory Model** that circumvents the limitations of fixed context windows.
+
+### 8.1 Long-Term Semantic Recall
+The Hive Mind isn't just for the current file; it's a project-wide vector space. 
+- **Cross-Project Intelligence**: Agents can "recall" how a specific auth pattern was implemented in a sibling repository on the Mesh.
+- **Context Pinning**: Users can manually "pin" historical fragments, forcing them into the agent's active reasoning cycle.
+
+### 8.2 The Flight Recorder (Total Observability)
+Transparency is the foundation of high-trust automation. The Flight Recorder provides:
+- **Reasoning Traces**: Real-time streaming of the agent's "Internal Monologue."
+- **Tool-Call Auditing**: Every file read, write, and shell command is logged and verifiable.
+- **State Snapshots**: The ability to inspect the task graph at any point in time.
+
 ## 9. Attributions & Citations
 
 Neurex is built upon the foundational work of the global AI and Open Source research community. We gratefully acknowledge the following sources:
