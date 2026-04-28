@@ -24,6 +24,7 @@ import "highlight.js/styles/github-dark.css";
 import { Send, Loader2, Trash2, CheckCircle2, XCircle, ArrowUp, Mic, MicOff, Volume2, Paperclip, Shield, Plus } from "lucide-react";
 import { useStore } from "../../lib/store";
 import type { TaskNode } from "../../lib/types";
+import toast from "react-hot-toast";
 import "./AIPanel.css";
 
 import { API_BASE } from "../../lib/config";
@@ -118,7 +119,7 @@ export function AIPanel({ send, conversationId, isActive = true }: AIPanelProps)
   const { 
     messages, tasks, wsStatus, clearTasks, 
     conversations, setConversations, setActiveConversation, newConversation,
-    preferredModel, setPreferredModel, speechLang, setSpeechLang
+    preferredModel, setPreferredModel, speechLang, setSpeechLang, activeFile
   } = useStore();
 
   const [isListening, setIsListening] = useState(false);
