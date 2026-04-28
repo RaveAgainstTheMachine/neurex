@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import {
   Files, MessageSquare, Settings, GitBranch, Search, Bot, Activity, Clock, Cpu, Shield, Puzzle, Layout, AlertTriangle, BrainCircuit, Braces
@@ -18,6 +18,7 @@ import { HiveMindPanel } from "./components/HiveMindPanel/HiveMindPanel";
 import { PresenceBar } from "./components/PresenceBar/PresenceBar";
 import { AuthOverlay } from "./components/AuthOverlay/AuthOverlay";
 import { MenuBar } from "./components/MenuBar/MenuBar";
+import { CommandPalette } from "./components/CommandPalette/CommandPalette";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useNotifications } from "./hooks/useNotifications";
 import { useStore } from "./lib/store";
@@ -142,7 +143,7 @@ function AppContent() {
   const { 
     wsStatus, isInitialized, setIsInitialized, onboardingRequired, 
     token, activeConversationId, modalOpen, tasks, hiveStats, 
-    infraMetrics, theme, cursorPosition, openFiles, activeFile 
+    infraMetrics, theme, cursorPosition, openFiles, activeFile, setFileLanguage 
   } = useStore();
   
   const [visualProgress, setVisualProgress] = useState(25);
@@ -153,6 +154,9 @@ function AppContent() {
   const [showHiveMind, setShowHiveMind] = useState(false);
   const { send } = useWebSocket(activeConversationId);
   const sidebarRef = useRef<any>(null);
+
+  // Command Palette States
+  const [paletteMode, setPaletteMode] = useState<"none" | "language" | "indent" | "encoding">("none");
 
   useEffect(() => {
     if (!token || onboardingRequired || isInitialized || useStore.getState().isInitializing) return;
@@ -187,12 +191,23 @@ function AppContent() {
     setShowHiveMind(false);
   };
 
-  const handleInfraExpand = React.useCallback((size: number) => {
-    sidebarRef.current?.resize(size);
-  }, []);
-
   const activeTaskCount = Object.values(tasks).filter(t => t.status === "THINKING" || t.status === "WRITING" || t.status === "TESTING").length;
   const activeFileLanguage = openFiles.find(f => f.path === activeFile)?.language || "plaintext";
+
+  const languageItems = useMemo(() => [
+    "typescript", "javascript", "python", "css", "json", "markdown", "yaml", "html", "rust", "go"
+  ].map(l => ({ id: l, label: l.toUpperCase(), action: () => activeFile && setFileLanguage(activeFile, l) })), [activeFile, setFileLanguage]);
+
+  const indentItems = [
+    { id: "2", label: "Spaces: 2", action: () => {} },
+    { id: "4", label: "Spaces: 4", action: () => {} },
+    { id: "tabs", label: "Tabs", action: () => {} }
+  ];
+
+  const encodingItems = [
+    { id: "utf8", label: "UTF-8", action: () => {} },
+    { id: "ascii", label: "ASCII", action: () => {} }
+  ];
 
   try {
     return (
@@ -200,6 +215,25 @@ function AppContent() {
         {(!token || onboardingRequired) && <AuthOverlay />}
         {!isInitialized && <LoadingOverlay progress={visualProgress} />}
         
+        <CommandPalette 
+          isOpen={paletteMode === "language"} 
+          onClose={() => setPaletteMode("none")} 
+          title="Select Language Mode"
+          items={languageItems}
+        />
+        <CommandPalette 
+          isOpen={paletteMode === "indent"} 
+          onClose={() => setPaletteMode("none")} 
+          title="Select Indentation"
+          items={indentItems}
+        />
+        <CommandPalette 
+          isOpen={paletteMode === "encoding"} 
+          onClose={() => setPaletteMode("none")} 
+          title="Select Encoding"
+          items={encodingItems}
+        />
+
         <Toaster position="top-right" toastOptions={{ style: { background: '#1e1e24', color: '#e8e8f0', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)' } }} />
         
         <div className="app__root">
@@ -229,7 +263,7 @@ function AppContent() {
                 </div>
               </DndContext>
               <div className="activity-bar__bottom">
-                <button className={`activity-btn ${showHiveMind ? "active" : ""}`} onClick={() => { setShowHiveMind(!showHiveMind); setShowSettings(false); }} title="Hive Mind (Collective Memory)">
+                <button className={`activity-btn ${showHiveMind ? "active" : ""}`} onClick={() => { setShowHiveMind(!showHiveMind); setShowSettings(false); }} title="Hive Mind">
                   <BrainCircuit size={20} className="text-cyan" />
                   {showHiveMind && <div className="activity-indicator" />}
                 </button>
@@ -248,22 +282,21 @@ function AppContent() {
                 <Panel ref={sidebarRef} defaultSize={16} minSize={10} maxSize={45} className={`app__sidebar ${mobileTab === "explorer" ? "mobile-visible" : ""}`}>
                   {sidebarTab === "explorer" && <FileExplorer />}
                   {sidebarTab === "history"  && <ConversationList />}
-                  {sidebarTab === "infra"    && <InfraPanel onExpand={handleInfraExpand} currentSize={sidebarRef.current?.getSize() || 16} />}
+                  {sidebarTab === "infra"    && <InfraPanel onExpand={(s) => sidebarRef.current?.resize(s)} currentSize={sidebarRef.current?.getSize() || 16} />}
                   {sidebarTab === "system"   && <SystemLogsPanel />}
                   {sidebarTab === "search"   && <SearchPanel />}
-                  {sidebarTab === "git"      && <PlaceholderPanel label="Source Control" />}
                   {sidebarTab === "skills"   && <SkillsPanel />}
                   {sidebarTab === "agent"    && <AgentPanel />}
                 </Panel>
                 <ResizeHandle />
-                <Panel minSize={30} className={`app__main-panel ${mobileTab === "editor" || mobileTab === "terminal" ? "mobile-visible" : ""}`}>
+                <Panel minSize={30} className="app__main-content">
                   <PanelGroup autoSaveId="neurex-main-layout-v" direction="vertical">
-                    <Panel minSize={25} className={`app__editor ${mobileTab === "editor" ? "mobile-visible" : ""}`}>
+                    <Panel minSize={25} className="app__editor-wrapper">
                       <PresenceBar />
                       {showSettings ? <SettingsPanel /> : showHiveMind ? <HiveMindPanel /> : <EditorPane />}
                     </Panel>
                     <ResizeHandle vertical />
-                    <Panel defaultSize={25} minSize={10} className={`app__bottom ${mobileTab === "terminal" ? "mobile-visible" : ""}`}>
+                    <Panel defaultSize={25} minSize={10} className="app__bottom-wrapper">
                       <BottomPanel send={send} />
                     </Panel>
                   </PanelGroup>
@@ -271,7 +304,7 @@ function AppContent() {
                 {(showAIPanel || mobileTab === "chat") && (
                   <>
                     <ResizeHandle />
-                    <Panel defaultSize={24} minSize={16} maxSize={45} className={`app__ai ${mobileTab === "chat" ? "mobile-visible" : ""}`}>
+                    <Panel defaultSize={24} minSize={16} maxSize={45} className="app__ai-wrapper">
                       <AIPanel send={send} conversationId={activeConversationId} isActive={showAIPanel || mobileTab === "chat"} />
                     </Panel>
                   </>
@@ -284,25 +317,25 @@ function AppContent() {
                     <Activity size={10} />
                     <span className="hide-mobile">{wsStatus === "connected" ? "NEUREX MESH ACTIVE" : wsStatus.toUpperCase()}</span>
                   </span>
-                  <div className="status-intel animate-slide-up">
+                  <div className="status-intel">
                     <div className={`swarm-pulse ${hiveStats.total_nodes > 0 && theme.enable_swarm_glow ? 'swarm-pulse--active' : ''}`} />
-                    <span className="hide-mobile">{hiveStats.total_nodes} NODES • {hiveStats.memory_count} FRAGMENTS</span>
+                    <span className="hide-mobile">{hiveStats.total_nodes} NODES</span>
                   </div>
                 </div>
                 <div className="status-bar__right">
                   <div className="status-segments">
                     <span className="status-segment">Ln {cursorPosition.line}, Col {cursorPosition.ch}</span>
-                    <span className="status-segment">Spaces: 2</span>
-                    <span className="status-segment">UTF-8</span>
-                    <span className="status-segment">LF</span>
-                    <span className="status-segment status-segment--interactive">
+                    <button className="status-segment status-segment--interactive" onClick={() => setPaletteMode("indent")}>Spaces: 2</button>
+                    <button className="status-segment status-segment--interactive" onClick={() => setPaletteMode("encoding")}>UTF-8</button>
+                    <button className="status-segment">LF</button>
+                    <button className="status-segment status-segment--interactive" onClick={() => setPaletteMode("language")}>
                       <Braces size={10} />
                       <span>{activeFileLanguage.toUpperCase()}</span>
-                    </span>
-                    <span className="status-segment">
+                    </button>
+                    <button className="status-segment">
                       <Activity size={10} className="text-cyan" />
                       <span>Compose</span>
-                    </span>
+                    </button>
                   </div>
                   <UpdateNotifier />
                 </div>
@@ -330,12 +363,6 @@ function ResizeHandle({ vertical = false }: { vertical?: boolean }) {
     <PanelResizeHandle className={`resize-handle ${vertical ? "resize-handle--vertical" : "resize-handle--horizontal"}`}>
       <div className="resize-handle__highlight" />
     </PanelResizeHandle>
-  );
-}
-
-function PlaceholderPanel({ label }: { label: string }) {
-  return (
-    <div className="placeholder-panel"><div className="placeholder-panel_label">{label.toUpperCase()}</div><div className="placeholder-panel_hint">Coming soon</div></div>
   );
 }
 

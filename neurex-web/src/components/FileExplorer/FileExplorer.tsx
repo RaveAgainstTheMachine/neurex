@@ -4,7 +4,7 @@ import {
   ChevronRight, ChevronDown, File, Folder, FolderOpen, RefreshCw, Loader2,
   FileJson, FileCode, FileText, Settings, FileKey, GitGraph, 
   Container, Zap, Database, Terminal as TerminalIcon, Globe, Lock,
-  MoreVertical, Edit3, Trash2, Plus
+  MoreVertical, Plus
 } from "lucide-react";
 import { useStore } from "../../lib/store";
 import type { FileNode } from "../../lib/types";
@@ -25,44 +25,26 @@ function getLanguage(path: string) {
 function getFileIcon(name: string, isDir: boolean, expanded: boolean) {
   if (isDir) {
     const lowerName = name.toLowerCase();
-    if (lowerName === ".github" || lowerName === ".git") return <GitGraph size={13} className="file-item__icon git" />;
-    if (lowerName === "node_modules" || lowerName === "venv" || lowerName === ".venv") return <Database size={13} className="file-item__icon modules" />;
-    if (lowerName === "src" || lowerName === "app" || lowerName === "lib") return <FolderOpen size={13} className="file-item__icon src" />;
-    if (lowerName === "api" || lowerName === "core" || lowerName === "server") return <Settings size={13} className="file-item__icon core" />;
-    if (lowerName === "components" || lowerName === "ui") return <Zap size={13} className="file-item__icon components" />;
-    return expanded ? <FolderOpen size={13} className="file-item__icon dir" /> : <Folder size={13} className="file-item__icon dir" />;
+    if (lowerName === ".github" || lowerName === ".git") return <GitGraph size={14} className="file-item__icon git" />;
+    if (lowerName === "node_modules" || lowerName === "venv" || lowerName === ".venv") return <Database size={14} className="file-item__icon modules" />;
+    if (lowerName === "src" || lowerName === "app" || lowerName === "lib") return <FolderOpen size={14} className="file-item__icon src" />;
+    return expanded ? <FolderOpen size={14} className="file-item__icon dir" /> : <Folder size={14} className="file-item__icon dir" />;
   }
 
-  const lowerName = name.toLowerCase();
   const ext = name.split(".").pop()?.toLowerCase();
-
-  // Exact Match
-  if (lowerName === "package.json") return <FileJson size={13} className="file-item__icon npm" />;
-  if (lowerName === "tsconfig.json") return <Settings size={13} className="file-item__icon ts" />;
-  if (lowerName.includes("vite.config")) return <Zap size={13} className="file-item__icon vite" />;
-  if (lowerName.includes("dockerfile") || lowerName.includes("docker-compose")) return <Container size={13} className="file-item__icon docker" />;
-  if (lowerName.startsWith(".env")) return <FileKey size={13} className="file-item__icon env" />;
-  if (lowerName === "main.py") return <Zap size={13} className="file-item__icon py" />;
-  if (lowerName === "readme.md") return <FileText size={13} className="file-item__icon md-important" />;
-
-  // Extension Match
   switch (ext) {
-    case "ts": return <FileCode size={13} className="file-item__icon ts" />;
-    case "tsx": return <FileCode size={13} className="file-item__icon react" />;
-    case "js": return <FileCode size={13} className="file-item__icon js" />;
-    case "jsx": return <FileCode size={13} className="file-item__icon react" />;
-    case "py": return <FileCode size={13} className="file-item__icon py" />;
-    case "css": return <FileText size={13} className="file-item__icon css" />;
-    case "json": return <FileJson size={13} className="file-item__icon json" />;
-    case "md": return <FileText size={13} className="file-item__icon md" />;
-    case "sh": return <TerminalIcon size={13} className="file-item__icon sh" />;
+    case "ts": return <FileCode size={14} className="file-item__icon ts" />;
+    case "tsx": return <FileCode size={14} className="file-item__icon react" />;
+    case "js": return <FileCode size={14} className="file-item__icon js" />;
+    case "jsx": return <FileCode size={14} className="file-item__icon react" />;
+    case "py": return <FileCode size={14} className="file-item__icon py" />;
+    case "css": return <FileText size={14} className="file-item__icon css" />;
+    case "json": return <FileJson size={14} className="file-item__icon json" />;
+    case "md": return <FileText size={14} className="file-item__icon md" />;
+    case "sh": return <TerminalIcon size={14} className="file-item__icon sh" />;
     case "yml":
-    case "yaml": return <Settings size={13} className="file-item__icon yml" />;
-    case "html": return <Globe size={13} className="file-item__icon html" />;
-    case "sql": return <Database size={13} className="file-item__icon sql" />;
-    case "rs": return <FileCode size={13} className="file-item__icon rust" />;
-    case "go": return <FileCode size={13} className="file-item__icon go" />;
-    default: return <File size={13} className="file-item__icon" />;
+    case "yaml": return <Settings size={14} className="file-item__icon yml" />;
+    default: return <File size={14} className="file-item__icon" />;
   }
 }
 
@@ -73,7 +55,6 @@ function FileItem({ node, depth }: { node: FileNode; depth: number }) {
   const isDir = node.type === "dir";
   const [fetching, setFetching] = useState(false);
   const isActive = activeFile === node.path;
-  const lock = node.path ? locks[node.path] : null;
   
   const aggregate = useMemo(() => {
     const status = { m: node.has_m || false, u: node.has_u || false, error: false, dirty: false };
@@ -103,47 +84,37 @@ function FileItem({ node, depth }: { node: FileNode; depth: number }) {
         const r = await fetch(`${API_BASE}/api/files/read?path=${encodeURIComponent(node.path)}`);
         const data = await r.json();
         openFile(node.path, data.content ?? "", getLanguage(node.path));
-      } catch (err) {
-        openFile(node.path, "// Error loading file", getLanguage(node.path));
-      }
+      } catch (err) {}
     }
   };
 
   return (
     <div className="file-tree-node">
       <div
-        className={`file-item ${isActive ? "file-item--active" : ""} ${node.status ? `file-item--${node.status.toLowerCase()}` : ""} ${node.has_m ? 'file-item--m' : ''} ${node.has_u ? 'file-item--u' : ''}`}
+        className={`file-item ${isActive ? "file-item--active" : ""}`}
         style={{ paddingLeft: 8 + depth * 12 }}
         onClick={handleClick}
       >
         <div className="file-item__main">
           {isDir ? (
             <span className="file-item__arrow">
-              {fetching ? <Loader2 size={10} className="animate-spin" /> : (expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />)}
+              {fetching ? <Loader2 size={10} className="animate-spin" /> : (expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />)}
             </span>
           ) : (
-            <span className="file-item__arrow" />
+            <span className="file-item__spacer" />
           )}
-          
           {getFileIcon(node.name, isDir, expanded)}
           <span className="file-item__name">{node.name}</span>
         </div>
 
         <div className="file-item__actions">
-          {lock && <span className="file-lock-badge" title={`Locked by ${lock.locked_by}`}><Lock size={10} /></span>}
-          {(node.errors ?? 0) > 0 && <span className="file-error-badge">{node.errors}</span>}
-          {node.status && <span className={`file-status-tag tag--${node.status.toLowerCase()}`}>{node.status}</span>}
-          
           {isDir && !expanded && (
             <div className="folder-indicators">
               {aggregate.error && <span className="indicator-dot indicator-dot--error" />}
               {aggregate.dirty && <span className="indicator-dot indicator-dot--dirty" />}
-              {aggregate.m && <span className="indicator-dot indicator-dot--m" />}
-              {aggregate.u && <span className="indicator-dot indicator-dot--u" />}
             </div>
           )}
-          
-          <button className="file-item__menu-btn" onClick={(e) => { e.stopPropagation(); }}><MoreVertical size={12} /></button>
+          <button className="file-item__menu-btn" onClick={(e) => e.stopPropagation()}><MoreVertical size={12} /></button>
         </div>
       </div>
       {isDir && expanded && node.children && (
@@ -179,7 +150,7 @@ export function FileExplorer() {
       <div className="file-explorer__header">
         <span className="explorer-title">EXPLORER</span>
         <div className="explorer-actions">
-          <button className="icon-btn" title="New File"><Plus size={14} /></button>
+          <button className="icon-btn"><Plus size={14} /></button>
           <button className="icon-btn" onClick={handleRefresh} title="Refresh" disabled={loading}>
             <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
           </button>
