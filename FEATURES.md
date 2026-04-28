@@ -28,4 +28,8 @@ Neurex is a high-performance, AI-native IDE designed for distributed development
 ## 🐚 Terminal
 - **Seamless Integration**: Flush, borderless terminal rest aligned with the status bar.
 - **Descender Clearance**: 2px lifting for perfect character legibility.
-- **Multiplexed Sessions**: Support for concurrent terminal tabs.
+- **Multiplexed Sessions**: Support for concurrent, independent terminal tabs with session-aware routing.
+
+## 🧩 Extensibility
+- **Skill Discovery**: Native marketplace-style interface for discovering agentic toolsets.
+- **Git Injection**: Install new capabilities directly from Git repositories.

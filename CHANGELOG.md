@@ -5,6 +5,8 @@ All notable changes to the Neurex project will be documented in this file.
 ## [Unreleased] - 2026-04-28 (CAVEMAN ULTRA UPDATE)
 
 ### Added
+- **Terminal Multiplexing**: Support for multiple independent shell sessions with tabbed switching and session-aware command routing.
+- **Skill Discovery & Injection**: Native logic for Git-based skill installation and curated discovery of agentic toolsets.
 - **Global Command Palette (Cmd+Shift+P)**: Universal entry point for all IDE actions, including file management, view toggling, and developer tools.
 - **Source Control (Git) Integration**: A dedicated sidebar panel for staging changes, viewing branch status, and committing code with keyboard shortcuts (Cmd+Enter).
 - **Mature Search & Replace**:
