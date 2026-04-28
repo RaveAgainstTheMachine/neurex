@@ -243,8 +243,16 @@ export function EditorPane() {
 
               // Register Cmd+K
               editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK, () => {
-                const pos = editor.getScrolledVisiblePosition(editor.getPosition());
-                setInlineCoords({ top: pos.top + 30, left: Math.min(pos.left, editor.getDomNode().clientWidth - 320) });
+                const pos = editor.getPosition();
+                if (!pos) return;
+                
+                const coords = editor.getScrolledVisiblePosition(pos);
+                if (!coords) return;
+
+                setInlineCoords({ 
+                  top: coords.top + 30, 
+                  left: Math.min(coords.left, editor.getDomNode()?.clientWidth ?? 0 - 320) 
+                });
                 setIsInlineVisible(true);
               });
 
