@@ -237,13 +237,12 @@ function AppContent() {
         <Toaster position="top-right" toastOptions={{ style: { background: '#1e1e24', color: '#e8e8f0', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)' } }} />
         
         <div className="app__root">
-          <MenuBar />
-          
           <div className="app__main-layout">
             <div className="activity-bar">
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSidebarDragEnd}>
-                <div className="activity-bar__top">
-                  <div className="activity-bar__logo" onClick={() => window.location.reload()}>⬡</div>
+              <div className="activity-bar__top">
+                <MenuBar />
+                <div className="activity-bar__logo" onClick={() => window.location.reload()}>⬡</div>
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSidebarDragEnd}>
                   <SortableContext items={sidebarOrder} strategy={verticalListSortingStrategy}>
                     {sidebarOrder.map(id => {
                       const item = SIDEBAR_ITEMS.find(i => i.id === id);
@@ -260,8 +259,8 @@ function AppContent() {
                       );
                     })}
                   </SortableContext>
-                </div>
-              </DndContext>
+                </DndContext>
+              </div>
               <div className="activity-bar__bottom">
                 <button className={`activity-btn ${showHiveMind ? "active" : ""}`} onClick={() => { setShowHiveMind(!showHiveMind); setShowSettings(false); }} title="Hive Mind">
                   <BrainCircuit size={20} className="text-cyan" />
@@ -290,7 +289,7 @@ function AppContent() {
                 </Panel>
                 <ResizeHandle />
                 <Panel minSize={30} className="app__main-content">
-                  <PanelGroup autoSaveId="neurex-main-layout-v" direction="vertical">
+                  <PanelGroup autoSaveId="neurex-main-layout-v" direction="vertical" className="app__v-panels">
                     <Panel minSize={25} className="app__editor-wrapper">
                       <PresenceBar />
                       {showSettings ? <SettingsPanel /> : showHiveMind ? <HiveMindPanel /> : <EditorPane />}
@@ -301,11 +300,11 @@ function AppContent() {
                     </Panel>
                   </PanelGroup>
                 </Panel>
-                {(showAIPanel || mobileTab === "chat") && (
+                {showAIPanel && (
                   <>
                     <ResizeHandle />
                     <Panel defaultSize={24} minSize={16} maxSize={45} className="app__ai-wrapper">
-                      <AIPanel send={send} conversationId={activeConversationId} isActive={showAIPanel || mobileTab === "chat"} />
+                      <AIPanel send={send} conversationId={activeConversationId} isActive={showAIPanel} />
                     </Panel>
                   </>
                 )}

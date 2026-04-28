@@ -80,13 +80,13 @@ export function MenuBar() {
       <button 
         className={`burger-trigger ${isOpen ? "active" : ""}`}
         onClick={() => setIsOpen(!isOpen)}
+        title="Main Menu"
       >
-        <BurgerIcon size={16} />
-        <span>Menu</span>
+        <BurgerIcon size={18} />
       </button>
 
       {isOpen && (
-        <div className="burger-dropdown animate-scale">
+        <div className="burger-dropdown animate-slide-up">
           {menus.map((section) => (
             <div key={section.title} className="burger-section">
               <div className="burger-section__title">{section.title}</div>
