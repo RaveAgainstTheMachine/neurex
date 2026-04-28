@@ -24,7 +24,7 @@
 .xterm {
   width: 100%;
   height: 100%;
-  padding: 12px; /* Inner padding only, no borders */
+  padding: 12px 12px 14px 12px; /* Adding 2px extra to the bottom for descender clearance */
   z-index: 10;
 }
 
