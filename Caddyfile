@@ -29,16 +29,16 @@
 
     # Route /api/* to the FastAPI backend
     handle /api/* {
-        reverse_proxy backend:8000
+        reverse_proxy neurex-api:8000
     }
 
     # Route WebSocket connections
     handle /ws/* {
-        reverse_proxy backend:8000
+        reverse_proxy neurex-api:8000
     }
 
     # Route everything else to the Vite frontend
     handle {
-        reverse_proxy frontend:3000
+        reverse_proxy neurex-web:3000
     }
 }

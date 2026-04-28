@@ -40,14 +40,29 @@ fi
 # Health Check / Setup
 echo -e "${CYAN}Performing System Health Check...${NC}"
 
-# Check if containers are already running
-if [ "$(docker ps -q -f name=neurex-api)" ]; then
-    echo -e "${GREEN}Neurex is already running. Refreshing logs...${NC}"
     docker compose logs -f --tail 100
     exit 0
 fi
 
 # Determine Docker Compose command
+if docker compose version > /dev/null 2>&1; then
+    DOCKER_COMPOSE="docker compose"
+else
+    DOCKER_COMPOSE="docker-compose"
+fi
+
+echo -e "${YELLOW}Starting Neurex API & Worker...${NC}"
+# Use the virtualenv if it exists, otherwise system python
+if [ -d "./neurex-api/venv" ]; then
+    PYTHON="./neurex-api/venv/bin/python"
+else
+    PYTHON="python3"
+fi
+
+cd neurex-api
+$PYTHON -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload &
+API_PID=$!
+cd ..
 if docker compose version &> /dev/null; then
     DOCKER_COMPOSE="docker compose"
 elif docker-compose --version &> /dev/null; then
