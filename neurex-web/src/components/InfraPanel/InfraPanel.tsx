@@ -1,51 +1,27 @@
 // neurex-web/src/components/InfraPanel/InfraPanel.tsx
 "use client";
 
-import { useState, useEffect, useLayoutEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { 
-  Play, Square, RefreshCcw, Cpu, Zap, Database, ExternalLink, 
-  Code, Network, Search, Brain, FileJson, Video, Image, AudioLines, 
-  Loader2, Info, Trash2, AlertTriangle, Thermometer, Gauge 
+  Play, Square, RefreshCcw, Cpu, Zap, Search, 
+  Brain, Braces, Video, AudioLines, 
+  Thermometer, Gauge, Eye, X
 } from "lucide-react";
 import "./InfraPanel.css";
 import { useStore } from "../../lib/store";
-import { ModelProfile, InfraEngine, MeshPeer } from "../../lib/types";
+import { ModelProfile } from "../../lib/types";
 import toast from "react-hot-toast";
-
 import { API_BASE } from "../../lib/config";
-
-const getSpecialtyTag = (m: ModelProfile) => {
-  const tasks = (m.recommended_tasks || []).join(" ").toLowerCase();
-  if (tasks.includes("coding") || tasks.includes("code")) return "(coding)";
-  if (tasks.includes("logic") || tasks.includes("thinking") || tasks.includes("deep_thinking")) return "(thinking)";
-  return "(general)";
-};
-
-const formatModelName = (name: string, m: ModelProfile, simplify: boolean) => {
-  let displayName = name.split(':').shift() || name;
-  if (simplify) {
-    displayName = displayName.replace(/\s*\([^)]*\)/g, "").trim();
-    displayName += ` ${getSpecialtyTag(m)}`;
-  }
-  return displayName;
-};
 
 export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) => void, currentSize: number }) {
   const engines = useStore(s => s.infraEngines);
   const metrics = useStore(s => s.infraMetrics);
   const registry = useStore(s => s.infraRegistry);
-  const skills = useStore(s => s.infraSkills);
   const peers = useStore(s => s.infraPeers);
   const fetchData = useStore(s => s.refreshInfra);
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<ModelProfile[]>([]);
-  const [searching, setSearching] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [expanded, setExpanded] = useState(true);
-  
-  const [selectedModel, setSelectedModel] = useState<ModelProfile | null>(null);
-  const setGlobalModalOpen = useStore(s => s.setModalOpen);
 
   useEffect(() => {
     fetchData();
@@ -53,14 +29,14 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
     return () => clearInterval(timer);
   }, [fetchData]);
 
-  const bestInClass = useMemo(() => {
-    const roles = { "Thinking": "thinking", "Coding": "coding" };
-    const results: Record<string, ModelProfile | undefined> = {};
-    Object.entries(roles).forEach(([label, cap]) => {
-      results[label] = registry.find(m => m.recommended_tasks?.some(t => t.toLowerCase().includes(cap)));
-    });
-    return results;
-  }, [registry]);
+  const recommendations = [
+    { id: 'thinking', role: 'THINKING', model: 'deepseek-r1 (thinking)', specs: '32B • 20G VRAM', icon: Brain },
+    { id: 'coding', role: 'CODING', model: 'qwen2.5-coder (coding)', specs: '32B • 20G VRAM', icon: Braces },
+    { id: 'vision', role: 'VISION', model: 'llama3.2-vision (vision)', specs: '11B • 8.5G VRAM', icon: Eye },
+    { id: 'media', role: 'MEDIA', model: 'llama3.2-vision (vision)', specs: '11B • 8.5G VRAM', icon: Image },
+    { id: 'video', role: 'VIDEO', model: 'ltx-video (video)', specs: 'Multi-Modal • 24G VRAM', icon: Video },
+    { id: 'audio', role: 'AUDIO', model: 'whisper-large-v3-turbo (transcribe)', specs: '1.5B • 4G VRAM', icon: AudioLines },
+  ];
 
   const handlePullModel = async (engine: string, model: string) => {
     setLoading(true);
@@ -76,104 +52,105 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
     }
   };
 
+  const filteredRegistry = useMemo(() => {
+    if (!searchQuery) return registry.slice(0, 10);
+    return registry.filter(m => m.name.toLowerCase().includes(searchQuery.toLowerCase()));
+  }, [registry, searchQuery]);
+
   return (
     <div className="infra-panel">
       <div className="infra-panel__header">
         <Gauge size={16} className="text-purple" />
         <span>INFRASTRUCTURE HUB</span>
         <div className="mesh-indicator" title="Mesh Status">
-          <div className="swarm-pulse swarm-pulse--active" />
-          <span>MESH ACTIVE</span>
-        </div>
-      </div>
-
-      {/* TELEMETRY DASHBOARD */}
-      <div className="telemetry-dashboard">
-        <div className="telemetry-card">
-          <div className="telemetry-card__header">
-            <Zap size={12} /> <span>VRAM UTILIZATION</span>
-          </div>
-          <div className="telemetry-gauge">
-            <div className="telemetry-gauge__bar" style={{ width: `${(metrics?.vram_gb || 0) * 4}%` }} />
-            <span className="telemetry-gauge__val">{metrics?.vram_gb || 0} GB</span>
-          </div>
-        </div>
-        <div className="telemetry-card">
-          <div className="telemetry-card__header">
-            <Thermometer size={12} /> <span>NODE LOAD</span>
-          </div>
-          <div className="telemetry-gauge">
-            <div className="telemetry-gauge__bar telemetry-gauge__bar--load" style={{ width: '15%' }} />
-            <span className="telemetry-gauge__val">STABLE</span>
-          </div>
+          <span>24GB</span>
+          <div className="mesh-divider" />
+          <span>47.7G FREE</span>
+          <RefreshCcw size={12} className="ml-2 hover-rotate cursor-pointer" onClick={() => fetchData()} />
         </div>
       </div>
 
       <div className="infra-content">
-        {/* COMPUTE NODES */}
+        {/* AGENT RECOMMENDATIONS */}
         <div className="infra-section">
-          <div className="infra-section__title">
-            <Cpu size={12} /> <span>COMPUTE ENGINES</span>
-          </div>
-          <div className="engine-list">
-            {engines.map((e) => (
-              <div key={e.name} className={`engine-card ${e.status === 'running' ? 'active' : ''}`}>
-                <div className="engine-icon"><Zap size={14} /></div>
-                <div className="engine-info">
-                  <div className="engine-name">{e.name.toUpperCase()}</div>
-                  <div className="engine-status">{e.status.toUpperCase()}</div>
+          <div className="infra-section__title">AGENT RECOMMENDATIONS</div>
+          <div className="recommendation-grid">
+            {recommendations.map((rec) => (
+              <div key={rec.id} className="rec-card">
+                <div className="rec-header">
+                  <span className="rec-role">{rec.role}</span>
+                  <span className="rec-specs">{rec.specs}</span>
                 </div>
-                <button className="engine-action" disabled={loading}>
-                  {e.status === 'running' ? <Square size={12} /> : <Play size={12} />}
+                <div className="rec-model">{rec.model}</div>
+                <button className="rec-deploy-btn" onClick={() => handlePullModel('ollama', rec.model.split(' ')[0])}>
+                  DEPLOY
                 </button>
               </div>
             ))}
           </div>
         </div>
 
-        {/* ACTIVE DEPLOYMENTS */}
+        {/* COMPUTE ENGINES */}
         <div className="infra-section">
-          <div className="infra-section__title">
-            <RefreshCcw size={12} /> <span>ACTIVE INTELLIGENCE</span>
-          </div>
-          <div className="intelligence-grid">
-            {Object.entries(bestInClass).map(([role, model]) => model && (
-              <div key={role} className="intel-card">
-                <div className="intel-role">{role}</div>
-                <div className="intel-model">{model.name.split(':')[0]}</div>
-                <div className="intel-specs">{model.params} • {model.vram_required_gb}G</div>
-                <div className="intel-status">
-                  {model.is_downloaded ? (
-                    <span className="text-green">ONLINE</span>
-                  ) : (
-                    <button className="intel-deploy-btn" onClick={() => handlePullModel(model.engine, model.name)}>DEPLOY</button>
-                  )}
+          <div className="infra-section__title">COMPUTE ENGINES</div>
+          <div className="engine-stack">
+            {engines.map((e) => (
+              <div key={e.name} className={`engine-row ${e.status === 'running' ? 'active' : ''}`}>
+                <div className="engine-main">
+                  <div className="engine-name">{e.name}</div>
+                  <div className="engine-status">{e.status.toUpperCase()}</div>
+                </div>
+                <div className="engine-controls">
+                  <button className="engine-btn"><X size={14} /></button>
                 </div>
               </div>
             ))}
+            <div className="engine-row missing">
+              <div className="engine-main">
+                <div className="engine-name">vLLM</div>
+                <div className="engine-status">MISSING</div>
+              </div>
+              <button className="engine-install-btn">INSTALL</button>
+            </div>
+            <div className="engine-row missing">
+              <div className="engine-main">
+                <div className="engine-name">llama.cpp</div>
+                <div className="engine-status">MISSING</div>
+              </div>
+              <button className="engine-install-btn">INSTALL</button>
+            </div>
           </div>
         </div>
 
-        {/* NETWORK MESH */}
+        {/* MODEL CATALOG */}
         <div className="infra-section">
-          <div className="infra-section__title">
-            <Network size={12} /> <span>HIVE MESH PEERS</span>
+          <div className="infra-section__title">MODEL CATALOG</div>
+          <div className="catalog-search">
+            <Search size={14} className="search-icon" />
+            <input 
+              type="text" 
+              placeholder="Search registry or Hugging Face..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
-          <div className="mesh-list">
-            {peers.length === 0 ? (
-              <div className="mesh-empty">Scanning for local swarm nodes...</div>
-            ) : (
-              peers.map((p) => (
-                <div key={p.url} className="mesh-peer">
-                  <div className="peer-avatar">{p.name[0]}</div>
-                  <div className="peer-info">
-                    <div className="peer-name">{p.name}</div>
-                    <div className="peer-url">{p.url}</div>
+          <div className="catalog-list">
+            {filteredRegistry.map((m) => (
+              <div key={m.name} className="catalog-item">
+                <div className="catalog-main">
+                  <div className="catalog-header">
+                    <Cpu size={14} className="text-muted" />
+                    <span className="catalog-name">{m.name.split(':')[0]}</span>
+                    <span className="catalog-tag">{m.params}</span>
                   </div>
-                  <div className="peer-vram">{p.vram_gb}G</div>
+                  <div className="catalog-meta">
+                    <span>{m.vram_required_gb}GB VRAM</span>
+                    <RefreshCcw size={10} />
+                    <span>128k ctx</span>
+                  </div>
                 </div>
-              ))
-            )}
+              </div>
+            ))}
           </div>
         </div>
       </div>
