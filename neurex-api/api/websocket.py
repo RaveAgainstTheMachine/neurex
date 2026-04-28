@@ -83,16 +83,23 @@ async def websocket_endpoint(
         await presence_manager.connect(conversation_id, websocket, user_id)
 
         # Define output callback for this conversation's terminal
+        bg_tasks = set()
+        
         async def on_terminal_output(data: str):
             try:
                 await websocket.send_json({"event": "terminal_output", "data": data})
             except:
                 pass
 
+        def schedule_output(data: str):
+            t = asyncio.create_task(on_terminal_output(data))
+            bg_tasks.add(t)
+            t.add_done_callback(bg_tasks.discard)
+
         # Start/Get PTY session
         pty_session = pty_manager.get_or_create_session(
             conversation_id, 
-            lambda data: asyncio.create_task(on_terminal_output(data))
+            schedule_output
         )
         
         # Manually trigger history send for new connection
@@ -104,7 +111,6 @@ async def websocket_endpoint(
                 raw = await websocket.receive_text()
                 msg = json.loads(raw)
                 msg_type = msg.get("type")
-                log.info("ws.message_received", type=msg_type, conversation_id=conversation_id)
 
                 if msg_type == "ping":
                     await presence_manager.ping(conversation_id, user_id)
@@ -207,4 +213,4 @@ async def websocket_endpoint(
                 pass
         finally:
             await presence_manager.disconnect(conversation_id, websocket, user_id)
-            pty_session.detach()
+            pty_session.detach(schedule_output)

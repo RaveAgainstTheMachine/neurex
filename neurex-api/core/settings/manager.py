@@ -54,6 +54,10 @@ DEFAULT_SETTINGS = {
 
     # System Lifecycle
     "enable_insomnia": True,
+
+    # UI Layout
+    "menu_mode": "horizontal",
+    "terminal_line_height": 1.2,
 }
 
 class SettingsManager:

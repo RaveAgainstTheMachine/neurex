@@ -39,7 +39,7 @@ class PTYManager:
 class PTYSession:
     def __init__(self, session_id: str):
         self.session_id = session_id
-        self.on_output: Optional[Callable[[str], None]] = None
+        self.listeners: set[Callable[[str], None]] = set()
         self.proc: Optional[PtyProcessUnicode] = None
         self.task: Optional[asyncio.Task] = None
         self.workspace = os.getenv("WORKSPACE_PATH", os.getcwd())
@@ -47,19 +47,19 @@ class PTYSession:
         self.max_history = 50000 # Keep last 50k chars
 
     def attach(self, on_output: Callable[[str], None]):
-        self.on_output = on_output
+        self.listeners.add(on_output)
         if self.history:
-            self.on_output(self.history)
+            on_output(self.history)
 
-    def detach(self):
-        self.on_output = None
+    def detach(self, on_output: Callable[[str], None]):
+        self.listeners.discard(on_output)
 
     def _broadcast(self, data: str):
         self.history += data
         if len(self.history) > self.max_history:
             self.history = self.history[-self.max_history:]
-        if self.on_output:
-            self.on_output(data)
+        for listener in list(self.listeners):
+            listener(data)
 
     def start(self):
         try:
@@ -105,12 +105,29 @@ class PTYSession:
             self.close()
 
     def write(self, data: str):
+        if not self.proc or not self.proc.isalive():
+            log.warning("pty.dead_on_write", session=self.session_id, msg="Restarting PTY session")
+            self.start()
+        
         if self.proc and self.proc.isalive():
-            self.proc.write(data)
+            try:
+                self.proc.write(data)
+            except Exception as e:
+                log.error("pty.write_error", session=self.session_id, error=str(e))
+                self.close()
+                self.start()
+                if self.proc and self.proc.isalive():
+                    try:
+                        self.proc.write(data)
+                    except:
+                        pass
 
     def resize(self, rows: int, cols: int):
         if self.proc and self.proc.isalive():
-            self.proc.setwinsize(rows, cols)
+            try:
+                self.proc.setwinsize(rows, cols)
+            except Exception as e:
+                log.error("pty.resize_error", session=self.session_id, error=str(e))
 
     def close(self):
         if self.proc:
