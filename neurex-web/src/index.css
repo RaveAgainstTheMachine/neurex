@@ -1,61 +1,57 @@
 /* src/index.css — Neurex IDE Design System */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  /* Core palette (HSL for better harmony) */
-  --bg-app:       hsl(240, 10%, 4%);
-  --bg-sidebar:   hsl(240, 10%, 6%);
+  /* Core palette */
+  --bg-app:       hsl(240, 10%, 3%);
+  --bg-sidebar:   hsl(240, 10%, 5%);
   --bg-surface:   hsl(240, 10%, 8%);
   --bg-elevated:  hsl(240, 10%, 11%);
-  --bg-hover:     hsl(240, 10%, 15%);
-  --bg-active:    hsl(240, 10%, 20%);
-  --bg-input:     hsl(240, 10%, 7%);
+  --bg-hover:     hsla(255, 70%, 65%, 0.12);
+  --bg-active:    hsla(255, 70%, 65%, 0.18);
+  --bg-input:     hsl(240, 10%, 6%);
 
   /* Borders */
-  --border:       hsl(240, 10%, 16%);
-  --border-active: hsl(240, 10%, 25%);
+  --border:       hsla(240, 10%, 20%, 0.5);
+  --border-active: hsla(255, 70%, 65%, 0.3);
   --border-focus:  hsl(255, 70%, 65%);
 
   /* Text */
-  --text-primary:   hsl(240, 10%, 92%);
-  --text-secondary: hsl(240, 8%, 70%);
-  --text-muted:     hsl(240, 6%, 45%);
+  --text-primary:   hsl(240, 10%, 94%);
+  --text-secondary: hsl(240, 8%, 75%);
+  --text-muted:     hsl(240, 6%, 48%);
   --text-inverse:   hsl(240, 10%, 4%);
 
   /* Accents */
-  --accent-blue:   hsl(215, 100%, 65%);
-  --accent-purple: hsl(260, 90%, 70%);
-  --purple-light:  hsl(260, 95%, 85%);
-  --purple-main:   hsl(260, 90%, 65%);
-  --glow-purple:   hsla(260, 90%, 70%, 0.4);
-  --accent-amber:  hsl(38, 95%, 55%);
-  --accent-green:  hsl(145, 80%, 50%);
-  --accent-red:    hsl(0, 85%, 65%);
-  --accent-yellow: hsl(45, 95%, 60%);
-  --accent-cyan:   hsl(185, 85%, 55%);
-
-  /* Status */
-  --status-pending:  var(--text-muted);
-  --status-thinking: var(--accent-yellow);
-  --status-writing:  var(--accent-blue);
-  --status-done:     var(--accent-green);
-  --status-failed:   var(--accent-red);
-  --status-approval: var(--accent-purple);
+  --accent-blue:   hsl(210, 100%, 65%);
+  --accent-purple: hsl(265, 85%, 68%);
+  --purple-main:   hsl(265, 85%, 68%);
+  --glow-purple:   hsla(265, 85%, 68%, 0.4);
+  --accent-amber:  hsl(35, 95%, 58%);
+  --accent-green:  hsl(150, 80%, 52%);
+  --accent-red:    hsl(355, 85%, 65%);
+  --accent-yellow: hsl(45, 95%, 62%);
+  --accent-cyan:   hsl(180, 85%, 58%);
 
   /* Layout */
   --sidebar-width:    260px;
   --titlebar-height:  40px;
-  --tabbar-height:    34px;
-  --statusbar-height: 24px;
+  --tabbar-height:    36px;
+  --statusbar-height: 26px;
 
   /* Shapes */
-  --radius:           8px;
-  --radius-sm:        4px;
+  --radius:           10px;
+  --radius-sm:        6px;
+
+  /* Glassmorphism */
+  --glass-bg: hsla(240, 10%, 6%, 0.8);
+  --glass-border: hsla(0, 0%, 100%, 0.08);
+  --glass-blur: blur(12px);
 
   /* Typography */
-  --font-ui:   'Inter', system-ui, -apple-system, sans-serif;
+  --font-ui:   'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
   --font-size-xs:  11px;
   --font-size-sm:  12px;
@@ -76,34 +72,55 @@ html, body, #root {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Custom Selection */
+::selection {
+  background: hsla(265, 85%, 68%, 0.3);
+  color: #fff;
+}
+
 /* Scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #3a3a4a; }
+::-webkit-scrollbar-thumb { background: hsla(0, 0%, 100%, 0.1); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: hsla(265, 85%, 68%, 0.3); }
 
 button { 
   font-family: var(--font-ui); 
   cursor: pointer; 
-  border-radius: var(--radius-sm);
+  border: none;
+  background: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 input, textarea, select { 
   font-family: var(--font-ui); 
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  padding: 6px 10px;
+  outline: none;
 }
+
+input:focus { border-color: var(--border-focus); }
 
 /* Animations */
 @keyframes spin { to { transform: rotate(360deg); } }
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(4px); }
+  from { opacity: 0; transform: translateY(6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
 
-.animate-slide-up { animation: slide-up 0.15s ease; }
+.animate-slide-up { animation: slide-up 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+.animate-scale { animation: scale-in 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
 .animate-spin { animation: spin 1s linear infinite; }
-.animate-pulse { animation: pulse-dot 1.2s ease-in-out infinite; }
+
+/* Status Text Colors */
+.text-green { color: var(--accent-green); }
+.text-orange { color: var(--accent-amber); }
+.text-red { color: var(--accent-red); }
+.text-cyan { color: var(--accent-cyan); }
+.text-purple { color: var(--accent-purple); }
