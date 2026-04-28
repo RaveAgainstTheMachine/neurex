@@ -77,10 +77,17 @@ export function Terminal({ sessionId, onInput, onResize }: TerminalProps) {
     // Listen for writes specific to THIS session
     const handleWrite = (e: any) => {
       if (e.detail.sessionId === sessionId) {
-        xtermRef.current?.write(e.detail.data);
+        const term = xtermRef.current;
+        if (term) {
+          term.write(e.detail.data);
+          term.scrollToBottom();
+        }
       }
     };
     window.addEventListener("terminal_write", handleWrite);
+    
+    // Force focus
+    term.focus();
 
     return () => {
       observer.disconnect();

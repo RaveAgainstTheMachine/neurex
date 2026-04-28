@@ -153,7 +153,9 @@ export function SkillsPanel() {
              <button className={tab === 'discover' ? 'active' : ''} onClick={() => setTab('discover')}>Discover</button>
            </div>
         </div>
-        <p className="skills-panel__subtitle">Extend Neurex with specialized toolsets.</p>
+        <p className="skills-panel__subtitle">
+          Extend Neurex via the <a href="https://skillsmp.com" target="_blank" className="text-purple hover-glow">Reasoning Marketplace</a>
+        </p>
       </div>
 
       {tab === "installed" && (

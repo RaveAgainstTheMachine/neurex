@@ -28,6 +28,7 @@ import { Toaster, toast } from "react-hot-toast";
 import { UpdateNotifier } from "./components/UpdateNotifier/UpdateNotifier";
 import { FlightRecorder } from "./components/FlightRecorder/FlightRecorder";
 import { LoadingOverlay } from "./components/LoadingOverlay/LoadingOverlay";
+import { ContextMenu } from "./components/ContextMenu/ContextMenu";
 import { 
   DndContext, 
   closestCenter,
@@ -265,7 +266,25 @@ function AppContent() {
         {(!token || onboardingRequired) && <AuthOverlay />}
         {!isInitialized && <LoadingOverlay progress={visualProgress} />}
         
-        <CommandPalette 
+        <ContextMenu 
+          targetSelector=".file-explorer-item"
+          items={[
+            { label: 'Open File', action: () => {} },
+            { label: 'Reveal in Explorer', action: () => {} },
+            { label: 'Copy Path', action: () => {} },
+            { label: 'Delete File', action: () => {}, danger: true }
+          ]}
+        />
+
+        <ContextMenu 
+          targetSelector=".editor-pane"
+          items={[
+            { label: 'Format Document', action: () => {} },
+            { label: 'Peek Definition', action: () => {} },
+            { label: 'Refactor with AI', action: () => {} },
+            { label: 'Stage Changes', action: () => {} }
+          ]}
+        />
           isOpen={paletteMode === "global"} 
           onClose={() => setPaletteMode("none")} 
           title="Global Commands"
