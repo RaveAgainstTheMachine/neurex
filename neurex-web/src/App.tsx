@@ -20,6 +20,7 @@ import { PresenceBar } from "./components/PresenceBar/PresenceBar";
 import { AuthOverlay } from "./components/AuthOverlay/AuthOverlay";
 import { MenuBar } from "./components/MenuBar/MenuBar";
 import { CommandPalette } from "./components/CommandPalette/CommandPalette";
+import { API_BASE } from "./lib/config";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useNotifications } from "./hooks/useNotifications";
 import { useStore } from "./lib/store";
@@ -179,24 +180,56 @@ function AppContent() {
     return () => window.removeEventListener("keydown", handleGlobalKey);
   }, [activeFile, saveFile]);
 
+  // ── Event Listeners (Bypass) ──
   useEffect(() => {
-    if (!token || onboardingRequired || isInitialized || useStore.getState().isInitializing) return;
-    const init = async () => {
+    const handleForce = () => setIsInitialized(true);
+    window.addEventListener('neurex-force-start', handleForce);
+    return () => window.removeEventListener('neurex-force-start', handleForce);
+  }, [setIsInitialized]);
+
+  // ── Onboarding / Auth Initialization ──
+  useEffect(() => {
+    const checkStatus = async () => {
       const state = useStore.getState();
-      state.setIsInitializing(true);
       try {
-        await Promise.all([state.refreshFileTree(), state.refreshInfra()]);
-        setVisualProgress(100);
-        setIsInitialized(true);
-        if ((window as any).hidePreloader) (window as any).hidePreloader();
-      } catch (err) {
-        setVisualProgress(100);
-        setIsInitialized(true);
-      } finally {
-        state.setIsInitializing(false);
+        // 1. Always check onboarding status first
+        const res = await fetch(`${API_BASE}/api/auth/onboarding/status`);
+        const data = await res.json();
+        state.setOnboardingRequired(data.onboarding_required);
+        
+        // 2. If we don't have a token, we are done with "loading" — show Auth/Onboarding
+        if (!state.token || data.onboarding_required) {
+          setVisualProgress(100);
+          setIsInitialized(true);
+          if ((window as any).hidePreloader) (window as any).hidePreloader();
+          return;
+        }
+
+        // 3. If we DO have a token, proceed with full workspace initialization
+        if (!isInitialized && !state.isInitializing) {
+          state.setIsInitializing(true);
+          const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Init Timeout")), 5000));
+          try {
+            await Promise.race([
+              Promise.all([state.refreshFileTree(), state.refreshInfra()]),
+              timeout
+            ]);
+          } catch (err) {
+            console.warn("Workspace init timed out/failed", err);
+          } finally {
+            setVisualProgress(100);
+            setIsInitialized(true);
+            state.setIsInitializing(false);
+            if ((window as any).hidePreloader) (window as any).hidePreloader();
+          }
+        }
+      } catch (e) {
+        console.error("System status check failed", e);
+        setIsInitialized(true); // Fallback
       }
     };
-    init();
+
+    checkStatus();
   }, [token, onboardingRequired, isInitialized, setIsInitialized]);
 
   const updateSidebarTab = (tab: SidebarTab) => {

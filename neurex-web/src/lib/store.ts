@@ -102,30 +102,36 @@ export const useStore = create<NeurexStore>()(
       if (!token) return;
       
       try {
-        const statusProm = fetch(`${API_BASE}/api/infra/status`, { headers: { "Authorization": `Bearer ${token}` } }).then(r => r.json()).then(data => {
-          set((s) => {
-            s.infraEngines = Array.isArray(data.engines) ? data.engines : [];
-            s.infraMetrics = data.metrics || null;
-          });
+        const headers = { "Authorization": `Bearer ${token}` };
+        const statusRes = await fetch(`${API_BASE}/api/infra/status`, { headers });
+        
+        if (statusRes.status === 401) {
+          get().logout();
+          return;
+        }
+
+        const data = await statusRes.json();
+        set((s) => {
+          s.infraEngines = Array.isArray(data.engines) ? data.engines : [];
+          s.infraMetrics = data.metrics || null;
         });
         
-        const regProm = fetch(`${API_BASE}/api/infra/registry`, { headers: { "Authorization": `Bearer ${token}` } }).then(r => r.json()).then(data => {
-          set((s) => { s.infraRegistry = Array.isArray(data) ? data : []; });
-        });
+        const regRes = await fetch(`${API_BASE}/api/infra/registry`, { headers });
+        const regData = await regRes.json();
+        set((s) => { s.infraRegistry = Array.isArray(regData) ? regData : []; });
 
-        fetch(`${API_BASE}/api/infra/skills`, { headers: { "Authorization": `Bearer ${token}` } }).then(r => r.json()).then(data => {
+        fetch(`${API_BASE}/api/infra/skills`, { headers }).then(r => r.json()).then(data => {
           set((s) => { s.infraSkills = Array.isArray(data) ? data : []; });
-        }).catch(e => console.warn("Skills fetch failed"));
+        }).catch(() => {});
 
-        fetch(`${API_BASE}/api/infra/mesh/peers`, { headers: { "Authorization": `Bearer ${token}` } }).then(r => r.json()).then(data => {
+        fetch(`${API_BASE}/api/infra/mesh/peers`, { headers }).then(r => r.json()).then(data => {
           set((s) => { s.infraPeers = Array.isArray(data) ? data : []; });
-        }).catch(e => console.warn("Peers fetch failed"));
+        }).catch(() => {});
 
         fetch(`${API_BASE}/api/memory/stats`).then(r => r.json()).then(data => {
           set((s) => { s.hiveStats = data; });
-        }).catch(e => console.warn("Memory stats failed"));
+        }).catch(() => {});
 
-        await Promise.all([statusProm, regProm]);
         get().refreshTheme();
       } catch (e) {
         console.error("Infra refresh failed", e);
@@ -159,6 +165,10 @@ export const useStore = create<NeurexStore>()(
         const r = await fetch(`${API_BASE}/api/files/tree?depth=2`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
+        if (r.status === 401) {
+          get().logout();
+          return;
+        }
         const data = await r.json();
         set((s) => { s.fileTree = Array.isArray(data) ? data : [data]; });
       } catch (err) {

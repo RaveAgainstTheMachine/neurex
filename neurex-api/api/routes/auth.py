@@ -53,14 +53,24 @@ async def get_current_user(
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
-    except JWTError:
-        raise credentials_exception
+    except JWTError as e:
+        log.warning("ws.auth_invalid_token", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Invalid token: {str(e)}",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     
     statement = select(User).where(User.username == username)
     result = await session.exec(statement)
     user = result.first()
     if user is None:
-        raise credentials_exception
+        log.warning("ws.auth_user_not_found", user=username)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User associated with token no longer exists",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     return user
 
 def require_role(role: UserRole):

@@ -84,7 +84,7 @@ class MemoryWorker:
         log.info("memory_worker.started", workspace=str(WORKSPACE_PATH))
 
     async def stop(self):
-        if self._observer:
+        if self._observer and self._observer.is_alive():
             self._observer.stop()
             self._observer.join()
         log.info("memory_worker.stopped")

@@ -71,8 +71,13 @@ async def lifespan(app: FastAPI):
     yield
 
     # Teardown
-    await memory_worker.stop()
-    pty_manager.close_all()
+    try:
+        if hasattr(app.state, "memory_worker"):
+            await app.state.memory_worker.stop()
+        if hasattr(app.state, "pty_manager"):
+            app.state.pty_manager.close_all()
+    except Exception as e:
+        log.error("neurex.shutdown_error", error=str(e))
     log.info("neurex.shutdown")
 
 
@@ -84,13 +89,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|.*\.local):3000",
-    allow_origins=[
-        "http://10.10.10.48:3000",
-        "https://10.10.10.48:3000",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
