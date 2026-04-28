@@ -1,89 +1,31 @@
-# Neurex Technical Features
+# Neurex IDE Features
 
-Neurex is a distributed, agentic integrated development environment (IDE) optimized for local-first software engineering. The system leverages consumer-grade hardware to execute large-scale open-source models through a federated compute mesh.
+Neurex is a high-performance, AI-native IDE designed for distributed development and mesh-based intelligence.
 
-## 1. Distributed Inference & Resource Management
-*   **VRAM Aggregation**: Utilizes `llama-rpc-server` to pool VRAM across multiple physical nodes. This enables the execution of large parameter models (e.g., Llama-3-70B+) that exceed the capacity of a single consumer GPU.
-*   **MeshRouter Engine**: A dynamic load-balancing system that calculates node suitability scores based on:
-    *   **Available System RAM**: Real-time detection of free memory (Total - Used) to prevent OOM during heavy RAG indexing.
-    *   CPU pressure and thermal headroom.
-    *   Real-time network latency (heartbeat telemetry).
-    *   Current task queue depth.
-*   **Automatic Peer Discovery**: Nodes broadcast capabilities every 15 seconds via a UDP/WebSocket heartbeat agent, allowing the Master node to maintain an up-to-date registry of the compute mesh.
+## 💎 Design & Aesthetics
+- **Branded Minimalism**: Unified '⬡' logo-trigger for all system actions.
+- **Glassmorphism**: Sophisticated HSL-based translucency and blur effects.
+- **Premium Typography**: Using 'Outfit' and 'Roboto Mono' for a sleek, modern look.
+- **Dynamic Micro-animations**: State-aware pulses and transitions for AI activity.
 
-## 11. Ultra Mode & Kinetic Personalization
-Neurex features a high-fidelity, state-aware interface designed for elite focus:
-*   **Dynamic Identity**: Real-time customization of primary accent colors and glow intensity across the entire IDE.
-*   **Glassmorphism (Frosted Architecture)**: GPU-accelerated backdrop blurs and transparency layers for an immersive workspace.
-*   **Kinetic Transitions**: Micro-animations and kinetic interactions for all UI elements (collapsibles, modals, status indicators).
-*   **Swarm Pulse**: Visual neural pulse in the status bar indicating the real-time activity of the federated mesh (toggable).
-*   **Specialty Model Branding**: Automated specialty tagging (coding, thinking, vision) in the model selection panel for rapid cognitive identification.
-*   **Bubbling Folder Indicators**: Visual "breadcrumb" indicators in the File Explorer that bubble up emphasized items from collapsed subdirectories.
-*   **Token-Optimized Communication (Caveman Skill)**: Integrated "Caveman Ultra" mode for extreme token efficiency (up to 75% reduction) while maintaining technical precision.
-*   **Intelligent UI Flow**: Refined AI Panel with non-truncating headers, standard navigation, and context-aware settings placement for an uncompromised user experience.
+## 🧠 Intelligence
+- **AI-Native Sidebar**: Persistent reasoning traces and chat integration.
+- **Hive Mind Integration**: Access to the collective knowledge base of the Neurex mesh.
+- **Composition Indicators**: Visual feedback when the IDE is "thinking" or "writing".
 
-## 2. Multi-Agent Orchestration
-*   **Specialized Agent Personas**:
-    *   **Planner**: Decomposes natural language objectives into a state-persistent SQLite task graph.
-    *   **Coder**: Implements code changes using file-system tools (full-file rewrites for validation integrity).
-    *   **Reviewer**: Performs static analysis and security auditing on proposed changes.
-    *   **Tester**: Generates and executes test suites (`pytest`, `vitest`) within isolated containers.
-    *   **Commander**: Executive supervisor that re-evaluates stalled plans and rewrites the task graph mid-execution.
-*   **State Persistence**: All agent progress is tracked in a relational database, allowing for task resumption after system restarts or network interruptions.
-*   **Iteration Governance**: Enforces staleness detection and iteration caps to prevent infinite tool-call loops.
+## 🛠️ Editor & Productivity
+- **Global Command Palette**: Searchable command center (Cmd+Shift+P).
+- **Multi-Tab Search**: Grouped file results with search-and-replace.
+- **Source Control**: Native Git staging and commit interface.
+- **Interactive Status Bar**: Real-time control over indentation, encoding, and language.
+- **Monaco Engine**: Full VS Code-grade editing experience.
 
-## 3. Hive Mind (Collective Memory)
-*   **Vector Knowledge Base**: Integrates **ChromaDB** for semantic indexing of the entire workspace.
-*   **Code-Aware Chunking**: Uses **Tree-Sitter** to parse source files into logical chunks (functions, classes, blocks), preserving semantic context for retrieval.
-*   **Asynchronous Indexing**: A dedicated `MemoryWorker` utilizes `watchdog` to re-index modified files in the background with < 150ms latency.
-*   **Semantic Recall**: Agents utilize RAG (Retrieval-Augmented Generation) to inject relevant code patterns and architectural precedents into their context window.
+## 🌐 Mesh Infrastructure
+- **Real-time Synchronization**: WebSocket-based heartbeat and node tracking.
+- **Presence Tracking**: See other collaborators on the Neurex Mesh.
+- **AI Offload**: Seamlessly offload tasks to available RPC nodes in the hive.
 
-## 4. Security & Sandbox Execution
-*   **Docker Sandbox**: All terminal commands and test executions occur in isolated containers with:
-    *   **No Network Access**: Standard configuration blocks all external traffic from the sandbox.
-    *   **Read-Only Mounts**: The workspace is mounted as RO to prevent agents from modifying files via shell (enforced surgical write tools only).
-    *   **Resource Capping**: Hard limits on memory (512MB) and CPU (1 vCPU) per execution.
-*   **Human-in-the-Loop (HITL)**: Commands exceeding the configured autonomy ceiling require manual sign-off via the Master or Mobile interface.
-*   **Authentication & RBAC**:
-    *   **JWT Security**: HS256 signed tokens with mandatory 8-hour rotation.
-    *   **Credential Hashing**: PBKDF2-SHA256 with 600k iterations.
-    *   **MFA**: Mandatory TOTP for administrative actions and remote approvals.
-
-## 5. Real-Time Collaboration & Interface
-*   **Persistent PTY Manager**: Manages shell sessions through a detach/attach lifecycle, allowing terminal state to persist across browser refreshes and client handoffs.
-*   **WebSocket Presence**: Synchronizes cursor positions, active file locks, and agent statuses across all connected clients in real-time.
-*   **Dynamic API Resolution**: Automatically derives API and WebSocket endpoints from the origin URL, enabling seamless multi-device access (Desktop/Mobile) without configuration changes.
-*   **Mobile Web Interface**: A PWA-optimized control center for monitoring mesh telemetry and issuing remote task approvals.
-*   **Graph Cancellation**: Reactive 'Panic Button' capability to immediately halt complex multi-agent workflows.
-
-## 6. The Forge: Workspace Integrity
-*   **Deep Cleaning**: Automated purging of environment debris (`__pycache__`, caches) and `git` pruning.
-*   **Auto-Linting**: Integrated `ruff --fix` for instantaneous code hygiene.
-*   **Project Intelligence**: Autonomous synthesis of an architectural 'brain' (`intel.json`) by parsing documentation and source code.
-*   **Self-Onboarding**: The Planner automatically force-injects architectural discovery steps for new or un-profiled workspaces.
-
-## 7. The Sentinel: Security Auditing
-*   **Static Analysis**: Integrated `bandit` scanning for Python security vulnerabilities.
-*   **Vulnerability Tracking**: `safety` check for known exploits in the dependency tree.
-*   **Leak Detection**: Automated scanning of the Git index for accidental secret leaks (`.env`, `.pem`).
-
-## 8. The Immune System: Self-Healing Loops
-*   **Iterative Debugging**: The Orchestrator automatically detects test failures and re-activates preceding coding tasks with failure logs as context.
-*   **Quality Gates**: Multi-pass architectural review and testing cycles (up to 10 iterations) to ensure structural integrity without human intervention.
-*   **Mesh Awareness**: Agents can query `get_mesh_topology` to understand the distributed health and performance of the federated swarm.
-*   **Semantic RAG**: Conceptual indexing of codebases via a background summarization pass, enabling high-level architectural search.
-
-## 9. Swarm Governance: The Commander
-*   **Dynamic Graph Rewriting**: Mid-execution re-evaluation of stalled plans. The Commander autonomously cancels failed paths and appends new strategies to the task graph.
-*   **Executive Oversight**: Global status monitoring across all agents to detect logical contradictions or technical blockers.
-*   **Autonomous Strategy Pivoting**: Reactive architectural shifting when an agent hits its iteration limit without success.
-
-## 10. Safety Lifecycle: Autonomous Self-Preservation
-*   **Point-in-Time Snapshots**: Automated backups of the database, configuration, and architectural 'brain' before every system update.
-*   **One-Click Rollback**: Robust recovery path to restore the IDE to a known-stable state if an update fails or state is corrupted.
-*   **Operational Transparency**: Visual tracking of system snapshots directly within the Update Notifier dashboard.
-
-## 10. Infrastructure Lifecycle
-*   **Automated Self-Updates**: Background release monitoring with integrated `docker compose` pull triggers for background versioning.
-*   **Role-Aware Installer**: A unified bootstrap script that detects environment capabilities and configures the node as either a Master or an RPC Worker.
-*   **Observability**: Integrated structured logging (`structlog`) for deep-trace debugging across the entire distributed stack.
+## 🐚 Terminal
+- **Seamless Integration**: Flush, borderless terminal rest aligned with the status bar.
+- **Descender Clearance**: 2px lifting for perfect character legibility.
+- **Multiplexed Sessions**: Support for concurrent terminal tabs.

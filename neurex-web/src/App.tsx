@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import {
-  Files, MessageSquare, Settings, GitBranch, Search, Bot, Activity, Clock, Cpu, Shield, Puzzle, Layout, AlertTriangle, BrainCircuit, Braces
+  Files, MessageSquare, Settings, GitBranch, Search, Bot, Activity, Clock, Cpu, Shield, Puzzle, Layout, AlertTriangle, BrainCircuit, Braces, Terminal as TerminalIcon, Plus, RefreshCw, LogOut, Moon, Sun, Save
 } from "lucide-react";
 import { FileExplorer } from "./components/FileExplorer/FileExplorer";
 import { ConversationList } from "./components/ConversationList/ConversationList";
@@ -23,7 +23,7 @@ import { CommandPalette } from "./components/CommandPalette/CommandPalette";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useNotifications } from "./hooks/useNotifications";
 import { useStore } from "./lib/store";
-import { Toaster } from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
 import { UpdateNotifier } from "./components/UpdateNotifier/UpdateNotifier";
 import { FlightRecorder } from "./components/FlightRecorder/FlightRecorder";
 import { LoadingOverlay } from "./components/LoadingOverlay/LoadingOverlay";
@@ -143,7 +143,7 @@ function AppContent() {
   const { 
     wsStatus, isInitialized, setIsInitialized, onboardingRequired, 
     token, activeConversationId, modalOpen, tasks, hiveStats, 
-    theme, cursorPosition, openFiles, activeFile, setFileLanguage 
+    theme, cursorPosition, openFiles, activeFile, setFileLanguage, logout, saveFile
   } = useStore();
   
   const [visualProgress, setVisualProgress] = useState(25);
@@ -155,7 +155,25 @@ function AppContent() {
   const sidebarRef = useRef<any>(null);
 
   // Command Palette States
-  const [paletteMode, setPaletteMode] = useState<"none" | "language" | "indent" | "encoding">("none");
+  const [paletteMode, setPaletteMode] = useState<"none" | "language" | "indent" | "encoding" | "global">("none");
+
+  useEffect(() => {
+    const handleGlobalKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "P") {
+        e.preventDefault();
+        setPaletteMode("global");
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+        e.preventDefault();
+        if (activeFile) {
+          saveFile(activeFile);
+          toast.success("File Saved");
+        }
+      }
+    };
+    window.addEventListener("keydown", handleGlobalKey);
+    return () => window.removeEventListener("keydown", handleGlobalKey);
+  }, [activeFile, saveFile]);
 
   useEffect(() => {
     if (!token || onboardingRequired || isInitialized || useStore.getState().isInitializing) return;
@@ -177,12 +195,6 @@ function AppContent() {
     init();
   }, [token, onboardingRequired, isInitialized, setIsInitialized]);
 
-  useEffect(() => {
-    if (!token || onboardingRequired) {
-      if ((window as any).hidePreloader) (window as any).hidePreloader();
-    }
-  }, [token, onboardingRequired]);
-
   const updateSidebarTab = (tab: SidebarTab) => {
     setSidebarTab(tab);
     localStorage.setItem("neurex_sidebar_tab", tab);
@@ -198,12 +210,17 @@ function AppContent() {
     "typescript", "javascript", "python", "css", "json", "markdown", "yaml", "html", "rust", "go"
   ].map(l => ({ id: l, label: l.toUpperCase(), action: () => activeFile && setFileLanguage(activeFile, l) })), [activeFile, setFileLanguage]);
 
-  const indentItems = [
-    { id: "2", label: "Spaces: 2", action: () => {} },
-    { id: "4", label: "Spaces: 4", action: () => {} }
+  const globalCommands = [
+    { id: "new-file", label: "File: New File", category: "General", action: () => {} },
+    { id: "save-file", label: "File: Save", category: "General", action: () => activeFile && saveFile(activeFile) },
+    { id: "view-explorer", label: "View: Show Explorer", category: "Navigation", action: () => updateSidebarTab("explorer") },
+    { id: "view-git", label: "View: Show Source Control", category: "Navigation", action: () => updateSidebarTab("git") },
+    { id: "view-search", label: "View: Show Search", category: "Navigation", action: () => updateSidebarTab("search") },
+    { id: "toggle-ai", label: "View: Toggle AI Assistant", category: "View", action: () => setShowAIPanel(!showAIPanel) },
+    { id: "toggle-settings", label: "View: Toggle Settings", category: "View", action: () => setShowSettings(!showSettings) },
+    { id: "reload", label: "Developer: Reload Window", category: "Developer", action: () => window.location.reload() },
+    { id: "logout", label: "Account: Logout", category: "Account", action: logout }
   ];
-
-  const encodingItems = [{ id: "utf8", label: "UTF-8", action: () => {} }];
 
   try {
     return (
@@ -212,22 +229,17 @@ function AppContent() {
         {!isInitialized && <LoadingOverlay progress={visualProgress} />}
         
         <CommandPalette 
+          isOpen={paletteMode === "global"} 
+          onClose={() => setPaletteMode("none")} 
+          title="Global Commands"
+          items={globalCommands}
+          placeholder="Type a command to execute..."
+        />
+        <CommandPalette 
           isOpen={paletteMode === "language"} 
           onClose={() => setPaletteMode("none")} 
           title="Select Language Mode"
           items={languageItems}
-        />
-        <CommandPalette 
-          isOpen={paletteMode === "indent"} 
-          onClose={() => setPaletteMode("none")} 
-          title="Select Indentation"
-          items={indentItems}
-        />
-        <CommandPalette 
-          isOpen={paletteMode === "encoding"} 
-          onClose={() => setPaletteMode("none")} 
-          title="Select Encoding"
-          items={encodingItems}
         />
 
         <Toaster position="top-right" />
