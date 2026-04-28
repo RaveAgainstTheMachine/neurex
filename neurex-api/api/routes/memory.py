@@ -33,9 +33,14 @@ async def search_memory(
 @router.get("/stats")
 async def get_memory_stats():
     """Get metadata about the current memory state."""
-    # Mocking node count for now — in a real mesh we'd pull from presence
+    from core.infrastructure.mesh import mesh_router
+    
+    # Calculate real online nodes (Local + Online Peers)
+    online_peers = sum(1 for p in mesh_router.peers.values() if p.status == "online")
+    total_active_nodes = 1 + online_peers
+    
     return {
-        "total_nodes": 1, 
+        "total_nodes": total_active_nodes, 
         "memory_count": hive_mind.collection.count() if hive_mind.collection else 0,
         "collection_name": "neurex_collective"
     }

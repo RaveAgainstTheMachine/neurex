@@ -60,7 +60,7 @@ class SkillManager:
                             url = match.group(1)
                             log.info("skill.fallback_resolved_from_marketplace", git_url=url)
             except Exception as e:
-                log.warning("skill.marketplace_resolve_failed", error=str(e))
+                log.error("skill.marketplace_resolve_failed", url=url, error=str(e), exc_info=True)
 
         name = url.split("/")[-1].replace(".git", "")
         target_path = self.SKILLS_DIR / name
