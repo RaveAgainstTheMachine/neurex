@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useStore } from "../../lib/store";
-import { Check, Menu as BurgerIcon } from "lucide-react";
+import { Check } from "lucide-react";
 import "./MenuBar.css";
 
 interface MenuOption {
@@ -78,11 +78,11 @@ export function MenuBar() {
   return (
     <div className="menu-bar" ref={menuRef}>
       <button 
-        className={`burger-trigger ${isOpen ? "active" : ""}`}
+        className={`burger-trigger logo-trigger ${isOpen ? "active" : ""}`}
         onClick={() => setIsOpen(!isOpen)}
-        title="Main Menu"
+        title="Neurex Main Menu"
       >
-        <BurgerIcon size={18} />
+        <span className="neurex-symbol">⬡</span>
       </button>
 
       {isOpen && (
@@ -105,6 +105,7 @@ export function MenuBar() {
                             setIsOpen(false);
                           }
                         }}
+                        title={opt.label}
                       >
                         <div className="burger-option__left">
                           <div className="check-placeholder">
@@ -126,6 +127,7 @@ export function MenuBar() {
                                 setIsOpen(false);
                                 setActiveSubmenu(null);
                               }}
+                              title={sub.label}
                             >
                               <div className="burger-option__left">
                                 <div className="check-placeholder">

@@ -74,7 +74,6 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 }
 
 type SidebarTab = "explorer" | "search" | "git" | "agent" | "skills" | "history" | "infra" | "system";
-type MobileTab = "chat" | "editor" | "terminal" | "explorer";
 
 export default function App() {
   return (
@@ -143,13 +142,12 @@ function AppContent() {
   const { 
     wsStatus, isInitialized, setIsInitialized, onboardingRequired, 
     token, activeConversationId, modalOpen, tasks, hiveStats, 
-    infraMetrics, theme, cursorPosition, openFiles, activeFile, setFileLanguage 
+    theme, cursorPosition, openFiles, activeFile, setFileLanguage 
   } = useStore();
   
   const [visualProgress, setVisualProgress] = useState(25);
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>((localStorage.getItem("neurex_sidebar_tab") as SidebarTab) || "explorer");
-  const [showAIPanel, setShowAIPanel] = useState(window.innerWidth > 768);
-  const [mobileTab, setMobileTab] = useState<MobileTab>("chat");
+  const [showAIPanel, setShowAIPanel] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [showHiveMind, setShowHiveMind] = useState(false);
   const { send } = useWebSocket(activeConversationId);
@@ -193,6 +191,7 @@ function AppContent() {
 
   const activeTaskCount = Object.values(tasks).filter(t => t.status === "THINKING" || t.status === "WRITING" || t.status === "TESTING").length;
   const activeFileLanguage = openFiles.find(f => f.path === activeFile)?.language || "plaintext";
+  const isAIActive = Object.values(tasks).some(t => t.status === "THINKING" || t.status === "WRITING");
 
   const languageItems = useMemo(() => [
     "typescript", "javascript", "python", "css", "json", "markdown", "yaml", "html", "rust", "go"
@@ -200,14 +199,10 @@ function AppContent() {
 
   const indentItems = [
     { id: "2", label: "Spaces: 2", action: () => {} },
-    { id: "4", label: "Spaces: 4", action: () => {} },
-    { id: "tabs", label: "Tabs", action: () => {} }
+    { id: "4", label: "Spaces: 4", action: () => {} }
   ];
 
-  const encodingItems = [
-    { id: "utf8", label: "UTF-8", action: () => {} },
-    { id: "ascii", label: "ASCII", action: () => {} }
-  ];
+  const encodingItems = [{ id: "utf8", label: "UTF-8", action: () => {} }];
 
   try {
     return (
@@ -234,14 +229,13 @@ function AppContent() {
           items={encodingItems}
         />
 
-        <Toaster position="top-right" toastOptions={{ style: { background: '#1e1e24', color: '#e8e8f0', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)' } }} />
+        <Toaster position="top-right" />
         
         <div className="app__root">
           <div className="app__main-layout">
             <div className="activity-bar">
               <div className="activity-bar__top">
                 <MenuBar />
-                <div className="activity-bar__logo" onClick={() => window.location.reload()}>⬡</div>
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSidebarDragEnd}>
                   <SortableContext items={sidebarOrder} strategy={verticalListSortingStrategy}>
                     {sidebarOrder.map(id => {
@@ -262,14 +256,14 @@ function AppContent() {
                 </DndContext>
               </div>
               <div className="activity-bar__bottom">
-                <button className={`activity-btn ${showHiveMind ? "active" : ""}`} onClick={() => { setShowHiveMind(!showHiveMind); setShowSettings(false); }} title="Hive Mind">
+                <button className={`activity-btn ${showHiveMind ? "active" : ""}`} onClick={() => { setShowHiveMind(!showHiveMind); setShowSettings(false); }} title="Hive Mind (Knowledge Base)">
                   <BrainCircuit size={20} className="text-cyan" />
                   {showHiveMind && <div className="activity-indicator" />}
                 </button>
-                <button className={`activity-btn ${showAIPanel ? "active" : ""}`} onClick={() => setShowAIPanel(!showAIPanel)} title="Toggle AI Panel">
+                <button className={`activity-btn ${showAIPanel ? "active" : ""}`} onClick={() => setShowAIPanel(!showAIPanel)} title="Toggle AI Assistant (Cmd+L)">
                   <MessageSquare size={20} />
                 </button>
-                <button className={`activity-btn ${showSettings ? "active" : ""}`} onClick={() => { setShowSettings(!showSettings); setShowHiveMind(false); }} title="Settings">
+                <button className={`activity-btn ${showSettings ? "active" : ""}`} onClick={() => { setShowSettings(!showSettings); setShowHiveMind(false); }} title="IDE Settings">
                   <Settings size={20} />
                   {showSettings && <div className="activity-indicator" />}
                 </button>
@@ -277,11 +271,11 @@ function AppContent() {
             </div>
 
             <div className="app__body">
-              <PanelGroup autoSaveId="neurex-main-layout-h" direction="horizontal" className="app__panels">
-                <Panel ref={sidebarRef} defaultSize={16} minSize={10} maxSize={45} className={`app__sidebar ${mobileTab === "explorer" ? "mobile-visible" : ""}`}>
+              <PanelGroup direction="horizontal" className="app__panels">
+                <Panel ref={sidebarRef} defaultSize={18} minSize={10} maxSize={40} className="app__sidebar">
                   {sidebarTab === "explorer" && <FileExplorer />}
                   {sidebarTab === "history"  && <ConversationList />}
-                  {sidebarTab === "infra"    && <InfraPanel onExpand={(s) => sidebarRef.current?.resize(s)} currentSize={sidebarRef.current?.getSize() || 16} />}
+                  {sidebarTab === "infra"    && <InfraPanel onExpand={(s) => sidebarRef.current?.resize(s)} currentSize={sidebarRef.current?.getSize() || 18} />}
                   {sidebarTab === "system"   && <SystemLogsPanel />}
                   {sidebarTab === "search"   && <SearchPanel />}
                   {sidebarTab === "skills"   && <SkillsPanel />}
@@ -289,13 +283,13 @@ function AppContent() {
                 </Panel>
                 <ResizeHandle />
                 <Panel minSize={30} className="app__main-content">
-                  <PanelGroup autoSaveId="neurex-main-layout-v" direction="vertical" className="app__v-panels">
-                    <Panel minSize={25} className="app__editor-wrapper">
+                  <PanelGroup direction="vertical" className="app__v-panels">
+                    <Panel minSize={20} className="app__editor-wrapper">
                       <PresenceBar />
                       {showSettings ? <SettingsPanel /> : showHiveMind ? <HiveMindPanel /> : <EditorPane />}
                     </Panel>
                     <ResizeHandle vertical />
-                    <Panel defaultSize={25} minSize={10} className="app__bottom-wrapper">
+                    <Panel defaultSize={25} minSize={5} className="app__bottom-wrapper">
                       <BottomPanel send={send} />
                     </Panel>
                   </PanelGroup>
@@ -303,7 +297,7 @@ function AppContent() {
                 {showAIPanel && (
                   <>
                     <ResizeHandle />
-                    <Panel defaultSize={24} minSize={16} maxSize={45} className="app__ai-wrapper">
+                    <Panel defaultSize={25} minSize={15} maxSize={45} className="app__ai-wrapper">
                       <AIPanel send={send} conversationId={activeConversationId} isActive={showAIPanel} />
                     </Panel>
                   </>
@@ -312,29 +306,31 @@ function AppContent() {
 
               <div className="status-bar">
                 <div className="status-bar__left">
-                  <span className={`status-ws status-ws--${wsStatus}`} title={`WebSocket: ${wsStatus}`}>
+                  <span className="status-ws status-ws--connected" title="Mesh Network: Connected">
                     <Activity size={10} />
-                    <span className="hide-mobile">{wsStatus === "connected" ? "NEUREX MESH ACTIVE" : wsStatus.toUpperCase()}</span>
+                    <span>NEUREX MESH ACTIVE</span>
                   </span>
-                  <div className="status-intel">
-                    <div className={`swarm-pulse ${hiveStats.total_nodes > 0 && theme.enable_swarm_glow ? 'swarm-pulse--active' : ''}`} />
-                    <span className="hide-mobile">{hiveStats.total_nodes} NODES</span>
+                  <div className="status-intel" title="Hive Statistics">
+                    <div className="swarm-pulse swarm-pulse--active" />
+                    <span>{hiveStats.total_nodes} NODES ACTIVE</span>
                   </div>
                 </div>
                 <div className="status-bar__right">
                   <div className="status-segments">
-                    <span className="status-segment">Ln {cursorPosition.line}, Col {cursorPosition.ch}</span>
-                    <button className="status-segment status-segment--interactive" onClick={() => setPaletteMode("indent")}>Spaces: 2</button>
-                    <button className="status-segment status-segment--interactive" onClick={() => setPaletteMode("encoding")}>UTF-8</button>
-                    <button className="status-segment">LF</button>
-                    <button className="status-segment status-segment--interactive" onClick={() => setPaletteMode("language")}>
+                    <span className="status-segment" title="Cursor Position">Ln {cursorPosition.line}, Col {cursorPosition.ch}</span>
+                    <button className="status-segment status-segment--interactive" onClick={() => setPaletteMode("indent")} title="Select Indentation">Spaces: 2</button>
+                    <button className="status-segment status-segment--interactive" onClick={() => setPaletteMode("encoding")} title="Select Encoding">UTF-8</button>
+                    <button className="status-segment" title="End of Line Sequence">LF</button>
+                    <button className="status-segment status-segment--interactive" onClick={() => setPaletteMode("language")} title="Select Language Mode">
                       <Braces size={10} />
                       <span>{activeFileLanguage.toUpperCase()}</span>
                     </button>
-                    <button className="status-segment">
-                      <Activity size={10} className="text-cyan" />
-                      <span>Compose</span>
-                    </button>
+                    {isAIActive && (
+                      <button className="status-segment animate-pulse" title="Neurex is composing...">
+                        <Activity size={10} className="text-cyan" />
+                        <span>Compose</span>
+                      </button>
+                    )}
                   </div>
                   <UpdateNotifier />
                 </div>
@@ -342,17 +338,10 @@ function AppContent() {
             </div>
           </div>
         </div>
-
-        <div className="mobile-nav">
-          <button className={`mobile-nav-btn ${mobileTab === "chat" ? "active" : ""}`} onClick={() => setMobileTab("chat")}><MessageSquare size={20} /><span>Chat</span></button>
-          <button className={`mobile-nav-btn ${mobileTab === "editor" ? "active" : ""}`} onClick={() => setMobileTab("editor")}><Layout size={20} /><span>Code</span></button>
-          <button className={`mobile-nav-btn ${mobileTab === "terminal" ? "active" : ""}`} onClick={() => setMobileTab("terminal")}><Activity size={20} /><span>Run</span></button>
-          <button className={`mobile-nav-btn ${mobileTab === "explorer" ? "active" : ""}`} onClick={() => setMobileTab("explorer")}><Files size={20} /><span>Files</span></button>
-        </div>
       </div>
     );
   } catch (err) {
-    console.error("AppContent Render Error:", err);
+    console.error("AppContent Error:", err);
     throw err;
   }
 }
@@ -367,11 +356,10 @@ function ResizeHandle({ vertical = false }: { vertical?: boolean }) {
 
 function BottomPanel({ send }: { send: (p: any) => void }) {
   const [tab, setTab] = useState<"terminal" | "output" | "flight">("terminal");
-  const activeConversationId = useStore(s => s.activeConversationId);
   const tasks = useStore((s) => s.tasks);
   const lines = Object.values(tasks).filter((t) => t.result || t.error).flatMap((t) => {
     const out = [];
-    if (t.result) out.push(`[${t.agent_type}/${t.title}] ${t.result}`);
+    if (t.result) out.push(`[${t.agent_type}] ${t.result}`);
     if (t.error)  out.push(`[ERROR] ${t.error}`);
     return out;
   });
@@ -380,15 +368,18 @@ function BottomPanel({ send }: { send: (p: any) => void }) {
     <div className="bottom-panel">
       <div className="bottom-panel__header">
         <div className="bottom-panel__tabs">
-          <button className={`bottom-tab ${tab === "terminal" ? "active" : ""}`} onClick={() => setTab("terminal")}>TERMINAL</button>
-          <button className={`bottom-tab ${tab === "output" ? "active" : ""}`} onClick={() => setTab("output")}>OUTPUT</button>
-          <button className={`bottom-tab ${tab === "flight" ? "active" : ""}`} onClick={() => setTab("flight")}>FLIGHT LOG</button>
+          <button className={`bottom-tab ${tab === "terminal" ? "active" : ""}`} onClick={() => setTab("terminal")} title="Integrated Terminal">TERMINAL</button>
+          <button className={`bottom-tab ${tab === "output" ? "active" : ""}`} onClick={() => setTab("output")} title="Build & Task Output">OUTPUT</button>
+          <button className={`bottom-tab ${tab === "flight" ? "active" : ""}`} onClick={() => setTab("flight")} title="AI Flight Recorder">FLIGHT LOG</button>
         </div>
       </div>
       <div className="bottom-panel__content">
-        <div className="bottom-panel__tab-content" hidden={tab !== "terminal"}><Terminal onInput={(data) => send({ type: "terminal_input", data })} onResize={(rows, cols) => send({ type: "terminal_resize", rows, cols })} /></div>
-        <div className="bottom-panel__tab-content output-log" hidden={tab !== "output"}>{lines.length === 0 ? <span className="bottom-panel__empty">No output yet.</span> : lines.map((l, i) => <div key={i} className="bottom-panel__line">{l}</div>)}</div>
-        <div className="bottom-panel__tab-content" hidden={tab !== "flight"}>{activeConversationId ? <FlightRecorder conversationId={activeConversationId} isActive={tab === "flight"} /> : <div className="flight-empty">Select a conversation to view reasoning traces.</div>}</div>
+        <div className="bottom-panel__tab-content" hidden={tab !== "terminal"}>
+          <Terminal onInput={(data) => send({ type: "terminal_input", data })} onResize={(rows, cols) => send({ type: "terminal_resize", rows, cols })} />
+        </div>
+        <div className="bottom-panel__tab-content output-log" hidden={tab !== "output"}>
+          {lines.map((l, i) => <div key={i} className="bottom-panel__line">{l}</div>)}
+        </div>
       </div>
     </div>
   );
