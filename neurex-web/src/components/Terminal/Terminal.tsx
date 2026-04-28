@@ -1,4 +1,6 @@
 // src/components/Terminal/Terminal.tsx
+"use client";
+
 import { useEffect, useRef } from "react";
 import { Terminal as XTerm } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
@@ -7,12 +9,12 @@ import "@xterm/xterm/css/xterm.css";
 import "./Terminal.css";
 
 interface TerminalProps {
+  sessionId: string;
   onInput: (data: string) => void;
   onResize: (rows: number, cols: number) => void;
-  output?: string;
 }
 
-export function Terminal({ onInput, onResize, output }: TerminalProps) {
+export function Terminal({ sessionId, onInput, onResize }: TerminalProps) {
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<XTerm | null>(null);
 
@@ -20,10 +22,10 @@ export function Terminal({ onInput, onResize, output }: TerminalProps) {
     if (!terminalRef.current) return;
 
     const term = new XTerm({
-      cursorBlink: false,
+      cursorBlink: true,
       allowTransparency: true,
       scrollback: 5000,
-      rows: 1, // Small initial height to prevent layout flicker
+      rows: 24,
       lineHeight: 1.4,
       allowProposedApi: true,
       theme: {
@@ -51,34 +53,15 @@ export function Terminal({ onInput, onResize, output }: TerminalProps) {
 
     term.open(terminalRef.current);
 
-    // Smooth resize logic: only fit after a short pause during bursts
-    let resizeTimeout: any = null;
-    let burstTimeout: any = null;
-
-    const doFit = (isInitial = false) => {
-      if (isInitial) {
-        try { fitAddon.fit(); term.scrollToBottom(); } catch (e) { }
-        return;
-      }
-
-      // Immediately keep the prompt at the bottom of the current grid during drag
-      // using RAF for 60fps+ synchronization to prevent "dipping"
-      requestAnimationFrame(() => {
-        try { term.scrollToBottom(); } catch (e) { }
-      });
-
-      clearTimeout(burstTimeout);
-      burstTimeout = setTimeout(() => {
-        try {
-          fitAddon.fit();
-          term.scrollToBottom();
-          onResize(term.rows, term.cols);
-        } catch (e) { }
-      }, 50);
+    const doFit = () => {
+      try {
+        fitAddon.fit();
+        onResize(term.rows, term.cols);
+      } catch (e) {}
     };
 
-    setTimeout(() => doFit(true), 50);
-    setTimeout(() => doFit(true), 250);
+    // Initial fit
+    setTimeout(doFit, 100);
 
     const observer = new ResizeObserver(() => {
       doFit();
@@ -89,13 +72,13 @@ export function Terminal({ onInput, onResize, output }: TerminalProps) {
       onInput(data);
     });
 
-    // We no longer use term.onResize directly to avoid recursion or flood,
-    // we handle it inside our debounced doFit.
-
     xtermRef.current = term;
 
+    // Listen for writes specific to THIS session
     const handleWrite = (e: any) => {
-      xtermRef.current?.write(e.detail);
+      if (e.detail.sessionId === sessionId) {
+        xtermRef.current?.write(e.detail.data);
+      }
     };
     window.addEventListener("terminal_write", handleWrite);
 
@@ -104,14 +87,16 @@ export function Terminal({ onInput, onResize, output }: TerminalProps) {
       window.removeEventListener("terminal_write", handleWrite);
       term.dispose();
     };
-  }, []);
+  }, [sessionId]); // Re-init when sessionId changes
 
   return <div ref={terminalRef} className="terminal-container" />;
 }
 
 export const terminalEvents = {
-  write: (data: string) => {
-    const event = new CustomEvent("terminal_write", { detail: data });
+  write: (sessionId: string, data: string) => {
+    const event = new CustomEvent("terminal_write", { 
+      detail: { sessionId, data } 
+    });
     window.dispatchEvent(event);
   }
 };

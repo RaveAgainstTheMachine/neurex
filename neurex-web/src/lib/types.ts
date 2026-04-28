@@ -126,6 +126,11 @@ export interface SearchState {
   wholeWord: boolean;
 }
 
+export interface TerminalSession {
+  id: string;
+  name: string;
+}
+
 export interface NeurexStore {
   // App Lifecycle
   isInitialized: boolean;
@@ -206,6 +211,14 @@ export interface NeurexStore {
   search: SearchState;
   setSearch: (state: Partial<SearchState>) => void;
   clearSearch: () => void;
+
+  // Terminal
+  terminalSessions: TerminalSession[];
+  activeTerminalId: string;
+  addTerminalSession: (name?: string) => void;
+  closeTerminalSession: (id: string) => void;
+  setActiveTerminalId: (id: string) => void;
+
   // Modals
   modalOpen: boolean;
   setModalOpen: (val: boolean) => void;

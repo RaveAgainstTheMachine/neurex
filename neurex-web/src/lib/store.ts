@@ -366,6 +366,23 @@ export const useStore = create<NeurexStore>()(
       localStorage.removeItem("neurex_search");
     }),
 
+    // ── Terminal ──────────────────────────────────────────────────────
+    terminalSessions: [{ id: "default", name: "bash" }],
+    activeTerminalId: "default",
+    addTerminalSession: (name = "bash") => set((s) => {
+      const id = Math.random().toString(36).substring(7);
+      s.terminalSessions.push({ id, name });
+      s.activeTerminalId = id;
+    }),
+    closeTerminalSession: (id) => set((s) => {
+      if (s.terminalSessions.length <= 1) return;
+      s.terminalSessions = s.terminalSessions.filter(t => t.id !== id);
+      if (s.activeTerminalId === id) {
+        s.activeTerminalId = s.terminalSessions[s.terminalSessions.length - 1].id;
+      }
+    }),
+    setActiveTerminalId: (id) => set((s) => { s.activeTerminalId = id; }),
+
     // ── Navigation ───────────────────────────────────────────────────
     pendingJump: null,
     setPendingJump: (path, line) => set((s) => {

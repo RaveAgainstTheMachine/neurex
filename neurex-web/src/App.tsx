@@ -369,8 +369,9 @@ function ResizeHandle({ vertical = false }: { vertical?: boolean }) {
 }
 
 function BottomPanel({ send }: { send: (p: any) => void }) {
-  const [tab, setTab] = useState<"terminal" | "output" | "flight">("terminal");
-  const tasks = useStore((s) => s.tasks);
+  const [activeTab, setActiveTab] = useState<"terminal" | "output" | "flight">("terminal");
+  const { terminalSessions, activeTerminalId, setActiveTerminalId, addTerminalSession, closeTerminalSession, tasks } = useStore();
+  
   const lines = Object.values(tasks).filter((t) => t.result || t.error).flatMap((t) => {
     const out = [];
     if (t.result) out.push(`[${t.agent_type}] ${t.result}`);
@@ -382,16 +383,34 @@ function BottomPanel({ send }: { send: (p: any) => void }) {
     <div className="bottom-panel">
       <div className="bottom-panel__header">
         <div className="bottom-panel__tabs">
-          <button className={`bottom-tab ${tab === "terminal" ? "active" : ""}`} onClick={() => setTab("terminal")} title="Integrated Terminal">TERMINAL</button>
-          <button className={`bottom-tab ${tab === "output" ? "active" : ""}`} onClick={() => setTab("output")} title="Build & Task Output">OUTPUT</button>
-          <button className={`bottom-tab ${tab === "flight" ? "active" : ""}`} onClick={() => setTab("flight")} title="AI Flight Recorder">FLIGHT LOG</button>
+          <button className={`bottom-tab ${activeTab === "terminal" ? "active" : ""}`} onClick={() => setActiveTab("terminal")} title="Integrated Terminal">TERMINAL</button>
+          <button className={`bottom-tab ${activeTab === "output" ? "active" : ""}`} onClick={() => setActiveTab("output")} title="Build & Task Output">OUTPUT</button>
+          <button className={`bottom-tab ${activeTab === "flight" ? "active" : ""}`} onClick={() => setActiveTab("flight")} title="AI Flight Recorder">FLIGHT LOG</button>
         </div>
+        
+        {activeTab === "terminal" && (
+          <div className="terminal-session-switcher">
+            {terminalSessions.map((s) => (
+              <div key={s.id} className={`terminal-tab ${activeTerminalId === s.id ? "active" : ""}`} onClick={() => setActiveTerminalId(s.id)}>
+                <span className="terminal-tab__name">{s.name}</span>
+                {terminalSessions.length > 1 && (
+                  <button className="terminal-tab__close" onClick={(e) => { e.stopPropagation(); closeTerminalSession(s.id); }}><X size={10} /></button>
+                )}
+              </div>
+            ))}
+            <button className="terminal-add-btn" onClick={() => addTerminalSession()} title="New Terminal"><Plus size={14} /></button>
+          </div>
+        )}
       </div>
       <div className="bottom-panel__content">
-        <div className="bottom-panel__tab-content" hidden={tab !== "terminal"}>
-          <Terminal onInput={(data) => send({ type: "terminal_input", data })} onResize={(rows, cols) => send({ type: "terminal_resize", rows, cols })} />
+        <div className="bottom-panel__tab-content" hidden={activeTab !== "terminal"}>
+          <Terminal 
+            sessionId={activeTerminalId}
+            onInput={(data) => send({ type: "terminal_input", sessionId: activeTerminalId, data })} 
+            onResize={(rows, cols) => send({ type: "terminal_resize", sessionId: activeTerminalId, rows, cols })} 
+          />
         </div>
-        <div className="bottom-panel__tab-content output-log" hidden={tab !== "output"}>
+        <div className="bottom-panel__tab-content output-log" hidden={activeTab !== "output"}>
           {lines.map((l, i) => <div key={i} className="bottom-panel__line">{l}</div>)}
         </div>
       </div>
