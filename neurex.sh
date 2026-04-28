@@ -21,14 +21,20 @@ if ! [ -x "$(command -v docker)" ]; then
 fi
 
 # Hardware Acceleration Detection
-if command -v nvidia-smi &> /dev/null; then
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    if sysctl -n machdep.cpu.brand_string | grep -q "Apple"; then
+        echo -e "${GREEN}Apple Silicon detected. Metal acceleration enabled.${NC}"
+    else
+        echo -e "${CYAN}Intel Mac detected. OpenCL/CPU mode active.${NC}"
+    fi
+elif command -v nvidia-smi &> /dev/null; then
     echo -e "${GREEN}NVIDIA GPU detected. CUDA acceleration enabled.${NC}"
 elif command -v rocm-smi &> /dev/null; then
     echo -e "${GREEN}AMD GPU detected. ROCm acceleration enabled.${NC}"
 elif command -v xpu-smi &> /dev/null || clinfo &> /dev/null; then
     echo -e "${GREEN}Intel/OpenCL GPU detected. SYCL/OpenCL acceleration enabled.${NC}"
 else
-    echo -e "${CYAN}Note: No dedicated GPU detected via standard drivers. Defaulting to optimized CPU/Shared-Memory mode.${NC}"
+    echo -e "${CYAN}Note: No dedicated GPU detected via standard drivers. Defaulting to optimized CPU mode.${NC}"
 fi
 
 # Health Check / Setup
