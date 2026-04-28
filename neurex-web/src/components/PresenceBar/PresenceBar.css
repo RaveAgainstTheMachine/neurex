@@ -1,66 +1,105 @@
+/* src/components/PresenceBar/PresenceBar.css */
 .presence-bar {
-  display: flex;
-  align-items: center;
-  padding: 0 12px;
-  height: 36px;
+  height: 32px;
   background: var(--bg-sidebar);
   border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  overflow: hidden;
 }
 
-.presence-bar__empty {
+.presence-bar__info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 10px;
+  font-weight: 700;
   color: var(--text-muted);
-  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .presence-avatars {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+}
+
+.presence-solo {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-style: italic;
+  opacity: 0.5;
 }
 
 .presence-avatar {
-  position: relative;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
   display: flex;
   align-items: center;
-  justify-content: center;
-  cursor: help;
-  transition: transform 0.2s;
+  gap: 6px;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  transition: all 0.2s;
+  position: relative;
 }
 
 .presence-avatar:hover {
-  transform: scale(1.1);
-  border-color: var(--accent-purple);
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px);
 }
 
-.avatar-icon {
-  color: var(--text-muted);
+.presence-avatar.active-here {
+  background: rgba(100, 50, 255, 0.1);
+  border: 1px solid rgba(100, 50, 255, 0.2);
 }
 
-.avatar-icon--agent {
-  color: var(--accent-purple);
-  filter: drop-shadow(0 0 4px var(--accent-purple));
-  animation: aura-pulse 3s infinite ease-in-out;
-}
-
-@keyframes aura-pulse {
-  0% { opacity: 0.7; transform: scale(0.95); }
-  50% { opacity: 1; transform: scale(1.05); }
-  100% { opacity: 0.7; transform: scale(0.95); }
-}
-
-.avatar-status {
-  position: absolute;
-  bottom: -1px;
-  right: -1px;
-  width: 8px;
-  height: 8px;
-  background: var(--status-done);
-  border: 2px solid var(--bg-sidebar);
+.avatar-box {
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
+  background: var(--bg-app);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-purple);
+  border: 1px solid var(--border);
+}
+
+.avatar-box--agent {
+  color: var(--accent-cyan);
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+}
+
+.avatar-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.avatar-name {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.avatar-pulse {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 6px;
+  height: 6px;
+  background: #81b88b;
+  border-radius: 50%;
+  border: 1px solid var(--bg-sidebar);
+  animation: pulse-presence 2s infinite;
+}
+
+@keyframes pulse-presence {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(129, 184, 139, 0.4); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 6px rgba(129, 184, 139, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(129, 184, 139, 0); }
 }

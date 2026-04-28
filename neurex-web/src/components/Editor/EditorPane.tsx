@@ -8,11 +8,6 @@ import {
 } from "lucide-react";
 import "./EditorPane.css";
 
-const LANGUAGES = [
-  "typescript", "javascript", "python", "css", "json", "markdown", 
-  "shell", "yaml", "html", "rust", "go", "sql", "plaintext"
-];
-
 export function EditorPane() {
   const { 
     openFiles, activeFile, setFileContent, saveFile, 
@@ -28,6 +23,17 @@ export function EditorPane() {
   const [isInlineVisible, setIsInlineVisible] = useState(false);
   const [inlineCoords, setInlineCoords] = useState({ top: 0, left: 0 });
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Auto-Save / Debounced Sync
+  useEffect(() => {
+    if (!active) return;
+    const timer = setTimeout(() => {
+      if (active.isDirty) {
+        saveFile(active.path);
+      }
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [active?.content, active?.isDirty, active?.path, saveFile]);
 
   useEffect(() => {
     if (pendingJump && editorRef.current && pendingJump.path === activeFile) {
@@ -56,7 +62,6 @@ export function EditorPane() {
     const selectedText = editor.getModel().getValueInRange(selection);
     
     try {
-      // Simulate task creation for the flight recorder
       const taskId = Math.random().toString(36).substring(7);
       upsertTask({
         id: taskId,
@@ -73,7 +78,6 @@ export function EditorPane() {
         updated_at: new Date().toISOString()
       });
 
-      // Signal the AI Panel to handle the edit (or send directly to API)
       const event = new CustomEvent("neurex_inline_edit", {
         detail: {
           path: active.path,
@@ -241,14 +245,11 @@ export function EditorPane() {
 
               (editor as any)._presenceObserver = renderRemoteCursors;
 
-              // Register Cmd+K
               editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK, () => {
                 const pos = editor.getPosition();
                 if (!pos) return;
-                
                 const coords = editor.getScrolledVisiblePosition(pos);
                 if (!coords) return;
-
                 setInlineCoords({ 
                   top: coords.top + 30, 
                   left: Math.min(coords.left, editor.getDomNode()?.clientWidth ?? 0 - 320) 
