@@ -5,20 +5,21 @@
   height: 100%;
   background: var(--bg-sidebar);
   color: var(--text-primary);
-  overflow: hidden;
 }
 
 .source-control__header {
+  height: 32px;
+  padding: 0 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.02);
   border-bottom: 1px solid var(--border);
 }
 
 .source-control__title {
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 10px;
+  font-weight: 800;
   color: var(--text-muted);
   letter-spacing: 0.1em;
 }
@@ -32,51 +33,84 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 12px;
-  font-size: 12px;
-  color: var(--text-secondary);
-  background: var(--bg-app);
+  padding: 8px 12px;
+  background: rgba(100, 50, 255, 0.05);
   border-bottom: 1px solid var(--border);
 }
 
-.source-control__commit {
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  border-bottom: 1px solid var(--border);
-}
-
-.source-control__commit textarea {
-  width: 100%;
-  min-height: 80px;
-  background: var(--bg-app);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  padding: 8px;
-  font-size: 13px;
-  outline: none;
-  resize: vertical;
+.branch-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-purple);
   font-family: var(--font-mono);
 }
 
-.source-control__commit textarea:focus { border-color: var(--accent-purple); }
+/* ── Commit Box ─────────────────────────────────────────────────── */
+.source-control__commit-box {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+}
 
-.commit-btn {
+.commit-textarea-wrapper {
+  position: relative;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.commit-textarea-wrapper textarea {
   width: 100%;
-  height: 32px;
+  height: 60px;
+  background: none;
+  border: none;
+  outline: none;
+  padding: 8px;
+  color: var(--text-primary);
+  font-size: 12px;
+  resize: none;
+  font-family: var(--font-sans);
+}
+
+.ai-generate-btn {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 20px;
+  height: 20px;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border);
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  font-size: 13px;
+  color: var(--accent-purple);
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-/* ── Lists ───────────────────────────────────────────────────────── */
+.ai-generate-btn:hover:not(:disabled) {
+  border-color: var(--accent-purple);
+  box-shadow: 0 0 10px rgba(100, 50, 255, 0.3);
+}
+
+.ai-generate-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.commit-btn {
+  width: 100%;
+  height: 28px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* ── Change Lists ───────────────────────────────────────────────── */
 .source-control__lists {
   flex: 1;
   overflow-y: auto;
+  padding-bottom: 20px;
 }
 
 .change-list {
@@ -85,59 +119,49 @@
 }
 
 .change-list__header {
+  height: 28px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 4px 8px;
-  background: var(--bg-sidebar);
-  border-bottom: 1px solid var(--border);
-  font-size: 11px;
-  font-weight: 600;
+  gap: 4px;
+  padding: 0 8px;
+  font-size: 10px;
+  font-weight: 700;
   color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.01);
+  border-bottom: 1px solid var(--border);
   cursor: pointer;
 }
 
-.change-list__header:hover { color: var(--text-primary); }
-
 .count-badge {
   margin-left: auto;
-  font-size: 10px;
-  background: var(--bg-active);
+  font-size: 9px;
+  background: var(--border);
   padding: 1px 6px;
   border-radius: 10px;
-  color: var(--text-muted);
 }
 
-.change-list__empty {
-  padding: 20px;
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 12px;
-  font-style: italic;
-}
-
-/* ── Change Item ─────────────────────────────────────────────────── */
 .change-item {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 4px 8px 4px 24px;
+  padding: 4px 12px;
+  gap: 12px;
   cursor: pointer;
   transition: background 0.1s;
 }
 
-.change-item:hover { background: var(--bg-hover); }
-.change-item.active { background: var(--bg-active); }
+.change-item:hover { background: rgba(255, 255, 255, 0.03); }
+.change-item.active { background: rgba(100, 50, 255, 0.1); }
 
 .change-item__main {
+  flex: 1;
   display: flex;
   align-items: center;
   gap: 10px;
   min-width: 0;
-  flex: 1;
 }
 
 .change-icon { color: var(--text-muted); }
+.change-item.active .change-icon { color: var(--accent-purple); }
 
 .change-info {
   display: flex;
@@ -148,37 +172,33 @@
 .change-name {
   font-size: 13px;
   color: var(--text-primary);
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .change-path {
   font-size: 10px;
   color: var(--text-muted);
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .change-item__actions {
   display: flex;
   align-items: center;
   gap: 8px;
-  opacity: 0.5;
 }
 
-.change-item:hover .change-item__actions { opacity: 1; }
-
 .status-badge {
-  font-size: 10px;
-  font-weight: 700;
-  width: 16px;
-  height: 16px;
+  font-size: 9px;
+  font-weight: 800;
+  width: 14px;
+  height: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 2px;
 }
 
 .status--modified { color: #e2c08d; }
@@ -193,7 +213,9 @@
   align-items: center;
   justify-content: center;
   color: var(--text-muted);
-  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 0.1s;
 }
 
-.stage-btn:hover { background: var(--bg-active); color: var(--text-primary); }
+.change-item:hover .stage-btn { opacity: 1; }
+.stage-btn:hover { color: var(--text-primary); }

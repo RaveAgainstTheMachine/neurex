@@ -5,9 +5,10 @@ import { useState, useEffect } from "react";
 import { 
   GitBranch, GitCommit, GitPullRequest, RotateCw, Plus, Minus, 
   Check, MoreHorizontal, ChevronDown, ChevronRight, FileText, 
-  AlertCircle, History
+  AlertCircle, History, Sparkles, Wand2 
 } from "lucide-react";
 import { useStore } from "../../lib/store";
+import toast from "react-hot-toast";
 import "./SourceControlPanel.css";
 
 import { API_BASE } from "../../lib/config";
@@ -19,11 +20,12 @@ interface GitChange {
 }
 
 export function SourceControlPanel() {
-  const { token, refreshFileTree } = useStore();
+  const { token, refreshFileTree, diffFile } = useStore();
   const [branch, setBranch] = useState("main");
   const [changes, setChanges] = useState<GitChange[]>([]);
   const [commitMessage, setCommitMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [expanded, setExpanded] = useState({ staged: true, unstaged: true });
 
   const fetchGitStatus = async () => {
@@ -46,6 +48,26 @@ export function SourceControlPanel() {
     fetchGitStatus();
   }, []);
 
+  const handleGenerateCommit = async () => {
+    if (isGenerating) return;
+    setIsGenerating(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/git/generate_commit_msg`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.message) {
+        setCommitMessage(data.message);
+        toast.success("Semantic message generated");
+      }
+    } catch (err) {
+      toast.error("Failed to generate message");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const handleCommit = async () => {
     if (!commitMessage.trim() || loading) return;
     setLoading(true);
@@ -62,9 +84,10 @@ export function SourceControlPanel() {
         setCommitMessage("");
         fetchGitStatus();
         refreshFileTree();
+        toast.success("Changes committed to " + branch);
       }
     } catch (err) {
-      console.error("Commit failed", err);
+      toast.error("Commit failed");
     } finally {
       setLoading(false);
     }
@@ -101,24 +124,34 @@ export function SourceControlPanel() {
       </div>
 
       <div className="source-control__branch">
-        <GitBranch size={14} />
-        <span>{branch}</span>
+        <GitBranch size={14} className="text-purple" />
+        <span className="branch-name">{branch}</span>
       </div>
 
-      <div className="source-control__commit">
-        <textarea 
-          placeholder="Message (Cmd+Enter to commit)"
-          value={commitMessage}
-          onChange={(e) => setCommitMessage(e.target.value)}
-          onKeyDown={(e) => (e.metaKey || e.ctrlKey) && e.key === "Enter" && handleCommit()}
-        />
+      <div className="source-control__commit-box">
+        <div className="commit-textarea-wrapper">
+          <textarea 
+            placeholder="Commit message..."
+            value={commitMessage}
+            onChange={(e) => setCommitMessage(e.target.value)}
+            onKeyDown={(e) => (e.metaKey || e.ctrlKey) && e.key === "Enter" && handleCommit()}
+          />
+          <button 
+            className={`ai-generate-btn ${isGenerating ? 'loading' : ''}`} 
+            onClick={handleGenerateCommit}
+            title="Generate AI Commit Message"
+            disabled={isGenerating || stagedChanges.length === 0}
+          >
+            {isGenerating ? <RotateCw size={12} className="animate-spin" /> : <Sparkles size={12} />}
+          </button>
+        </div>
         <button 
           className="btn btn--purple commit-btn" 
           disabled={loading || !commitMessage.trim() || stagedChanges.length === 0}
           onClick={handleCommit}
         >
           {loading ? <RotateCw size={14} className="animate-spin" /> : <Check size={14} />}
-          <span>Commit</span>
+          <span>Commit changes</span>
         </button>
       </div>
 
@@ -127,11 +160,16 @@ export function SourceControlPanel() {
           <div className="change-list">
             <div className="change-list__header" onClick={() => setExpanded(v => ({ ...v, staged: !v.staged }))}>
               {expanded.staged ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-              <span>STAGED CHANGES</span>
+              <span>STAGED</span>
               <span className="count-badge">{stagedChanges.length}</span>
             </div>
             {expanded.staged && stagedChanges.map(change => (
-              <ChangeItem key={change.path} change={change} onToggle={() => toggleStage(change.path, true)} />
+              <ChangeItem 
+                key={change.path} 
+                change={change} 
+                onToggle={() => toggleStage(change.path, true)}
+                onClick={() => diffFile(change.path)}
+              />
             ))}
           </div>
         )}
@@ -143,10 +181,15 @@ export function SourceControlPanel() {
             <span className="count-badge">{unstagedChanges.length}</span>
           </div>
           {expanded.unstaged && unstagedChanges.length === 0 && (
-            <div className="change-list__empty">No changes detected</div>
+            <div className="change-list__empty">No pending changes</div>
           )}
           {expanded.unstaged && unstagedChanges.map(change => (
-            <ChangeItem key={change.path} change={change} onToggle={() => toggleStage(change.path, false)} />
+            <ChangeItem 
+              key={change.path} 
+              change={change} 
+              onToggle={() => toggleStage(change.path, false)}
+              onClick={() => diffFile(change.path)}
+            />
           ))}
         </div>
       </div>
@@ -154,8 +197,8 @@ export function SourceControlPanel() {
   );
 }
 
-function ChangeItem({ change, onToggle }: { change: GitChange; onToggle: () => void }) {
-  const { openFile, activeFile } = useStore();
+function ChangeItem({ change, onToggle, onClick }: { change: GitChange; onToggle: () => void; onClick: () => void }) {
+  const { activeFile } = useStore();
   const isActive = activeFile === change.path;
 
   const statusChar = {
@@ -167,7 +210,7 @@ function ChangeItem({ change, onToggle }: { change: GitChange; onToggle: () => v
   }[change.status];
 
   return (
-    <div className={`change-item ${isActive ? "active" : ""}`}>
+    <div className={`change-item ${isActive ? "active" : ""}`} onClick={onClick}>
       <div className="change-item__main">
         <FileText size={14} className="change-icon" />
         <div className="change-info">
