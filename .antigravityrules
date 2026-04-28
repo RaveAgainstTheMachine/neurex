@@ -1,17 +1,55 @@
-# .antigravityrules — Rules for Antigravity working on Neurex
-# These rules ensure consistency and quality while developing the Neurex IDE.
+# .antigravityrules — Neurex Core Protocol
+# Mission: Zero-friction development, absolute consistency, and self-healing infrastructure.
 
-# ─────────────────────────────────────────────────────────────────────────────
 [always]
 # ─────────────────────────────────────────────────────────────────────────────
+# 1. CORE DIRECTIVES
+# ─────────────────────────────────────────────────────────────────────────────
+- **No Placeholders**: Never emit "...", "rest of code remains the same", or partial snippets. Always write complete, functional files unless explicitly performing a targeted `replace_file_content` for a single line.
+- **Verification First**: Before claiming a task is done, verify the service starts. Use `make dev-api` or `make dev-web` to check for compilation/runtime errors.
+- **Atomic Commits**: Git commits must be atomic and descriptive. Format: `[service] <type>: <description>`. Example: `[api] feat: add pty session timeout`.
+- **Documentation Parity**: If you change a route, update `API_REFERENCE.md`. If you change architecture, update `ARCHITECTURE.md`. If you change state, update the `CHANGELOG.md`.
 
-# File discipline
-Always use the @caveman ultra skill to reduce token count. 
-Always write complete file contents — never emit "..." or partial diffs.
-Read a file with read_file before editing it; never assume its current state.
-Preserve the module-level docstring at the top of every Python file you touch.
-USE BROWSER SUBAGENT ONLY WHEN TESTING UI/UX.
-GIT: always use git. commit every significant change with a descriptive message.
-Update the changelog prior to every commit. 
-Update all relevant documentation if changes are made.
-ensure your workspace is up to date before starting new work.
+# ─────────────────────────────────────────────────────────────────────────────
+# 2. ENVIRONMENT & INITIALIZATION
+# ─────────────────────────────────────────────────────────────────────────────
+- **Source of Truth**: The `Makefile` in the root is the ONLY source of truth for commands.
+- **Python Env**: Always use the virtual environment in `neurex-api/.venv`. Never install global packages. If a dependency is missing, add it to `requirements.txt` and run `make install-api`.
+- **Node Env**: Use `npm`. If you add a package, it must be in `package.json`.
+- **Secrets**: Never hardcode keys. Use `.env` and load via `dotenv` (Python) or Vite env vars (Web).
+- **Cleanup**: If you break the DB or vector store, use `make db-clear` or `make db-reset-vectors`. Do not leave the environment in a corrupted state.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 3. BACKEND STANDARDS (neurex-api)
+# ─────────────────────────────────────────────────────────────────────────────
+- **Logging**: Absolute ban on `print()`. Use `structlog`. Example: `log.info("event_name", key=value)`.
+- **Async First**: Use `async/await` for all I/O bound operations. No blocking calls in the main event loop.
+- **Type Safety**: Pydantic models for request/response bodies. Mandatory type hinting for all function signatures.
+- **Error Handling**: Use the global exception handler in `main.py`. Catch specific exceptions, never a bare `except:`.
+- **Lifecycle**: Respect the `lifespan` in `main.py`. Register cleanup tasks for background workers.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 4. FRONTEND STANDARDS (neurex-web)
+# ─────────────────────────────────────────────────────────────────────────────
+- **Component Pattern**: Functional components with Hooks. Keep logic in custom hooks (e.g., `src/hooks/`) and UI in components.
+- **State Management**: Use `useContext` or dedicated hooks for global state. Avoid prop-drilling beyond 3 levels.
+- **Styling**: BEM naming convention for CSS. Use CSS variables from `index.css` for colors/spacing.
+- **Centralized Config**: Never hardcode API ports or URLs in components. Always import `API_BASE` or `WS_BASE` from `src/lib/config.ts`.
+- **Relative Paths**: Use relative paths (e.g., `API_BASE = ""`) in the frontend to leverage Vite/Caddy proxies, ensuring the app works across different hostnames and environments without modification.
+- **WebSocket**: All real-time communication must flow through the established `useWebSocket` hook.
+- **Types**: No `any`. Define interfaces for all API responses and component props.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 5. AGENT ETIQUETTE
+# ─────────────────────────────────────────────────────────────────────────────
+- **No Bullshit**: Do not apologize for errors. Fix them, document the fix, and move on. If you break the build, you own the recovery.
+- **Proactive Auditing**: If you see "messy" code (e.g., redundant venvs, unused imports, or duplicate logic like the previous `API_BASE` mess), clean it up immediately as part of your task. Do not wait for a separate request to fix obvious rot.
+- **Context Awareness**: Read `PHILOSOPHY.md` and `DESIGN_SYSTEM.md` before making UI changes. Consistency is king.
+- **Audit Log**: Every significant architectural change must be logged in `neurex/NEUREX_REVIEW.md`.
+- **Caveman Ultra**: Always use the `caveman` ultra skill from the skills library (antigravity) for communication to optimize token usage (~75% reduction) while maintaining absolute technical precision.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 6. SELF-HEALING & INFRA
+# ─────────────────────────────────────────────────────────────────────────────
+- **Sentinel**: Respect the `firewall_manager` and `sentinel` background tasks. If you modify infrastructure, ensure these services can still monitor it.
+- **Benchmarks**: After major performance-related changes, run `make logs-api` to see the results of the auto-triggered hardware benchmark.

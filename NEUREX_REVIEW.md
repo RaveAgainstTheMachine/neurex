@@ -38,6 +38,14 @@ While the architecture is incredibly sound, I have identified a few areas that r
     *   *Status*: **RESOLVED** (v0.8.3-beta).
     *   *Implementation*: Integrated peer discovery via both `presence_manager` and `mesh_router` into the `llama-server` master launch command.
 
+4.  **Terminal & UX Resilience (Phase 10.6)**:
+    *   *Status*: **RESOLVED** (v0.8.4-alpha).
+    *   *Implementation*:
+        *   **Dual-Mode Layout**: Implemented dynamic `menu_mode` (Vertical/Horizontal) with self-closing logic and hover-synchronized menus, ensuring navigation is both context-aware and space-efficient.
+        *   **PTY Multi-Listener Pattern**: Refactored the backend PTY manager to support multiple WebSocket listeners, eliminating the race condition where browser reloads would sever the live output feed.
+        *   **Direct-Bypass Terminal Input**: Hardened terminal keystroke routing by bypassing React component closures and dispatching directly to the global WebSocket handler, resolving intermittent input unresponsiveness.
+        *   **Debounced Resize Handling**: Integrated `ResizeObserver` debouncing (100ms) to protect the backend `ptyprocess` from kernel-level I/O crashes during high-frequency window resizing.
+
 ---
 
 ## 4. Strategic Recommendations for Next Deployment
