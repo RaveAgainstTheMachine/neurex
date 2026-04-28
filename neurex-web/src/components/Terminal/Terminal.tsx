@@ -60,8 +60,11 @@ export function Terminal({ sessionId, onInput, onResize }: TerminalProps) {
       } catch (e) {}
     };
 
-    // Initial fit
-    setTimeout(doFit, 100);
+    // Initial fit and request buffer sync
+    setTimeout(() => {
+      doFit();
+      onInput("\x12"); // Sending Ctrl+R as a heartbeat/buffer sync request
+    }, 100);
 
     const observer = new ResizeObserver(() => {
       doFit();

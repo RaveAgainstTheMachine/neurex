@@ -233,6 +233,13 @@ function AppContent() {
     checkStatus();
   }, [token, onboardingRequired, isInitialized, setIsInitialized]);
 
+  useEffect(() => {
+    // Bounce back to 18% when switching tabs or clearing search
+    if (sidebarTab !== "search" && sidebarTab !== "infra") {
+      sidebarRef.current?.resize(18);
+    }
+  }, [sidebarTab]);
+
   const updateSidebarTab = (tab: SidebarTab) => {
     setSidebarTab(tab);
     localStorage.setItem("neurex_sidebar_tab", tab);
@@ -285,6 +292,7 @@ function AppContent() {
             { label: 'Stage Changes', action: () => {} }
           ]}
         />
+        <CommandPalette 
           isOpen={paletteMode === "global"} 
           onClose={() => setPaletteMode("none")} 
           title="Global Commands"
@@ -346,7 +354,7 @@ function AppContent() {
                   {sidebarTab === "history"  && <ConversationList />}
                   {sidebarTab === "infra"    && <InfraPanel onExpand={(s) => sidebarRef.current?.resize(s)} currentSize={sidebarRef.current?.getSize() || 18} />}
                   {sidebarTab === "system"   && <SystemLogsPanel />}
-                  {sidebarTab === "search"   && <SearchPanel />}
+                  {sidebarTab === "search"   && <SearchPanel onExpand={(s) => sidebarRef.current?.resize(s)} />}
                   {sidebarTab === "git"      && <SourceControlPanel />}
                   {sidebarTab === "skills"   && <SkillsPanel />}
                   {sidebarTab === "agent"    && <AgentPanel />}

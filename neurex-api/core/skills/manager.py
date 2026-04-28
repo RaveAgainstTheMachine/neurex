@@ -38,6 +38,30 @@ class SkillManager:
 
     def install_from_git(self, url: str) -> str:
         """Clone a skill repository into the local skills store."""
+        # Handle skillsmp.com deep links
+        if "skillsmp.com" in url:
+            try:
+                import requests
+                log.info("skill.resolve_marketplace", url=url)
+                # Try to find the GitHub URL in the page content or via meta
+                resp = requests.get(url, timeout=10)
+                if resp.status_code == 200:
+                    import re
+                    # Look for githubUrl param in Manus links as a high-fidelity source
+                    match = re.search(r"githubUrl=([^&\"' >]+)", resp.text)
+                    if match:
+                        from urllib.parse import unquote
+                        url = unquote(match.group(1))
+                        log.info("skill.resolved_from_marketplace", git_url=url)
+                    else:
+                        # Fallback: look for any github.com links in the description
+                        match = re.search(r"(https://github\.com/[^\"' >]+)", resp.text)
+                        if match:
+                            url = match.group(1)
+                            log.info("skill.fallback_resolved_from_marketplace", git_url=url)
+            except Exception as e:
+                log.warning("skill.marketplace_resolve_failed", error=str(e))
+
         name = url.split("/")[-1].replace(".git", "")
         target_path = self.SKILLS_DIR / name
         
@@ -155,7 +179,7 @@ class SkillManager:
                 "url": "https://github.com/JuliusBrussee/caveman",
                 "author": "Julius Brussee",
                 "version": "1.1.0",
-                "enabled": false
+                "enabled": False
             }
         ]
         

@@ -27,7 +27,7 @@ interface SearchResult {
   content: string;
 }
 
-export function SearchPanel() {
+export function SearchPanel({ onExpand }: { onExpand?: (s: number) => void }) {
   const searchState = useStore((s) => s.search);
   const setSearch = useStore((s) => s.setSearch);
   const clearSearch = useStore((s) => s.clearSearch);
@@ -40,6 +40,12 @@ export function SearchPanel() {
   const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>({});
 
   const { openFile, setPendingJump, token } = useStore();
+
+  useEffect(() => {
+    if (searchState.results.length > 0 && onExpand) {
+      onExpand(35); // Expand to 35% when results exist
+    }
+  }, [searchState.results.length, onExpand]);
 
   const handleSearch = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -155,7 +161,11 @@ export function SearchPanel() {
                   className="search-input"
                   placeholder="Search"
                   value={searchState.query}
-                  onChange={(e) => setSearch({ query: e.target.value })}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSearch({ query: val });
+                    if (!val.trim()) clearSearch();
+                  }}
                   onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                 />
                 <div className="search-options">
