@@ -8,6 +8,7 @@ import { ConversationList } from "./components/ConversationList/ConversationList
 import { InfraPanel } from "./components/InfraPanel/InfraPanel";
 import { SystemLogsPanel } from "./components/SystemLogs/SystemLogs";
 import { SearchPanel } from "./components/SearchPanel/SearchPanel";
+import { SourceControlPanel } from "./components/SourceControlPanel/SourceControlPanel";
 import { EditorPane } from "./components/Editor/EditorPane";
 import { AIPanel } from "./components/AIPanel/AIPanel";
 import { AgentPanel } from "./components/AgentPanel/AgentPanel";
@@ -86,10 +87,10 @@ export default function App() {
 const SIDEBAR_ITEMS: { id: SidebarTab; icon: React.FC<any>; label: string }[] = [
   { id: "explorer", icon: Files,          label: "Explorer" },
   { id: "search",   icon: Search,         label: "Search" },
+  { id: "git",      icon: GitBranch,      label: "Source Control" },
   { id: "history",  icon: Clock,          label: "History" },
   { id: "infra",    icon: Cpu,            label: "AI Infrastructure" },
   { id: "system",   icon: Shield,         label: "System Logs" },
-  { id: "git",      icon: GitBranch,      label: "Source Control" },
   { id: "skills",   icon: Puzzle,         label: "Skills & Extensions" },
   { id: "agent",    icon: Bot,            label: "Agents" },
 ];
@@ -278,6 +279,7 @@ function AppContent() {
                   {sidebarTab === "infra"    && <InfraPanel onExpand={(s) => sidebarRef.current?.resize(s)} currentSize={sidebarRef.current?.getSize() || 18} />}
                   {sidebarTab === "system"   && <SystemLogsPanel />}
                   {sidebarTab === "search"   && <SearchPanel />}
+                  {sidebarTab === "git"      && <SourceControlPanel />}
                   {sidebarTab === "skills"   && <SkillsPanel />}
                   {sidebarTab === "agent"    && <AgentPanel />}
                 </Panel>

@@ -1,8 +1,11 @@
 // neurex-web/src/components/SearchPanel/SearchPanel.tsx
 "use client";
 
-import { useState } from "react";
-import { Search, FileText, Loader2, X, ChevronDown, ChevronRight, CaseSensitive, WholeWord, Regex as RegexIcon } from "lucide-react";
+import { useState, useMemo } from "react";
+import { 
+  Search, FileText, Loader2, X, ChevronDown, ChevronRight, CaseSensitive, 
+  WholeWord, Regex as RegexIcon, Replace as ReplaceIcon, Check, MoreHorizontal
+} from "lucide-react";
 import { useStore } from "../../lib/store";
 import "./SearchPanel.css";
 
@@ -18,6 +21,12 @@ function getLanguage(path: string) {
   return LANG_MAP[path.split(".").pop() ?? ""] ?? "plaintext";
 }
 
+interface SearchResult {
+  path: string;
+  line: number;
+  content: string;
+}
+
 export function SearchPanel() {
   const searchState = useStore((s) => s.search);
   const setSearch = useStore((s) => s.setSearch);
@@ -25,8 +34,12 @@ export function SearchPanel() {
   
   const [searching, setSearching] = useState(false);
   const [expanded, setExpanded] = useState(true);
-  
-  const { openFile } = useStore();
+  const [showReplace, setShowReplace] = useState(false);
+  const [replaceQuery, setReplaceQuery] = useState("");
+  const [replacing, setReplacing] = useState(false);
+  const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>({});
+
+  const { openFile, setPendingJump, token } = useStore();
 
   const handleSearch = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -43,9 +56,16 @@ export function SearchPanel() {
         exclude_glob: searchState.excludeGlob,
       });
       
-      const res = await fetch(`${API_BASE}/api/files/search?${params.toString()}`);
+      const res = await fetch(`${API_BASE}/api/files/search?${params.toString()}`, {
+        headers: { "Authorization": `Bearer ${token}` }
+      });
       const data = await res.json();
       setSearch({ results: Array.isArray(data) ? data : [] });
+      
+      // Auto-expand all files on new search
+      const nextExpanded: Record<string, boolean> = {};
+      (Array.isArray(data) ? data : []).forEach(r => { nextExpanded[r.path] = true; });
+      setExpandedFiles(nextExpanded);
     } catch (err) {
       console.error("Search failed", err);
     } finally {
@@ -53,8 +73,38 @@ export function SearchPanel() {
     }
   };
 
+  const handleReplaceAll = async () => {
+    if (!searchState.query || replacing) return;
+    setReplacing(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/files/replace-all`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          query: searchState.query,
+          replacement: replaceQuery,
+          case_sensitive: searchState.caseSensitive,
+          use_regex: searchState.useRegex,
+          whole_word: searchState.wholeWord,
+          include_glob: searchState.includeGlob,
+          exclude_glob: searchState.excludeGlob,
+        })
+      });
+      if (res.ok) {
+        // Refresh search results after replace
+        handleSearch();
+      }
+    } catch (err) {
+      console.error("Replace failed", err);
+    } finally {
+      setReplacing(false);
+    }
+  };
+
   const handleOpenResult = async (path: string, line: number) => {
-    const { openFile, setPendingJump, token } = useStore.getState();
     try {
       const r = await fetch(`${API_BASE}/api/files/read?path=${encodeURIComponent(path)}`, {
         headers: { "Authorization": `Bearer ${token}` }
@@ -68,6 +118,19 @@ export function SearchPanel() {
     }
   };
 
+  const groupedResults = useMemo(() => {
+    const groups: Record<string, SearchResult[]> = {};
+    searchState.results.forEach(res => {
+      if (!groups[res.path]) groups[res.path] = [];
+      groups[res.path].push(res);
+    });
+    return groups;
+  }, [searchState.results]);
+
+  const toggleFile = (path: string) => {
+    setExpandedFiles(prev => ({ ...prev, [path]: !prev[path] }));
+  };
+
   return (
     <div className="search-panel">
       <div className="search-panel__header" onClick={() => setExpanded(!expanded)}>
@@ -77,71 +140,95 @@ export function SearchPanel() {
       
       {expanded && (
         <div className="search-panel__controls">
-          <form className="search-panel__form" onSubmit={handleSearch}>
-            <div className="search-input-wrapper">
-              <input
-                type="text"
-                className="search-input"
-                placeholder="Search"
-                value={searchState.query}
-                onChange={(e) => setSearch({ query: e.target.value })}
-              />
-              <div className="search-options">
-                <button 
-                  type="button"
-                  title="Match Case"
-                  className={`search-opt-btn ${searchState.caseSensitive ? "active" : ""}`}
-                  onClick={() => setSearch({ caseSensitive: !searchState.caseSensitive })}
-                >
-                  <CaseSensitive size={16} />
-                </button>
-                <button 
-                  type="button"
-                  title="Match Whole Word"
-                  className={`search-opt-btn ${searchState.wholeWord ? "active" : ""}`}
-                  onClick={() => setSearch({ wholeWord: !searchState.wholeWord })}
-                >
-                  <WholeWord size={16} />
-                </button>
-                <button 
-                  type="button"
-                  title="Use Regular Expression"
-                  className={`search-opt-btn ${searchState.useRegex ? "active" : ""}`}
-                  onClick={() => setSearch({ useRegex: !searchState.useRegex })}
-                >
-                  <RegexIcon size={16} />
-                </button>
-              </div>
-              <button type="submit" className="search-submit">
-                {searching ? <Loader2 size={14} className="animate-spin" /> : <Search size={14} />}
+          <div className="search-panel__inputs-group">
+            <div className="search-panel__row">
+              <button 
+                className={`search-expand-btn ${showReplace ? "active" : ""}`} 
+                onClick={() => setShowReplace(!showReplace)}
+                title="Toggle Replace"
+              >
+                {showReplace ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
               </button>
+              <div className="search-input-wrapper">
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder="Search"
+                  value={searchState.query}
+                  onChange={(e) => setSearch({ query: e.target.value })}
+                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                />
+                <div className="search-options">
+                  <button 
+                    type="button" title="Match Case"
+                    className={`search-opt-btn ${searchState.caseSensitive ? "active" : ""}`}
+                    onClick={() => setSearch({ caseSensitive: !searchState.caseSensitive })}
+                  >
+                    <CaseSensitive size={16} />
+                  </button>
+                  <button 
+                    type="button" title="Match Whole Word"
+                    className={`search-opt-btn ${searchState.wholeWord ? "active" : ""}`}
+                    onClick={() => setSearch({ wholeWord: !searchState.wholeWord })}
+                  >
+                    <WholeWord size={16} />
+                  </button>
+                  <button 
+                    type="button" title="Use Regular Expression"
+                    className={`search-opt-btn ${searchState.useRegex ? "active" : ""}`}
+                    onClick={() => setSearch({ useRegex: !searchState.useRegex })}
+                  >
+                    <RegexIcon size={16} />
+                  </button>
+                </div>
+              </div>
             </div>
-            
-            <div className="search-extra-inputs">
-              <input 
-                type="text" 
-                placeholder="files to include (e.g. *.ts, src/)" 
-                className="search-extra-input"
-                value={searchState.includeGlob}
-                onChange={(e) => setSearch({ includeGlob: e.target.value })}
-              />
-              <input 
-                type="text" 
-                placeholder="files to exclude (e.g. *.test.ts)" 
-                className="search-extra-input"
-                value={searchState.excludeGlob}
-                onChange={(e) => setSearch({ excludeGlob: e.target.value })}
-              />
-            </div>
-          </form>
+
+            {showReplace && (
+              <div className="search-panel__row animate-slide-down">
+                <div className="search-expand-spacer" />
+                <div className="search-input-wrapper">
+                  <input
+                    type="text"
+                    className="search-input"
+                    placeholder="Replace"
+                    value={replaceQuery}
+                    onChange={(e) => setReplaceQuery(e.target.value)}
+                  />
+                  <div className="search-options">
+                    <button 
+                      type="button" 
+                      title="Replace All"
+                      className="search-opt-btn replace-all-btn"
+                      onClick={handleReplaceAll}
+                      disabled={replacing || !searchState.query}
+                    >
+                      {replacing ? <Loader2 size={16} className="animate-spin" /> : <ReplaceIcon size={16} />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="search-extra-inputs">
+            <input 
+              type="text" placeholder="files to include" className="search-extra-input"
+              value={searchState.includeGlob} onChange={(e) => setSearch({ includeGlob: e.target.value })}
+            />
+            <input 
+              type="text" placeholder="files to exclude" className="search-extra-input"
+              value={searchState.excludeGlob} onChange={(e) => setSearch({ excludeGlob: e.target.value })}
+            />
+          </div>
         </div>
       )}
 
       <div className="search-results">
         {searchState.results.length > 0 && (
           <div className="search-results-count">
-            {searchState.results.length} results found
-            <button className="search-clear-btn" onClick={clearSearch}><X size={12} /></button>
+            <span>{Object.keys(groupedResults).length} files, {searchState.results.length} results</span>
+            <button className="search-clear-btn" onClick={clearSearch} title="Clear Results"><X size={12} /></button>
           </div>
         )}
         
@@ -149,20 +236,32 @@ export function SearchPanel() {
           <div className="search-empty">No results found.</div>
         )}
         
-        {searchState.results.map((res, i) => (
-          <div 
-            key={i} 
-            className="search-item" 
-            onClick={() => handleOpenResult(res.path, res.line)}
-          >
-            <div className="search-item__header">
-              <FileText size={12} className="search-item__icon" />
-              <span className="search-item__path">{res.path}</span>
-              <span className="search-item__line">{res.line}</span>
+        {searching && (
+          <div className="search-loading">
+            <Loader2 size={24} className="animate-spin" />
+            <span>Searching throughout codebase...</span>
+          </div>
+        )}
+
+        {Object.entries(groupedResults).map(([path, matches]) => (
+          <div key={path} className={`search-file-group ${expandedFiles[path] ? "expanded" : ""}`}>
+            <div className="search-file-header" onClick={() => toggleFile(path)}>
+              {expandedFiles[path] ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+              <FileText size={14} className="search-file-icon" />
+              <span className="search-file-name">{path.split('/').pop()}</span>
+              <span className="search-file-path">{path.substring(0, path.lastIndexOf('/'))}</span>
+              <span className="search-file-count">{matches.length}</span>
             </div>
-            <div className="search-item__snippet">
-              {res.content}
-            </div>
+            {expandedFiles[path] && (
+              <div className="search-file-matches">
+                {matches.map((match, idx) => (
+                  <div key={idx} className="search-match" onClick={() => handleOpenResult(path, match.line)}>
+                    <span className="search-match__line">{match.line}</span>
+                    <span className="search-match__content">{match.content}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ))}
       </div>
