@@ -1,7 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+// src/components/Editor/EditorPane.tsx
+import { useEffect, useRef, useState, useCallback } from "react";
 import MonacoEditor, { Editor, DiffEditor } from "@monaco-editor/react";
 import { useStore } from "../../lib/store";
-import { Files, ChevronDown, Save, FileCode, Check, AlertCircle } from "lucide-react";
+import { 
+  Files, ChevronDown, Save, FileCode, Check, AlertCircle, 
+  Sparkles, X, CornerDownLeft, Loader2 
+} from "lucide-react";
 import "./EditorPane.css";
 
 const LANGUAGES = [
@@ -13,13 +17,17 @@ export function EditorPane() {
   const { 
     openFiles, activeFile, setFileContent, saveFile, 
     presence, pendingJump, clearPendingJump, setFileLanguage,
-    setCursorPosition
+    setCursorPosition, upsertTask
   } = useStore();
   
   const editorRef = useRef<any>(null);
-  const [showLangMenu, setShowLangMenu] = useState(false);
-
   const active = openFiles.find((f) => f.path === activeFile) ?? openFiles[0];
+  
+  // Inline AI Edit State
+  const [inlinePrompt, setInlinePrompt] = useState("");
+  const [isInlineVisible, setIsInlineVisible] = useState(false);
+  const [inlineCoords, setInlineCoords] = useState({ top: 0, left: 0 });
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     if (pendingJump && editorRef.current && pendingJump.path === activeFile) {
@@ -38,6 +46,53 @@ export function EditorPane() {
       editorRef.current._presenceObserver();
     }
   }, [presence]);
+
+  const handleInlineSubmit = useCallback(async () => {
+    if (!inlinePrompt.trim() || isProcessing || !editorRef.current) return;
+    
+    setIsProcessing(true);
+    const editor = editorRef.current;
+    const selection = editor.getSelection();
+    const selectedText = editor.getModel().getValueInRange(selection);
+    
+    try {
+      // Simulate task creation for the flight recorder
+      const taskId = Math.random().toString(36).substring(7);
+      upsertTask({
+        id: taskId,
+        graph_id: "inline-edit",
+        parent_id: null,
+        agent_type: "coder",
+        title: "Inline AI Edit",
+        description: inlinePrompt,
+        status: "THINKING",
+        result: null,
+        error: null,
+        iteration: 1,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+
+      // Signal the AI Panel to handle the edit (or send directly to API)
+      const event = new CustomEvent("neurex_inline_edit", {
+        detail: {
+          path: active.path,
+          prompt: inlinePrompt,
+          selection: selectedText,
+          range: selection,
+          taskId
+        }
+      });
+      window.dispatchEvent(event);
+      
+      setIsInlineVisible(false);
+      setInlinePrompt("");
+    } catch (err) {
+      console.error("Inline edit failed", err);
+    } finally {
+      setIsProcessing(false);
+    }
+  }, [inlinePrompt, isProcessing, active, upsertTask]);
 
   if (!active) {
     return (
@@ -90,6 +145,34 @@ export function EditorPane() {
       </div>
 
       <div className="editor-monaco">
+        {isInlineVisible && (
+          <div 
+            className="inline-ai-prompt animate-scale"
+            style={{ top: inlineCoords.top, left: inlineCoords.left }}
+          >
+            <div className="inline-ai-prompt__header">
+              <Sparkles size={12} className="text-cyan" />
+              <span>Ask AI to edit...</span>
+              <button className="close-btn" onClick={() => setIsInlineVisible(false)}><X size={12} /></button>
+            </div>
+            <div className="inline-ai-prompt__input-wrapper">
+              <input 
+                autoFocus
+                placeholder="Fix bugs, add features, refactor..."
+                value={inlinePrompt}
+                onChange={(e) => setInlinePrompt(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleInlineSubmit();
+                  if (e.key === "Escape") setIsInlineVisible(false);
+                }}
+              />
+              <button className="submit-btn" onClick={handleInlineSubmit}>
+                {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <CornerDownLeft size={14} />}
+              </button>
+            </div>
+          </div>
+        )}
+
         {active.originalContent !== undefined ? (
           <DiffEditor
             height="100%"
@@ -97,14 +180,6 @@ export function EditorPane() {
             modified={active.content}
             language={active.language}
             theme="neurex-dark"
-            beforeMount={(monaco) => {
-              monaco.editor.defineTheme("neurex-dark", {
-                base: "vs-dark",
-                inherit: true,
-                rules: [],
-                colors: { "editor.background": "#0a0a0c" },
-              });
-            }}
             options={{
               fontSize: 13,
               fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
@@ -165,6 +240,14 @@ export function EditorPane() {
               };
 
               (editor as any)._presenceObserver = renderRemoteCursors;
+
+              // Register Cmd+K
+              editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyK, () => {
+                const pos = editor.getScrolledVisiblePosition(editor.getPosition());
+                setInlineCoords({ top: pos.top + 30, left: Math.min(pos.left, editor.getDomNode().clientWidth - 320) });
+                setIsInlineVisible(true);
+              });
+
               editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
                 saveFile(active.path);
               });
@@ -186,10 +269,6 @@ export function EditorPane() {
             }}
           />
         )}
-      </div>
-
-      <div className="editor-status-bar" style={{ display: 'none' }}>
-        {/* Hiding old status bar as it moved to global app status bar */}
       </div>
     </div>
   );

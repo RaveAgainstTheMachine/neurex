@@ -1,202 +1,205 @@
+/* src/components/Editor/EditorPane.css */
 .editor-pane {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: var(--bg-surface);
+  background: var(--bg-app);
   overflow: hidden;
+  position: relative;
 }
 
-/* ── Ghost Cursors ── */
-.remote-cursor {
-  width: 2px !important;
-  background: var(--status-done);
-  position: absolute;
-  z-index: 10;
+.editor-pane__header {
+  height: 35px;
+  background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
 }
 
-.remote-cursor--agent {
-  background: var(--accent-purple);
+.editor-tabs {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  overflow-x: auto;
+  gap: 1px;
 }
 
-.remote-cursor:after {
+.editor-tab {
+  height: 100%;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  border-right: 1px solid var(--border);
+  white-space: nowrap;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.editor-tab:hover { background: var(--bg-hover); color: var(--text-primary); }
+.editor-tab.active { background: var(--bg-app); color: var(--text-primary); }
+.editor-tab.active::after {
   content: "";
   position: absolute;
-  top: -2px;
-  left: -2px;
-  width: 6px;
-  height: 6px;
-  background: inherit;
+  top: 0; left: 0; right: 0; height: 2px;
+  background: var(--accent-purple);
+  box-shadow: 0 0 8px var(--accent-purple);
+}
+
+.editor-tab__icon { opacity: 0.6; }
+.editor-tab__close {
+  width: 16px; height: 16px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 4px;
+  font-size: 14px;
+  opacity: 0.5;
+}
+.editor-tab__close:hover { background: var(--bg-active); opacity: 1; color: var(--text-red); }
+
+.dirty-dot {
+  width: 6px; height: 6px;
+  background: var(--accent-purple);
   border-radius: 50%;
+  box-shadow: 0 0 5px var(--accent-purple);
+}
+
+.editor-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 8px;
+}
+
+.editor-control-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.editor-control-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+.save-btn { color: var(--accent-purple); font-weight: 600; }
+
+.editor-monaco {
+  flex: 1;
+  position: relative;
+  min-height: 0;
 }
 
 .editor-empty {
+  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
   background: var(--bg-app);
 }
 
 .editor-empty__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 400px;
   text-align: center;
 }
 
 .editor-empty__logo {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 24px;
-  color: var(--accent-purple);
-  filter: drop-shadow(0 0 20px rgba(156, 111, 255, 0.2));
-  animation: float 4s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
-}
-
-.editor-empty__title {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: 8px;
-  letter-spacing: -0.02em;
-}
-
-.editor-empty__subtitle {
-  font-size: 14px;
-  color: var(--text-muted);
-  max-width: 400px;
-  line-height: 1.6;
-}
-
-/* Tabs */
-.editor-tabs {
-  display: flex;
-  align-items: stretch;
-  background: var(--bg-app);
-  border-bottom: 1px solid var(--border);
-  height: var(--tabbar-height);
-  overflow-x: auto;
-  flex-shrink: 0;
-}
-
-.editor-tabs::-webkit-scrollbar { height: 2px; }
-
-.editor-tab {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 12px;
-  border-right: 1px solid var(--border);
-  cursor: pointer;
-  white-space: nowrap;
-  font-size: 13px;
-  color: var(--text-muted);
+  width: 120px; height: 120px;
   background: var(--bg-sidebar);
-  position: relative;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  min-width: 140px;
+  border-radius: 30px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--accent-purple);
+  box-shadow: 0 0 40px rgba(0,0,0,0.5);
+  border: 1px solid var(--border);
 }
 
-.editor-tab:hover {
-  color: var(--text-secondary);
-  background: var(--bg-hover);
-}
+.editor-empty__title { font-size: 24px; color: var(--text-primary); }
+.editor-empty__subtitle { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
 
-.editor-tab--active {
-  color: var(--text-primary);
-  background: var(--bg-surface);
-}
-
-.editor-tab--active::after {
-  content: '';
+/* ── Inline AI Prompt ────────────────────────────────────────────── */
+.inline-ai-prompt {
   position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: var(--accent-blue);
-  box-shadow: 0 0 10px rgba(76, 142, 255, 0.5);
-}
-
-.editor-tab__name { flex: 1; overflow: hidden; text-overflow: ellipsis; }
-
-.editor-tab__dirty {
-  width: 8px; height: 8px;
-  border-radius: 50%;
-  background: var(--accent-blue);
-  flex-shrink: 0;
-  box-shadow: 0 0 8px rgba(76, 142, 255, 0.4);
-}
-
-.editor-tab__close {
-  background: none; border: none;
-  color: var(--text-muted);
-  display: flex; align-items: center;
-  padding: 4px; border-radius: 4px;
-  opacity: 0.4; transition: all 0.2s;
-}
-
-.editor-tab:hover .editor-tab__close { opacity: 0.8; }
-.editor-tab__close:hover { 
-  color: var(--text-primary); 
-  background: var(--bg-elevated);
-  opacity: 1;
-}
-
-/* Breadcrumb */
-.editor-breadcrumb {
-  padding: 0 16px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  font-size: 11px;
-  color: var(--text-muted);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-  background: var(--bg-surface);
-  gap: 4px;
-}
-
-.breadcrumb-seg { transition: color 0.1s; }
-.breadcrumb-seg:hover { color: var(--text-secondary); cursor: pointer; }
-.breadcrumb-sep { opacity: 0.3; padding: 0 2px; }
-.breadcrumb-active {
-  color: var(--text-primary);
-  font-weight: 500;
-}
-
-.editor-diff-actions {
-  margin-left: auto;
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.editor-diff-actions .btn--sm {
-  padding: 4px 10px;
-  font-size: 11px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* Monaco container */
-.editor-monaco {
-  flex: 1;
-  overflow: hidden;
-  background: var(--bg-surface);
-}
-
-.editor-error {
+  z-index: 1000;
+  width: 320px;
+  background: rgba(15, 15, 20, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--accent-purple);
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.8), 0 0 20px rgba(100, 50, 255, 0.2);
+  padding: 8px;
   display: flex;
   flex-direction: column;
+  gap: 8px;
+}
+
+.inline-ai-prompt__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.inline-ai-prompt__header .close-btn {
+  margin-left: auto;
+  opacity: 0.5;
+}
+
+.inline-ai-prompt__input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-app);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 8px;
+}
+
+.inline-ai-prompt__input-wrapper input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 13px;
+  padding: 4px 0;
+}
+
+.inline-ai-prompt__input-wrapper .submit-btn {
+  color: var(--accent-purple);
+  display: flex;
   align-items: center;
   justify-content: center;
-  height: 100%;
-  background: #1a1a1f;
-  color: #ff5555;
-  font-family: monospace;
-  padding: 20px;
-  text-align: center;
+  transition: transform 0.2s;
 }
+
+.inline-ai-prompt__input-wrapper .submit-btn:hover {
+  transform: translateX(2px);
+  filter: drop-shadow(0 0 5px var(--accent-purple));
+}
+
+/* ── Remote Cursors ─────────────────────────────────────────────── */
+.remote-cursor {
+  width: 2px !important;
+  z-index: 50;
+}
+.remote-cursor::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  box-shadow: 0 0 10px currentColor;
+}
+.remote-cursor--agent { color: var(--accent-cyan); }
+.remote-cursor--user { color: var(--accent-purple); }
