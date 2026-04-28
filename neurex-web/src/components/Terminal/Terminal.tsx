@@ -27,7 +27,7 @@ export function Terminal({ onInput, onResize, output }: TerminalProps) {
       lineHeight: 1.4,
       allowProposedApi: true,
       theme: {
-        background: "hsl(240, 10%, 4%)",
+        background: "#050507",
         foreground: "#e8e8f0",
         cursor: "hsl(240, 6%, 45%)",
         selectionBackground: "rgba(255, 255, 255, 0.1)",

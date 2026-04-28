@@ -160,7 +160,6 @@
 
 .bottom-panel__content {
   flex: 1;
-  padding: 12px;
   overflow: hidden;
   background: #050507; /* Ultra dark terminal background */
 }

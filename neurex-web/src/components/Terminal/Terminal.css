@@ -1,16 +1,14 @@
+/* src/components/Terminal/Terminal.css */
 .terminal-container {
   width: 100%;
   height: 100%;
-  background: var(--bg-app);
+  background: #050507;
   box-sizing: border-box;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  padding-bottom: 6px;
   position: relative;
-  border: 1px solid var(--border);
-  box-shadow: inset 0 0 40px rgba(100, 50, 255, 0.05); /* Subtle inner glow */
+  /* No borders or padding for a seamless flush look */
 }
 
 /* Cyberpunk scanline effect overlay */
@@ -25,8 +23,8 @@
 
 .xterm {
   width: 100%;
-  padding: 8px;
-  height: auto !important;
+  height: 100%;
+  padding: 12px; /* Inner padding only, no borders */
   z-index: 10;
 }
 
