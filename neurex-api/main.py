@@ -3,6 +3,7 @@ neurex-api — main.py
 Entry point: mounts routers, starts background workers, manages lifespan.
 """
 from contextlib import asynccontextmanager
+import asyncio
 import structlog
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -45,6 +46,10 @@ async def lifespan(app: FastAPI):
     pty_manager = PTYManager()
     app.state.pty_manager = pty_manager
 
+    # Start Presence Manager tasks
+    from core.collaboration.presence import presence_manager
+    presence_manager.start()
+
     # Start Insomnia Service
     from core.infrastructure.insomnia import insomnia_service
     insomnia_service.sync()
@@ -55,7 +60,6 @@ async def lifespan(app: FastAPI):
 
     # Firewall Integrity Check + Sentinel (Auto-Healing)
     from core.infrastructure.firewall import firewall_manager
-    import asyncio
     await firewall_manager.check_startup()
     asyncio.create_task(firewall_manager.start_sentinel())
 

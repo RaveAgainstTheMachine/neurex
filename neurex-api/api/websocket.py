@@ -126,6 +126,13 @@ async def websocket_endpoint(
                     pty_session.resize(msg.get("rows", 24), msg.get("cols", 80))
                     continue
 
+                if msg_type == "terminal_sync":
+                    sid = msg.get("sessionId", conversation_id)
+                    history = pty_manager.get_history(sid)
+                    if history:
+                        await websocket.send_json({"type": "terminal_output", "sessionId": sid, "data": history})
+                    continue
+
                 if msg_type == "set_autonomy":
                     level = msg.get("level", "limited")
                     orch.set_autonomy_level(level)

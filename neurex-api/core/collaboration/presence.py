@@ -17,8 +17,13 @@ class PresenceManager:
         # Map conversation_id -> user_id -> presence_data
         self.presence_state: Dict[str, Dict[str, Any]] = {}
         self.node_id = "node-" + str(time.time()) # Unique ID for this specific instance
-        asyncio.create_task(self._sweep_zombies())
-        asyncio.create_task(self._heartbeat_system())
+        self._tasks: List[asyncio.Task] = []
+
+    def start(self):
+        """Starts background tasks once an event loop is running."""
+        if not self._tasks:
+            self._tasks.append(asyncio.create_task(self._sweep_zombies()))
+            self._tasks.append(asyncio.create_task(self._heartbeat_system()))
 
     async def _heartbeat_system(self):
         """Periodically broadcasts this node's compute capabilities to the mesh."""
