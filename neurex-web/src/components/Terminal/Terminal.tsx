@@ -16,11 +16,28 @@ interface TerminalProps {
   isActive?: boolean;
 }
 
+// Phase 1: Centralized registry for O(1) event routing
+export const terminalRegistry = new Map<string, XTerm>();
+
+// Static global listener to avoid O(N) listener overhead
+if (typeof window !== "undefined") {
+  window.addEventListener("terminal_write", (e: any) => {
+    const { sessionId, data } = e.detail;
+    const term = terminalRegistry.get(sessionId);
+    if (term) {
+      term.write(data);
+    }
+  });
+}
+
 export function Terminal({ sessionId, onInput, onResize, isActive }: TerminalProps) {
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef   = useRef<XTerm | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
   const lastSizeRef = useRef({ rows: 0, cols: 0 });
+
+  const activeConversationId = useStore(s => s.activeConversationId);
+  const theme = useStore(s => s.theme);
 
   // Stable refs for callbacks — never stale, never trigger re-renders
   const onInputRef  = useRef(onInput);
@@ -29,7 +46,7 @@ export function Terminal({ sessionId, onInput, onResize, isActive }: TerminalPro
   useEffect(() => { onResizeRef.current = onResize; }, [onResize]);
 
   // Read line height once via getState — no subscription, no re-renders
-  const lineHeightRef = useRef(useStore.getState().theme.terminal_line_height ?? 1.2);
+  const lineHeightRef = useRef(theme.terminal_line_height ?? 1.2);
 
   // Keep lineHeight and accent color in sync without re-rendering
   useEffect(() => {
@@ -54,6 +71,7 @@ export function Terminal({ sessionId, onInput, onResize, isActive }: TerminalPro
           xtermRef.current.options.theme = {
             ...xtermRef.current.options.theme,
             cursor: accent,
+            cursorAccent: "#050507",
             magenta: accent,
             selectionBackground: `${accent}44`
           };
@@ -78,19 +96,37 @@ export function Terminal({ sessionId, onInput, onResize, isActive }: TerminalPro
     return () => clearTimeout(t);
   }, [isActive]);
 
+  // Sync terminal options when theme changes
+  useEffect(() => {
+    if (!xtermRef.current) return;
+    const theme = useStore.getState().theme;
+    xtermRef.current.options.fontSize = theme.terminal_font_size;
+    xtermRef.current.options.fontFamily = theme.terminal_font_family;
+    xtermRef.current.options.cursorStyle = theme.terminal_cursor_style;
+    xtermRef.current.options.lineHeight = theme.terminal_line_height;
+    xtermRef.current.options.theme = {
+      ...xtermRef.current.options.theme,
+      cursor: theme.accent_color,
+      selectionBackground: `${theme.accent_color}44`,
+      magenta: theme.accent_color
+    };
+    // Re-fit after font changes
+    fitAddonRef.current?.fit();
+  }, [isActive, theme.terminal_font_size, theme.terminal_font_family, theme.terminal_cursor_style, theme.terminal_line_height, theme.accent_color]);
+
   // Mount once per sessionId
   useEffect(() => {
     if (!terminalRef.current) return;
 
     const term = new XTerm({
-      cursorBlink: true,
-      cursorStyle: "block",
+      cursorBlink: false, // CSS managed
       allowTransparency: true,
       scrollback: 5000,
       theme: {
-        background: "#050507",
+        background: "transparent",
         foreground: "#e8e8f0",
         cursor: useStore.getState().theme.accent_color || "hsl(260, 90%, 70%)",
+        cursorAccent: "#050507",
         selectionBackground: `${useStore.getState().theme.accent_color || "hsl(260, 90%, 70%)"}44`,
         black: "#0d0d0f",
         red: "hsl(0, 85%, 65%)",
@@ -101,8 +137,9 @@ export function Terminal({ sessionId, onInput, onResize, isActive }: TerminalPro
         cyan: "hsl(185, 85%, 55%)",
         white: "#e8e8f0",
       },
-      fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-      fontSize: 13,
+      fontFamily: theme.terminal_font_family,
+      fontSize: theme.terminal_font_size,
+      cursorStyle: theme.terminal_cursor_style,
       lineHeight: lineHeightRef.current,
       allowProposedApi: true,
       convertEol: true,
@@ -116,67 +153,75 @@ export function Terminal({ sessionId, onInput, onResize, isActive }: TerminalPro
 
     term.open(terminalRef.current);
     xtermRef.current = term;
+    
+    // Register for global event routing
+    terminalRegistry.set(sessionId, term);
 
     const doFit = () => {
       if (!terminalRef.current || !xtermRef.current || !fitAddonRef.current) return;
       try {
-        const isAtBottom = xtermRef.current.buffer.active.viewportY === xtermRef.current.buffer.active.baseY;
-        fitAddonRef.current.fit();
-        
-        const { rows, cols } = xtermRef.current;
+        const term = xtermRef.current;
+        const fitAddon = fitAddonRef.current;
+        const isAtBottom = term.buffer.active.viewportY === term.buffer.active.baseY;
+        fitAddon.fit();
+        const { rows, cols } = term;
         if (rows > 0 && cols > 0 && (rows !== lastSizeRef.current.rows || cols !== lastSizeRef.current.cols)) {
           lastSizeRef.current = { rows, cols };
           onResizeRef.current(rows, cols);
         }
-        
-        if (isAtBottom) {
-          xtermRef.current.scrollToBottom();
+        if (isAtBottom || lastSizeRef.current.rows === 0) {
+          term.scrollToBottom();
         }
       } catch (_) {}
     };
 
-    let resizeTimer: any;
+    let rafId: number = 0;
     const observer = new ResizeObserver(() => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(doFit, 50);
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(doFit);
     });
     observer.observe(terminalRef.current);
 
-    // Route keystrokes to PTY unconditionally bypassing React closures
+    // Phase 2: Direct DOM focus management
+    const ta = term.textarea;
+    const container = terminalRef.current;
+    if (ta && container) {
+      ta.addEventListener('focus', () => container.classList.add('is-focused'));
+      ta.addEventListener('blur', () => container.classList.remove('is-focused'));
+    }
+
     term.onData((data) => {
       const ws = (window as any).neurexWS;
       if (ws && ws.send) {
         ws.send({ type: "terminal_input", sessionId, data });
       } else {
-        onInputRef.current(data); // Fallback to prop
+        onInputRef.current(data);
       }
     });
     
-    // Fallback: intercept keys directly if onData misses them (rare but possible in some electron/iframe envs)
-    term.onKey(({ key, domEvent }) => {
-      if (term.options.disableStdin) return;
-      // We don't want to double-send, so we rely on onData, 
-      // but keeping this hook in case we need to debug or intercept.
-    });
-
-    const handleWrite = (e: any) => {
-      if (e.detail.sessionId === sessionId) {
-        term.write(e.detail.data, () => term.scrollToBottom());
-      }
-    };
-    window.addEventListener("terminal_write", handleWrite);
-
     term.focus();
+    
+    // Stabilize layout and then sync history
+    setTimeout(() => {
+      if (!xtermRef.current) return;
+      doFit();
+      xtermRef.current.refresh(0, xtermRef.current.rows - 1);
+      
+      const ws = (window as any).neurexWS;
+      if (ws && ws.send) {
+        ws.send({ type: "terminal_sync", sessionId });
+      }
+    }, 150);
 
     return () => {
-      clearTimeout(resizeTimer);
+      cancelAnimationFrame(rafId);
       observer.disconnect();
-      window.removeEventListener("terminal_write", handleWrite);
+      terminalRegistry.delete(sessionId);
       term.dispose();
       xtermRef.current  = null;
       fitAddonRef.current = null;
     };
-  }, [sessionId]); // mount once per session — nothing else
+  }, [sessionId]);
 
   return (
     <div

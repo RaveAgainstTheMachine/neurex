@@ -2,6 +2,7 @@
 core/infrastructure/manager.py
 Manages LLM engines (Ollama, vLLM, etc.) and system resources.
 """
+import os
 import asyncio
 import shutil
 import psutil

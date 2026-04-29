@@ -58,7 +58,8 @@
   display: flex; align-items: center; justify-content: center;
   border-radius: 4px;
   font-size: 14px;
-  opacity: 0.5;
+  opacity: 1;
+  color: var(--text-primary);
 }
 .editor-tab__close:hover { background: var(--bg-active); opacity: 1; color: var(--text-red); }
 

@@ -60,6 +60,9 @@ DEFAULT_SETTINGS = {
     # UI Layout
     "menu_mode": "horizontal",
     "terminal_line_height": 1.2,
+    "terminal_font_size": 13,
+    "terminal_font_family": "'JetBrains Mono', 'Fira Code', monospace",
+    "terminal_cursor_style": "block",
 }
 
 class SettingsManager:

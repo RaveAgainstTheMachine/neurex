@@ -27,7 +27,11 @@ export function MenuBar({ mode = "horizontal" }: MenuBarProps) {
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [expandedSections, setExpandedSections] = useState<string[]>(["File"]);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
-  const { logout, saveFile, activeFile, setTheme, theme } = useStore();
+  const { 
+    logout, saveFile, activeFile, setTheme, theme, 
+    addTerminalSession, closeTerminalSession, activeTerminalId, 
+    clearActiveTerminal, runActiveFile, setModalOpen, refreshFileTree 
+  } = useStore();
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -49,8 +53,11 @@ export function MenuBar({ mode = "horizontal" }: MenuBarProps) {
         { label: "Open File...", shortcut: "Ctrl+O" },
         { separator: true },
         { label: "Save", shortcut: "Ctrl+S", action: () => activeFile && saveFile(activeFile) },
+        { label: "Save All", shortcut: "Ctrl+K S" },
         { separator: true },
-        { label: "Auto Save", checked: true },
+        { label: "Refresh Explorer", action: refreshFileTree },
+        { separator: true },
+        { label: "Settings", shortcut: "Ctrl+,", action: () => setModalOpen(true) },
         { separator: true },
         { label: "Exit", action: logout }
       ]
@@ -59,11 +66,14 @@ export function MenuBar({ mode = "horizontal" }: MenuBarProps) {
       title: "Edit",
       options: [
         { label: "Undo", shortcut: "Ctrl+Z" },
-        { label: "Redo", shortcut: "Ctrl+Y" },
+        { label: "Redo", shortcut: "Ctrl+Shift+Z" },
         { separator: true },
         { label: "Cut", shortcut: "Ctrl+X" },
         { label: "Copy", shortcut: "Ctrl+C" },
-        { label: "Paste", shortcut: "Ctrl+V" }
+        { label: "Paste", shortcut: "Ctrl+V" },
+        { separator: true },
+        { label: "Find", shortcut: "Ctrl+F" },
+        { label: "Replace", shortcut: "Ctrl+H" }
       ]
     },
     {
@@ -71,12 +81,38 @@ export function MenuBar({ mode = "horizontal" }: MenuBarProps) {
       options: [
         { label: "Appearance", submenu: [
           { label: "Toggle Glassmorphism", checked: theme.enable_glassmorphism, action: () => setTheme({ enable_glassmorphism: !theme.enable_glassmorphism }) },
-          { label: "Toggle Animations", checked: theme.enable_animations, action: () => setTheme({ enable_animations: !theme.enable_animations }) }
+          { label: "Toggle Animations", checked: theme.enable_animations, action: () => setTheme({ enable_animations: !theme.enable_animations }) },
+          { label: "Swarm Glow", checked: theme.enable_swarm_glow, action: () => setTheme({ enable_swarm_glow: !theme.enable_swarm_glow }) }
         ]},
         { separator: true },
         { label: "Explorer", shortcut: "Ctrl+Shift+E" },
         { label: "Search", shortcut: "Ctrl+Shift+F" },
+        { label: "Source Control", shortcut: "Ctrl+Shift+G" },
         { label: "Terminal", shortcut: "Ctrl+`" }
+      ]
+    },
+    {
+      title: "Terminal",
+      options: [
+        { label: "New Terminal", shortcut: "Ctrl+Shift+`", action: () => addTerminalSession() },
+        { label: "Split Terminal", shortcut: "Ctrl+Shift+5" },
+        { separator: true },
+        { label: "Run Active File", shortcut: "F5" },
+        { separator: true },
+        { label: "Clear Terminal", shortcut: "Ctrl+L", action: clearActiveTerminal },
+        { label: "Kill Terminal", action: () => closeTerminalSession(activeTerminalId) }
+      ]
+    },
+    {
+      title: "Help",
+      options: [
+        { label: "Welcome", action: () => window.open("https://github.com/frosty-hq/neurex", "_blank") },
+        { label: "Documentation", action: () => window.open("https://github.com/frosty-hq/neurex/wiki", "_blank") },
+        { label: "Show All Commands", shortcut: "Ctrl+Shift+P" },
+        { separator: true },
+        { label: "Check for Updates..." },
+        { separator: true },
+        { label: "About Neurex" }
       ]
     }
   ];

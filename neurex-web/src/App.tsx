@@ -148,7 +148,9 @@ function AppContent() {
   const { 
     wsStatus, isInitialized, setIsInitialized, onboardingRequired, 
     token, activeConversationId, modalOpen, tasks, hiveStats, 
-    theme, cursorPosition, openFiles, activeFile, setFileLanguage, logout, saveFile
+    theme, cursorPosition, openFiles, activeFile, setFileLanguage, logout, saveFile,
+    refreshFileTree, activeTerminalId, addTerminalSession, clearActiveTerminal, 
+    runActiveFile, setModalOpen, closeTerminalSession
   } = useStore();
   
   const [visualProgress, setVisualProgress] = useState(25);
@@ -171,25 +173,49 @@ function AppContent() {
 
   useEffect(() => {
     const handleGlobalKey = (e: KeyboardEvent) => {
+      // Command Palette
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "P") {
         e.preventDefault();
         setPaletteMode("global");
       }
+      // Global Search
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "F") {
         e.preventDefault();
-        updateSidebarTab("search");
+        setSidebarTab("search");
       }
+      // Save File
       if ((e.metaKey || e.ctrlKey) && e.key === "s") {
         e.preventDefault();
         if (activeFile) {
           saveFile(activeFile);
-          toast.success("File Saved");
         }
+      }
+      // Settings
+      if ((e.metaKey || e.ctrlKey) && e.key === ",") {
+        e.preventDefault();
+        setModalOpen(true);
+      }
+      // New Terminal
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "`") {
+        e.preventDefault();
+        addTerminalSession();
+      }
+      // Clear Terminal
+      if ((e.metaKey || e.ctrlKey) && e.key === "l") {
+        // Only if terminal might be focused or we want it global
+        // Usually Ctrl+L is expected global in IDEs to clear focused terminal
+        e.preventDefault();
+        clearActiveTerminal();
+      }
+      // Run Active File
+      if (e.key === "F5") {
+        e.preventDefault();
+        runActiveFile();
       }
     };
     window.addEventListener("keydown", handleGlobalKey);
     return () => window.removeEventListener("keydown", handleGlobalKey);
-  }, [activeFile, saveFile]);
+  }, [activeFile, saveFile, addTerminalSession, clearActiveTerminal, runActiveFile, setModalOpen]);
 
   // ── Event Listeners (Bypass) ──
   useEffect(() => {
@@ -282,11 +308,16 @@ function AppContent() {
   const globalCommands = [
     { id: "new-file", label: "File: New File", category: "General", action: () => {} },
     { id: "save-file", label: "File: Save", category: "General", action: () => activeFile && saveFile(activeFile) },
+    { id: "refresh-explorer", label: "File: Refresh Explorer", category: "General", action: refreshFileTree },
     { id: "view-explorer", label: "View: Show Explorer", category: "Navigation", action: () => updateSidebarTab("explorer") },
     { id: "view-git", label: "View: Show Source Control", category: "Navigation", action: () => updateSidebarTab("git") },
     { id: "view-search", label: "View: Show Search", category: "Navigation", action: () => updateSidebarTab("search") },
     { id: "toggle-ai", label: "View: Toggle AI Assistant", category: "View", action: () => setShowAIPanel(!showAIPanel) },
-    { id: "toggle-settings", label: "View: Toggle Settings", category: "View", action: () => setShowSettings(!showSettings) },
+    { id: "toggle-settings", label: "View: Toggle Settings", category: "View", action: () => setModalOpen(!modalOpen) },
+    { id: "new-terminal", label: "Terminal: New Terminal", category: "Terminal", action: () => addTerminalSession() },
+    { id: "clear-terminal", label: "Terminal: Clear Terminal", category: "Terminal", action: clearActiveTerminal },
+    { id: "kill-terminal", label: "Terminal: Kill Active Session", category: "Terminal", action: () => closeTerminalSession(activeTerminalId) },
+    { id: "run-file", label: "Terminal: Run Active File", category: "Terminal", action: runActiveFile },
     { id: "reload", label: "Developer: Reload Window", category: "Developer", action: () => window.location.reload() },
     { id: "logout", label: "Account: Logout", category: "Account", action: logout }
   ];
@@ -505,12 +536,13 @@ function BottomPanel({ send }: { send: (p: any) => void }) {
           className="bottom-panel__tab-content" 
           style={{ display: activeTab === "terminal" ? "block" : "none" }}
         >
-          {activeConversationId && (
+          {activeTerminalId && (
             <Terminal 
-              sessionId={activeConversationId}
+              key={activeTerminalId}
+              sessionId={activeTerminalId}
               isActive={activeTab === "terminal"}
-              onInput={(data) => send({ type: "terminal_input", sessionId: activeConversationId, data })} 
-              onResize={(rows, cols) => send({ type: "terminal_resize", sessionId: activeConversationId, rows, cols })} 
+              onInput={(data) => send({ type: "terminal_input", sessionId: activeTerminalId, data })} 
+              onResize={(rows, cols) => send({ type: "terminal_resize", sessionId: activeTerminalId, rows, cols })} 
             />
           )}
         </div>

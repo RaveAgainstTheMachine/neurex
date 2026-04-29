@@ -66,6 +66,8 @@ export interface ModelProfile {
   benchmarks?: Record<string, string>;
   repo_url?: string;
   is_downloaded?: boolean;
+  is_community?: boolean;
+  deployed?: boolean;
 }
 
 export interface InfraEngine {
@@ -223,6 +225,8 @@ export interface NeurexStore {
   addTerminalSession: (name?: string) => void;
   closeTerminalSession: (id: string) => void;
   setActiveTerminalId: (id: string) => void;
+  clearActiveTerminal: () => void;
+  runActiveFile: () => void;
 
   // Modals
   modalOpen: boolean;
@@ -230,7 +234,18 @@ export interface NeurexStore {
   // Hive
   hiveStats: { total_nodes: number; memory_count: number };
   // Theme
-  theme: { accent_color: string; glow_color: string; enable_glassmorphism: boolean; enable_animations: boolean; enable_swarm_glow: boolean; menu_mode: "vertical" | "horizontal"; terminal_line_height: number };
+  theme: { 
+    accent_color: string; 
+    glow_color: string; 
+    enable_glassmorphism: boolean; 
+    enable_animations: boolean; 
+    enable_swarm_glow: boolean; 
+    menu_mode: "vertical" | "horizontal";  
+    terminal_line_height: number;
+    terminal_font_size: number;
+    terminal_font_family: string;
+    terminal_cursor_style: "block" | "bar" | "underline";
+  };
   setTheme: (theme: any) => void;
   refreshTheme: () => Promise<void>;
   // Settings

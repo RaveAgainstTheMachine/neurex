@@ -92,7 +92,7 @@ export function useWebSocket(conversationId: string) {
               break;
             case "terminal_output":
               window.dispatchEvent(new CustomEvent("terminal_write", { 
-                detail: { sessionId: conversationId, data } 
+                detail: { sessionId: msg.sessionId || conversationId, data } 
               }));
               break;
             case "lock_update":

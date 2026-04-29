@@ -2,6 +2,32 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
+## [0.1.5] - 2026-04-29 (IDE CORE STABILIZATION)
+### Added
+- **Full MenuBar Wiring**: transformed the `MenuBar` into a functional control center with comprehensive actions for File, Edit, View, Terminal, and Help menus.
+- **Advanced Terminal Customization**: introduced granular settings for **Font Size**, **Font Family** (JetBrains Mono, Fira Code, etc.), and **Cursor Style** (Block, Bar, Underline) with live-preview support.
+- **Global Keyboard Shortcuts**: implemented industry-standard shortcuts for productivity:
+  - `Ctrl+Shift+` ` for New Terminal
+  - `Ctrl+L` for Clear Terminal (Frontend + Backend Sync)
+  - `F5` for Run Active File (detects Python, JS, Bash)
+  - `Ctrl+,` for IDE Settings
+  - `Ctrl+Shift+P` for Command Palette
+- **Active Execution Layer**: enabled one-click "Run Active File" logic that injects language-aware commands directly into the terminal.
+- **Terminal Lifecycle Management**: added backend support for `terminal_clear` and `terminal_kill` to ensure PTY history and processes are correctly managed.
+
+### Fixed
+- **UI Contrast Refinement**: significantly increased the visibility of tab close buttons (X) in both the editor and terminal panels by setting default opacity to 1.0.
+- **Critical Architecture Stability**:
+  - Resolved `Cannot redeclare block-scoped variable` errors in `App.tsx`.
+  - Fixed `Cannot find name 'terminalRegistry'` and `Cannot find name 'store'` errors.
+  - Eliminated redundant `theme` property artifacts in `Terminal.tsx` initialization.
+- **Design Integrity**: restored the accidentally overridden Neurex logo branding and hover effects in the activity bar.
+- **State Synchronization**: fixed a race condition where terminal resizing would fail if the DOM was not fully settled.
+
+### Changed
+- Refactored `App.tsx` store destructuring to a unified, O(1) single-call pattern.
+- Exported `terminalRegistry` to enable cross-module session management from the global store.
+
 ## [Unreleased] - 2026-04-28 (CAVEMAN ULTRA UPDATE)
 
 ### Added

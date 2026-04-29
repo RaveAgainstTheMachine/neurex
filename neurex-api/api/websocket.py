@@ -82,35 +82,34 @@ async def websocket_endpoint(
         user_id = websocket.query_params.get("user_id", "Anonymous")
         await presence_manager.connect(conversation_id, websocket, user_id)
 
-        # Define output callback for this conversation's terminal
-        bg_tasks = set()
+        # Define output callback for terminals
+        attached_sessions = set()
         
-        async def on_terminal_output(data: str):
+        async def on_terminal_output(sid: str, data: str):
             try:
-                await websocket.send_json({"event": "terminal_output", "data": data})
+                await websocket.send_json({"event": "terminal_output", "sessionId": sid, "data": data})
             except:
                 pass
 
-        def schedule_output(data: str):
-            t = asyncio.create_task(on_terminal_output(data))
-            bg_tasks.add(t)
-            t.add_done_callback(bg_tasks.discard)
+        def get_output_handler(sid: str):
+            return lambda data: asyncio.create_task(on_terminal_output(sid, data))
 
-        # Start/Get PTY session
-        pty_session = pty_manager.get_or_create_session(
+        # Initial default session
+        default_pty = pty_manager.get_or_create_session(
             conversation_id, 
-            schedule_output
+            get_output_handler(conversation_id)
         )
-        
-        # Manually trigger history send for new connection
-        if pty_session.history:
-            await on_terminal_output(pty_session.history)
+        attached_sessions.add(conversation_id)
 
         try:
             while True:
                 raw = await websocket.receive_text()
                 msg = json.loads(raw)
                 msg_type = msg.get("type")
+                requested_sid = msg.get("sessionId")
+                pty_sid = requested_sid
+                if not pty_sid or pty_sid == "default":
+                    pty_sid = conversation_id
 
                 if msg_type == "ping":
                     await presence_manager.ping(conversation_id, user_id)
@@ -125,18 +124,41 @@ async def websocket_endpoint(
                     break
 
                 if msg_type == "terminal_input":
-                    pty_session.write(msg.get("data", ""))
+                    if requested_sid not in attached_sessions:
+                        s = pty_manager.get_or_create_session(pty_sid, get_output_handler(requested_sid))
+                        attached_sessions.add(requested_sid)
+                    else:
+                        s = pty_manager.get_or_create_session(pty_sid)
+                    s.write(msg.get("data", ""))
                     continue
 
                 if msg_type == "terminal_resize":
-                    pty_session.resize(msg.get("rows", 24), msg.get("cols", 80))
+                    if requested_sid not in attached_sessions:
+                        s = pty_manager.get_or_create_session(pty_sid, get_output_handler(requested_sid))
+                        attached_sessions.add(requested_sid)
+                    else:
+                        s = pty_manager.get_or_create_session(pty_sid)
+                    s.resize(msg.get("rows", 24), msg.get("cols", 80))
                     continue
 
                 if msg_type == "terminal_sync":
-                    sid = msg.get("sessionId", conversation_id)
-                    history = pty_manager.get_history(sid)
-                    if history:
-                        await websocket.send_json({"type": "terminal_output", "sessionId": sid, "data": history})
+                    s = pty_manager.get_or_create_session(pty_sid, get_output_handler(requested_sid))
+                    if requested_sid not in attached_sessions:
+                        attached_sessions.add(requested_sid)
+                    if s.history:
+                        await on_terminal_output(requested_sid, s.history)
+                    continue
+
+                if msg_type == "terminal_clear":
+                    s = pty_manager.get_session(pty_sid)
+                    if s:
+                        s.clear()
+                    continue
+
+                if msg_type == "terminal_kill":
+                    pty_manager.close_session(pty_sid)
+                    if requested_sid in attached_sessions:
+                        attached_sessions.remove(requested_sid)
                     continue
 
                 if msg_type == "set_autonomy":
@@ -213,4 +235,7 @@ async def websocket_endpoint(
                 pass
         finally:
             await presence_manager.disconnect(conversation_id, websocket, user_id)
-            pty_session.detach(schedule_output)
+            for sid in attached_sessions:
+                s = pty_manager.get_session(sid)
+                if s:
+                    s.detach(get_output_handler(sid))

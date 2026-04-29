@@ -10,6 +10,7 @@
 - **Atomic Commits**: Git commits must be atomic and descriptive. Format: `[service] <type>: <description>`. Example: `[api] feat: add pty session timeout`.
 - **Documentation Parity**: If you change a route, update `API_REFERENCE.md`. If you change architecture, update `ARCHITECTURE.md`. If you change state, update the `CHANGELOG.md`.
 - **Confirmation Rule**: Before any thinking or action, you must explicitly state that you have read and are applying these rules (Source of Law: .antigravityrules).
+- **Refactoring Integrity**: When refactoring React components or Backend routes, NEVER leave orphaned syntax (e.g., missing `);`), corrupted dependency arrays, or missing imports. Test the specific modified block for logical completeness before saving.
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 2. ENVIRONMENT & INITIALIZATION
@@ -27,7 +28,7 @@
 - **Async First**: Use `async/await` for all I/O bound operations. No blocking calls in the main event loop.
 - **Type Safety**: Pydantic models for request/response bodies. Mandatory type hinting for all function signatures.
 - **Error Handling**: Use the global exception handler in `main.py`. Catch specific exceptions, never a bare `except:`.
-- **Lifecycle**: Respect the `lifespan` in `main.py`. Register cleanup tasks for background workers.
+- **Resource Protection**: Prevent "Listener Storms". In WebSocket loops, ensure handlers (e.g., PTY output listeners) are attached EXACTLY ONCE per session ID. Use a tracking set (e.g., `attached_sessions`) to manage lifecycle.
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 4. FRONTEND STANDARDS (neurex-web)
@@ -36,21 +37,30 @@
 - **State Management**: Use `useContext` or dedicated hooks for global state. Avoid prop-drilling beyond 3 levels.
 - **Styling**: BEM naming convention for CSS. Use CSS variables from `index.css` for colors/spacing.
 - **Centralized Config**: Never hardcode API ports or URLs in components. Always import `API_BASE` or `WS_BASE` from `src/lib/config.ts`.
-- **Relative Paths**: Use relative paths (e.g., `API_BASE = ""`) in the frontend to leverage Vite/Caddy proxies, ensuring the app works across different hostnames and environments without modification.
+- **Relative Paths**: Use relative paths (e.g., `API_BASE = ""`) in the frontend to leverage Vite/Caddy proxies.
 - **WebSocket**: All real-time communication must flow through the established `useWebSocket` hook.
-- **Types**: No `any`. Define interfaces for all API responses and component props.
+- **Types**: No `any`. Define interfaces for all API responses and component props. Ensure interfaces (e.g., `ModelProfile`) are updated alongside backend metadata changes.
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 5. AGENT ETIQUETTE
+# 5. HIGH-FIDELITY TERMINAL ENGINEERING
+# ─────────────────────────────────────────────────────────────────────────────
+- **Layout Integrity**: NEVER use `display: flex` or `justify-content` on terminal containers. Flexbox layout thrashing causes severe input lag in xterm.js. Use `width: 100%; height: 100%; position: relative;` and let `FitAddon` manage the grid.
+- **Deterministic Sync**: Terminals MUST register in the global routing registry (e.g., `terminalRegistry`) synchronously during mount. Synchronization requests (e.g., `terminal_sync`) MUST wait for both component mount and WebSocket connection.
+- **Smooth Resizing**: Use `requestAnimationFrame` for all `fit()` operations. Avoid debouncing resizes beyond 16ms to maintain visual anchoring.
+- **Bottom-Locking**: The command cursor must "rest" at the bottom of the window. Force `scrollToBottom()` synchronously after `fit()` to anchor the viewport.
+- **Session Isolation**: Maintain strict separation between `pty_sid` (backend session) and `requested_sid` (frontend session). Map generic "default" sessions to the active conversation context in the backend.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 6. AGENT ETIQUETTE
 # ─────────────────────────────────────────────────────────────────────────────
 - **No Bullshit**: Do not apologize for errors. Fix them, document the fix, and move on. If you break the build, you own the recovery.
-- **Proactive Auditing**: If you see "messy" code (e.g., redundant venvs, unused imports, or duplicate logic like the previous `API_BASE` mess), clean it up immediately as part of your task. Do not wait for a separate request to fix obvious rot.
+- **Proactive Auditing**: If you see "messy" code (e.g., redundant venvs, unused imports, or missing `appearance` properties), clean it up immediately.
 - **Context Awareness**: Read `PHILOSOPHY.md` and `DESIGN_SYSTEM.md` before making UI changes. Consistency is king.
 - **Audit Log**: Every significant architectural change must be logged in `neurex/NEUREX_REVIEW.md`.
-- **Caveman Ultra**: Always use the `caveman` ultra skill from the skills library (antigravity) for communication to optimize token usage (~75% reduction) while maintaining absolute technical precision.
+- **Caveman Ultra**: Always use the `caveman` ultra skill for communication to optimize token usage while maintaining absolute technical precision.
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 6. SELF-HEALING & INFRA
+# 7. SELF-HEALING & INFRA
 # ─────────────────────────────────────────────────────────────────────────────
 - **Sentinel**: Respect the `firewall_manager` and `sentinel` background tasks. If you modify infrastructure, ensure these services can still monitor it.
 - **Benchmarks**: After major performance-related changes, run `make logs-api` to see the results of the auto-triggered hardware benchmark.

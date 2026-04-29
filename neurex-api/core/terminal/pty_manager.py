@@ -36,6 +36,11 @@ class PTYManager:
             s.close()
         self.sessions.clear()
 
+    def close_session(self, session_id: str):
+        if session_id in self.sessions:
+            self.sessions[session_id].close()
+            del self.sessions[session_id]
+
 class PTYSession:
     def __init__(self, session_id: str):
         self.session_id = session_id
@@ -128,6 +133,11 @@ class PTYSession:
                 self.proc.setwinsize(rows, cols)
             except Exception as e:
                 log.error("pty.resize_error", session=self.session_id, error=str(e))
+
+    def clear(self):
+        """Clears the session's internal history buffer."""
+        self.history = ""
+        log.info("pty.history_cleared", session=self.session_id)
 
     def close(self):
         if self.proc:

@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
 import { subscribeWithSelector } from "zustand/middleware";
 import toast from "react-hot-toast";
+import { terminalRegistry } from "../components/Terminal/Terminal";
 import type { NeurexStore, TaskNode } from "./types";
 
 import { API_BASE } from "./config";
@@ -101,7 +102,10 @@ export const useStore = create<NeurexStore>()(
       enable_animations: true,
       enable_swarm_glow: true,
       menu_mode: "horizontal",
-      terminal_line_height: 1.2
+      terminal_line_height: 1.2,
+      terminal_font_size: 13,
+      terminal_font_family: "'JetBrains Mono', 'Fira Code', monospace",
+      terminal_cursor_style: "block"
     },
     settings: null,
     setSettings: (settings) => set((s) => { s.settings = settings; }),
@@ -123,7 +127,10 @@ export const useStore = create<NeurexStore>()(
             enable_animations: data.enable_animations,
             enable_swarm_glow: data.enable_swarm_glow,
             menu_mode: data.menu_mode || "horizontal",
-            terminal_line_height: data.terminal_line_height || 1.2
+            terminal_line_height: data.terminal_line_height || 1.2,
+            terminal_font_size: data.terminal_font_size || 13,
+            terminal_font_family: data.terminal_font_family || "'JetBrains Mono', 'Fira Code', monospace",
+            terminal_cursor_style: data.terminal_cursor_style || "block"
           });
         }
       } catch (err) {
@@ -456,11 +463,48 @@ export const useStore = create<NeurexStore>()(
       }
       localStorage.setItem("neurex_terminal_sessions", JSON.stringify(s.terminalSessions));
       localStorage.setItem("neurex_active_terminal", s.activeTerminalId);
+      
+      const ws = (window as any).neurexWS;
+      if (ws && ws.send) {
+        ws.send({ type: "terminal_kill", sessionId: id });
+      }
     }),
     setActiveTerminalId: (id) => set((s) => { 
       s.activeTerminalId = id;
       localStorage.setItem("neurex_active_terminal", id);
     }),
+    clearActiveTerminal: () => {
+      const id = get().activeTerminalId;
+      const term = terminalRegistry.get(id);
+      if (term) term.clear();
+      const ws = (window as any).neurexWS;
+      if (ws && ws.send) {
+        ws.send({ type: "terminal_clear", sessionId: id });
+        ws.send({ type: "terminal_input", sessionId: id, data: "\x0c" }); // Send Ctrl+L to clear backend buffer
+      }
+    },
+    runActiveFile: () => {
+      const file = get().activeFile;
+      if (!file) {
+        toast.error("No active file to run");
+        return;
+      }
+      const id = get().activeTerminalId;
+      const ws = (window as any).neurexWS;
+      if (ws && ws.send) {
+        let cmd = "";
+        if (file.endsWith(".py")) cmd = `python ${file}\n`;
+        else if (file.endsWith(".js")) cmd = `node ${file}\n`;
+        else if (file.endsWith(".sh")) cmd = `bash ${file}\n`;
+        
+        if (cmd) {
+          ws.send({ type: "terminal_input", sessionId: id, data: cmd });
+          toast.success(`Running ${file.split("/").pop()}`);
+        } else {
+          toast.error("Language not supported for direct execution");
+        }
+      }
+    },
 
     // ── Navigation ───────────────────────────────────────────────────
     pendingJump: null,

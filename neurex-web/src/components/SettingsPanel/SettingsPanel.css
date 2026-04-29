@@ -180,10 +180,12 @@
 .settings-input[type="number"]::-webkit-inner-spin-button,
 .settings-input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
+  appearance: none;
   margin: 0;
 }
 .settings-input[type="number"] {
   -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 /* Toggle Switch - High Contrast */

@@ -118,7 +118,7 @@ export function SettingsPanel() {
     });
 
     // Immediate preview for visual settings
-    if (["accent_color", "glow_color", "enable_glassmorphism", "enable_animations", "menu_mode", "terminal_line_height"].includes(key)) {
+    if (["accent_color", "glow_color", "enable_glassmorphism", "enable_animations", "menu_mode", "terminal_line_height", "terminal_font_size", "terminal_font_family", "terminal_cursor_style"].includes(key)) {
       store.setTheme({ [key]: value });
     }
   };
@@ -140,7 +140,7 @@ export function SettingsPanel() {
     // Immediate preview for visual settings
     const visualUpdates: any = {};
     for (const [k, v] of Object.entries(updates)) {
-      if (["accent_color", "glow_color", "enable_glassmorphism", "enable_animations", "menu_mode", "terminal_line_height"].includes(k)) {
+      if (["accent_color", "glow_color", "enable_glassmorphism", "enable_animations", "menu_mode", "terminal_line_height", "terminal_font_size", "terminal_font_family", "terminal_cursor_style"].includes(k)) {
         visualUpdates[k] = v;
       }
     }
@@ -175,7 +175,10 @@ export function SettingsPanel() {
           enable_glassmorphism: localSettings.enable_glassmorphism,
           enable_animations: localSettings.enable_animations,
           menu_mode: localSettings.menu_mode,
-          terminal_line_height: localSettings.terminal_line_height
+          terminal_line_height: localSettings.terminal_line_height,
+          terminal_font_size: localSettings.terminal_font_size,
+          terminal_font_family: localSettings.terminal_font_family,
+          terminal_cursor_style: localSettings.terminal_cursor_style
         });
         toast.success("Settings saved successfully");
         // Re-fetch to ensure sync
@@ -522,6 +525,64 @@ export function SettingsPanel() {
                   />
                   <span className="slider-value">{localSettings.terminal_line_height.toFixed(2)}</span>
                 </div>
+              </div>
+            </div>
+
+            <div className="setting-row">
+              <div className="setting-info">
+                <label>Terminal Font Size</label>
+                <p>Set the base pixel size for terminal text.</p>
+              </div>
+              <div className="setting-control">
+                <div className="slider-group">
+                  <input 
+                    type="range" min="10" max="20" step="1" 
+                    value={localSettings.terminal_font_size} 
+                    onChange={(e) => handleChange("terminal_font_size", parseInt(e.target.value))}
+                    disabled={isViewer || isRestricted("terminal_font_size")}
+                  />
+                  <span className="slider-value">{localSettings.terminal_font_size}px</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="setting-row">
+              <div className="setting-info">
+                <label>Terminal Font Family</label>
+                <p>Select your preferred monospace typeface.</p>
+              </div>
+              <div className="setting-control">
+                <select 
+                  value={localSettings.terminal_font_family} 
+                  onChange={(e) => handleChange("terminal_font_family", e.target.value)}
+                  className="settings-select"
+                  disabled={isViewer || isRestricted("terminal_font_family")}
+                >
+                  <option value="'JetBrains Mono', 'Fira Code', monospace">JetBrains Mono (Modern)</option>
+                  <option value="'Fira Code', monospace">Fira Code (Ligatures)</option>
+                  <option value="'Source Code Pro', monospace">Source Code Pro (Classic)</option>
+                  <option value="'Roboto Mono', monospace">Roboto Mono (Clean)</option>
+                  <option value="'Courier New', Courier, monospace">Courier New (Legacy)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="setting-row">
+              <div className="setting-info">
+                <label>Terminal Cursor Style</label>
+                <p>Customize the appearance of the shell cursor.</p>
+              </div>
+              <div className="setting-control">
+                <select 
+                  value={localSettings.terminal_cursor_style} 
+                  onChange={(e) => handleChange("terminal_cursor_style", e.target.value)}
+                  className="settings-select"
+                  disabled={isViewer || isRestricted("terminal_cursor_style")}
+                >
+                  <option value="block">Block (Retro)</option>
+                  <option value="bar">Bar (Standard)</option>
+                  <option value="underline">Underline (Minimal)</option>
+                </select>
               </div>
             </div>
 

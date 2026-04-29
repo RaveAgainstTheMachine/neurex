@@ -64,7 +64,7 @@ sandbox-test:
 
 ## Run API locally with hot reload (requires Python 3.12+ and pip install)
 dev-api:
-	cd neurex-api && uvicorn main:app --reload --host 127.0.0.1 --port 8000
+	cd neurex-api && ./.venv/bin/uvicorn main:app --reload --host 127.0.0.1 --port 8000
 
 ## Run web locally with hot reload (requires npm install first)
 dev-web:
