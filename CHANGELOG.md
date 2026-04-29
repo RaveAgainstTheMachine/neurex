@@ -54,7 +54,7 @@ All notable changes to the Neurex project will be documented in this file.
 - **Settings Persistence**: resolved a critical bug where non-admin users were blocked from saving visual preferences due to the presence of restricted infrastructure keys in the payload.
 - **RBAC Hardening**: refined the backend settings validator to only enforce admin-only checks if the restricted key's value is actually modified.
 - **Color Sync**: standardized all default colors to HEX format to ensure 1:1 synchronization with native browser color pickers.
-- **Terminal Anchor**: reconfigured xterm.js layout to anchor the active cursor to the bottom of the container, eliminating visual gaps and ensuring input stability during scroll-down events.
+- **Terminal Anchor**: implemented an immediate, pixel-perfect `fit()` logic and unified flex-bottom layout to ensure the cursor remains physically locked to the bottom edge during all resize operations (shrink/grow).
 - **Chat UI**: applied primary accent colors to user message bubbles and thinking animations for full thematic unity.
 
 ## [0.1.1] - 2026-04-28

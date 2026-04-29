@@ -99,18 +99,21 @@ export function Terminal({ sessionId, onInput, onResize, isActive }: TerminalPro
     const doFit = () => {
       if (!terminalRef.current || !xtermRef.current || !fitAddonRef.current) return;
       try {
+        const isAtBottom = xtermRef.current.buffer.active.viewportY === xtermRef.current.buffer.active.baseY;
         fitAddonRef.current.fit();
         if (xtermRef.current.rows > 0 && xtermRef.current.cols > 0) {
           onResizeRef.current(xtermRef.current.rows, xtermRef.current.cols);
         }
-        setTimeout(() => xtermRef.current?.scrollToBottom(), 10);
+        if (isAtBottom) {
+          xtermRef.current.scrollToBottom();
+        }
       } catch (_) {}
     };
 
     let resizeTimer: any;
     const observer = new ResizeObserver(() => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(doFit, 100);
+      // Return to immediate fit — we'll handle stutter by optimizing the internal doFit logic
+      doFit();
     });
     observer.observe(terminalRef.current);
 

@@ -6,8 +6,10 @@
   box-sizing: border-box;
   overflow: hidden;
   position: relative;
-  /* Apply padding here instead of on xterm directly */
-  padding: 4px 4px 0 8px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
 }
 
 .xterm {
@@ -15,14 +17,22 @@
   height: 100%;
   display: flex;
   flex-direction: column;
+  justify-content: flex-end;
+  background: #050507;
 }
 
 .xterm-viewport {
-  background-color: transparent !important;
+  background-color: #050507 !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
 }
 
 .xterm-screen {
-  background-color: transparent !important;
+  background-color: #050507 !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
 }
 
 .xterm-rows {
