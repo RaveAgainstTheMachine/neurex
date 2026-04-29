@@ -29,6 +29,7 @@ import { Toaster, toast } from "react-hot-toast";
 import { UpdateNotifier } from "./components/UpdateNotifier/UpdateNotifier";
 import { FlightRecorder } from "./components/FlightRecorder/FlightRecorder";
 import { LoadingOverlay } from "./components/LoadingOverlay/LoadingOverlay";
+import { MobileView } from "./components/MobileView/MobileView";
 import { ContextMenu } from "./components/ContextMenu/ContextMenu";
 import { 
   DndContext, 
@@ -155,8 +156,15 @@ function AppContent() {
   const [showAIPanel, setShowAIPanel] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [showHiveMind, setShowHiveMind] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const { send } = useWebSocket(activeConversationId);
   const sidebarRef = useRef<any>(null);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Command Palette States
   const [paletteMode, setPaletteMode] = useState<"none" | "language" | "indent" | "encoding" | "global">("none");
@@ -218,7 +226,8 @@ function AppContent() {
           // Use a race to ensure we don't hang forever
           const initPromise = Promise.all([
             state.refreshFileTree(), 
-            state.refreshInfra()
+            state.refreshInfra(),
+            state.refreshSettings()
           ]);
 
           const timeoutPromise = new Promise((resolve) => {
@@ -324,118 +333,122 @@ function AppContent() {
         <Toaster position="top-right" />
         
         <div className="app__root">
-          <div className="app__main-layout">
-            <div className="activity-bar">
-              <div className="activity-bar__top">
-                <MenuBar mode={theme.menu_mode} />
-                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSidebarDragEnd}>
-                  <SortableContext items={sidebarOrder} strategy={verticalListSortingStrategy}>
-                    {sidebarOrder.map(id => {
-                      const item = SIDEBAR_ITEMS.find(i => i.id === id);
-                      if (!item) return null;
-                      let badge = undefined;
-                      if (id === "agent" && activeTaskCount > 0) badge = activeTaskCount;
-                      return (
-                        <SortableActivityItem
-                          key={id} id={id} icon={item.icon} label={item.label}
-                          active={sidebarTab === id && !showSettings && !showHiveMind}
-                          onClick={() => updateSidebarTab(id as SidebarTab)}
-                          badge={badge}
-                        />
-                      );
-                    })}
-                  </SortableContext>
-                </DndContext>
+          {isMobile ? (
+            <MobileView send={send} />
+          ) : (
+            <div className="app__main-layout">
+              <div className="activity-bar">
+                <div className="activity-bar__top">
+                  <MenuBar mode={theme.menu_mode} />
+                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSidebarDragEnd}>
+                    <SortableContext items={sidebarOrder} strategy={verticalListSortingStrategy}>
+                      {sidebarOrder.map(id => {
+                        const item = SIDEBAR_ITEMS.find(i => i.id === id);
+                        if (!item) return null;
+                        let badge = undefined;
+                        if (id === "agent" && activeTaskCount > 0) badge = activeTaskCount;
+                        return (
+                          <SortableActivityItem
+                            key={id} id={id} icon={item.icon} label={item.label}
+                            active={sidebarTab === id && !showSettings && !showHiveMind}
+                            onClick={() => updateSidebarTab(id as SidebarTab)}
+                            badge={badge}
+                          />
+                        );
+                      })}
+                    </SortableContext>
+                  </DndContext>
+                </div>
+                <div className="activity-bar__bottom">
+                  <button className={`activity-btn ${showHiveMind ? "active" : ""}`} onClick={() => { setShowHiveMind(!showHiveMind); setShowSettings(false); }} title="Hive Mind (Knowledge Base)">
+                    <BrainCircuit size={20} className="text-cyan" />
+                    {showHiveMind && <div className="activity-indicator" />}
+                  </button>
+                  <button className={`activity-btn ${showAIPanel ? "active" : ""}`} onClick={() => setShowAIPanel(!showAIPanel)} title="Toggle AI Assistant (Cmd+L)">
+                    <MessageSquare size={20} />
+                  </button>
+                  <button className={`activity-btn ${showSettings ? "active" : ""}`} onClick={() => { setShowSettings(!showSettings); setShowHiveMind(false); }} title="IDE Settings">
+                    <Settings size={20} />
+                    {showSettings && <div className="activity-indicator" />}
+                  </button>
+                </div>
               </div>
-              <div className="activity-bar__bottom">
-                <button className={`activity-btn ${showHiveMind ? "active" : ""}`} onClick={() => { setShowHiveMind(!showHiveMind); setShowSettings(false); }} title="Hive Mind (Knowledge Base)">
-                  <BrainCircuit size={20} className="text-cyan" />
-                  {showHiveMind && <div className="activity-indicator" />}
-                </button>
-                <button className={`activity-btn ${showAIPanel ? "active" : ""}`} onClick={() => setShowAIPanel(!showAIPanel)} title="Toggle AI Assistant (Cmd+L)">
-                  <MessageSquare size={20} />
-                </button>
-                <button className={`activity-btn ${showSettings ? "active" : ""}`} onClick={() => { setShowSettings(!showSettings); setShowHiveMind(false); }} title="IDE Settings">
-                  <Settings size={20} />
-                  {showSettings && <div className="activity-indicator" />}
-                </button>
-              </div>
-            </div>
 
-            <div className="app__body">
-              <PanelGroup direction="horizontal" className="app__panels">
-                <Panel ref={sidebarRef} defaultSize={18} minSize={10} maxSize={40} className="app__sidebar">
-                  {sidebarTab === "explorer" && <FileExplorer />}
-                  {sidebarTab === "history"  && <ConversationList />}
-                  {sidebarTab === "infra"    && <InfraPanel onExpand={(s) => sidebarRef.current?.resize(s)} currentSize={sidebarRef.current?.getSize() || 18} />}
-                  {sidebarTab === "system"   && <SystemLogsPanel />}
-                  {sidebarTab === "search"   && <SearchPanel onExpand={(s) => sidebarRef.current?.resize(s)} />}
-                  {sidebarTab === "git"      && <SourceControlPanel />}
-                  {sidebarTab === "skills"   && <SkillsPanel />}
-                  {sidebarTab === "agent"    && <AgentPanel />}
-                </Panel>
-                <ResizeHandle />
-                <Panel minSize={30} className="app__main-content">
-                  <PanelGroup direction="vertical" className="app__v-panels">
-                    <Panel minSize={20} className="app__editor-wrapper">
-                      <PresenceBar />
-                      {showSettings ? <SettingsPanel /> : showHiveMind ? <HiveMindPanel /> : <EditorPane />}
-                    </Panel>
-                    <ResizeHandle vertical />
-                    <Panel defaultSize={25} minSize={5} className="app__bottom-wrapper">
-                      <BottomPanel send={send} />
-                    </Panel>
-                  </PanelGroup>
-                </Panel>
-                {showAIPanel && (
-                  <>
-                    <ResizeHandle />
-                    <Panel defaultSize={25} minSize={15} maxSize={45} className="app__ai-wrapper">
-                      <AIPanel send={send} conversationId={activeConversationId} isActive={showAIPanel} />
-                    </Panel>
-                  </>
-                )}
-              </PanelGroup>
+              <div className="app__body">
+                <PanelGroup direction="horizontal" className="app__panels">
+                  <Panel ref={sidebarRef} defaultSize={18} minSize={10} maxSize={40} className="app__sidebar">
+                    {sidebarTab === "explorer" && <FileExplorer />}
+                    {sidebarTab === "history"  && <ConversationList />}
+                    {sidebarTab === "infra"    && <InfraPanel onExpand={(s) => sidebarRef.current?.resize(s)} currentSize={sidebarRef.current?.getSize() || 18} />}
+                    {sidebarTab === "system"   && <SystemLogsPanel />}
+                    {sidebarTab === "search"   && <SearchPanel onExpand={(s) => sidebarRef.current?.resize(s)} />}
+                    {sidebarTab === "git"      && <SourceControlPanel />}
+                    {sidebarTab === "skills"   && <SkillsPanel />}
+                    {sidebarTab === "agent"    && <AgentPanel />}
+                  </Panel>
+                  <ResizeHandle />
+                  <Panel minSize={30} className="app__main-content">
+                    <PanelGroup direction="vertical" className="app__v-panels">
+                      <Panel minSize={20} className="app__editor-wrapper">
+                        <PresenceBar />
+                        {showSettings ? <SettingsPanel /> : showHiveMind ? <HiveMindPanel /> : <EditorPane />}
+                      </Panel>
+                      <ResizeHandle vertical />
+                      <Panel defaultSize={25} minSize={5} className="app__bottom-wrapper">
+                        <BottomPanel send={send} />
+                      </Panel>
+                    </PanelGroup>
+                  </Panel>
+                  {showAIPanel && (
+                    <>
+                      <ResizeHandle />
+                      <Panel defaultSize={25} minSize={15} maxSize={45} className="app__ai-wrapper">
+                        <AIPanel send={send} conversationId={activeConversationId} isActive={showAIPanel} />
+                      </Panel>
+                    </>
+                  )}
+                </PanelGroup>
 
-              <div className="status-bar">
-                <div className="status-bar__left">
-                  <span className={`status-ws status-ws--${wsStatus}`} title={`Mesh Network: ${wsStatus}`}>
-                    <Activity size={10} />
-                    <span>
-                      {wsStatus !== "connected" 
-                        ? "MESH DISCONNECTED" 
-                        : hiveStats.total_nodes > 1 
-                          ? "NEUREX MESH ACTIVE" 
-                          : "NEUREX LOCAL ACTIVE"}
+                <div className="status-bar">
+                  <div className="status-bar__left">
+                    <span className={`status-ws status-ws--${wsStatus}`} title={`Mesh Network: ${wsStatus}`}>
+                      <Activity size={10} />
+                      <span>
+                        {wsStatus !== "connected" 
+                          ? "MESH DISCONNECTED" 
+                          : hiveStats.total_nodes > 1 
+                            ? "NEUREX MESH ACTIVE" 
+                            : "NEUREX LOCAL ACTIVE"}
+                      </span>
                     </span>
-                  </span>
-                  <div className="status-intel" title="Hive Statistics">
-                    <div className={`swarm-pulse ${wsStatus === "connected" ? "swarm-pulse--active" : ""}`} />
-                    <span>{hiveStats.total_nodes} NODES ACTIVE</span>
+                    <div className="status-intel" title="Hive Statistics">
+                      <div className={`swarm-pulse ${wsStatus === "connected" ? "swarm-pulse--active" : ""}`} />
+                      <span>{hiveStats.total_nodes} NODES ACTIVE</span>
+                    </div>
                   </div>
-                </div>
-                <div className="status-bar__right">
-                  <div className="status-segments">
-                    <span className="status-segment" title="Cursor Position">Ln {cursorPosition.line}, Col {cursorPosition.ch}</span>
-                    <button className="status-segment status-segment--interactive" onClick={() => setPaletteMode("indent")} title="Select Indentation">Spaces: 2</button>
-                    <button className="status-segment status-segment--interactive" onClick={() => setPaletteMode("encoding")} title="Select Encoding">UTF-8</button>
-                    <button className="status-segment" title="End of Line Sequence">LF</button>
-                    <button className="status-segment status-segment--interactive" onClick={() => setPaletteMode("language")} title="Select Language Mode">
-                      <Braces size={10} />
-                      <span>{activeFileLanguage.toUpperCase()}</span>
-                    </button>
-                    {isAIActive && (
-                      <button className="status-segment animate-pulse" title="Neurex is composing...">
-                        <Activity size={10} className="text-cyan" />
-                        <span>Compose</span>
+                  <div className="status-bar__right">
+                    <div className="status-segments">
+                      <span className="status-segment" title="Cursor Position">Ln {cursorPosition.line}, Col {cursorPosition.ch}</span>
+                      <button className="status-segment status-segment--interactive" onClick={() => setPaletteMode("indent")} title="Select Indentation">Spaces: 2</button>
+                      <button className="status-segment status-segment--interactive" onClick={() => setPaletteMode("encoding")} title="Select Encoding">UTF-8</button>
+                      <button className="status-segment" title="End of Line Sequence">LF</button>
+                      <button className="status-segment status-segment--interactive" onClick={() => setPaletteMode("language")} title="Select Language Mode">
+                        <Braces size={10} />
+                        <span>{activeFileLanguage.toUpperCase()}</span>
                       </button>
-                    )}
+                      {isAIActive && (
+                        <button className="status-segment animate-pulse" title="Neurex is composing...">
+                          <Activity size={10} className="text-cyan" />
+                          <span>Compose</span>
+                        </button>
+                      )}
+                    </div>
+                    <UpdateNotifier />
                   </div>
-                  <UpdateNotifier />
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     );

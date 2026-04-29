@@ -20,6 +20,7 @@ export function Terminal({ sessionId, onInput, onResize, isActive }: TerminalPro
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef   = useRef<XTerm | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
+  const lastSizeRef = useRef({ rows: 0, cols: 0 });
 
   // Stable refs for callbacks — never stale, never trigger re-renders
   const onInputRef  = useRef(onInput);
@@ -101,9 +102,13 @@ export function Terminal({ sessionId, onInput, onResize, isActive }: TerminalPro
       try {
         const isAtBottom = xtermRef.current.buffer.active.viewportY === xtermRef.current.buffer.active.baseY;
         fitAddonRef.current.fit();
-        if (xtermRef.current.rows > 0 && xtermRef.current.cols > 0) {
-          onResizeRef.current(xtermRef.current.rows, xtermRef.current.cols);
+        
+        const { rows, cols } = xtermRef.current;
+        if (rows > 0 && cols > 0 && (rows !== lastSizeRef.current.rows || cols !== lastSizeRef.current.cols)) {
+          lastSizeRef.current = { rows, cols };
+          onResizeRef.current(rows, cols);
         }
+        
         if (isAtBottom) {
           xtermRef.current.scrollToBottom();
         }

@@ -55,53 +55,35 @@ interface UserProfile {
 }
 
 export function SettingsPanel() {
-  const [settings, setSettings] = useState<SettingsState | null>(null);
-  const { user, logout, token } = useStore();
+  const store = useStore();
+  const [localSettings, setLocalSettings] = useState<SettingsState | null>(store.settings);
   const [users, setUsers] = useState<UserProfile[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!store.settings);
   const [saving, setSaving] = useState(false);
   const [otpData, setOtpData] = useState<{ secret: string, qr_code: string } | null>(null);
   const [otpVerifyCode, setOtpVerifyCode] = useState("");
 
   const fetchData = async () => {
-    if (!token) return;
+    if (!store.token) return;
     try {
-      const [settingsRes, userRes] = await Promise.all([
-        fetch(`${API_BASE}/api/settings/`),
-        fetch(`${API_BASE}/api/auth/me`, {
-          headers: { "Authorization": `Bearer ${token}` }
-        })
-      ]);
-
-      if (!settingsRes.ok || !userRes.ok) throw new Error("Sync failed");
-
-      const settingsData = await settingsRes.json();
-      const userData = await userRes.json();
+      // 1. Refresh global settings in background
+      await store.refreshSettings();
       
-      const finalSettings = {
-        enable_glassmorphism: true,
-        enable_animations: true,
-        theme_preset: "obsidian",
-        llm_temperature: 0.7,
-        llm_context_length: 8192,
-        auto_save_files: true,
-        show_hidden_files: false,
-        menu_mode: "horizontal",
-        terminal_line_height: 1.2,
-        ...settingsData
-      };
+      // 2. Sync local state with refreshed store
+      if (useStore.getState().settings) {
+        setLocalSettings(useStore.getState().settings);
+      }
 
-      setSettings(finalSettings);
-      // user state is managed by the store, but we might want to check roles here
-      if (userData.role === "admin") {
-        const usersRes = await fetch(`${API_BASE}/api/auth/users`, {
-          headers: { "Authorization": `Bearer ${token}` }
+      // 3. Admin specific: fetch users
+      if (store.user?.role === "admin") {
+        const res = await fetch(`${API_BASE}/api/auth/users`, {
+          headers: { "Authorization": `Bearer ${store.token}` }
         });
-        if (usersRes.ok) setUsers(await usersRes.json());
+        if (res.ok) setUsers(await res.json());
       }
     } catch (err) {
-      toast.error("Failed to sync with Neurex core");
-      // Fallback settings if possible, or stay in loading but show error
+      console.error("SettingsPanel sync error:", err);
+      if (!localSettings) toast.error("Failed to sync with Neurex core");
     } finally {
       setLoading(false);
     }
@@ -109,10 +91,10 @@ export function SettingsPanel() {
 
   useEffect(() => {
     fetchData();
-  }, [token]);
+  }, [store.token]);
 
-  const isAdmin = user?.role === "admin";
-  const isViewer = user?.role === "viewer";
+  const isAdmin = store.user?.role === "admin";
+  const isViewer = store.user?.role === "viewer";
 
   const ADMIN_ONLY_SETTINGS = [
     "api_port", "web_port", "chromadb_port", "ollama_port", "rpc_port",
@@ -126,23 +108,23 @@ export function SettingsPanel() {
   };
 
   const handleChange = (key: string, value: any) => {
-    if (!settings || isViewer || isRestricted(key)) return;
+    if (!localSettings || isViewer || isRestricted(key)) return;
     
-    setSettings(prev => {
+    setLocalSettings(prev => {
       if (!prev) return null;
       return { ...prev, [key]: value };
     });
 
     // Immediate preview for visual settings
     if (["accent_color", "glow_color", "enable_glassmorphism", "enable_animations", "menu_mode", "terminal_line_height"].includes(key)) {
-      useStore.getState().setTheme({ [key]: value });
+      store.setTheme({ [key]: value });
     }
   };
 
   const handleBatchChange = (updates: Record<string, any>) => {
-    if (!settings || isViewer) return;
+    if (!localSettings || isViewer) return;
     
-    setSettings(prev => {
+    setLocalSettings(prev => {
       if (!prev) return null;
       let next = { ...prev };
       for (const [k, v] of Object.entries(updates)) {
@@ -161,21 +143,21 @@ export function SettingsPanel() {
       }
     }
     if (Object.keys(visualUpdates).length > 0) {
-      useStore.getState().setTheme(visualUpdates);
+      store.setTheme(visualUpdates);
     }
   };
 
   const handleSave = async () => {
-    if (!settings || isViewer) return;
+    if (!localSettings || isViewer) return;
     setSaving(true);
     try {
       const res = await fetch(`${API_BASE}/api/settings/`, {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          "Authorization": `Bearer ${store.token}`
         },
-        body: JSON.stringify({ settings })
+        body: JSON.stringify({ settings: localSettings })
       });
 
       if (res.status === 403) {
@@ -184,15 +166,14 @@ export function SettingsPanel() {
       }
 
       if (res.ok) {
-        const data = await res.json();
         // Sync global theme immediately
-        useStore.getState().setTheme({
-          accent_color: settings.accent_color,
-          glow_color: settings.glow_color,
-          enable_glassmorphism: settings.enable_glassmorphism,
-          enable_animations: settings.enable_animations,
-          menu_mode: settings.menu_mode,
-          terminal_line_height: settings.terminal_line_height
+        store.setTheme({
+          accent_color: localSettings.accent_color,
+          glow_color: localSettings.glow_color,
+          enable_glassmorphism: localSettings.enable_glassmorphism,
+          enable_animations: localSettings.enable_animations,
+          menu_mode: localSettings.menu_mode,
+          terminal_line_height: localSettings.terminal_line_height
         });
         toast.success("Settings saved successfully");
         // Re-fetch to ensure sync
@@ -276,7 +257,7 @@ export function SettingsPanel() {
     }
   };
 
-  if (loading || !settings) {
+  if (loading || !localSettings) {
     return (
       <div className="settings-panel loading">
         <div className="settings-loader">
@@ -296,11 +277,11 @@ export function SettingsPanel() {
           </div>
           <div>
             <h2>Control Center</h2>
-            <p className="settings-panel__subtitle">Node ID: {user?.id?.slice(0,8) || "Local"}</p>
+            <p className="settings-panel__subtitle">Node ID: {store.user?.id?.slice(0,8) || "Local"}</p>
           </div>
         </div>
         <div className="settings-panel__actions">
-          <button className="btn btn--outline" onClick={logout}>
+          <button className="btn btn--outline" onClick={store.logout}>
             <LogOut size={14} /> Log Out
           </button>
           <button className="btn btn--purple btn--save" onClick={handleSave} disabled={saving || isViewer}>
@@ -320,10 +301,10 @@ export function SettingsPanel() {
             <div className="setting-row">
               <div className="setting-info">
                 <label>Authenticated Identity</label>
-                <p>You are logged in as <strong className="text-purple">{user?.username}</strong></p>
+                <p>You are logged in as <strong className="text-purple">{store.user?.username}</strong></p>
               </div>
               <div className="setting-control">
-                <span className={`badge badge--${user?.role}`}>{user?.role?.toUpperCase()}</span>
+                <span className={`badge badge--${store.user?.role}`}>{store.user?.role?.toUpperCase()}</span>
               </div>
             </div>
 
@@ -333,13 +314,13 @@ export function SettingsPanel() {
                 <p>Add an extra layer of security to your neural connection.</p>
               </div>
               <div className="setting-control">
-                {user?.is_active && !otpData && (
+                {store.user?.is_active && !otpData && (
                   <button 
-                    className={`btn ${user?.role === 'admin' ? 'btn--purple' : 'btn--outline'} btn--sm`}
+                    className={`btn ${store.user?.role === 'admin' ? 'btn--purple' : 'btn--outline'} btn--sm`}
                     onClick={handleSetupOtp}
-                    disabled={!!(user as any).otp_enabled}
+                    disabled={!!(store.user as any).otp_enabled}
                   >
-                    {(user as any).otp_enabled ? "✓ 2FA Active" : "Enable 2FA"}
+                    {(store.user as any).otp_enabled ? "✓ 2FA Active" : "Enable 2FA"}
                   </button>
                 )}
               </div>
@@ -393,7 +374,7 @@ export function SettingsPanel() {
                         value={u.role} 
                         onChange={(e) => handleUpdateRole(u.id, e.target.value)}
                         className="settings-select settings-select--sm"
-                        disabled={u.id === user?.id}
+                        disabled={u.id === store.user?.id}
                       >
                         <option value="admin">Admin</option>
                         <option value="developer">Developer</option>
@@ -402,7 +383,7 @@ export function SettingsPanel() {
                       <button 
                         className="btn btn--icon btn--danger" 
                         onClick={() => handleDeleteUser(u.id)}
-                        disabled={u.id === user?.id}
+                        disabled={u.id === store.user?.id}
                         title="Purge Identity"
                       >
                         <Trash2 size={14} />
@@ -429,7 +410,7 @@ export function SettingsPanel() {
               <div className="setting-control">
                 <input 
                   type="text" 
-                  value={settings.ollama_base_url} 
+                  value={localSettings.ollama_base_url} 
                   onChange={(e) => handleChange("ollama_base_url", e.target.value)}
                   onKeyDown={handleKeyDown}
                   className="settings-input"
@@ -446,7 +427,7 @@ export function SettingsPanel() {
               </div>
               <div className="setting-control">
                 <select 
-                  value={settings.llm_context_length} 
+                  value={localSettings.llm_context_length} 
                   onChange={(e) => handleChange("llm_context_length", parseInt(e.target.value))}
                   className="settings-select"
                   disabled={isViewer || isRestricted("llm_context_length")}
@@ -475,7 +456,7 @@ export function SettingsPanel() {
               </div>
               <div className="setting-control">
                 <label className={`toggle-switch ${isViewer ? 'disabled' : ''}`}>
-                  <input type="checkbox" checked={settings.enable_glassmorphism} onChange={(e) => handleChange("enable_glassmorphism", e.target.checked)} disabled={isViewer || isRestricted("enable_glassmorphism")} />
+                  <input type="checkbox" checked={localSettings.enable_glassmorphism} onChange={(e) => handleChange("enable_glassmorphism", e.target.checked)} disabled={isViewer || isRestricted("enable_glassmorphism")} />
                   <span className="toggle-slider"></span>
                 </label>
               </div>
@@ -488,7 +469,7 @@ export function SettingsPanel() {
               </div>
               <div className="setting-control">
                 <label className={`toggle-switch ${isViewer ? 'disabled' : ''}`}>
-                  <input type="checkbox" checked={settings.enable_animations} onChange={(e) => handleChange("enable_animations", e.target.checked)} disabled={isViewer || isRestricted("enable_animations")} />
+                  <input type="checkbox" checked={localSettings.enable_animations} onChange={(e) => handleChange("enable_animations", e.target.checked)} disabled={isViewer || isRestricted("enable_animations")} />
                   <span className="toggle-slider"></span>
                 </label>
               </div>
@@ -501,7 +482,7 @@ export function SettingsPanel() {
               </div>
               <div className="setting-control">
                 <label className={`toggle-switch ${isViewer ? 'disabled' : ''}`}>
-                  <input type="checkbox" checked={settings.enable_swarm_glow} onChange={(e) => handleChange("enable_swarm_glow", e.target.checked)} disabled={isViewer || isRestricted("enable_swarm_glow")} />
+                  <input type="checkbox" checked={localSettings.enable_swarm_glow} onChange={(e) => handleChange("enable_swarm_glow", e.target.checked)} disabled={isViewer || isRestricted("enable_swarm_glow")} />
                   <span className="toggle-slider"></span>
                 </label>
               </div>
@@ -514,7 +495,7 @@ export function SettingsPanel() {
               </div>
               <div className="setting-control">
                 <select 
-                  value={settings.menu_mode} 
+                  value={localSettings.menu_mode} 
                   onChange={(e) => handleChange("menu_mode", e.target.value)}
                   className="settings-select"
                   disabled={isViewer || isRestricted("menu_mode")}
@@ -533,11 +514,11 @@ export function SettingsPanel() {
                 <div className="slider-group">
                   <input 
                     type="range" min="1.0" max="2.0" step="0.25" 
-                    value={settings.terminal_line_height} 
+                    value={localSettings.terminal_line_height} 
                     onChange={(e) => handleChange("terminal_line_height", parseFloat(e.target.value))}
                     disabled={isViewer || isRestricted("terminal_line_height")}
                   />
-                  <span className="slider-value">{settings.terminal_line_height.toFixed(2)}</span>
+                  <span className="slider-value">{localSettings.terminal_line_height.toFixed(2)}</span>
                 </div>
               </div>
             </div>
@@ -550,7 +531,7 @@ export function SettingsPanel() {
               <div className="setting-control color-picker-group">
                 <input 
                   type="color" 
-                  value={settings.accent_color.startsWith('#') ? settings.accent_color : '#9c6fff'} 
+                  value={localSettings.accent_color.startsWith('#') ? localSettings.accent_color : '#9c6fff'} 
                   onChange={(e) => {
                     const hex = e.target.value;
                     handleBatchChange({
@@ -562,7 +543,7 @@ export function SettingsPanel() {
                 />
                 <input 
                   type="text" 
-                  value={settings.accent_color} 
+                  value={localSettings.accent_color} 
                   onChange={(e) => handleChange("accent_color", e.target.value)}
                   onKeyDown={handleKeyDown}
                   className="settings-input settings-input--sm"
@@ -587,7 +568,7 @@ export function SettingsPanel() {
               </div>
               <div className="setting-control">
                 <select 
-                  value={settings.autonomy_level} 
+                  value={localSettings.autonomy_level} 
                   onChange={(e) => handleChange("autonomy_level", e.target.value)}
                   className="settings-select"
                   disabled={isViewer || isRestricted("autonomy_level")}
@@ -608,11 +589,11 @@ export function SettingsPanel() {
                 <div className="slider-group">
                   <input 
                     type="range" min="0" max="2" step="0.1" 
-                    value={settings.llm_temperature} 
+                    value={localSettings.llm_temperature} 
                     onChange={(e) => handleChange("llm_temperature", parseFloat(e.target.value))}
                     disabled={isViewer || isRestricted("llm_temperature")}
                   />
-                  <span className="slider-value">{settings.llm_temperature}</span>
+                  <span className="slider-value">{localSettings.llm_temperature}</span>
                 </div>
               </div>
             </div>
@@ -624,7 +605,7 @@ export function SettingsPanel() {
               </div>
               <div className="setting-control full-width">
                 <textarea 
-                  value={settings.system_prompt_addition}
+                  value={localSettings.system_prompt_addition}
                   onChange={(e) => handleChange("system_prompt_addition", e.target.value)}
                   placeholder="e.g. Always write comments in French..."
                   className="settings-textarea"
@@ -648,7 +629,7 @@ export function SettingsPanel() {
               </div>
               <div className="setting-control">
                 <label className={`toggle-switch ${isViewer ? 'disabled' : ''}`}>
-                  <input type="checkbox" checked={settings.auto_save_files} onChange={(e) => handleChange("auto_save_files", e.target.checked)} disabled={isViewer || isRestricted("auto_save_files")} />
+                  <input type="checkbox" checked={localSettings.auto_save_files} onChange={(e) => handleChange("auto_save_files", e.target.checked)} disabled={isViewer || isRestricted("auto_save_files")} />
                   <span className="toggle-slider"></span>
                 </label>
               </div>
@@ -661,7 +642,7 @@ export function SettingsPanel() {
               </div>
               <div className="setting-control">
                 <label className={`toggle-switch ${isViewer ? 'disabled' : ''}`}>
-                  <input type="checkbox" checked={settings.show_hidden_files} onChange={(e) => handleChange("show_hidden_files", e.target.checked)} disabled={isViewer || isRestricted("show_hidden_files")} />
+                  <input type="checkbox" checked={localSettings.show_hidden_files} onChange={(e) => handleChange("show_hidden_files", e.target.checked)} disabled={isViewer || isRestricted("show_hidden_files")} />
                   <span className="toggle-slider"></span>
                 </label>
               </div>
@@ -682,7 +663,7 @@ export function SettingsPanel() {
               </div>
               <div className="setting-control">
                 <label className={`toggle-switch ${isViewer ? 'disabled' : ''}`}>
-                  <input type="checkbox" checked={settings.enable_agent_internet} onChange={(e) => handleChange("enable_agent_internet", e.target.checked)} disabled={isViewer || isRestricted("enable_agent_internet")} />
+                  <input type="checkbox" checked={localSettings.enable_agent_internet} onChange={(e) => handleChange("enable_agent_internet", e.target.checked)} disabled={isViewer || isRestricted("enable_agent_internet")} />
                   <span className="toggle-slider"></span>
                 </label>
               </div>
@@ -703,7 +684,7 @@ export function SettingsPanel() {
               </div>
               <div className="setting-control">
                 <label className={`toggle-switch ${isViewer ? 'disabled' : ''}`}>
-                  <input type="checkbox" checked={settings.enable_mesh_routing} onChange={(e) => handleChange("enable_mesh_routing", e.target.checked)} disabled={isViewer || isRestricted("enable_mesh_routing")} />
+                  <input type="checkbox" checked={localSettings.enable_mesh_routing} onChange={(e) => handleChange("enable_mesh_routing", e.target.checked)} disabled={isViewer || isRestricted("enable_mesh_routing")} />
                   <span className="toggle-slider"></span>
                 </label>
               </div>
@@ -717,7 +698,7 @@ export function SettingsPanel() {
               </div>
               <div className="setting-control">
                 <label className={`toggle-switch toggle-switch--purple ${isViewer ? 'disabled' : ''}`}>
-                  <input type="checkbox" checked={settings.enable_distributed_pooling} onChange={(e) => handleChange("enable_distributed_pooling", e.target.checked)} disabled={isViewer || isRestricted("enable_distributed_pooling")} />
+                  <input type="checkbox" checked={localSettings.enable_distributed_pooling} onChange={(e) => handleChange("enable_distributed_pooling", e.target.checked)} disabled={isViewer || isRestricted("enable_distributed_pooling")} />
                   <span className="toggle-slider"></span>
                 </label>
               </div>
@@ -738,7 +719,7 @@ export function SettingsPanel() {
               </div>
               <div className="setting-control">
                 <label className={`toggle-switch ${isViewer ? 'disabled' : ''}`}>
-                  <input type="checkbox" checked={settings.enable_push_notifications} onChange={(e) => handleChange("enable_push_notifications", e.target.checked)} disabled={isViewer || isRestricted("enable_push_notifications")} />
+                  <input type="checkbox" checked={localSettings.enable_push_notifications} onChange={(e) => handleChange("enable_push_notifications", e.target.checked)} disabled={isViewer || isRestricted("enable_push_notifications")} />
                   <span className="toggle-slider"></span>
                 </label>
               </div>
@@ -755,15 +736,15 @@ export function SettingsPanel() {
             <div className="setting-grid">
               <div className="setting-col">
                 <label>API Port</label>
-                <input type="number" value={settings.api_port} onChange={e => handleChange("api_port", parseInt(e.target.value))} className="settings-input" disabled={isViewer || isRestricted("api_port")} />
+                <input type="number" value={localSettings.api_port} onChange={e => handleChange("api_port", parseInt(e.target.value))} className="settings-input" disabled={isViewer || isRestricted("api_port")} />
               </div>
               <div className="setting-col">
                 <label>Web Port</label>
-                <input type="number" value={settings.web_port} onChange={e => handleChange("web_port", parseInt(e.target.value))} className="settings-input" disabled={isViewer || isRestricted("web_port")} />
+                <input type="number" value={localSettings.web_port} onChange={e => handleChange("web_port", parseInt(e.target.value))} className="settings-input" disabled={isViewer || isRestricted("web_port")} />
               </div>
               <div className="setting-col">
                 <label>RPC Port</label>
-                <input type="number" value={settings.rpc_port} onChange={e => handleChange("rpc_port", parseInt(e.target.value))} className="settings-input" disabled={isViewer || isRestricted("rpc_port")} />
+                <input type="number" value={localSettings.rpc_port} onChange={e => handleChange("rpc_port", parseInt(e.target.value))} className="settings-input" disabled={isViewer || isRestricted("rpc_port")} />
               </div>
             </div>
             
@@ -774,7 +755,7 @@ export function SettingsPanel() {
               </div>
               <div className="setting-control">
                 <label className={`toggle-switch ${isViewer ? 'disabled' : ''}`}>
-                  <input type="checkbox" checked={settings.firewall_enabled} onChange={(e) => handleChange("firewall_enabled", e.target.checked)} disabled={isViewer || isRestricted("firewall_enabled")} />
+                  <input type="checkbox" checked={localSettings.firewall_enabled} onChange={(e) => handleChange("firewall_enabled", e.target.checked)} disabled={isViewer || isRestricted("firewall_enabled")} />
                   <span className="toggle-slider"></span>
                 </label>
               </div>
@@ -787,7 +768,7 @@ export function SettingsPanel() {
               </div>
               <div className="setting-control">
                 <label className={`toggle-switch ${isViewer ? 'disabled' : ''}`}>
-                  <input type="checkbox" checked={settings.firewall_lan_only} onChange={(e) => handleChange("firewall_lan_only", e.target.checked)} disabled={isViewer || isRestricted("firewall_lan_only")} />
+                  <input type="checkbox" checked={localSettings.firewall_lan_only} onChange={(e) => handleChange("firewall_lan_only", e.target.checked)} disabled={isViewer || isRestricted("firewall_lan_only")} />
                   <span className="toggle-slider"></span>
                 </label>
               </div>
@@ -808,7 +789,7 @@ export function SettingsPanel() {
               </div>
               <div className="setting-control">
                 <label className={`toggle-switch ${isViewer ? 'disabled' : ''}`}>
-                  <input type="checkbox" checked={settings.enable_insomnia} onChange={(e) => handleChange("enable_insomnia", e.target.checked)} disabled={isViewer || isRestricted("enable_insomnia")} />
+                  <input type="checkbox" checked={localSettings.enable_insomnia} onChange={(e) => handleChange("enable_insomnia", e.target.checked)} disabled={isViewer || isRestricted("enable_insomnia")} />
                   <span className="toggle-slider"></span>
                 </label>
               </div>
@@ -822,7 +803,7 @@ export function SettingsPanel() {
               <div className="setting-control full-width">
                 <input 
                   type="text" 
-                  value={settings.neurex_trash_path}
+                  value={localSettings.neurex_trash_path}
                   onChange={(e) => handleChange("neurex_trash_path", e.target.value)}
                   onKeyDown={handleKeyDown}
                   className="settings-input"

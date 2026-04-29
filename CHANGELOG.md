@@ -44,6 +44,16 @@ All notable changes to the Neurex project will be documented in this file.
 - Migrated all IDE actions to a unified `MenuBar` logic tree.
 - Standardized tooltips across every interactive icon in the IDE.
 
+## [0.1.3] - 2026-04-29
+### Added
+- **Dedicated Mobile UI**: Introduced `MobileView` with bottom-navigation for seamless touch interaction on devices <= 768px.
+- **Global Settings Cache**: Implemented system-wide settings management in `useStore` to enable zero-latency "instant" hydration of the Control Center.
+
+### Fixed
+- **Settings Sync Stalls**: Hardened core synchronization with 10s timeouts and enforced authentication across all neural link proxies.
+- **ReferenceError Crash**: Resolved critical variable scoping issues in `SettingsPanel` that caused rendering failures during identity transitions.
+- **Theme Consistency**: Guaranteed authenticated theme refreshes to prevent visual preset resets on neural link reconnects.
+
 ## [0.1.2] - 2026-04-28
 ### Added
 - **Dynamic Theme Engine**: implemented `color-mix` based design tokens, allowing the entire UI (including chat) to reactively adapt to the user's primary accent color.

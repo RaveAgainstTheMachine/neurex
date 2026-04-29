@@ -102,18 +102,19 @@ export const useStore = create<NeurexStore>()(
       menu_mode: "horizontal",
       terminal_line_height: 1.2
     },
-    setTheme: (theme) => set((s) => { 
-      s.theme = { ...s.theme, ...theme };
-      const root = document.documentElement;
-      if (theme.accent_color) root.style.setProperty('--accent-purple', theme.accent_color);
-      if (theme.accent_color) root.style.setProperty('--purple-main', theme.accent_color);
-      if (theme.glow_color) root.style.setProperty('--glow-purple', theme.glow_color);
-    }),
-    refreshTheme: async () => {
+    settings: null,
+    setSettings: (settings) => set((s) => { s.settings = settings; }),
+    refreshSettings: async () => {
+      const token = get().token;
+      if (!token) return;
       try {
-        const res = await fetch(`${API_BASE}/api/settings/`);
-        const data = await res.json();
-        if (data.accent_color) {
+        const res = await fetch(`${API_BASE}/api/settings/`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          set((s) => { s.settings = data; });
+          // Also sync theme
           get().setTheme({
             accent_color: data.accent_color,
             glow_color: data.glow_color,
@@ -125,8 +126,19 @@ export const useStore = create<NeurexStore>()(
           });
         }
       } catch (err) {
-        console.error("Theme sync failed", err);
+        console.error("Settings sync failed", err);
       }
+    },
+    setTheme: (theme) => set((s) => { 
+      s.theme = { ...s.theme, ...theme };
+      const root = document.documentElement;
+      if (theme.accent_color) root.style.setProperty('--accent-purple', theme.accent_color);
+      if (theme.accent_color) root.style.setProperty('--purple-main', theme.accent_color);
+      if (theme.glow_color) root.style.setProperty('--glow-purple', theme.glow_color);
+    }),
+    refreshTheme: async () => {
+      // Logic moved into refreshSettings for efficiency
+      await get().refreshSettings();
     },
     refreshInfra: async () => {
       const token = get().token;
