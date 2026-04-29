@@ -124,3 +124,73 @@ input:focus { border-color: var(--border-focus); }
 .text-red { color: var(--accent-red); }
 .text-cyan { color: var(--accent-cyan); }
 .text-purple { color: var(--accent-purple); }
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent-purple);
+  box-shadow: 0 4px 12px rgba(100, 50, 255, 0.2);
+}
+
+.btn:active { transform: translateY(0); }
+
+.btn--purple {
+  border-color: var(--accent-purple);
+  color: var(--accent-purple);
+}
+
+.btn--purple:hover {
+  background: var(--accent-purple);
+  color: var(--bg-app);
+}
+
+.btn--green {
+  border-color: var(--accent-purple); /* As per the image: purple border, green text */
+  color: var(--accent-green);
+}
+
+.btn--green:hover {
+  background: var(--accent-green);
+  color: var(--bg-app);
+  border-color: var(--accent-green);
+}
+
+.btn--red {
+  border-color: var(--accent-red);
+  color: var(--accent-red);
+}
+
+.btn--red:hover {
+  background: var(--accent-red);
+  color: var(--bg-app);
+}
+
+.btn--secondary {
+  border-color: var(--border);
+  color: var(--text-secondary);
+}
+
+.btn--secondary:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.btn--sm { padding: 6px 12px; font-size: 11px; }
+.btn--full { width: 100%; }

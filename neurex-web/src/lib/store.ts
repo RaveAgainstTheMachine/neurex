@@ -322,6 +322,36 @@ export const useStore = create<NeurexStore>()(
       localStorage.setItem("neurex_open_files", JSON.stringify(s.openFiles));
       localStorage.setItem("neurex_active_file", s.activeFile || "");
     }),
+    closeOthers: (path) => set((s) => {
+      s.openFiles = s.openFiles.filter(f => f.path === path);
+      s.activeFile = path;
+      localStorage.setItem("neurex_open_files", JSON.stringify(s.openFiles));
+      localStorage.setItem("neurex_active_file", path);
+    }),
+    closeToRight: (path) => set((s) => {
+      const idx = s.openFiles.findIndex(f => f.path === path);
+      if (idx === -1) return;
+      s.openFiles = s.openFiles.slice(0, idx + 1);
+      if (!s.openFiles.find(f => f.path === s.activeFile)) {
+        s.activeFile = path;
+      }
+      localStorage.setItem("neurex_open_files", JSON.stringify(s.openFiles));
+      localStorage.setItem("neurex_active_file", s.activeFile || "");
+    }),
+    closeSaved: () => set((s) => {
+      s.openFiles = s.openFiles.filter(f => f.isDirty);
+      if (!s.openFiles.find(f => f.path === s.activeFile)) {
+        s.activeFile = s.openFiles[0]?.path ?? null;
+      }
+      localStorage.setItem("neurex_open_files", JSON.stringify(s.openFiles));
+      localStorage.setItem("neurex_active_file", s.activeFile || "");
+    }),
+    closeAllFiles: () => set((s) => {
+      s.openFiles = [];
+      s.activeFile = null;
+      localStorage.setItem("neurex_open_files", "[]");
+      localStorage.setItem("neurex_active_file", "");
+    }),
     setActiveFile: (path) => { 
       set((s) => { 
         s.activeFile = path; 
@@ -397,6 +427,47 @@ export const useStore = create<NeurexStore>()(
       } catch (err) {
         toast.error(`Failed to save ${path}`);
         console.error("Failed to save file:", err);
+      }
+    },
+    renameFile: async (oldPath, newPath) => {
+      try {
+        const token = get().token;
+        const res = await fetch(`${API_BASE}/api/files/rename`, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({ old_path: oldPath, new_path: newPath }),
+        });
+        if (res.ok) {
+          toast.success("File renamed");
+          get().refreshFileTree();
+          // Update open files if applicable
+          set(s => {
+            const f = s.openFiles.find(x => x.path === oldPath);
+            if (f) f.path = newPath;
+            if (s.activeFile === oldPath) s.activeFile = newPath;
+          });
+        }
+      } catch (err) {
+        toast.error("Rename failed");
+      }
+    },
+    deleteFile: async (path) => {
+      try {
+        const token = get().token;
+        const res = await fetch(`${API_BASE}/api/files/delete?path=${encodeURIComponent(path)}`, {
+          method: "DELETE",
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          toast.success("File deleted");
+          get().refreshFileTree();
+          get().closeFile(path);
+        }
+      } catch (err) {
+        toast.error("Delete failed");
       }
     },
 

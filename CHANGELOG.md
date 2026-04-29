@@ -2,6 +2,26 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
+## [0.1.6] - 2026-04-29 (ADVANCED INTERACTION & UX)
+### Added
+- **Unified Context Menu System**: implemented high-fidelity, 'Neural' right-click menus across all critical surfaces:
+  - **Editor Tabs**: Close, Close Others, Close to Right, Copy Path, Reveal in Explorer.
+  - **File Explorer**: Open, Open in Terminal, Rename, Delete, Path Utilities.
+  - **Monaco Editor**: Go to Definition, References, Rename Symbol, Format, Refactor (wired to native engine).
+- **Standardized Button System**: introduced a global `.btn` architecture modeled after the 'DEPLOY' aesthetic (dark surfaces, neon accents, uppercase technical typography).
+- **Destructive Action Safeguards**: created the `ConfirmModal` component, a premium blurred verification step for high-risk operations like file deletion.
+- **Backend File Operations**: added `/api/files/rename` and `/api/files/delete` endpoints with path traversal protection and workspace resolution.
+- **Path Ergonomics**: integrated one-click "Copy Path" and "Copy Relative Path" with toast confirmations across the entire UI.
+
+### Fixed
+- **Visual Visibility**: enforced `opacity: 1.0` on all tab close buttons to ensure unmistakable interactive affordance.
+- **Interaction Model**: disabled Monaco's native context menu to provide a consistent, branded experience.
+- **State Synchronization**: ensured that file renames and deletions automatically update the global store and synchronized editor sessions.
+
+### Changed
+- Migrated all action-triggering buttons to the new standardized design system.
+- Enhanced the "Empty Editor" dashboard with standardized typography and button styles.
+
 ## [0.1.5] - 2026-04-29 (IDE CORE STABILIZATION)
 ### Added
 - **Full MenuBar Wiring**: transformed the `MenuBar` into a functional control center with comprehensive actions for File, Edit, View, Terminal, and Help menus.

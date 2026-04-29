@@ -9,6 +9,7 @@ import {
   Sparkles, X, CornerDownLeft, Loader2, Activity, Cpu, Zap, Layout 
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { ContextMenu } from "../ContextMenu/ContextMenu";
 import "./EditorPane.css";
 
 export function EditorPane() {
@@ -148,7 +149,7 @@ export function EditorPane() {
           </div>
 
           <div className="quick-actions">
-            <button className="btn btn--purple" onClick={() => window.dispatchEvent(new CustomEvent('open_command_palette'))}>
+            <button className="btn btn--green" onClick={() => window.dispatchEvent(new CustomEvent('open_command_palette'))}>
               <Layout size={14} /> Open Command Palette
             </button>
           </div>
@@ -166,6 +167,7 @@ export function EditorPane() {
               key={f.path}
               className={`editor-tab ${f.path === activeFile ? "active" : ""} ${f.isDirty ? "is-dirty" : ""} ${f.originalContent !== undefined ? "is-diff" : ""}`}
               onClick={() => useStore.getState().setActiveFile(f.path)}
+              data-path={f.path}
             >
               <FileCode size={13} className="editor-tab__icon" />
               <span className="editor-tab__name">{f.path.split("/").pop()}</span>
@@ -181,6 +183,49 @@ export function EditorPane() {
               </button>
             </div>
           ))}
+          <ContextMenu 
+            targetSelector=".editor-tab"
+            items={[
+              { label: 'Close', shortcut: 'Ctrl+W', action: (target) => {
+                const path = target.getAttribute('data-path');
+                if (path) useStore.getState().closeFile(path);
+              }},
+              { label: 'Close Others', action: (target) => {
+                const path = target.getAttribute('data-path');
+                if (path) useStore.getState().closeOthers(path);
+              }},
+              { label: 'Close to the Right', action: (target) => {
+                const path = target.getAttribute('data-path');
+                if (path) useStore.getState().closeToRight(path);
+              }},
+              { label: 'Close Saved', shortcut: 'Ctrl+K U', action: () => useStore.getState().closeSaved() },
+              { label: 'Close All', shortcut: 'Ctrl+K W', action: () => useStore.getState().closeAllFiles() },
+              { type: 'separator' },
+              { label: 'Copy Path', shortcut: 'Ctrl+Alt+C', action: (target) => {
+                const path = target.getAttribute('data-path');
+                if (path) {
+                  navigator.clipboard.writeText(path);
+                  toast.success("Path copied to clipboard");
+                }
+              }},
+              { label: 'Copy Relative Path', shortcut: 'Ctrl+Shift+Alt+C', action: (target) => {
+                const path = target.getAttribute('data-path');
+                if (path) {
+                  const rel = path.replace(/^\/+/, '');
+                  navigator.clipboard.writeText(rel);
+                  toast.success("Relative path copied");
+                }
+              }},
+              { type: 'separator' },
+              { label: 'Reveal in Explorer', shortcut: 'Ctrl+Alt+R', action: (target) => {
+                const path = target.getAttribute('data-path');
+                if (path) {
+                  // This is a UI-only reveal in our current setup
+                  toast.success(`Revealing ${path.split('/').pop()}`);
+                }
+              }}
+            ]}
+          />
         </div>
         
         <div className="editor-controls">
@@ -202,7 +247,37 @@ export function EditorPane() {
         </div>
       </div>
 
-      <div className="editor-monaco">
+      <div className="editor-monaco" data-path={active.path}>
+        <ContextMenu 
+          targetSelector=".editor-monaco"
+          items={[
+            { label: 'Go to Definition', shortcut: 'F12', action: () => editorRef.current?.trigger('any', 'editor.action.revealDefinition') },
+            { label: 'Go to References', shortcut: 'Shift+F12', action: () => editorRef.current?.trigger('any', 'editor.action.goToReferences') },
+            { type: 'separator' },
+            { label: 'Find All References', shortcut: 'Alt+Shift+F12', action: () => editorRef.current?.trigger('any', 'references-view.findReferences') },
+            { label: 'Rename Symbol', shortcut: 'F2', action: () => editorRef.current?.trigger('any', 'editor.action.rename') },
+            { label: 'Change All Occurrences', shortcut: 'Ctrl+F2', action: () => editorRef.current?.trigger('any', 'editor.action.changeAll') },
+            { type: 'separator' },
+            { label: 'Format Document', shortcut: 'Alt+Shift+F', action: () => editorRef.current?.trigger('any', 'editor.action.formatDocument') },
+            { label: 'Refactor...', shortcut: 'Ctrl+Shift+R', action: () => editorRef.current?.trigger('any', 'editor.action.quickFix') },
+            { type: 'separator' },
+            { label: 'Cut', shortcut: 'Ctrl+X', action: () => {
+              editorRef.current?.focus();
+              document.execCommand('cut');
+            }},
+            { label: 'Copy', shortcut: 'Ctrl+C', action: () => {
+              editorRef.current?.focus();
+              document.execCommand('copy');
+            }},
+            { label: 'Paste', shortcut: 'Ctrl+V', action: () => {
+              editorRef.current?.focus();
+              document.execCommand('paste');
+            }},
+            { type: 'separator' },
+            { label: 'Run in Terminal', shortcut: 'F5', action: () => useStore.getState().runActiveFile() },
+            { label: 'Command Palette...', shortcut: 'Ctrl+Shift+P', action: () => window.dispatchEvent(new CustomEvent('open_command_palette')) }
+          ]}
+        />
         {isInlineVisible && (
           <div 
             className="inline-ai-prompt animate-scale"
@@ -245,6 +320,7 @@ export function EditorPane() {
               scrollBeyondLastLine: false,
               readOnly: false,
               automaticLayout: true,
+              contextmenu: false,
             }}
           />
         ) : (
@@ -329,6 +405,7 @@ export function EditorPane() {
               lineNumbersMinChars: 3,
               bracketPairColorization: { enabled: true },
               suggestOnTriggerCharacters: true,
+              contextmenu: false,
             }}
           />
         )}

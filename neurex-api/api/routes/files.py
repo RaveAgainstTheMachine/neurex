@@ -222,3 +222,42 @@ async def search_files(
         except Exception as e:
             return {"error": str(e)}
 
+class RenameRequest(BaseModel):
+    old_path: str
+    new_path: str
+
+@router.post("/rename")
+async def rename_file(req: RenameRequest):
+    """Rename or move a file/directory."""
+    old_resolved = (WORKSPACE / req.old_path).resolve()
+    new_resolved = (WORKSPACE / req.new_path).resolve()
+    
+    if not str(old_resolved).startswith(str(WORKSPACE)) or not str(new_resolved).startswith(str(WORKSPACE)):
+        raise HTTPException(status_code=403, detail="Path traversal blocked")
+        
+    if not old_resolved.exists():
+        raise HTTPException(status_code=404, detail="Source not found")
+        
+    if new_resolved.exists():
+        raise HTTPException(status_code=409, detail="Destination already exists")
+        
+    old_resolved.rename(new_resolved)
+    return {"old_path": req.old_path, "new_path": req.new_path, "status": "renamed"}
+
+@router.delete("/delete")
+async def delete_file(path: str):
+    """Delete a file or directory recursively."""
+    resolved = (WORKSPACE / path).resolve()
+    
+    if not str(resolved).startswith(str(WORKSPACE)):
+        raise HTTPException(status_code=403, detail="Path traversal blocked")
+        
+    if not resolved.exists():
+        raise HTTPException(status_code=404, detail="Path not found")
+        
+    if resolved.is_dir():
+        shutil.rmtree(resolved)
+    else:
+        resolved.unlink()
+        
+    return {"path": path, "status": "deleted"}

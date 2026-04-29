@@ -8,6 +8,9 @@ import {
 } from "lucide-react";
 import { useStore } from "../../lib/store";
 import type { FileNode } from "../../lib/types";
+import { ContextMenu } from "../ContextMenu/ContextMenu";
+import { ConfirmModal } from "../ConfirmModal/ConfirmModal";
+import { toast } from "react-hot-toast";
 import "./FileExplorer.css";
 
 import { API_BASE } from "../../lib/config";
@@ -94,6 +97,9 @@ function FileItem({ node, depth }: { node: FileNode; depth: number }) {
         className={`file-item ${isActive ? "file-item--active" : ""}`}
         style={{ paddingLeft: 8 + depth * 12 }}
         onClick={handleClick}
+        data-path={node.path}
+        data-type={node.type}
+        data-name={node.name}
       >
         <div className="file-item__main">
           {isDir ? (
@@ -132,8 +138,9 @@ function FileItem({ node, depth }: { node: FileNode; depth: number }) {
 }
 
 export function FileExplorer() {
-  const { fileTree, refreshFileTree } = useStore();
+  const { fileTree, refreshFileTree, renameFile, deleteFile, addTerminalSession } = useStore();
   const [loading, setLoading] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<{ path: string, name: string } | null>(null);
 
   const handleRefresh = async () => {
     setLoading(true);
@@ -164,6 +171,71 @@ export function FileExplorer() {
             <FileItem key={node.path || node.name} node={node} depth={0} />
           ))}
       </div>
+      
+      <ConfirmModal 
+        isOpen={!!confirmDelete}
+        title="Permanently Delete?"
+        message={`Are you sure you want to delete '${confirmDelete?.name}'? This action cannot be undone.`}
+        confirmLabel="Delete"
+        danger={true}
+        onClose={() => setConfirmDelete(null)}
+        onConfirm={() => {
+          if (confirmDelete) {
+            deleteFile(confirmDelete.path);
+            setConfirmDelete(null);
+          }
+        }}
+      />
+
+      <ContextMenu 
+        targetSelector=".file-item"
+        items={[
+          { label: 'Open', shortcut: 'Enter', action: (target) => target.click() },
+          { label: 'Open to the Side', shortcut: 'Ctrl+Enter', action: (target) => target.click() },
+          { label: 'Open in Integrated Terminal', action: (target) => {
+            const path = target.getAttribute('data-path');
+            const type = target.getAttribute('data-type');
+            if (path) {
+              const dir = type === 'dir' ? path : path.split('/').slice(0, -1).join('/');
+              addTerminalSession(dir);
+            }
+          }},
+          { type: 'separator' },
+          { label: 'Copy Path', shortcut: 'Ctrl+Alt+C', action: (target) => {
+            const path = target.getAttribute('data-path');
+            if (path) {
+              navigator.clipboard.writeText(path);
+              toast.success("Path copied");
+            }
+          }},
+          { label: 'Copy Relative Path', shortcut: 'Ctrl+Shift+Alt+C', action: (target) => {
+            const path = target.getAttribute('data-path');
+            if (path) {
+              navigator.clipboard.writeText(path.replace(/^\/+/, ''));
+              toast.success("Relative path copied");
+            }
+          }},
+          { type: 'separator' },
+          { label: 'Rename...', shortcut: 'F2', action: (target) => {
+            const path = target.getAttribute('data-path');
+            const name = target.getAttribute('data-name');
+            if (path) {
+              const newName = prompt("Rename to:", name || "");
+              if (newName && newName !== name) {
+                const newPath = path.split('/').slice(0, -1).concat(newName).join('/');
+                renameFile(path, newPath);
+              }
+            }
+          }},
+          { label: 'Delete', shortcut: 'Delete', danger: true, action: (target) => {
+            const path = target.getAttribute('data-path');
+            const name = target.getAttribute('data-name');
+            if (path && name) {
+              setConfirmDelete({ path, name });
+            }
+          }}
+        ]}
+      />
     </div>
   );
 }
