@@ -46,13 +46,6 @@ const STATUS_LABEL: Record<string, string> = {
   CANCELLED: "Cancelled", AWAITING_APPROVAL: "Awaiting Approval",
 };
 
-const MODEL_OPTIONS = [
-  { value: "qwen2.5-coder:7b", label: "Qwen 2.5 Coder 7B (general)", group: "Open Source" },
-  { value: "qwen2.5-coder:14b", label: "Qwen 2.5 Coder 14B (coding)", group: "Open Source" },
-  { value: "qwen2.5-coder:32b", label: "Qwen 2.5 Coder 32B (multi)", group: "Open Source" },
-  { value: "deepseek-r1:7b", label: "DeepSeek R1 7B (thinking)", group: "Open Source" },
-  { value: "llama3.1:8b", label: "Llama 3.1 8B (general)", group: "Open Source" },
-];
 
 const AUTONOMY_OPTIONS = [
   { value: "restricted", label: "Restricted" },
@@ -116,11 +109,13 @@ export function AIPanel({ send, conversationId, isActive = true }: AIPanelProps)
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const store = useStore();
   const { 
     messages, tasks, wsStatus, clearTasks, 
     conversations, setConversations, setActiveConversation, newConversation,
-    preferredModel, setPreferredModel, speechLang, setSpeechLang, activeFile
-  } = useStore();
+    preferredModel, setPreferredModel, speechLang, setSpeechLang, activeFile,
+    fileTree, infraRegistry
+  } = store;
 
   const [isListening, setIsListening] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -129,7 +124,6 @@ export function AIPanel({ send, conversationId, isActive = true }: AIPanelProps)
   const [showMentions, setShowMentions] = useState(false);
   const [mentionIndex, setMentionIndex] = useState(0);
   const recognitionRef = useRef<any>(null);
-  const { fileTree } = useStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -313,6 +307,18 @@ export function AIPanel({ send, conversationId, isActive = true }: AIPanelProps)
       });
     }
   };
+
+  const MODEL_OPTIONS = useMemo(() => {
+    if (store.infraRegistry.length === 0) {
+      // Fallback to currently preferred model if registry is not yet loaded
+      return [{ value: preferredModel, label: preferredModel, group: "Active" }];
+    }
+    return store.infraRegistry.map(m => ({
+      value: m.name,
+      label: `${m.name} (${m.params || 'Local'})`,
+      group: m.is_community ? "Community" : "Open Source"
+    }));
+  }, [store.infraRegistry, preferredModel]);
 
   const headerElements: Record<string, React.ReactNode> = {
     tabs: (

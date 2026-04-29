@@ -1,13 +1,14 @@
-// src/lib/store.ts
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
+import { subscribeWithSelector } from "zustand/middleware";
 import toast from "react-hot-toast";
 import type { NeurexStore, TaskNode } from "./types";
 
 import { API_BASE } from "./config";
 
 export const useStore = create<NeurexStore>()(
-  immer((set, get) => ({
+  subscribeWithSelector(
+    immer((set, get) => ({
     // ── App Lifecycle ────────────────────────────────────────────────
     isInitialized: false,
     isInitializing: false,
@@ -146,36 +147,39 @@ export const useStore = create<NeurexStore>()(
       
       try {
         const headers = { "Authorization": `Bearer ${token}` };
-        const statusRes = await fetch(`${API_BASE}/api/infra/status`, { headers });
         
+        // 1. Core status is required first to handle auth check
+        const statusRes = await fetch(`${API_BASE}/api/infra/status`, { headers });
         if (statusRes.status === 401) {
           get().logout();
           return;
         }
-
-        const data = await statusRes.json();
-        set((s) => {
-          s.infraEngines = Array.isArray(data.engines) ? data.engines : [];
-          s.infraMetrics = data.metrics || null;
-        });
+        const statusData = await statusRes.json();
         
-        const regRes = await fetch(`${API_BASE}/api/infra/registry`, { headers });
-        const regData = await regRes.json();
-        set((s) => { s.infraRegistry = Array.isArray(regData) ? regData : []; });
+        // 2. Parallelize everything else for maximum speed
+        const [regRes, skillsRes, peersRes, memoryRes] = await Promise.all([
+          fetch(`${API_BASE}/api/infra/registry`, { headers }),
+          fetch(`${API_BASE}/api/infra/skills`, { headers }),
+          fetch(`${API_BASE}/api/infra/mesh/peers`, { headers }),
+          fetch(`${API_BASE}/api/memory/stats`)
+        ]);
 
-        fetch(`${API_BASE}/api/infra/skills`, { headers }).then(r => r.json()).then(data => {
-          set((s) => { s.infraSkills = Array.isArray(data) ? data : []; });
-        }).catch(() => {});
+        const [regData, skillsData, peersData, hiveData] = await Promise.all([
+          regRes.json(),
+          skillsRes.json(),
+          peersRes.json(),
+          memoryRes.json()
+        ]);
 
-        fetch(`${API_BASE}/api/infra/mesh/peers`, { headers }).then(r => r.json()).then(data => {
-          set((s) => { s.infraPeers = Array.isArray(data) ? data : []; });
-        }).catch(() => {});
+        set((s) => {
+          s.infraEngines = Array.isArray(statusData.engines) ? statusData.engines : [];
+          s.infraMetrics = statusData.metrics || null;
+          s.infraRegistry = Array.isArray(regData) ? regData : [];
+          s.infraSkills = Array.isArray(skillsData) ? skillsData : [];
+          s.infraPeers = Array.isArray(peersData) ? peersData : [];
+          s.hiveStats = hiveData;
+        });
 
-        fetch(`${API_BASE}/api/memory/stats`).then(r => r.json()).then(data => {
-          set((s) => { s.hiveStats = data; });
-        }).catch(() => {});
-
-        get().refreshTheme();
       } catch (e) {
         console.error("Infra refresh failed", e);
       }
@@ -467,5 +471,5 @@ export const useStore = create<NeurexStore>()(
     // ── Modals ───────────────────────────────────────────────────────
     modalOpen: false,
     setModalOpen: (val) => set((s) => { s.modalOpen = val; }),
-  }))
+  })))
 );

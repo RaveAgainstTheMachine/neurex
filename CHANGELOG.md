@@ -44,6 +44,23 @@ All notable changes to the Neurex project will be documented in this file.
 - Migrated all IDE actions to a unified `MenuBar` logic tree.
 - Standardized tooltips across every interactive icon in the IDE.
 
+## [0.1.4] - 2026-04-29 (HIGH PERFORMANCE UPDATE)
+### Added
+- **Infrastructure Hardening**:
+  - Implemented **WebSocket Reconnection** with exponential backoff (1s to 30s) to survive transient backend restarts and network drops.
+  - Introduced **Granular Engine Port Management** in the Control Center, allowing administrators to remap vLLM, llama.cpp, and Ollama ports to resolve local network collisions.
+  - Added **Model Deployment Modals**: a high-fidelity 'OS-style' interface for reviewing model specifications (VRAM, context, origin) and configuring deployment parameters before pulling assets.
+- **Visual Excellence**:
+  - **Thematic Terminal**: The xterm.js cursor, text selection, and prompt colors (magenta) are now fully synchronized with the global platform accent color.
+  - **Zero-Trust Input Styling**: Removed distracting browser-default spin buttons from numerical inputs for a cleaner, professional 'Neural' look.
+  - **Interactive Affordance**: Added hover-scale and glow transitions to all model catalog items to indicate clickability.
+
+### Fixed
+- **Terminal Latency**: eliminated typing lag by implementing **Surgical State Subscriptions** via `subscribeWithSelector`. The terminal now completely ignores non-visual state updates (messages, tasks, presence).
+- **Initialization Speed**: achieved 'Near Instant' loading by **parallelizing system hydration**. Infrastructure discovery (Registry, Skills, Peers, and Memory) now executes in a single concurrent batch.
+- **Port 8000 Collision**: fixed a critical conflict between the Neurex API and vLLM by remapping the default vLLM port to 8002.
+- **Type Safety**: resolved multiple TypeScript compiler errors in the store and synchronized the `NeurexStore` interface with the dynamic settings registry.
+
 ## [0.1.3] - 2026-04-29
 ### Added
 - **Dedicated Mobile UI**: Introduced `MobileView` with bottom-navigation for seamless touch interaction on devices <= 768px.

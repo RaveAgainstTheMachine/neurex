@@ -31,20 +31,40 @@ export function Terminal({ sessionId, onInput, onResize, isActive }: TerminalPro
   // Read line height once via getState — no subscription, no re-renders
   const lineHeightRef = useRef(useStore.getState().theme.terminal_line_height ?? 1.2);
 
-  // Keep lineHeight in sync without re-rendering
+  // Keep lineHeight and accent color in sync without re-rendering
   useEffect(() => {
-    return useStore.subscribe(
-      (state) => {
-        const lh = state.theme.terminal_line_height ?? 1.2;
-        if (lh !== lineHeightRef.current) {
-          lineHeightRef.current = lh;
-          if (xtermRef.current) {
-            xtermRef.current.options.lineHeight = lh;
-            fitAddonRef.current?.fit();
-          }
+    // 1. Subscribe specifically to line_height
+    const subLh = useStore.subscribe(
+      (s) => s.theme.terminal_line_height,
+      (lh) => {
+        const val = lh ?? 1.2;
+        if (val !== lineHeightRef.current && xtermRef.current) {
+          lineHeightRef.current = val;
+          xtermRef.current.options.lineHeight = val;
+          fitAddonRef.current?.fit();
         }
       }
     );
+
+    // 2. Subscribe specifically to accent_color
+    const subAccent = useStore.subscribe(
+      (s) => s.theme.accent_color,
+      (accent) => {
+        if (xtermRef.current && accent) {
+          xtermRef.current.options.theme = {
+            ...xtermRef.current.options.theme,
+            cursor: accent,
+            magenta: accent,
+            selectionBackground: `${accent}44`
+          };
+        }
+      }
+    );
+
+    return () => {
+      subLh();
+      subAccent();
+    };
   }, []);
 
   // isActive: re-fit + focus without destroying anything
@@ -70,14 +90,14 @@ export function Terminal({ sessionId, onInput, onResize, isActive }: TerminalPro
       theme: {
         background: "#050507",
         foreground: "#e8e8f0",
-        cursor: "hsl(260, 90%, 70%)",
-        selectionBackground: "rgba(139, 92, 246, 0.3)",
+        cursor: useStore.getState().theme.accent_color || "hsl(260, 90%, 70%)",
+        selectionBackground: `${useStore.getState().theme.accent_color || "hsl(260, 90%, 70%)"}44`,
         black: "#0d0d0f",
         red: "hsl(0, 85%, 65%)",
         green: "hsl(145, 80%, 50%)",
         yellow: "hsl(45, 95%, 60%)",
         blue: "hsl(215, 100%, 65%)",
-        magenta: "hsl(260, 90%, 70%)",
+        magenta: useStore.getState().theme.accent_color || "hsl(260, 90%, 70%)",
         cyan: "hsl(185, 85%, 55%)",
         white: "#e8e8f0",
       },
@@ -117,8 +137,8 @@ export function Terminal({ sessionId, onInput, onResize, isActive }: TerminalPro
 
     let resizeTimer: any;
     const observer = new ResizeObserver(() => {
-      // Return to immediate fit — we'll handle stutter by optimizing the internal doFit logic
-      doFit();
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(doFit, 50);
     });
     observer.observe(terminalRef.current);
 

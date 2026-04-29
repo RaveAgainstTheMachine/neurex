@@ -32,72 +32,102 @@ export function useWebSocket(conversationId: string) {
 
   useEffect(() => {
     if (!conversationId || conversationId === "undefined" || !token) return;
-    const state = useStore.getState();
+    
+    let socket: WebSocket | null = null;
+    let reconnectTimeout: any = null;
+    let backoff = 1000;
+    const maxBackoff = 30000;
 
-    const url = `${WS_BASE}/ws/${conversationId}?token=${token}&user_id=${userId}`;
-    const socket = new WebSocket(url);
-    ws.current = socket;
-    (window as any).neurexWS = { send, sendPresence };
-    state.setWsStatus("connecting");
+    const connect = () => {
+      const state = useStore.getState();
+      const url = `${WS_BASE}/ws/${conversationId}?token=${token}&user_id=${userId}`;
+      socket = new WebSocket(url);
+      ws.current = socket;
+      (window as any).neurexWS = { send, sendPresence };
+      
+      state.setWsStatus("connecting");
 
-    socket.onopen = () => state.setWsStatus("connected");
-    socket.onclose = () => state.setWsStatus("disconnected");
-    socket.onerror = () => state.setWsStatus("disconnected");
+      socket.onopen = () => {
+        state.setWsStatus("connected");
+        backoff = 1000; // Reset backoff on success
+      };
 
-    socket.onmessage = (e) => {
-      try {
-        const msg = JSON.parse(e.data);
-        const { event, data } = msg;
-        const s = useStore.getState();
-
-        switch (event) {
-          case "presence_update":
-            s.setPresence(data.filter((p: any) => p.user_id !== userId));
-            break;
-          case "task_created":
-          case "task_updated":
-            s.upsertTask(data as TaskNode);
-            break;
-          case "plan_ready":
-            (data.tasks as TaskNode[]).forEach(s.upsertTask);
-            break;
-          case "token":
-            s.appendToken(data as string);
-            break;
-          case "done":
-            (data.tasks as TaskNode[]).forEach(s.upsertTask);
-            break;
-          case "terminal_output":
-            window.dispatchEvent(new CustomEvent("terminal_write", { 
-              detail: { sessionId: conversationId, data } 
-            }));
-            break;
-          case "lock_update":
-            s.setLocks({ ...s.locks, [data.path]: data });
-            break;
-          case "lock_release":
-            const nextLocks = { ...s.locks };
-            delete nextLocks[data.path];
-            s.setLocks(nextLocks);
-            break;
-          case "error":
-            const errorMsg = typeof data === "object" ? JSON.stringify(data) : data;
-            s.addMessage({ role: "assistant", content: `❌ Error: ${errorMsg}` });
-            break;
+      socket.onclose = (e) => {
+        state.setWsStatus("disconnected");
+        // Don't reconnect if closed normally
+        if (e.code !== 1000 && e.code !== 1001) {
+          reconnectTimeout = setTimeout(() => {
+            backoff = Math.min(backoff * 1.5, maxBackoff);
+            connect();
+          }, backoff);
         }
-      } catch {}
+      };
+
+      socket.onerror = () => {
+        state.setWsStatus("disconnected");
+      };
+
+      socket.onmessage = (e) => {
+        try {
+          const msg = JSON.parse(e.data);
+          const { event, data } = msg;
+          const s = useStore.getState();
+
+          switch (event) {
+            case "presence_update":
+              s.setPresence(data.filter((p: any) => p.user_id !== userId));
+              break;
+            case "task_created":
+            case "task_updated":
+              s.upsertTask(data as TaskNode);
+              break;
+            case "plan_ready":
+              (data.tasks as TaskNode[]).forEach(s.upsertTask);
+              break;
+            case "token":
+              s.appendToken(data as string);
+              break;
+            case "done":
+              (data.tasks as TaskNode[]).forEach(s.upsertTask);
+              break;
+            case "terminal_output":
+              window.dispatchEvent(new CustomEvent("terminal_write", { 
+                detail: { sessionId: conversationId, data } 
+              }));
+              break;
+            case "lock_update":
+              s.setLocks({ ...s.locks, [data.path]: data });
+              break;
+            case "lock_release":
+              const nextLocks = { ...s.locks };
+              delete nextLocks[data.path];
+              s.setLocks(nextLocks);
+              break;
+            case "error":
+              const errorMsg = typeof data === "object" ? JSON.stringify(data) : data;
+              s.addMessage({ role: "assistant", content: `❌ Error: ${errorMsg}` });
+              break;
+          }
+        } catch {}
+      };
     };
 
+    connect();
+
     const heartbeat = setInterval(() => {
-      if (socket.readyState === WebSocket.OPEN) {
+      if (socket?.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({ type: "ping" }));
       }
     }, 15000);
 
     return () => {
       clearInterval(heartbeat);
-      socket.close();
-      state.clearTasks();
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      if (socket) {
+        socket.onclose = null; // Prevent reconnect on cleanup
+        socket.close();
+      }
+      useStore.getState().clearTasks();
     };
   }, [conversationId, send, sendPresence, token, userId]);
 

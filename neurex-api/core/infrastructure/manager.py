@@ -83,50 +83,96 @@ class InfrastructureManager:
         raise Exception(f"Pulling models for {engine} is not supported yet.")
 
     async def get_installed_models(self, engine: str) -> List[str]:
-        """List models currently downloaded and available on this node."""
+        """List models currently downloaded and available on this node with FS fallback."""
         if engine == "ollama":
-            if not shutil.which("ollama"):
-                return []
-            try:
-                # ollama list output format: NAME  ID  SIZE  MODIFIED
-                process = await asyncio.create_subprocess_exec(
-                    "ollama", "list",
-                    stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE
-                )
-                stdout, _ = await process.communicate()
-                lines = stdout.decode().strip().split("\n")
-                if len(lines) <= 1: return [] # Header only or empty
+            models = []
+            
+            # 1. Try API/CLI first (preferred)
+            if shutil.which("ollama"):
+                try:
+                    process = await asyncio.create_subprocess_exec(
+                        "ollama", "list",
+                        stdout=asyncio.subprocess.PIPE,
+                        stderr=asyncio.subprocess.PIPE
+                    )
+                    stdout, _ = await process.communicate()
+                    lines = stdout.decode().strip().split("\n")
+                    if len(lines) > 1:
+                        models = [line.split()[0] for line in lines[1:] if line.strip()]
+                except Exception as e:
+                    log.warning("infra.model_list_api_failed", engine=engine, error=str(e))
+
+            # 2. Filesystem Fallback (if API failed or returned nothing)
+            if not models:
+                import os
+                from pathlib import Path
+                # Standard Linux path for Ollama manifests
+                manifest_path = Path.home() / ".ollama" / "models" / "manifests"
+                if not manifest_path.exists():
+                    # Check system-wide path
+                    manifest_path = Path("/usr/share/ollama/.ollama/models/manifests")
                 
-                # Skip header, take first column (name)
-                # Split by multiple spaces and take the first part
-                return [line.split()[0] for line in lines[1:] if line.strip()]
-            except Exception as e:
-                log.warning("infra.model_list_failed", engine=engine, error=str(e))
-                return []
+                if manifest_path.exists():
+                    log.info("infra.model_scan_fallback", path=str(manifest_path))
+                    for root, dirs, files in os.walk(manifest_path):
+                        for file in files:
+                            # manifest path is usually manifests/registry.ollama.ai/library/model/tag
+                            rel_path = Path(root).relative_to(manifest_path)
+                            # We want 'library/model:tag' or just 'model:tag'
+                            parts = list(rel_path.parts)
+                            if len(parts) >= 2:
+                                # registry.ollama.ai / library / model
+                                if parts[0] == "registry.ollama.ai":
+                                    parts = parts[1:]
+                                model_name = "/".join(parts)
+                                models.append(f"{model_name}:{file}")
+            
+            return sorted(list(set(models)))
         return []
 
     async def start_engine(self, name: str):
-        """Start a specific LLM engine."""
+        """Start a specific LLM engine using configured ports."""
+        from core.settings.manager import settings_manager
+        
         if name == "ollama":
             if not shutil.which("ollama"):
                 raise Exception("Ollama not installed in PATH")
-            # Start in background
+            
+            port = settings_manager.get("ollama_port")
+            env = os.environ.copy()
+            env["OLLAMA_HOST"] = f"0.0.0.0:{port}"
+            
             process = await asyncio.create_subprocess_exec(
                 "ollama", "serve",
+                env=env,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
-            log.info("infra.engine_started", engine=name)
+            log.info("infra.engine_started", engine=name, port=port)
+            return True
+
+        elif name == "vllm":
+            if not shutil.which("python"):
+                raise Exception("Python not found")
+            
+            port = settings_manager.get("vllm_port")
+            # Example vLLM start: python -m vllm.entrypoints.openai.api_server --port 8002
+            cmd = ["python", "-m", "vllm.entrypoints.openai.api_server", "--port", str(port)]
+            
+            process = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            log.info("infra.engine_started", engine=name, port=port)
             return True
         
         elif name == "llama.cpp":
             from core.collaboration.presence import presence_manager
+            port = settings_manager.get("llama_cpp_port")
             
-            # 1. Discover all RPC workers in the mesh (Presence + Peer Registry)
+            # 1. Discover all RPC workers in the mesh
             rpc_hosts = []
-            
-            # Discovery via Presence (Active WebSocket sessions)
             for conv_state in presence_manager.presence_state.values():
                 for user_state in conv_state.values():
                     if user_state.get("type") == "compute_node":
@@ -134,20 +180,16 @@ class InfrastructureManager:
                         if caps.get("is_rpc_worker") and caps.get("rpc_endpoint"):
                             rpc_hosts.append(caps["rpc_endpoint"])
             
-            # Discovery via Mesh Router (Persistent Peers)
             from core.infrastructure.mesh import mesh_router
             for peer in mesh_router.peers.values():
                 if peer.status == "online" and getattr(peer, "rpc_endpoint", None):
                     rpc_hosts.append(peer.rpc_endpoint)
             
-            # Deduplicate
             rpc_hosts = list(set(rpc_hosts))
-            
-            # 2. Construct the --rpc flag (comma-separated list)
             rpc_flag = ",".join(rpc_hosts)
             
-            # 3. Start llama-server as Master
-            cmd = ["llama-server", "--model", "models/default.gguf"] # Placeholder model
+            # 2. Start llama-server
+            cmd = ["llama-server", "--model", "models/default.gguf", "--port", str(port)]
             if rpc_flag:
                 log.info("infra.distributed_inference_active", hosts=rpc_hosts)
                 cmd.extend(["--rpc", rpc_flag])
@@ -157,7 +199,7 @@ class InfrastructureManager:
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
-            log.info("infra.engine_started", engine=name, distributed=bool(rpc_flag))
+            log.info("infra.engine_started", engine=name, port=port, distributed=bool(rpc_flag))
             return True
 
         raise Exception(f"Start logic for {name} not implemented yet")

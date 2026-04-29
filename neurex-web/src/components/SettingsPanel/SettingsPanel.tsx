@@ -39,6 +39,8 @@ interface SettingsState {
   web_port: number;
   chromadb_port: number;
   ollama_port: number;
+  vllm_port: number;
+  llama_cpp_port: number;
   rpc_port: number;
   firewall_enabled: boolean;
   firewall_lan_only: boolean;
@@ -97,7 +99,7 @@ export function SettingsPanel() {
   const isViewer = store.user?.role === "viewer";
 
   const ADMIN_ONLY_SETTINGS = [
-    "api_port", "web_port", "chromadb_port", "ollama_port", "rpc_port",
+    "api_port", "web_port", "chromadb_port", "ollama_port", "vllm_port", "llama_cpp_port", "rpc_port",
     "firewall_enabled", "firewall_lan_only", "enable_mesh_routing",
     "enable_distributed_pooling", "ollama_base_url"
   ];
@@ -745,6 +747,21 @@ export function SettingsPanel() {
               <div className="setting-col">
                 <label>RPC Port</label>
                 <input type="number" value={localSettings.rpc_port} onChange={e => handleChange("rpc_port", parseInt(e.target.value))} className="settings-input" disabled={isViewer || isRestricted("rpc_port")} />
+              </div>
+            </div>
+
+            <div className="setting-grid mt-4">
+              <div className="setting-col">
+                <label>Ollama Port</label>
+                <input type="number" value={localSettings.ollama_port} onChange={e => handleChange("ollama_port", parseInt(e.target.value))} className="settings-input" disabled={isViewer || isRestricted("ollama_port")} />
+              </div>
+              <div className="setting-col">
+                <label>vLLM Port</label>
+                <input type="number" value={localSettings.vllm_port} onChange={e => handleChange("vllm_port", parseInt(e.target.value))} className="settings-input" disabled={isViewer || isRestricted("vllm_port")} />
+              </div>
+              <div className="setting-col">
+                <label>llama.cpp Port</label>
+                <input type="number" value={localSettings.llama_cpp_port} onChange={e => handleChange("llama_cpp_port", parseInt(e.target.value))} className="settings-input" disabled={isViewer || isRestricted("llama_cpp_port")} />
               </div>
             </div>
             

@@ -23,6 +23,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
   const [searchQuery, setSearchQuery] = useState("");
   const [hfResults, setHfResults] = useState<ModelProfile[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<ModelProfile | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -170,7 +171,17 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
                   <span className="rec-specs">{rec.specs}</span>
                 </div>
                 <div className="rec-model">{rec.model}</div>
-                <button className="rec-deploy-btn" onClick={() => handlePullModel('ollama', rec.model.split(' ')[0])}>
+                <button 
+                  className="rec-deploy-btn" 
+                  onClick={() => setSelectedModel({ 
+                    name: rec.model.split(' ')[0], 
+                    engine: 'ollama', 
+                    params: rec.specs, 
+                    context_window: 32768, 
+                    vram_required_gb: parseInt(rec.specs) || 0,
+                    recommended_tasks: [rec.role]
+                  })}
+                >
                   DEPLOY
                 </button>
               </div>
@@ -221,39 +232,133 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
             />
           </div>
           <div className="catalog-list">
-            {filteredRegistry.map((m) => (
-              <div key={m.name} className="catalog-item">
-                <div className="catalog-main">
-                  <div className="catalog-header">
-                    <Cpu size={14} className="text-muted" />
-                    <span className="catalog-name">{m.name.split(':')[0]}</span>
-                    <span className="catalog-tag">{m.params}</span>
-                    <span className={`catalog-badge origin-${(m as any).origin.toLowerCase()}`}>
-                      {(m as any).origin === 'HF' ? 'HF' : 
-                       (m as any).origin === 'RPC' ? 'MESH(RPC)' :
-                       (m as any).origin === 'NODE' ? `NODE: ${(m as any).nodeName}` : 
-                       'LOCAL'}
-                    </span>
+            {filteredRegistry.length === 0 ? (
+              <div className="catalog-empty">
+                <Brain size={24} className="text-muted mb-2 opacity-20" />
+                <p>No models detected in registry.</p>
+                {engines.find(e => e.name === 'ollama')?.status !== 'running' && (
+                  <div className="catalog-empty__hint">
+                    Ollama engine is currently offline. <br/>
+                    <button className="text-purple hover:underline" onClick={() => handleEngineControl('start', 'ollama')}>Start Engine</button>
                   </div>
-                  <div className="catalog-meta">
-                    <span>{m.vram_required_gb > 0 ? `${m.vram_required_gb}GB VRAM` : 'Local Asset'}</span>
-                    <RefreshCcw size={10} />
-                    <span>{m.context_window / 1000}k ctx</span>
-                    {((m as any).origin === 'HF' || (m as any).origin === 'NODE') && (
-                      <button 
-                        className="catalog-deploy-btn"
-                        onClick={() => handlePullModel(m.engine, m.name)}
-                      >
-                        DEPLOY
-                      </button>
-                    )}
+                )}
+                {searchQuery && <p className="text-muted text-xs">Try searching for something else or check your connection.</p>}
+              </div>
+            ) : (
+              filteredRegistry.map((m) => (
+                <div key={m.name} className="catalog-item" onClick={() => setSelectedModel(m)}>
+                  <div className="catalog-main">
+                    <div className="catalog-header">
+                      <Cpu size={14} className="text-muted" />
+                      <span className="catalog-name">{m.name.split(':')[0]}</span>
+                      <span className="catalog-tag">{m.params}</span>
+                      <span className={`catalog-badge origin-${(m as any).origin.toLowerCase()}`}>
+                        {(m as any).origin === 'HF' ? 'HF' : 
+                         (m as any).origin === 'RPC' ? 'MESH(RPC)' :
+                         (m as any).origin === 'NODE' ? `NODE: ${(m as any).nodeName}` : 
+                         'LOCAL'}
+                      </span>
+                    </div>
+                    <div className="catalog-meta">
+                      <span>{m.vram_required_gb > 0 ? `${m.vram_required_gb}GB VRAM` : 'Local Asset'}</span>
+                      <RefreshCcw size={10} />
+                      <span>{m.context_window / 1000}k ctx</span>
+                      {((m as any).origin === 'HF' || (m as any).origin === 'NODE') && (
+                        <button 
+                          className="catalog-deploy-btn"
+                          onClick={() => setSelectedModel(m)}
+                        >
+                          DEPLOY
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>
+
+      {/* MODEL MODAL */}
+      {selectedModel && (
+        <div className="infra-modal-overlay" onClick={() => setSelectedModel(null)}>
+          <div className="infra-modal" onClick={e => e.stopPropagation()}>
+            <div className="infra-modal__header">
+              <div className="infra-modal__title-group">
+                <Cpu size={18} className="text-purple" />
+                <div>
+                  <h3>Deploy Model</h3>
+                  <p>{selectedModel.name}</p>
+                </div>
+              </div>
+              <button className="infra-modal__close" onClick={() => setSelectedModel(null)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="infra-modal__content">
+              <div className="infra-modal__stats">
+                <div className="stat-box">
+                  <span className="stat-label">VRAM REQ</span>
+                  <span className="stat-value">{selectedModel.vram_required_gb}GB</span>
+                </div>
+                <div className="stat-box">
+                  <span className="stat-label">CONTEXT</span>
+                  <span className="stat-value">{selectedModel.context_window / 1024}k</span>
+                </div>
+                <div className="stat-box">
+                  <span className="stat-label">ENGINE</span>
+                  <span className="stat-value">{selectedModel.engine.toUpperCase()}</span>
+                </div>
+              </div>
+
+              <div className="infra-modal__section">
+                <label>Configuration</label>
+                <div className="config-grid">
+                  <div className="config-item">
+                    <span>Quantization</span>
+                    <select className="settings-select">
+                      <option>4-bit (Fastest)</option>
+                      <option>8-bit (Balanced)</option>
+                      <option>FP16 (High Precision)</option>
+                    </select>
+                  </div>
+                  <div className="config-item">
+                    <span>Node Affinity</span>
+                    <select className="settings-select">
+                      <option>Local Only</option>
+                      <option>Auto-Balance Mesh</option>
+                      <option>High-Compute Node</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {selectedModel.description && (
+                <div className="infra-modal__section">
+                  <label>Description</label>
+                  <p className="infra-modal__desc">{selectedModel.description}</p>
+                </div>
+              )}
+            </div>
+
+            <div className="infra-modal__footer">
+              <button className="btn btn--outline" onClick={() => setSelectedModel(null)}>Cancel</button>
+              <button 
+                className="btn btn--purple" 
+                disabled={loading}
+                onClick={async () => {
+                  await handlePullModel(selectedModel.engine, selectedModel.name);
+                  setSelectedModel(null);
+                }}
+              >
+                {loading ? "Initializing..." : "Start Deployment"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

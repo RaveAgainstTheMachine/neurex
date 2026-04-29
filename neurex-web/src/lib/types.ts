@@ -233,4 +233,8 @@ export interface NeurexStore {
   theme: { accent_color: string; glow_color: string; enable_glassmorphism: boolean; enable_animations: boolean; enable_swarm_glow: boolean; menu_mode: "vertical" | "horizontal"; terminal_line_height: number };
   setTheme: (theme: any) => void;
   refreshTheme: () => Promise<void>;
+  // Settings
+  settings: any | null;
+  setSettings: (settings: any) => void;
+  refreshSettings: () => Promise<void>;
 }

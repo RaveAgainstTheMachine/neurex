@@ -26,6 +26,8 @@ DEFAULT_SETTINGS = {
     "web_port":        3000,
     "chromadb_port":   8001,
     "ollama_port":     11434,
+    "vllm_port":       8002,
+    "llama_cpp_port":  8080,
     "rpc_port":        50051,
 
     # Firewall

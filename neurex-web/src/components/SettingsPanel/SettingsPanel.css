@@ -176,6 +176,16 @@
   box-shadow: 0 0 0 2px var(--glow-purple);
 }
 
+/* Hide spin buttons */
+.settings-input[type="number"]::-webkit-inner-spin-button,
+.settings-input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.settings-input[type="number"] {
+  -moz-appearance: textfield;
+}
+
 /* Toggle Switch - High Contrast */
 .toggle-switch {
   position: relative;
