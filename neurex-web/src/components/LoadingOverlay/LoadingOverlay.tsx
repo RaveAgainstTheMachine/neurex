@@ -13,28 +13,30 @@ export function LoadingOverlay({ progress = 0, message = "Initializing Neurex...
         </div>
         <div className="loading-percentage">{Math.round(progress)}%</div>
         
-        {(() => {
-          const [showBypass, setShowBypass] = React.useState(false);
-          React.useEffect(() => {
-            const t = setTimeout(() => setShowBypass(true), 3000);
-            return () => clearTimeout(t);
-          }, []);
-          
-          if (!showBypass && progress === 0) return null;
-          
-          return (
-            <button 
-              className="loading-overlay__bypass animate-fade-in"
-              onClick={() => {
-                if ((window as any).hidePreloader) (window as any).hidePreloader();
-                window.dispatchEvent(new CustomEvent('neurex-force-start'));
-              }}
-            >
-              Launch Anyway
-            </button>
-          );
-        })()}
+        <BypassButton progress={progress} />
       </div>
     </div>
+  );
+}
+
+function BypassButton({ progress }: { progress: number }) {
+  const [showBypass, setShowBypass] = React.useState(false);
+  React.useEffect(() => {
+    const t = setTimeout(() => setShowBypass(true), 3000);
+    return () => clearTimeout(t);
+  }, []);
+  
+  if (!showBypass && progress === 0) return null;
+  
+  return (
+    <button 
+      className="loading-overlay__bypass animate-fade-in"
+      onClick={() => {
+        if ((window as any).hidePreloader) (window as any).hidePreloader();
+        window.dispatchEvent(new CustomEvent('neurex-force-start'));
+      }}
+    >
+      Launch Anyway
+    </button>
   );
 }

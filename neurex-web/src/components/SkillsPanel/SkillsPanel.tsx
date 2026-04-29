@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Puzzle, Download, Trash2, Globe, Loader2, Plus } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Puzzle, Download, Trash2, Globe, Loader2, Plus, Search, Star, X, Zap } from "lucide-react";
 import "./SkillsPanel.css";
 import toast from "react-hot-toast";
 
@@ -48,6 +48,75 @@ function ConfirmModal({
   );
 }
 
+function SkillDetailModal({
+  skill,
+  onClose
+}: {
+  skill: any;
+  onClose: () => void;
+}) {
+  if (!skill) return null;
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content modal-content--large" onClick={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <div className="skill-modal-title">
+            <Puzzle size={20} className="text-purple" />
+            <h2>{skill.name}</h2>
+            <span className="skill-modal-version">v{skill.version}</span>
+          </div>
+          <button className="modal-close" onClick={onClose}><X size={20} /></button>
+        </div>
+        <div className="modal-body">
+          <div className="skill-modal-meta">
+            <div className="meta-item">
+              <span className="meta-label">Author</span>
+              <span className="meta-value">{skill.author}</span>
+            </div>
+            {skill.repository && (
+              <div className="meta-item">
+                <span className="meta-label">Repository</span>
+                <a href={skill.repository} target="_blank" className="meta-value text-purple">{skill.repository}</a>
+              </div>
+            )}
+          </div>
+          <p className="skill-modal-desc">{skill.description}</p>
+          
+          {skill.instructions && (
+            <div className="skill-modal-instructions">
+              <h3 className="section-title">Behavioral Guidelines</h3>
+              <pre className="instructions-box">{skill.instructions}</pre>
+            </div>
+          )}
+
+          <div className="skill-modal-tools">
+            <h3 className="section-title">
+              {skill.type === 'functional' ? `Capabilities (${skill.tools?.length || 0})` : 'Logic Extension'}
+            </h3>
+            <div className="tools-list">
+              {skill.type === 'functional' && skill.tools?.length > 0 ? (
+                skill.tools.map((t: any, idx: number) => (
+                  <div key={idx} className="tool-entry">
+                    <div className="tool-name">
+                      <Zap size={10} />
+                      {t.function?.name}
+                    </div>
+                    <p className="tool-desc">{t.function?.description}</p>
+                  </div>
+                ))
+              ) : (
+                <div className="tools-empty">
+                  <p>This skill provides high-level instructions and reasoning logic to refine agent behavior rather than exposing discrete tools.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function SkillsPanel() {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [curated, setCurated] = useState<any[]>([]);
@@ -56,11 +125,18 @@ export function SkillsPanel() {
   const [newSkillUrl, setNewSkillUrl] = useState("");
   const [tab, setTab] = useState<"installed" | "discover">("installed");
   const [confirmState, setConfirmState] = useState<{ show: boolean; skillId: string | null }>({ show: false, skillId: null });
+  const [selectedSkill, setSelectedSkill] = useState<any>(null);
+  
+  // Marketplace states
+  const [marketSearch, setMarketSearch] = useState("");
+  const [marketCategory, setMarketCategory] = useState("All");
 
   const fetchSkills = async () => {
     setLoading(true);
     try {
-      const resp = await fetch(`${API_BASE}/api/skills/`);
+      const resp = await fetch(`${API_BASE}/api/skills/`, {
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      });
       const data = await resp.json();
       if (Array.isArray(data)) setSkills(data);
     } catch (err) {
@@ -70,10 +146,26 @@ export function SkillsPanel() {
     }
   };
 
+  const fetchSkillDetails = async (id: string) => {
+    try {
+      const resp = await fetch(`${API_BASE}/api/skills/${id}`, {
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        setSelectedSkill(data);
+      }
+    } catch (err) {
+      toast.error("Failed to load skill details");
+    }
+  };
+
   const fetchCurated = async () => {
     setLoading(true);
     try {
-      const resp = await fetch(`${API_BASE}/api/skills/curated`);
+      const resp = await fetch(`${API_BASE}/api/skills/curated`, {
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      });
       const data = await resp.json();
       if (Array.isArray(data)) setCurated(data);
     } catch (err) {
@@ -87,6 +179,15 @@ export function SkillsPanel() {
     if (tab === "installed") fetchSkills();
     else fetchCurated();
   }, [tab]);
+
+  const filteredMarketplace = useMemo(() => {
+    return curated.filter(item => {
+      const matchesSearch = item.name.toLowerCase().includes(marketSearch.toLowerCase()) || 
+                            item.description.toLowerCase().includes(marketSearch.toLowerCase());
+      const matchesCategory = marketCategory === "All" || item.category === marketCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [curated, marketSearch, marketCategory]);
 
   const handleInstall = async (url: string) => {
     setInstalling(true);
@@ -145,13 +246,29 @@ export function SkillsPanel() {
         onConfirm={() => confirmState.skillId && handleUninstall(confirmState.skillId)}
         onCancel={() => setConfirmState({ show: false, skillId: null })}
       />
-      <div className="skills-panel__header">
+      <SkillDetailModal 
+        skill={selectedSkill}
+        onClose={() => setSelectedSkill(null)}
+      />
+      <div className="skills-panel__header animate-slide-up">
         <div className="skills-panel__title-bar">
-           <h2 className="skills-panel__title">Agent Skills</h2>
-           <div className="skills-tabs">
-             <button className={tab === 'installed' ? 'active' : ''} onClick={() => setTab('installed')}>Installed</button>
-             <button className={tab === 'discover' ? 'active' : ''} onClick={() => setTab('discover')}>Discover</button>
-           </div>
+          <h2 className="skills-panel__title">Agent Skills</h2>
+          <div className="skills-tabs">
+            <button 
+              id="tab-installed"
+              className={tab === "installed" ? "active" : ""} 
+              onClick={() => setTab("installed")}
+            >
+              Installed
+            </button>
+            <button 
+              id="tab-discover"
+              className={tab === "discover" ? "active" : ""} 
+              onClick={() => setTab("discover")}
+            >
+              Discover
+            </button>
+          </div>
         </div>
         <p className="skills-panel__subtitle">
           Extend Neurex via the <a href="https://skillsmp.com" target="_blank" className="text-purple hover-glow">Reasoning Marketplace</a>
@@ -159,10 +276,14 @@ export function SkillsPanel() {
       </div>
 
       {tab === "installed" && (
-        <div className="skills-panel__install">
+        <div className="skills-panel__install animate-slide-up">
+          <p className="skills-install-hint">
+            Paste a <strong>Git repository URL</strong> or a <strong>skillsmp.com</strong> link below to synthesize new agent capabilities.
+          </p>
           <div className="skills-input">
             <Globe size={14} className="skills-input__icon" />
             <input 
+              id="skill-install-url"
               type="text" 
               placeholder="Git repository URL..." 
               value={newSkillUrl}
@@ -170,6 +291,7 @@ export function SkillsPanel() {
               disabled={installing}
             />
             <button 
+              id="btn-install-skill"
               className="btn btn--purple" 
               onClick={() => handleInstall(newSkillUrl)}
               disabled={installing || !newSkillUrl}
@@ -188,46 +310,93 @@ export function SkillsPanel() {
         ) : (
           <>
             {tab === "installed" && skills.length === 0 && (
-              <div className="skills-empty">
-                <Puzzle size={32} opacity={0.2} />
+              <div className="skills-empty animate-scale">
+                <Puzzle size={32} className="text-purple opacity-20" />
                 <p>No skills installed yet.</p>
               </div>
             )}
-            {tab === "installed" && skills.map((skill) => (
-              <div key={skill.id} className="skill-card">
+            {tab === "installed" && skills.map((skill, idx) => (
+              <div 
+                key={skill.id} 
+                id={`skill-installed-${skill.id}`}
+                className="skill-card skill-card--clickable animate-slide-up" 
+                style={{ animationDelay: `${idx * 0.05}s` }}
+                onClick={() => fetchSkillDetails(skill.id)}
+              >
                 <div className="skill-card__header">
                   <div className="skill-card__info">
                     <h3 className="skill-card__name">{skill.name}</h3>
                     <span className="skill-card__badge">{skill.tools_count} tools</span>
                   </div>
                   <button 
+                    id={`btn-delete-${skill.id}`}
                     className="skill-card__delete"
-                    onClick={() => setConfirmState({ show: true, skillId: skill.id })}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setConfirmState({ show: true, skillId: skill.id });
+                    }}
                   >
                     <Trash2 size={12} />
                   </button>
                 </div>
                 <p className="skill-card__desc">{skill.description}</p>
-                {skill.url && (
-                  <div className="skill-card__footer">
-                    <a href={skill.url} target="_blank" rel="noreferrer" className="skill-card__link">
-                      View Source
-                    </a>
-                  </div>
-                )}
+                <div className="skill-card__footer">
+                  <span className="skill-card__link">
+                    Deep Inspection →
+                  </span>
+                </div>
               </div>
             ))}
 
-            {tab === "discover" && curated.map((item) => (
-              <div key={item.name} className="skill-card skill-card--discover">
+            {tab === "discover" && (
+              <div className="marketplace-controls animate-slide-up">
+                <div className="skills-input">
+                  <Search size={14} className="skills-input__icon" />
+                  <input 
+                    id="marketplace-search"
+                    type="text" 
+                    placeholder="Search marketplace..." 
+                    value={marketSearch}
+                    onChange={(e) => setMarketSearch(e.target.value)}
+                  />
+                </div>
+                <div className="market-categories">
+                  {["All", "Core", "Code", "Web", "Data"].map(cat => (
+                    <button 
+                      key={cat} 
+                      id={`market-cat-${cat.toLowerCase()}`}
+                      className={`market-cat-btn ${marketCategory === cat ? 'active' : ''}`}
+                      onClick={() => setMarketCategory(cat)}
+                    >
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {tab === "discover" && filteredMarketplace.map((item, idx) => (
+              <div 
+                key={item.id} 
+                id={`market-item-${item.id}`}
+                className="skill-card skill-card--discover animate-slide-up"
+                style={{ animationDelay: `${idx * 0.05}s` }}
+              >
                 <div className="skill-card__header">
                   <div className="skill-card__info">
-                    <h3 className="skill-card__name">{item.display_name}</h3>
-                    <span className="skill-card__author">by {item.author}</span>
+                    <div className="skill-card__top">
+                      <h3 className="skill-card__name">{item.name}</h3>
+                      <span className="market-badge">{item.category}</span>
+                    </div>
+                    <div className="skill-card__subinfo">
+                      <span className="skill-card__author">by {item.author}</span>
+                      <span className="market-stars"><Star size={8} fill="currentColor" /> {item.stars}</span>
+                    </div>
                   </div>
                   <button 
+                    id={`btn-install-curated-${item.id}`}
                     className="btn btn--purple btn--small"
-                    onClick={() => handleInstall(item.repository)}
+                    onClick={() => handleInstall(item.url)}
                     disabled={installing}
                   >
                     {installing ? <Loader2 className="animate-spin" size={12} /> : "Install"}

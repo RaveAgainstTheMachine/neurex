@@ -172,6 +172,34 @@ class InfrastructureManager:
         log.info("infra.engine_stopped", engine=name, killed_count=count)
         return count > 0
 
+    async def install_engine(self, name: str):
+        """Execute installation commands for an engine."""
+        log.info("infra.engine_install_start", engine=name)
+        cmd = []
+        if name == "ollama":
+            cmd = ["curl", "-fsSL", "https://ollama.com/install.sh", "|", "sh"]
+        elif name == "vllm":
+            cmd = ["pip", "install", "vllm"]
+        elif name == "llama.cpp":
+            cmd = ["pip", "install", "llama-cpp-python"]
+        
+        if not cmd:
+            raise Exception(f"No installation script defined for {name}")
+
+        process = await asyncio.create_subprocess_shell(
+            " ".join(cmd),
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        stdout, stderr = await process.communicate()
+        if process.returncode != 0:
+            error = stderr.decode()
+            log.error("infra.engine_install_failed", engine=name, error=error)
+            raise Exception(f"Installation failed: {error}")
+        
+        log.info("infra.engine_install_success", engine=name)
+        return True
+
     def get_system_vram(self) -> float:
         """
         Estimate available VRAM in GB using nvidia-smi.

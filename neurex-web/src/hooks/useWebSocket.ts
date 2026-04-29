@@ -81,7 +81,8 @@ export function useWebSocket(conversationId: string) {
             s.setLocks(nextLocks);
             break;
           case "error":
-            s.addMessage({ role: "assistant", content: `❌ Error: ${data}` });
+            const errorMsg = typeof data === "object" ? JSON.stringify(data) : data;
+            s.addMessage({ role: "assistant", content: `❌ Error: ${errorMsg}` });
             break;
         }
       } catch {}

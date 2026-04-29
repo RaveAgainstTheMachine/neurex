@@ -45,6 +45,10 @@ export function SearchPanel({ onExpand }: { onExpand?: (s: number) => void }) {
     if (searchState.results.length > 0 && onExpand) {
       onExpand(35); // Expand to 35% when results exist
     }
+    
+    return () => {
+      if (onExpand) onExpand(18); // Shrink back on unmount
+    };
   }, [searchState.results.length, onExpand]);
 
   const handleSearch = async (e?: React.FormEvent) => {

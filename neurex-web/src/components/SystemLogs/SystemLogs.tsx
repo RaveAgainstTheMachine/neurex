@@ -26,7 +26,14 @@ export function SystemLogsPanel() {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const r = await fetch(`${API_BASE}/api/infra/logs`);
+        const token = localStorage.getItem("token");
+        if (!token) return;
+        const r = await fetch(`${API_BASE}/api/infra/logs`, {
+          headers: { 
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json"
+          }
+        });
         const data = await r.json();
         const rawLogs = Array.isArray(data) ? data : [];
         

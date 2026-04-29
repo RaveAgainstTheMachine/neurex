@@ -55,8 +55,35 @@ export const useStore = create<NeurexStore>()(
       localStorage.removeItem("token");
       localStorage.removeItem("token_timestamp");
       localStorage.removeItem("user");
-      set((s) => { s.token = null; s.user = null; s.isInitialized = false; });
+      set((s) => { 
+        s.token = null; 
+        s.user = null; 
+        s.isInitialized = false; 
+        s.messages = [];
+        s.tasks = {};
+        s.infraEngines = [];
+        s.infraMetrics = null;
+        s.infraRegistry = [];
+        s.infraSkills = [];
+        s.infraPeers = [];
+      });
       toast.error("Logged out");
+    },
+    refreshMe: async () => {
+      const token = get().token;
+      if (!token) return;
+      try {
+        const res = await fetch(`${API_BASE}/api/auth/me`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const user = await res.json();
+          localStorage.setItem("user", JSON.stringify(user));
+          set((s) => { s.user = user; });
+        } else if (res.status === 401) {
+          get().logout();
+        }
+      } catch (err) {}
     },
 
     // ── Infra ─────────────────────────────────────────────────────────

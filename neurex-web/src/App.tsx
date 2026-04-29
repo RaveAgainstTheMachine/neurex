@@ -212,6 +212,9 @@ function AppContent() {
         if (!isInitialized && !state.isInitializing) {
           state.setIsInitializing(true);
           
+          // Refresh user profile to ensure roles are correct
+          state.refreshMe();
+          
           // Use a race to ensure we don't hang forever
           const initPromise = Promise.all([
             state.refreshFileTree(), 
@@ -396,12 +399,18 @@ function AppContent() {
 
               <div className="status-bar">
                 <div className="status-bar__left">
-                  <span className="status-ws status-ws--connected" title="Mesh Network: Connected">
+                  <span className={`status-ws status-ws--${wsStatus}`} title={`Mesh Network: ${wsStatus}`}>
                     <Activity size={10} />
-                    <span>NEUREX MESH ACTIVE</span>
+                    <span>
+                      {wsStatus !== "connected" 
+                        ? "MESH DISCONNECTED" 
+                        : hiveStats.total_nodes > 1 
+                          ? "NEUREX MESH ACTIVE" 
+                          : "NEUREX LOCAL ACTIVE"}
+                    </span>
                   </span>
                   <div className="status-intel" title="Hive Statistics">
-                    <div className="swarm-pulse swarm-pulse--active" />
+                    <div className={`swarm-pulse ${wsStatus === "connected" ? "swarm-pulse--active" : ""}`} />
                     <span>{hiveStats.total_nodes} NODES ACTIVE</span>
                   </div>
                 </div>
@@ -497,6 +506,12 @@ function BottomPanel({ send }: { send: (p: any) => void }) {
           style={{ display: activeTab === "output" ? "block" : "none" }}
         >
           {lines.map((l, i) => <div key={i} className="bottom-panel__line">{l}</div>)}
+        </div>
+        <div 
+          className="bottom-panel__tab-content"
+          style={{ display: activeTab === "flight" ? "block" : "none" }}
+        >
+          <FlightRecorder conversationId={activeConversationId} />
         </div>
       </div>
     </div>

@@ -5,11 +5,10 @@ Endpoints for managing AI infrastructure (engines, VRAM, performance).
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Dict, Any
 from core.infrastructure.manager import InfrastructureManager
-from core.infrastructure.registry import LLMRecommender, MODEL_REGISTRY
+from core.infrastructure.registry import LLMRecommender, search_huggingface
 from core.infrastructure.benchmarker import Benchmarker
 from core.skills.manager import SkillManager
 from api.routes.auth import require_role, UserRole
-from core.infrastructure.registry import LLMRecommender, MODEL_REGISTRY, search_huggingface
 
 router = APIRouter()
 infra_manager = InfrastructureManager()
@@ -95,6 +94,15 @@ async def stop_engine(name: str):
     success = await infra_manager.stop_engine(name)
     return {"success": success}
 
+@router.post("/engine/{name}/install", dependencies=[Depends(require_role(UserRole.ADMIN))])
+async def install_engine(name: str):
+    """Install a specific AI engine."""
+    try:
+        success = await infra_manager.install_engine(name)
+        return {"success": success}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get("/recommend")
 async def recommend_model(task: str):
     """Recommend the best available model for a task."""
@@ -104,16 +112,26 @@ async def recommend_model(task: str):
         raise HTTPException(status_code=404, detail="No suitable model found")
     return recommendation
 
+from core.infrastructure.registry import LLMRecommender, search_huggingface
+
 @router.get("/registry")
 async def get_model_registry():
-    """List all models known to Neurex and their availability."""
+    """List only the models actually available on this node."""
     local_models = await infra_manager.get_installed_models("ollama")
     enriched_registry = []
-    for model in MODEL_REGISTRY:
-        m_dict = model.dict()
-        # Mark as downloaded if name exists in local_models
-        m_dict["is_downloaded"] = any(model.name in lm for lm in local_models)
-        enriched_registry.append(m_dict)
+    
+    for lm in local_models:
+        enriched_registry.append({
+            "name": lm,
+            "engine": "ollama",
+            "params": "Local",
+            "context_window": 32768,
+            "vram_required_gb": 0,
+            "recommended_tasks": [],
+            "is_downloaded": True,
+            "is_community": False
+        })
+            
     return enriched_registry
 
 @router.post("/model/pull", dependencies=[Depends(require_role(UserRole.ADMIN))])

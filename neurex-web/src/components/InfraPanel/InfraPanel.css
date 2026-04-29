@@ -96,21 +96,23 @@
 }
 
 .rec-deploy-btn {
-  width: 100%;
-  padding: 10px;
-  background: var(--accent-purple);
-  color: white;
+  align-self: flex-end;
+  padding: 8px 16px;
+  background: rgba(139, 92, 246, 0.05);
+  color: var(--accent-purple);
+  border: 1px solid rgba(139, 92, 246, 0.2);
   border-radius: 6px;
-  font-size: 11px;
-  font-weight: 900;
+  font-size: 10px;
+  font-weight: 800;
   letter-spacing: 0.05em;
   transition: all 0.2s;
-  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.2);
+  margin-top: auto;
 }
 
 .rec-deploy-btn:hover {
-  background: #9333ea;
-  transform: translateY(-1px);
+  background: var(--accent-purple);
+  color: white;
+  border-color: var(--accent-purple);
 }
 
 /* ── Compute Engines (Stack) ── */
@@ -131,7 +133,7 @@
 }
 
 .engine-row.active {
-  border-color: white;
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 .engine-row.missing {
@@ -152,24 +154,44 @@
 }
 
 .engine-install-btn {
-  padding: 8px 16px;
+  padding: 6px 12px;
+  background: transparent;
+  color: var(--accent-purple);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  transition: all 0.2s;
+}
+
+.engine-install-btn:hover {
   background: var(--accent-purple);
   color: white;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 900;
 }
 
 .engine-btn {
   width: 32px;
   height: 32px;
   border-radius: 6px;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border);
   color: var(--text-muted);
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all 0.2s;
+}
+
+.engine-btn.start:hover {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.engine-btn.stop:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
 }
 
 /* ── Model Catalog ── */
@@ -239,4 +261,66 @@
   font-size: 10px;
   color: var(--text-muted);
   font-weight: 600;
+}
+
+.catalog-badge {
+  font-size: 8px;
+  font-weight: 900;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.catalog-badge.origin-local {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.1);
+}
+
+.catalog-badge.origin-registry {
+  background: rgba(245, 158, 11, 0.1);
+  color: #f59e0b;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.catalog-badge.origin-hf {
+  background: rgba(139, 92, 246, 0.1);
+  color: var(--accent-purple);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.1);
+}
+
+.catalog-badge.origin-rpc {
+  background: rgba(34, 211, 238, 0.1);
+  color: #22d3ee;
+  border: 1px solid rgba(34, 211, 238, 0.2);
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.1);
+}
+
+.catalog-badge.origin-node {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.catalog-deploy-btn {
+  margin-left: auto;
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--accent-purple);
+  background: rgba(139, 92, 246, 0.05);
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  transition: all 0.2s;
+  letter-spacing: 0.02em;
+}
+
+.catalog-deploy-btn:hover {
+  background: var(--accent-purple);
+  color: white;
+  border-color: var(--accent-purple);
+  transform: translateY(-1px);
 }

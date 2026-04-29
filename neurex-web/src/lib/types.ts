@@ -89,6 +89,7 @@ export interface MeshPeer {
   vram_gb: number;
   latency_ms: number;
   models?: string[];
+  rpc_endpoint?: string;
 }
 
 export interface Presence {
@@ -108,6 +109,7 @@ export interface User {
   id: string;
   username: string;
   role: "admin" | "developer" | "viewer";
+  is_active?: boolean;
 }
 
 export interface SearchResult {
@@ -145,6 +147,7 @@ export interface NeurexStore {
   user: User | null;
   setAuth: (token: string, user: User) => void;
   logout: () => void;
+  refreshMe: () => Promise<void>;
 
   // Infra
   infraEngines: InfraEngine[];
@@ -227,7 +230,7 @@ export interface NeurexStore {
   // Hive
   hiveStats: { total_nodes: number; memory_count: number };
   // Theme
-  theme: { accent_color: string; glow_color: string; enable_glassmorphism: boolean; enable_animations: boolean; enable_swarm_glow: boolean; menu_mode: "vertical" | "horizontal" };
+  theme: { accent_color: string; glow_color: string; enable_glassmorphism: boolean; enable_animations: boolean; enable_swarm_glow: boolean; menu_mode: "vertical" | "horizontal"; terminal_line_height: number };
   setTheme: (theme: any) => void;
   refreshTheme: () => Promise<void>;
 }

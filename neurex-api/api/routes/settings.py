@@ -9,6 +9,7 @@ from typing import Dict, Any
 import os
 from core.settings.manager import settings_manager
 from api.routes.auth import require_role, UserRole
+from core.task_graph import User
 
 router = APIRouter()
 
@@ -47,8 +48,29 @@ async def get_settings():
     return settings_manager.get_all()
 
 
-@router.post("/", dependencies=[Depends(require_role(UserRole.ADMIN))])
-async def update_settings(req: SettingsUpdateRequest, background_tasks: BackgroundTasks):
+# Settings that ONLY Admins can change
+ADMIN_ONLY_SETTINGS = {
+    "api_port", "web_port", "chromadb_port", "ollama_port", "rpc_port",
+    "firewall_enabled", "firewall_lan_only", "enable_mesh_routing",
+    "enable_distributed_pooling", "ollama_base_url"
+}
+
+
+@router.post("/")
+async def update_settings(
+    req: SettingsUpdateRequest, 
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(require_role(UserRole.DEVELOPER))
+):
+    # If not admin, ensure they aren't changing restricted keys
+    if current_user.role != UserRole.ADMIN:
+        restricted_changes = [k for k in req.settings if k in ADMIN_ONLY_SETTINGS]
+        if restricted_changes:
+            raise HTTPException(
+                status_code=403, 
+                detail=f"Admin privileges required to modify: {', '.join(restricted_changes)}"
+            )
+
     # Detect if any port or firewall key is being changed
     firewall_needs_update = any(k in PORT_KEYS for k in req.settings)
 

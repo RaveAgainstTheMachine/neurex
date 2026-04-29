@@ -21,13 +21,40 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
   const fetchData = useStore(s => s.refreshInfra);
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [hfResults, setHfResults] = useState<ModelProfile[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchData();
     const timer = setInterval(fetchData, 5000);
-    return () => clearInterval(timer);
-  }, [fetchData]);
+    onExpand(35);
+    return () => {
+      clearInterval(timer);
+      onExpand(18);
+    };
+  }, [fetchData, onExpand]);
+
+  // Debounced search for Hugging Face ONLY
+  useEffect(() => {
+    const trimmed = searchQuery.trim();
+    if (trimmed.length < 3) {
+      setHfResults([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/infra/registry/search?query=${encodeURIComponent(trimmed)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setHfResults(data);
+      } catch (err) {
+        console.error("HF Search failed", err);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   const recommendations = [
     { id: 'thinking', role: 'THINKING', model: 'deepseek-r1 (thinking)', specs: '32B • 20G VRAM', icon: Brain },
@@ -41,7 +68,10 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
   const handlePullModel = async (engine: string, model: string) => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/infra/model/pull?engine=${engine}&model=${model}`, { method: "POST" });
+      const res = await fetch(`${API_BASE}/api/infra/model/pull?engine=${engine}&model=${model}`, { 
+        method: "POST",
+        headers: { "Authorization": `Bearer ${useStore.getState().token}` }
+      });
       if (!res.ok) throw new Error(await res.text());
       toast.success(`Deploying ${model} to node...`);
       fetchData();
@@ -52,10 +82,68 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
     }
   };
 
+  const handleEngineControl = async (action: 'start' | 'stop' | 'install', engine: string) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/infra/engine/${engine}/${action}`, { 
+        method: "POST",
+        headers: { "Authorization": `Bearer ${useStore.getState().token}` }
+      });
+      if (!res.ok) throw new Error(await res.text());
+      toast.success(`${engine.toUpperCase()} ${action} successful`);
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const filteredRegistry = useMemo(() => {
-    if (!searchQuery) return registry.slice(0, 10);
-    return registry.filter(m => m.name.toLowerCase().includes(searchQuery.toLowerCase()));
-  }, [registry, searchQuery]);
+    const results: (ModelProfile & { origin: 'LOCAL' | 'HF' | 'RPC' | 'NODE', nodeName?: string })[] = [];
+
+    // 1. Local Models (Strictly from disk)
+    registry.forEach(m => {
+      results.push({ ...m, origin: 'LOCAL' });
+    });
+
+    // 2. Peer Models
+    peers.forEach(peer => {
+      if (peer.status === 'online' && peer.models) {
+        peer.models.forEach(modelName => {
+          results.push({
+            name: modelName,
+            engine: 'ollama',
+            params: '?',
+            context_window: 32768,
+            vram_required_gb: 0,
+            recommended_tasks: [],
+            origin: peer.rpc_endpoint ? 'RPC' : 'NODE',
+            nodeName: peer.name
+          });
+        });
+      }
+    });
+
+    // 3. HF Results (Discovery layer)
+    if (searchQuery.trim().length >= 3) {
+      hfResults.forEach(m => {
+        results.push({ ...m, origin: 'HF' } as any);
+      });
+    }
+
+    const query = searchQuery.toLowerCase().trim();
+    if (!query) {
+      // Show all real-world available models
+      return results.slice(0, 20);
+    }
+    
+    const searchWords = query.split(/\s+/);
+    return results.filter(m => {
+      const name = m.name.toLowerCase();
+      return searchWords.every(word => name.includes(word));
+    });
+  }, [registry, searchQuery, hfResults, peers]);
 
   return (
     <div className="infra-panel">
@@ -101,24 +189,22 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
                   <div className="engine-status">{e.status.toUpperCase()}</div>
                 </div>
                 <div className="engine-controls">
-                  <button className="engine-btn"><X size={14} /></button>
+                  {e.status === 'running' ? (
+                    <button className="engine-btn stop" onClick={() => handleEngineControl('stop', e.name)} title="Stop Engine">
+                      <Square size={14} fill="currentColor" />
+                    </button>
+                  ) : e.status === 'stopped' ? (
+                    <button className="engine-btn start" onClick={() => handleEngineControl('start', e.name)} title="Start Engine">
+                      <Play size={14} fill="currentColor" />
+                    </button>
+                  ) : (
+                    <button className="engine-install-btn" onClick={() => handleEngineControl('install', e.name)}>
+                      INSTALL
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
-            <div className="engine-row missing">
-              <div className="engine-main">
-                <div className="engine-name">vLLM</div>
-                <div className="engine-status">MISSING</div>
-              </div>
-              <button className="engine-install-btn">INSTALL</button>
-            </div>
-            <div className="engine-row missing">
-              <div className="engine-main">
-                <div className="engine-name">llama.cpp</div>
-                <div className="engine-status">MISSING</div>
-              </div>
-              <button className="engine-install-btn">INSTALL</button>
-            </div>
           </div>
         </div>
 
@@ -142,11 +228,25 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
                     <Cpu size={14} className="text-muted" />
                     <span className="catalog-name">{m.name.split(':')[0]}</span>
                     <span className="catalog-tag">{m.params}</span>
+                    <span className={`catalog-badge origin-${(m as any).origin.toLowerCase()}`}>
+                      {(m as any).origin === 'HF' ? 'HF' : 
+                       (m as any).origin === 'RPC' ? 'MESH(RPC)' :
+                       (m as any).origin === 'NODE' ? `NODE: ${(m as any).nodeName}` : 
+                       'LOCAL'}
+                    </span>
                   </div>
                   <div className="catalog-meta">
-                    <span>{m.vram_required_gb}GB VRAM</span>
+                    <span>{m.vram_required_gb > 0 ? `${m.vram_required_gb}GB VRAM` : 'Local Asset'}</span>
                     <RefreshCcw size={10} />
-                    <span>128k ctx</span>
+                    <span>{m.context_window / 1000}k ctx</span>
+                    {((m as any).origin === 'HF' || (m as any).origin === 'NODE') && (
+                      <button 
+                        className="catalog-deploy-btn"
+                        onClick={() => handlePullModel(m.engine, m.name)}
+                      >
+                        DEPLOY
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
