@@ -64,7 +64,14 @@ async def update_settings(
 ):
     # If not admin, ensure they aren't changing restricted keys
     if current_user.role != UserRole.ADMIN:
-        restricted_changes = [k for k in req.settings if k in ADMIN_ONLY_SETTINGS]
+        restricted_changes = []
+        for k, v in req.settings.items():
+            if k in ADMIN_ONLY_SETTINGS:
+                # Only block if the value is actually different from current
+                current_val = settings_manager.get(k)
+                if v != current_val:
+                    restricted_changes.append(k)
+        
         if restricted_changes:
             raise HTTPException(
                 status_code=403, 

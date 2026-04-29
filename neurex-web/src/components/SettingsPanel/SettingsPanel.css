@@ -42,12 +42,12 @@
 .settings-icon-wrapper {
   width: 40px;
   height: 40px;
-  background: rgba(168, 85, 247, 0.1);
+  background: var(--glow-purple);
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(168, 85, 247, 0.2);
+  border: 1px solid var(--border-active);
 }
 
 .settings-panel__title-bar h2 {
@@ -173,7 +173,7 @@
   outline: none;
   border-color: var(--accent-purple);
   background: rgba(0, 0, 0, 0.3);
-  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.1);
+  box-shadow: 0 0 0 2px var(--glow-purple);
 }
 
 /* Toggle Switch - High Contrast */
@@ -227,7 +227,7 @@
 }
 
 input:checked + .toggle-slider {
-  background-color: rgba(168, 85, 247, 0.2);
+  background-color: var(--glow-purple);
   border-color: var(--accent-purple);
 }
 
@@ -278,9 +278,9 @@ input:checked + .toggle-slider:after {
 }
 
 .badge--experimental {
-  background: rgba(168, 85, 247, 0.1);
+  background: var(--glow-purple);
   color: var(--accent-purple);
-  border: 1px solid rgba(168, 85, 247, 0.2);
+  border: 1px solid var(--border-active);
 }
 
 .badge--admin { background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3); }
@@ -307,7 +307,7 @@ input:checked + .toggle-slider:after {
 
 .user-item:hover {
   background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(168, 85, 247, 0.3);
+  border-color: var(--accent-purple);
 }
 
 .user-item__info {
@@ -348,8 +348,8 @@ input:checked + .toggle-slider:after {
   margin-top: 24px;
   padding: 24px;
   border-radius: 12px;
-  border: 1px solid rgba(168, 85, 247, 0.2);
-  background: rgba(168, 85, 247, 0.05);
+  border: 1px solid var(--border-active);
+  background: var(--glow-purple);
   animation: slideDown 0.3s ease-out;
 }
 

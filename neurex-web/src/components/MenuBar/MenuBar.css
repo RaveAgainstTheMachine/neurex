@@ -14,7 +14,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-muted);
+  color: var(--accent-purple);
+  filter: drop-shadow(0 0 4px var(--glow-purple));
   transition: all 0.2s;
   cursor: pointer;
 }
@@ -22,15 +23,7 @@
 .burger-trigger:hover, .burger-trigger.active {
   background: var(--bg-hover);
   color: var(--text-primary);
-}
-
-.logo-trigger {
-  color: var(--accent-purple);
-  filter: drop-shadow(0 0 5px var(--glow-purple));
-}
-
-.logo-trigger.active .neurex-logo-svg {
-  transform: rotate(90deg) scale(1.1);
+  filter: drop-shadow(0 0 8px var(--glow-purple));
 }
 
 /* ── Vertical Drawer ────────────────────────────────────────────── */

@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useStore } from "../../lib/store";
-import { Check, ChevronRight } from "lucide-react";
+import { Check, ChevronRight, Menu } from "lucide-react";
 import "./MenuBar.css";
-import { NeurexLogo } from "../Icons/NeurexLogo";
 
 interface MenuOption {
   label?: string;
@@ -140,21 +139,21 @@ export function MenuBar({ mode = "horizontal" }: MenuBarProps) {
   return (
     <div className="menu-bar" ref={menuRef}>
       <button 
-        className={`burger-trigger logo-trigger ${isOpen ? "active" : ""}`}
+        className={`burger-trigger ${isOpen ? "active" : ""}`}
         onClick={() => {
           setIsOpen(!isOpen);
           setActiveSection(null);
         }}
-        title="Neurex Main Menu"
+        title="Main Menu"
       >
-        <NeurexLogo size={22} className="neurex-logo-svg" />
+        <Menu size={22} />
       </button>
 
       {isOpen && mode === "vertical" && (
         <div className="menu-drawer animate-slide-right">
           <div className="menu-drawer__header">
-            <NeurexLogo size={18} />
-            <span>NEUREX TREE</span>
+            <Menu size={16} />
+            <span>NEUREX</span>
           </div>
           <div className="menu-drawer__content">
             {menus.map(section => (

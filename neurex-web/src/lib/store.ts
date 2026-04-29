@@ -94,8 +94,8 @@ export const useStore = create<NeurexStore>()(
     infraPeers: [],
     hiveStats: { total_nodes: 0, memory_count: 0 },
     theme: { 
-      accent_color: "hsl(260, 90%, 70%)", 
-      glow_color: "hsla(260, 90%, 70%, 0.4)",
+      accent_color: "#9c6fff", 
+      glow_color: "#9c6fff66",
       enable_glassmorphism: true,
       enable_animations: true,
       enable_swarm_glow: true,

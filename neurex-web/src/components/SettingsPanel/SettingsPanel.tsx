@@ -127,7 +127,13 @@ export function SettingsPanel() {
 
   const handleChange = (key: string, value: any) => {
     if (!settings || isViewer || isRestricted(key)) return;
-    setSettings({ ...settings, [key]: value });
+    const newSettings = { ...settings, [key]: value };
+    setSettings(newSettings);
+
+    // Immediate preview for visual settings
+    if (["accent_color", "glow_color", "enable_glassmorphism", "enable_animations", "menu_mode", "terminal_line_height"].includes(key)) {
+      useStore.getState().setTheme({ [key]: value });
+    }
   };
 
   const handleSave = async () => {
@@ -138,7 +144,7 @@ export function SettingsPanel() {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem("token")}`
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({ settings })
       });
@@ -148,21 +154,34 @@ export function SettingsPanel() {
         return;
       }
 
-      // Sync global theme immediately
-      useStore.getState().setTheme({
-        accent_color: settings.accent_color,
-        glow_color: settings.glow_color,
-        enable_glassmorphism: settings.enable_glassmorphism,
-        enable_animations: settings.enable_animations,
-        menu_mode: settings.menu_mode,
-        terminal_line_height: settings.terminal_line_height
-      });
-
-      toast.success("Settings saved successfully");
+      if (res.ok) {
+        const data = await res.json();
+        // Sync global theme immediately
+        useStore.getState().setTheme({
+          accent_color: settings.accent_color,
+          glow_color: settings.glow_color,
+          enable_glassmorphism: settings.enable_glassmorphism,
+          enable_animations: settings.enable_animations,
+          menu_mode: settings.menu_mode,
+          terminal_line_height: settings.terminal_line_height
+        });
+        toast.success("Settings saved successfully");
+        // Re-fetch to ensure sync
+        fetchData();
+      } else {
+        const error = await res.json();
+        toast.error(error.detail || "Failed to save settings");
+      }
     } catch (err) {
       toast.error("Failed to save settings");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSave();
     }
   };
 
@@ -383,6 +402,7 @@ export function SettingsPanel() {
                   type="text" 
                   value={settings.ollama_base_url} 
                   onChange={(e) => handleChange("ollama_base_url", e.target.value)}
+                  onKeyDown={handleKeyDown}
                   className="settings-input"
                   placeholder="http://127.0.0.1:11434"
                   disabled={isViewer || isRestricted("ollama_base_url")}
@@ -501,7 +521,7 @@ export function SettingsPanel() {
               <div className="setting-control color-picker-group">
                 <input 
                   type="color" 
-                  value={settings.accent_color.startsWith('hsl') ? '#9c6fff' : settings.accent_color} 
+                  value={settings.accent_color.startsWith('#') ? settings.accent_color : '#9c6fff'} 
                   onChange={(e) => {
                     const hex = e.target.value;
                     handleChange("accent_color", hex);
@@ -514,6 +534,7 @@ export function SettingsPanel() {
                   type="text" 
                   value={settings.accent_color} 
                   onChange={(e) => handleChange("accent_color", e.target.value)}
+                  onKeyDown={handleKeyDown}
                   className="settings-input settings-input--sm"
                   placeholder="hex or hsl"
                   disabled={isViewer || isRestricted("accent_color")}
@@ -773,6 +794,7 @@ export function SettingsPanel() {
                   type="text" 
                   value={settings.neurex_trash_path}
                   onChange={(e) => handleChange("neurex_trash_path", e.target.value)}
+                  onKeyDown={handleKeyDown}
                   className="settings-input"
                   disabled={isViewer || isRestricted("neurex_trash_path")}
                 />

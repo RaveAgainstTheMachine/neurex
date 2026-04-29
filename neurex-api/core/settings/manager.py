@@ -40,8 +40,8 @@ DEFAULT_SETTINGS = {
     "enable_glassmorphism": True,
     "enable_animations": True,
     "theme_preset": "obsidian",
-    "accent_color": "hsl(260, 90%, 70%)",
-    "glow_color": "hsla(260, 90%, 70%, 0.4)",
+    "accent_color": "#9c6fff",
+    "glow_color": "#9c6fff66",
     "enable_swarm_glow": True,
 
     # LLM Advanced
