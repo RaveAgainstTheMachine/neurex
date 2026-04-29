@@ -155,7 +155,7 @@ export function Terminal({ sessionId, onInput, onResize, isActive }: TerminalPro
       ref={terminalRef}
       className="terminal-container"
       onClick={() => xtermRef.current?.focus()}
-      style={{ height: "100%", width: "100%", background: "#050507", outline: "none", paddingBottom: "1px" }}
+      style={{ height: "100%", width: "100%", background: "#050507", outline: "none" }}
       tabIndex={-1}
     />
   );
