@@ -44,7 +44,19 @@ All notable changes to the Neurex project will be documented in this file.
 - Migrated all IDE actions to a unified `MenuBar` logic tree.
 - Standardized tooltips across every interactive icon in the IDE.
 
-## [0.1.0] - 2026-04-27
+## [0.1.2] - 2026-04-28
+### Added
+- **Dynamic Theme Engine**: implemented `color-mix` based design tokens, allowing the entire UI (including chat) to reactively adapt to the user's primary accent color.
+- **Immediate Settings Preview**: configuration changes now apply in real-time to the DOM before persistence.
+- **Batch State Management**: introduced `handleBatchChange` in `SettingsPanel` to eliminate state race conditions during rapid property updates.
+
+### Fixed
+- **Settings Persistence**: resolved a critical bug where non-admin users were blocked from saving visual preferences due to the presence of restricted infrastructure keys in the payload.
+- **RBAC Hardening**: refined the backend settings validator to only enforce admin-only checks if the restricted key's value is actually modified.
+- **Color Sync**: standardized all default colors to HEX format to ensure 1:1 synchronization with native browser color pickers.
+- **Chat UI**: applied primary accent colors to user message bubbles and thinking animations for full thematic unity.
+
+## [0.1.1] - 2026-04-28
 ### Added
 - Initial IDE Core implementation.
 - Monaco Editor integration.

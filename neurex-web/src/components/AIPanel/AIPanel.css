@@ -215,13 +215,13 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 0 10px rgba(100, 50, 255, 0.2);
+  box-shadow: 0 0 10px var(--glow-purple);
 }
 
 .code-block-apply:hover {
   transform: translateY(-1px);
   filter: brightness(1.2);
-  box-shadow: 0 0 15px rgba(100, 50, 255, 0.4);
+  box-shadow: 0 0 15px var(--glow-purple);
 }
 
 .message__content pre {

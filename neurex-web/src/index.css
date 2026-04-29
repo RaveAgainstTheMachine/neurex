@@ -9,14 +9,14 @@
   --bg-sidebar:   hsl(240, 10%, 5%);
   --bg-surface:   hsl(240, 10%, 8%);
   --bg-elevated:  hsl(240, 10%, 11%);
-  --bg-hover:     hsla(255, 70%, 65%, 0.12);
-  --bg-active:    hsla(255, 70%, 65%, 0.18);
+  --bg-hover:     color-mix(in srgb, var(--accent-purple), transparent 88%);
+  --bg-active:    color-mix(in srgb, var(--accent-purple), transparent 82%);
   --bg-input:     hsl(240, 10%, 6%);
 
   /* Borders */
   --border:       hsla(240, 10%, 20%, 0.5);
-  --border-active: hsla(255, 70%, 65%, 0.3);
-  --border-focus:  hsl(255, 70%, 65%);
+  --border-active: color-mix(in srgb, var(--accent-purple), transparent 70%);
+  --border-focus:  var(--accent-purple);
 
   /* Text */
   --text-primary:   hsl(240, 10%, 94%);

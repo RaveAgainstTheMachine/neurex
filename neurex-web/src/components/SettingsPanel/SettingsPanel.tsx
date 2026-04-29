@@ -127,12 +127,41 @@ export function SettingsPanel() {
 
   const handleChange = (key: string, value: any) => {
     if (!settings || isViewer || isRestricted(key)) return;
-    const newSettings = { ...settings, [key]: value };
-    setSettings(newSettings);
+    
+    setSettings(prev => {
+      if (!prev) return null;
+      return { ...prev, [key]: value };
+    });
 
     // Immediate preview for visual settings
     if (["accent_color", "glow_color", "enable_glassmorphism", "enable_animations", "menu_mode", "terminal_line_height"].includes(key)) {
       useStore.getState().setTheme({ [key]: value });
+    }
+  };
+
+  const handleBatchChange = (updates: Record<string, any>) => {
+    if (!settings || isViewer) return;
+    
+    setSettings(prev => {
+      if (!prev) return null;
+      let next = { ...prev };
+      for (const [k, v] of Object.entries(updates)) {
+        if (!isRestricted(k)) {
+          next[k] = v;
+        }
+      }
+      return next;
+    });
+
+    // Immediate preview for visual settings
+    const visualUpdates: any = {};
+    for (const [k, v] of Object.entries(updates)) {
+      if (["accent_color", "glow_color", "enable_glassmorphism", "enable_animations", "menu_mode", "terminal_line_height"].includes(k)) {
+        visualUpdates[k] = v;
+      }
+    }
+    if (Object.keys(visualUpdates).length > 0) {
+      useStore.getState().setTheme(visualUpdates);
     }
   };
 
@@ -524,9 +553,10 @@ export function SettingsPanel() {
                   value={settings.accent_color.startsWith('#') ? settings.accent_color : '#9c6fff'} 
                   onChange={(e) => {
                     const hex = e.target.value;
-                    handleChange("accent_color", hex);
-                    // Update glow as well with alpha
-                    handleChange("glow_color", hex + '66'); 
+                    handleBatchChange({
+                      "accent_color": hex,
+                      "glow_color": hex + '66'
+                    });
                   }} 
                   disabled={isViewer || isRestricted("accent_color")}
                 />
