@@ -9,6 +9,7 @@
 - **Verification First**: Before claiming a task is done, verify the service starts. Use `make dev-api` or `make dev-web` to check for compilation/runtime errors.
 - **Atomic Commits**: Git commits must be atomic and descriptive. Format: `[service] <type>: <description>`. Example: `[api] feat: add pty session timeout`.
 - **Documentation Parity**: If you change a route, update `API_REFERENCE.md`. If you change architecture, update `ARCHITECTURE.md`. If you change state, update the `CHANGELOG.md`.
+- **Confirmation Rule**: Before any thinking or action, you must explicitly state that you have read and are applying these rules (Source of Law: .antigravityrules).
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 2. ENVIRONMENT & INITIALIZATION

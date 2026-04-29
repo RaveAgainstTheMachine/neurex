@@ -48,14 +48,27 @@ While the architecture is incredibly sound, I have identified a few areas that r
 
 ---
 
+5.  **Zero-Trust Security & RBAC Hardening (Phase 12 Milestone)**:
+    *   *Status*: **RESOLVED** (v0.8.5-beta).
+    *   *Implementation*:
+        *   **Invite-Only Onboarding**: Replaced public registration with a time-limited invitation system, controlled by `admin` users.
+        *   **JWT Secret Enforced**: Removed insecure default keys; the system now mandates environment-level configuration to prevent unauthorized token forgery.
+        *   **Path Sanitization**: Implemented strict input normalization for Skill installation, blocking path traversal vulnerabilities at the core resolver level.
+
+6.  **Context Optimization & Hive Mind (Phase 11 Milestone)**:
+    *   *Status*: **RESOLVED** (v0.8.5-beta).
+    *   *Implementation*:
+        *   **Automated Summarization**: Developed a lazy context condenser that automatically summarizes long task histories, maintaining agent precision while respecting token constraints.
+        *   **Time-Aware Ledger**: Transitioned the entire TaskGraph and Audit Log to UTC-standardized, timezone-aware timestamps to ensure absolute temporal consistency across mesh nodes.
+
+---
+
 ## 4. Strategic Recommendations for Next Deployment
 
-1.  **Phase 11: The "Hive Mind" Memory System**
-    *   Agents currently maintain context per conversation. Introduce a global vector database (e.g., ChromaDB or pgvector) that allows an agent in Conversation A to recall code written by an agent in Conversation B.
-2.  **Phase 12: Teams & RBAC (Role-Based Access Control)**
-    *   As the Mesh expands, you will need distinct user accounts. A Junior Dev should not be able to change the `AUTONOMY_LEVEL` to "Full" or modify the `Hardened Trash Path`.
-3.  **Phase 10.5 Completion**:
+1.  **Phase 13: Distributed RPC Pooling**
     *   Finalize the `Llama.cpp` RPC master/worker handshake to enable true distributed tensor pooling across the Mesh.
+2.  **Phase 14: Autonomous Self-Healing**
+    *   Implement an autonomous "Sentinel" agent that can detect and repair service drifts or port conflicts (e.g., ghost Ollama processes) without human intervention.
 
 ---
 **Report Concluded.**

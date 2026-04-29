@@ -19,7 +19,7 @@ from core.task_graph import AsyncSession
 log = structlog.get_logger()
 router = APIRouter()
 
-from api.routes.auth import SECRET_KEY, ALGORITHM
+from api.routes.auth import get_secret_key, ALGORITHM
 from jose import jwt, JWTError
 
 async def _authenticate(websocket: WebSocket) -> bool:
@@ -28,7 +28,7 @@ async def _authenticate(websocket: WebSocket) -> bool:
         await websocket.close(code=http_status.WS_1008_POLICY_VIOLATION)
         return False
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, get_secret_key(), algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
             await websocket.close(code=http_status.WS_1008_POLICY_VIOLATION)

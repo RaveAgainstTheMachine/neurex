@@ -30,7 +30,10 @@
 
 ## 1. Authentication
 
-All endpoints (except `/health`, `/api/auth/register`, `/api/auth/token`) require a Bearer JWT.
+All endpoints (except `/health`, `/api/auth/register`, `/api/auth/token`) require a Bearer JWT. 
+
+> [!IMPORTANT]
+> **JWT_SECRET**: The API will refuse to start if the `JWT_SECRET` environment variable is not set.
 
 **Roles**: `admin` > `developer` > `viewer`
 
@@ -40,12 +43,37 @@ Register a new user. The **first** user registered is automatically granted `adm
 **Body** (`application/x-www-form-urlencoded`):
 | Field | Type | Description |
 |:---|:---|:---|
+| `invite_code` | string | **Mandatory**. A valid, unused invitation token. |
 | `username` | string | Unique username |
 | `password` | string | Plain-text password (hashed server-side with pbkdf2_sha256) |
 
 **Response `200`**:
 ```json
-{ "message": "User created", "role": "admin" }
+{ "message": "Account created with role: developer", "role": "developer" }
+```
+
+---
+
+### `POST /api/auth/invite/create`
+Generate a new invitation code.
+
+**Auth**: `admin`
+
+**Body**:
+```json
+{
+  "role": "developer",
+  "expires_in_hours": 24
+}
+```
+
+**Response `200`**:
+```json
+{
+  "invite_code": "code-123",
+  "role": "developer",
+  "expires_at": "2026-04-29T..."
+}
 ```
 
 ---

@@ -240,7 +240,7 @@ FIREWALL_LAN_ONLY={str(lan_only).lower()}
     if enable_firewall:
         console.print("\n[bold magenta]9. Applying Firewall Rules[/bold magenta]")
         try:
-            from core.infrastructure.firewall import firewall_manager
+            from core.infrastructure.firewall import firewall_manager # type: ignore
             result = asyncio.run(firewall_manager.apply_rules(
                 role="master",
                 bind_ip=bind_ip,
@@ -381,7 +381,7 @@ FIREWALL_LAN_ONLY={str(lan_only).lower()}
     if enable_firewall:
         console.print("\n[bold magenta]7. Applying Firewall Rules[/bold magenta]")
         try:
-            from core.infrastructure.firewall import firewall_manager
+            from core.infrastructure.firewall import firewall_manager # type: ignore
             result = asyncio.run(firewall_manager.apply_rules(
                 role="node",
                 bind_ip=bind_ip,

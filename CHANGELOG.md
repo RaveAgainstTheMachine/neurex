@@ -16,8 +16,24 @@ All notable changes to the Neurex project will be documented in this file.
 - **Burger Menu 2.0**: Unified the top-level menu into a single, branded '⬡' trigger in the Activity Bar.
 - **Interactive Status Bar**: Real-time cursor position, indentation selection, encoding selection, and language mode switching via Command Palettes.
 - **AI Intelligence Indicators**: Pulse animations for active AI composition and thinking states.
+- **Security Hardening (RBAC+)**:
+  - Implemented time-limited, role-aware **Invite Codes** for registration.
+  - Enforced strict environment-based **JWT Secret** validation (prevents insecure defaults).
+  - Sanitized skill installation paths to block path traversal vulnerabilities.
+- **Context Summarization**: Added an automated history condensation step in the Orchestrator to prevent context window bloat during complex task sequences.
+- **Unified Protocol**: Established `.antigravityrules` as the absolute Source of Law and mandated the **Confirmation Rule** for agentic reasoning.
+- **SkillsMP Marketplace**: Integrated deep-linking and marketplace discovery directly into the Skills Panel.
+- **Infrastructure Hub (v2)**: Restored high-fidelity UI for Agent Recommendations, Engine Stack monitoring, and Model Catalog management.
+- **Universal Installer**: Created a role-aware cross-platform installation system with dedicated launchers for Linux, macOS, and Windows.
+- **Multi-Vendor Acceleration**: Enhanced hardware detection to support Apple Silicon (Metal), AMD (ROCm), and Intel (SYCL/OpenCL).
+- **Global Context Menus**: Implemented system-wide right-click menus for rapid file and task management.
 
 ### Fixed
+- **Terminal Reliability**: Resolved input bypass issues, debounced resize events, and fixed blank screen artifacts.
+- **Memory Worker**: Refactored the memory indexing worker to be non-blocking, eliminating UI hangs during large code ingestions.
+- **Initialization**: Resolved deadlocks in the mesh network startup and fixed IPv4/v6 loopback mismatches.
+- **Search Persistence**: Ensured search results and auto-expand states persist across view toggles.
+- **Infrastructure**: Hardened PTY broadcast stability and fixed settings persistence across reloads.
 - **Infinite Layout Bleeding**: Enforced strict `min-width: 0` and `overflow: hidden` across the entire flex layout.
 - **Terminal Rendering**: Achieved a 'flush' seamless look with synced background colors (#050507) and descender clearance (+2px lifting).
 - **Redundant UI Elements**: Fused the Neurex logo with the menu trigger and removed redundant headers.

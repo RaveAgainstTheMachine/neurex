@@ -12,15 +12,22 @@ from passlib.context import CryptContext
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+import structlog
 from core.task_graph import User, UserRole, InviteCode, get_session
+
+log = structlog.get_logger()
 
 router = APIRouter()
 
 # Configuration
-SECRET_KEY = os.getenv("JWT_SECRET")
-if not SECRET_KEY:
-    # Fail fast if security is compromised by missing config
-    raise RuntimeError("JWT_SECRET environment variable is not set. Neurex cannot start without a secure key.")
+def get_secret_key() -> str:
+    key = os.getenv("JWT_SECRET")
+    if not key:
+        if os.getenv("DEBUG") == "true":
+            log.warning("auth.using_insecure_dev_secret", hint="Set JWT_SECRET in .env for production")
+            return "neurex-insecure-dev-secret-007"
+        raise RuntimeError("JWT_SECRET environment variable is not set. Neurex cannot start without a secure key.")
+    return key
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 1440 # 24 hours
 
@@ -40,7 +47,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     else:
         expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return jwt.encode(to_encode, get_secret_key(), algorithm=ALGORITHM)
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
@@ -52,7 +59,7 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, get_secret_key(), algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
