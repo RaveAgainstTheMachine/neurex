@@ -65,6 +65,35 @@ class Orchestrator:
         """Override the session-specific autonomy level."""
         self.autonomy_level = level
 
+    async def _summarize_history(self, tasks: List[TaskNode], model: str) -> str:
+        """Condense a long task history into a manageable summary."""
+        if not tasks:
+            return ""
+        
+        history_text = "\n".join([f"Task: {n.title}\nResult: {n.result}" for n in tasks])
+        
+        # If history is small (e.g. < 4k chars), return as-is
+        if len(history_text) < 4000:
+            return history_text
+            
+        log.info("orchestrator.summarizing_context", task_count=len(tasks), char_count=len(history_text))
+        
+        from core.agents.reviewer_agent import ReviewerAgent
+        summarizer = ReviewerAgent(self.rules, self.ctx, model=model)
+        
+        prompt = f"Summarize the following completed task steps into a concise summary for a sibling agent. Focus on what was achieved and any critical findings:\n\n{history_text}"
+        
+        summary = ""
+        # Use a simple stream collect
+        async for chunk in summarizer.stream([{"role": "user", "content": prompt}]):
+            if chunk["type"] == "token":
+                summary += chunk["text"]
+            elif chunk["type"] == "done":
+                break
+        
+        # Return summary + the very last result in full for immediate context
+        return f"[CONTEXT SUMMARY]\n{summary}\n\n[LATEST RESULT]\nTask: {tasks[-1].title}\nResult: {tasks[-1].result}"
+
     async def _create_git_snapshot(self, graph_id: str):
         """Creates a git tag/snapshot of the workspace for safety."""
         import subprocess
@@ -224,13 +253,15 @@ class Orchestrator:
                         AgentClass = AGENT_MAP.get(node.agent_type, CoderAgent)
                         agent = AgentClass(self.rules, self.ctx, model=model_name)
                         
-                        # Gather history context
+                        # Gather and summarize history context
                         history_stmt = select(TaskNode).where(
                             TaskNode.graph_id == graph_id,
                             TaskNode.status == TaskStatus.DONE
-                        )
+                        ).order_by(TaskNode.created_at)
                         history_result = await self.session.exec(history_stmt)
-                        history_context = "\n".join([f"Task: {n.title}\nResult: {n.result}" for n in history_result.all()])
+                        done_tasks = history_result.all()
+                        
+                        history_context = await self._summarize_history(done_tasks, model_name)
                         
                         task_payload = {
                             "title": node.title,

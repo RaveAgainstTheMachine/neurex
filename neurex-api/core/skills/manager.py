@@ -69,6 +69,13 @@ class SkillManager:
                 base_repo = match.group(1)
                 branch = match.group(2)
                 sub_path = match.group(3)
+                
+                # SECURITY: Sanitize sub_path to prevent path traversal
+                # Ensure it's not absolute and doesn't contain parent directory references
+                if os.path.isabs(sub_path) or ".." in sub_path:
+                    log.error("security.path_traversal_attempt", path=sub_path)
+                    raise Exception(f"Invalid sub-path in URL: {sub_path}. Absolute paths and '..' are forbidden.")
+                
                 url = base_repo
                 log.info("skill.detected_github_tree", repo=base_repo, branch=branch, path=sub_path)
 

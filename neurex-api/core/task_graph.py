@@ -5,7 +5,7 @@ The UI can still build the tree view using parent_id.
 """
 from __future__ import annotations
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Optional, List
 
@@ -26,12 +26,20 @@ class User(SQLModel, table=True):
     username: str = Field(index=True, unique=True)
     hashed_password: str
     role: UserRole = UserRole.DEVELOPER
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     is_active: bool = Field(default=True)
     otp_secret: Optional[str] = None
     otp_enabled: bool = Field(default=False)
     otp_backup_codes: Optional[str] = None # JSON-serialized list of hashed codes
     force_password_change: bool = Field(default=False)
+
+class InviteCode(SQLModel, table=True):
+    code: str = Field(primary_key=True)
+    role: UserRole = UserRole.DEVELOPER
+    expires_at: datetime
+    is_used: bool = Field(default=False)
+    created_by: str # username of admin who created it
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class AutonomyLevel(str, Enum):
     RESTRICTED = "restricted" # Everything needs approval
@@ -61,8 +69,8 @@ class TaskNode(SQLModel, table=True):
     error: Optional[str] = None
     iteration: int = 0
     max_iterations: int = 10
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     is_checkpoint: bool = Field(default=False)
 
 class FileLock(SQLModel, table=True):
@@ -70,7 +78,7 @@ class FileLock(SQLModel, table=True):
     locked_by: str # user_id or agent_id
     owner_node: str # Which node instance holds the lock
     expires_at: datetime
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 # DecisionEvent moved to core.observability.flight_recorder
 
@@ -114,7 +122,7 @@ async def update_task(
     if not node:
         return None
     node.status = status
-    node.updated_at = datetime.utcnow()
+    node.updated_at = datetime.now(timezone.utc)
     node.iteration += 1
     if result is not None:
         node.result = result

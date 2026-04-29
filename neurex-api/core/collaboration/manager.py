@@ -4,7 +4,7 @@ Federated Governance & Zero-Trust Collision Prevention Engine
 """
 import time
 import structlog
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List
 from sqlmodel import select
 from core.task_graph import FileLock, engine
@@ -24,7 +24,7 @@ class CollaborationManager:
         Ensure only one entity (User or Agent) can mutate a file across the entire mesh.
         """
         async with AsyncSession(engine) as session:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             
             # Check for existing lock
             statement = select(FileLock).where(FileLock.path == path)
@@ -94,7 +94,7 @@ class CollaborationManager:
     async def get_active_locks(self) -> List[FileLock]:
         """Fetch all active locks across the mesh."""
         async with AsyncSession(engine) as session:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             statement = select(FileLock).where(FileLock.expires_at > now)
             results = await session.exec(statement)
             return results.all()

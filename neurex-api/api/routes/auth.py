@@ -3,7 +3,7 @@ api/routes/auth.py
 User authentication and RBAC logic.
 """
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -12,12 +12,15 @@ from passlib.context import CryptContext
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from core.task_graph import User, UserRole, get_session
+from core.task_graph import User, UserRole, InviteCode, get_session
 
 router = APIRouter()
 
 # Configuration
-SECRET_KEY = os.getenv("JWT_SECRET", "neurex-super-secret-key-007")
+SECRET_KEY = os.getenv("JWT_SECRET")
+if not SECRET_KEY:
+    # Fail fast if security is compromised by missing config
+    raise RuntimeError("JWT_SECRET environment variable is not set. Neurex cannot start without a secure key.")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 1440 # 24 hours
 
@@ -33,9 +36,9 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -168,20 +171,67 @@ async def setup_admin(username: str, password: str, token: str, session: AsyncSe
     return {"message": "Master Identity Synthesized"}
 
 @router.post("/register")
-async def register(form_data: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_session)):
+async def register(
+    invite_code: str,
+    form_data: OAuth2PasswordRequestForm = Depends(), 
+    session: AsyncSession = Depends(get_session)
+):
+    # Verify invite code
+    stmt = select(InviteCode).where(
+        InviteCode.code == invite_code,
+        InviteCode.is_used == False,
+        InviteCode.expires_at > datetime.now(timezone.utc)
+    )
+    result = await session.exec(stmt)
+    invitation = result.first()
+    
+    if not invitation:
+        raise HTTPException(status_code=403, detail="Invalid, used, or expired invite code")
+
     user = User(
         username=form_data.username,
         hashed_password=hash_password(form_data.password),
-        role=UserRole.DEVELOPER,
-        force_password_change=False # User is setting their own password
+        role=invitation.role,
+        force_password_change=False
     )
     session.add(user)
+    
+    # Mark invite code as used
+    invitation.is_used = True
+    session.add(invitation)
+    
     try:
         await session.commit()
     except:
         raise HTTPException(status_code=400, detail="Username already exists")
     
-    return {"message": "Developer account created", "role": UserRole.DEVELOPER, "force_password_change": True}
+    return {"message": f"Account created with role: {invitation.role}", "role": invitation.role}
+
+@router.post("/invite/create", dependencies=[Depends(require_role(UserRole.ADMIN))])
+async def create_invite(
+    role: UserRole = UserRole.DEVELOPER, 
+    expires_in_hours: int = 24,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session)
+):
+    import secrets
+    code = secrets.token_urlsafe(16)
+    expires_at = datetime.now(timezone.utc) + timedelta(hours=expires_in_hours)
+    
+    invitation = InviteCode(
+        code=code,
+        role=role,
+        expires_at=expires_at,
+        created_by=current_user.username
+    )
+    session.add(invitation)
+    await session.commit()
+    
+    return {
+        "invite_code": code,
+        "role": role,
+        "expires_at": expires_at.isoformat()
+    }
 
 @router.post("/token")
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_session)):
