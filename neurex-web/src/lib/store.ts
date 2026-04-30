@@ -500,6 +500,13 @@ export const useStore = create<NeurexStore>()(
       });
       setTimeout(() => (window as any).hideOverlays?.(), 0);
     },
+    togglePin: (path) => set((s) => {
+      const f = s.openFiles.find(x => x.path === path);
+      if (f) {
+        f.isPinned = !f.isPinned;
+        localStorage.setItem("neurex_open_files", JSON.stringify(s.openFiles));
+      }
+    }),
     setFileContent: (path, content) => set((s) => {
       const f = s.openFiles.find(f => f.path === path);
       if (f) { 

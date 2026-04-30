@@ -1,18 +1,17 @@
 // neurex-web/src/components/Editor/EditorPane.tsx
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import MonacoEditor, { Editor, DiffEditor } from "@monaco-editor/react";
 import { useStore } from "../../lib/store";
 import { API_BASE } from "../../lib/config";
 import { 
   ChevronDown, ChevronRight, Save, FileCode, Check, AlertCircle, 
   Sparkles, X, CornerDownLeft, Loader2, Activity, Cpu, Zap, Layout,
-  RefreshCw, Folder
+  RefreshCw, Folder, Pin, PinOff
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { ContextMenu } from "../ContextMenu/ContextMenu";
-// import { lspManager } from "../../lib/lsp";
 import { api } from "../../lib/api";
 import "./EditorPane.css";
 
@@ -23,7 +22,7 @@ export function EditorPane({ paneId = "pane-main" }: { paneId?: string }) {
     setCursorPosition, upsertTask, hiveStats, infraMetrics,
     acceptDiff, discardDiff, token, refreshInfra,
     editorPanes, setPaneFile, setActiveFile, activeFile,
-    splitEditor, closePane, setDiagnostics
+    splitEditor, closePane, setDiagnostics, togglePin
   } = useStore();
 
   const [supportedLangs, setSupportedLangs] = useState<string[]>([]);
@@ -58,7 +57,6 @@ export function EditorPane({ paneId = "pane-main" }: { paneId?: string }) {
       const { installLanguageServer } = await import("../../lib/lsp");
       await installLanguageServer(active.language, token);
       toast.success(`${active.language} intelligence active!`, { id: toastId });
-      // Refresh supported list in store
       refreshInfra();
     } catch (err: any) {
       toast.error(err.message, { id: toastId });
@@ -66,7 +64,6 @@ export function EditorPane({ paneId = "pane-main" }: { paneId?: string }) {
       setIsInstalling(false);
     }
   };
-
 
   const [inlinePrompt, setInlinePrompt] = useState("");
   const [isInlineVisible, setIsInlineVisible] = useState(false);
@@ -89,7 +86,6 @@ export function EditorPane({ paneId = "pane-main" }: { paneId?: string }) {
     if (active && token && supportedLangs?.includes(active.language)) {
       import("../../lib/lsp").then(m => m.lspManager.connect(active.language, token));
     } else if (active && token && !supportedLangs?.includes(active.language) && installableLangs?.includes(active.language) && !isInstalling) {
-      // Auto-provisioning (Autopilot on by default)
       handleInstall();
     }
   }, [active?.language, token, supportedLangs, installableLangs, isInstalling]);
@@ -152,8 +148,18 @@ export function EditorPane({ paneId = "pane-main" }: { paneId?: string }) {
       setInlinePrompt("");
     } catch (err) {
       console.error("Inline edit failed", err);
+    } finally {
+      setIsProcessing(false);
     }
   }, [inlinePrompt, isProcessing, active, upsertTask]);
+
+  const sortedTabs = useMemo(() => {
+    return [...openFiles].sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      return 0;
+    });
+  }, [openFiles]);
 
   const renderBreadcrumbs = () => {
     if (!active) return null;
@@ -166,8 +172,6 @@ export function EditorPane({ paneId = "pane-main" }: { paneId?: string }) {
             <div 
               className={`breadcrumb-item ${i === parts.length - 1 ? 'file' : ''}`}
               onClick={() => {
-                // In a real app, we'd fetch siblings here. 
-                // For now, let's just toggle a state to show the UI intent.
                 setBreadcrumbMenu(breadcrumbMenu?.index === i ? null : { index: i, items: [part, "other_file.ts", "sibling_dir"] });
               }}
             >
@@ -223,10 +227,10 @@ export function EditorPane({ paneId = "pane-main" }: { paneId?: string }) {
     <div className="editor-pane">
       <div className="editor-pane__header">
         <div className="editor-tabs">
-          {openFiles.map((f) => (
+          {sortedTabs.map((f) => (
             <div
               key={f.path}
-              className={`editor-tab ${f.path === activePath ? "active" : ""} ${f.isDirty ? "is-dirty" : ""} ${f.originalContent !== undefined ? "is-diff" : ""} ${f.isPreview ? "is-preview" : ""}`}
+              className={`editor-tab ${f.path === activePath ? "active" : ""} ${f.isDirty ? "is-dirty" : ""} ${f.originalContent !== undefined ? "is-diff" : ""} ${f.isPreview ? "is-preview" : ""} ${f.isPinned ? "pinned" : ""}`}
               onClick={() => {
                 setPaneFile(paneId, f.path);
                 setActiveFile(f.path);
@@ -238,16 +242,19 @@ export function EditorPane({ paneId = "pane-main" }: { paneId?: string }) {
             >
               <FileCode size={13} className="editor-tab__icon" />
               <span className="editor-tab__name">{f.path.split("/").pop()}</span>
-              {f.isDirty && <span className="dirty-dot" />}
-              <button
-                className="editor-tab__close"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  useStore.getState().closeFile(f.path);
-                }}
-              >
-                <X size={14} />
-              </button>
+              {f.isPinned && <Pin size={10} className="pin-icon" />}
+              {f.isDirty && !f.isPinned && <span className="dirty-dot" />}
+              {!f.isPinned && (
+                <button
+                  className="editor-tab__close"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    useStore.getState().closeFile(f.path);
+                  }}
+                >
+                  <X size={14} />
+                </button>
+              )}
             </div>
           ))}
           <ContextMenu 
@@ -265,6 +272,12 @@ export function EditorPane({ paneId = "pane-main" }: { paneId?: string }) {
                 const path = target.getAttribute('data-path');
                 if (path) useStore.getState().closeToRight(path);
               }},
+              { type: 'separator' },
+              { label: active.isPinned ? 'Unpin' : 'Pin', action: (target) => {
+                const path = target.getAttribute('data-path');
+                if (path) togglePin(path);
+              }},
+              { type: 'separator' },
               { label: 'Close Saved', shortcut: 'Ctrl+K U', action: () => useStore.getState().closeSaved() },
               { label: 'Close All', shortcut: 'Ctrl+K W', action: () => useStore.getState().closeAllFiles() },
               { type: 'separator' },
@@ -547,7 +560,6 @@ export function EditorPane({ paneId = "pane-main" }: { paneId?: string }) {
               });
 
               editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, async () => {
-                // Trigger formatting if available
                 const formatAction = editor.getAction('editor.action.formatDocument');
                 if (formatAction) {
                   await formatAction.run();

@@ -54,6 +54,7 @@ export interface OpenFile {
   language: string;
   isDirty: boolean;
   isPreview?: boolean;
+  isPinned?: boolean;
 }
 
 export interface ModelProfile {
@@ -227,6 +228,7 @@ export interface NeurexStore {
   closeToRight: (path: string) => void;
   closeSaved: () => void;
   closeAllFiles: () => void;
+  togglePin: (path: string) => void;
   setActiveFile: (path: string | null) => void;
   editorPanes: { id: string; path: string | null }[];
   setEditorPanes: (panes: { id: string; path: string | null }[]) => void;

@@ -92,6 +92,23 @@
   display: none;
 }
 
+.editor-tab.pinned {
+  flex-grow: 0;
+  min-width: fit-content;
+  background: var(--bg-active);
+  border-right: 1px solid var(--border);
+}
+
+.pin-icon {
+  margin-left: 4px;
+  opacity: 0.8;
+  color: var(--accent-primary);
+}
+
+.editor-tab.pinned .editor-tab__name {
+  max-width: 100px;
+}
+
 .editor-tab__close:hover { 
   background: var(--bg-active); 
   color: var(--text-primary); 
