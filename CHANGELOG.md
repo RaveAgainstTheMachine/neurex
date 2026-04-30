@@ -4,10 +4,11 @@ All notable changes to the Neurex project will be documented in this file.
 
 ## [0.1.7] - 2026-04-29 (NATIVE LSP & NEURAL LENS)
 ### Added
-- **Native LSP Hub**: transitioned to a high-performance, native Language Server Protocol architecture:
-  - **Backend LSP Manager**: automated discovery and lifecycle management of system-installed language servers (Python, TS, Rust, Go, etc.).
-  - **WebSocket JSON-RPC Bridge**: low-latency bidirectional streaming for real-time code intelligence.
-  - **Top-100 Language Support**: extensible configuration map covering the world's most popular programming languages.
+- **Universal Language Intelligence**: transitioned to a high-performance, native Language Server Protocol architecture with near-universal coverage:
+  - **Mega-Registry Expansion**: added support for the **Top 100+** languages (including Elixir, Haskell, Zig, Fortran, Cobol, and more).
+  - **Dynamic Fallback Engine**: automated heuristic discovery for niche languages via system-path pattern matching (e.g., `lang-lsp`).
+  - **Custom LSP Configuration**: introduced `.neurex/lsp.json` for workspace-level command overrides and proprietary language support.
+  - **LSP Autopilot**: automated discovery and lifecycle management of system-installed language servers.
 - **Neural Error Lens**: implemented a native, high-fidelity inline diagnostic system:
   - **Inline Error Messages**: groups and renders diagnostics (Errors/Warnings) directly after code lines with thematic neon accents.
   - **Real-time Synchronization**: updates decorations instantly as the LSP reports markers.

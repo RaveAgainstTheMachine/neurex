@@ -35,6 +35,38 @@ export function EditorPane() {
   const active = openFiles.find((f) => f.path === activeFile);
   
   // Inline AI Edit State
+  const [installableLangs, setInstallableLangs] = useState<string[]>([]);
+  const [isInstalling, setIsInstalling] = useState(false);
+
+  useEffect(() => {
+    if (!token) return;
+    fetch(`${API_BASE}/api/languages/installable`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    })
+      .then(r => r.json())
+      .then(data => setInstallableLangs(data.languages))
+      .catch(() => {});
+  }, [token]);
+
+  const handleInstall = async () => {
+    if (!active || !token) return;
+    setIsInstalling(true);
+    const toastId = toast.loading(`Provisioning ${active.language} intelligence...`);
+    try {
+      const { installLanguageServer } = await import("../../lib/lsp");
+      await installLanguageServer(active.language, token);
+      toast.success(`${active.language} intelligence active!`, { id: toastId });
+      // Refresh supported list in store
+      refreshInfra();
+    } catch (err: any) {
+      toast.error(err.message, { id: toastId });
+    } finally {
+      setIsInstalling(false);
+    }
+  };
+
+  const showAutopilot = active && !supportedLangs.includes(active.language) && installableLangs.includes(active.language);
+
   const [inlinePrompt, setInlinePrompt] = useState("");
   const [isInlineVisible, setIsInlineVisible] = useState(false);
   const [inlineCoords, setInlineCoords] = useState({ top: 0, left: 0 });
@@ -314,6 +346,20 @@ export function EditorPane() {
                 {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <CornerDownLeft size={14} />}
               </button>
             </div>
+          </div>
+        {showAutopilot && (
+          <div className="autopilot-banner glass animate-slide-down">
+            <div className="autopilot-banner__info">
+              <BrainCircuit size={14} className="text-cyan animate-pulse" />
+              <span>Autopilot detected missing {active.language} intelligence.</span>
+            </div>
+            <button 
+              className="btn btn--cyan btn--small" 
+              onClick={handleInstall}
+              disabled={isInstalling}
+            >
+              {isInstalling ? <RefreshCw size={12} className="animate-spin" /> : "ENABLE AUTOPILOT"}
+            </button>
           </div>
         )}
 

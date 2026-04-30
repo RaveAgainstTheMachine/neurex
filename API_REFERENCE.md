@@ -529,6 +529,18 @@ WebSocket bridge for raw LSP JSON-RPC traffic. Acts as a transparent proxy to th
 | `token` | Auth token |
 | `workspace` | Root path for the LSP server |
 
+### Custom Workspace Configuration
+You can override or add LSP configurations by creating a `.neurex/lsp.json` file in your workspace root.
+
+**Example `.neurex/lsp.json`**:
+```json
+{
+  "python": ["/usr/bin/python3", "-m", "pyright"],
+  "custom-lang": ["custom-lsp-server", "--stdio"]
+}
+```
+If a language is defined here, it takes precedence over both the native registry and system discovery.
+
 ---
 
 ## Git & Version Control

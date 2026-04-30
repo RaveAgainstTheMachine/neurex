@@ -96,3 +96,15 @@ class LSPManager {
 }
 
 export const lspManager = new LSPManager();
+
+export async function installLanguageServer(lang: string, token: string) {
+    const res = await fetch(`${API_BASE}/api/languages/install/${lang}`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` }
+    });
+    if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.detail || "Installation failed");
+    }
+    return res.json();
+}

@@ -153,7 +153,9 @@ Neurex implements a high-performance, native LSP Hub that provides IDE-grade int
 
 ### 10.1 Backend LSP Manager
 The `LSPManager` orchestrates language server subprocesses on the host machine.
-- **Discovery**: Scans the system `PATH` for known language binaries (e.g., `pyright-langserver`, `rust-analyzer`).
+- **Discovery**: Scans the system `PATH` and `.neurex/bin/lsp` for known binaries.
+- **Dynamic Fallback**: If a language is unrecognized, the manager interrogates the system for standard patterns (e.g., `lang-lsp`, `langls`) to provide zero-config intelligence for niche languages.
+- **Custom Configuration**: Supports workspace-level overrides via `.neurex/lsp.json`, allowing developers to define proprietary LSP commands.
 - **Lifecycle**: Manages the startup, health checks, and shutdown of server instances.
 - **Bridging**: Transparently pipes standard I/O from the LSP subprocess to a dedicated WebSocket endpoint.
 
