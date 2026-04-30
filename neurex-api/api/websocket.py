@@ -239,3 +239,51 @@ async def websocket_endpoint(
                 s = pty_manager.get_session(sid)
                 if s:
                     s.detach(get_output_handler(sid))
+@router.websocket("/ws/lsp/{lang}")
+async def lsp_websocket_endpoint(websocket: WebSocket, lang: str):
+    await websocket.accept()
+    
+    if not await _authenticate(websocket):
+        return
+
+    workspace_path = websocket.query_params.get("workspace", os.getcwd())
+    lsp_manager = websocket.app.state.lsp_manager
+    
+    try:
+        session = await lsp_manager.get_session(lang, workspace_path)
+    except Exception as e:
+        log.error("lsp.start_failed", lang=lang, error=str(e))
+        await websocket.send_json({"event": "error", "data": str(e)})
+        await websocket.close()
+        return
+
+    log.info("lsp.connected", lang=lang, workspace=workspace_path)
+
+    async def forward_to_lsp():
+        try:
+            while True:
+                data = await websocket.receive_bytes()
+                await session.write(data)
+        except WebSocketDisconnect:
+            pass
+        except Exception as e:
+            log.error("lsp.forward_error", lang=lang, error=str(e))
+
+    async def forward_to_ws():
+        try:
+            while True:
+                data = await session.read_stdout()
+                if not data:
+                    break
+                await websocket.send_bytes(data)
+        except Exception as e:
+            log.error("lsp.receive_error", lang=lang, error=str(e))
+
+    try:
+        await asyncio.gather(forward_to_lsp(), forward_to_ws())
+    except Exception as e:
+        log.error("lsp.bridge_crash", lang=lang, error=str(e))
+    finally:
+        # We don't stop the session here because multiple tabs might use the same language LSP
+        # But for the prototype, we just log it
+        log.info("lsp.disconnected", lang=lang)

@@ -279,3 +279,30 @@
 }
 .remote-cursor--agent { color: var(--accent-cyan); }
 .remote-cursor--user { color: var(--accent-purple); }
+
+/* ── Neural Lens Styles ────────────────────────────────────────── */
+.error-lens-msg {
+  font-style: italic;
+  font-size: 11px;
+  opacity: 0.7;
+  margin-left: 20px;
+  pointer-events: none;
+}
+
+.error-lens-msg--error {
+  color: var(--accent-red);
+  text-shadow: 0 0 5px rgba(239, 68, 68, 0.4);
+}
+
+.error-lens-msg--warning {
+  color: var(--accent-amber);
+}
+
+.git-blame-ghost {
+  color: var(--text-muted);
+  font-size: 11px;
+  opacity: 0.4;
+  font-style: italic;
+  margin-left: 20px;
+  pointer-events: none;
+}

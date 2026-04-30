@@ -147,3 +147,22 @@ Real-time state is synchronized across the mesh via WebSockets:
 - **Presence Bar**: Displays active users and agent personas in the current session.
 - **Visual Locking**: The File Explorer renders pulsing lock badges for files currently being mutated by the swarm.
 - **Shared Scratchpad**: A collective in-memory buffer allowing agents to pass technical "gotchas" and findings to their swarm siblings.
+## 10. Language Intelligence & LSP Hub
+
+Neurex implements a high-performance, native LSP Hub that provides IDE-grade intelligence without the overhead of external plugins.
+
+### 10.1 Backend LSP Manager
+The `LSPManager` orchestrates language server subprocesses on the host machine.
+- **Discovery**: Scans the system `PATH` for known language binaries (e.g., `pyright-langserver`, `rust-analyzer`).
+- **Lifecycle**: Manages the startup, health checks, and shutdown of server instances.
+- **Bridging**: Transparently pipes standard I/O from the LSP subprocess to a dedicated WebSocket endpoint.
+
+### 10.2 Neural Lens & Decorations
+The frontend implements a high-fidelity visual layer atop the LSP data:
+- **Neural Error Lens**: Groups diagnostic markers (Errors, Warnings) and renders them inline directly following the relevant code lines.
+- **Neural GitLens**: Interrogates the Git subsystem to provide real-time commit blame and file history, rendered as "ghost text" decorations.
+- **Formatting Engine**: Intercepts save operations to trigger the LSP's formatting capability, ensuring codebase consistency.
+
+### 10.3 Communication
+- **Protocol**: Standard JSON-RPC 2.0 over WebSockets.
+- **Multiplexing**: While chat and telemetry share a socket, LSP traffic utilizes dedicated per-language channels to ensure zero-latency intelligence during heavy agent execution.

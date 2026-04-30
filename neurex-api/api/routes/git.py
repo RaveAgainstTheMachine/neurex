@@ -92,3 +92,48 @@ async def generate_commit_msg(user=Depends(get_current_user)):
     # In a real scenario, we would pass 'diff' to an LLM here.
     # For now, we'll return a semantic placeholder or a basic summary.
     return {"message": f"feat: update system components\n\nChanges identified:\n{diff}"}
+@router.get("/blame")
+async def get_blame(path: str = Query(...), user=Depends(get_current_user)):
+    try:
+        # Use line-porcelain for detailed, stable parsing
+        res = run_git(["blame", "--line-porcelain", path])
+        lines = []
+        current_blame = {}
+        
+        for line in res.split("\n"):
+            if not line: continue
+            if len(line) >= 40 and " " not in line[:40]: # SHA line
+                current_blame = {"hash": line[:8]}
+            elif line.startswith("author "):
+                current_blame["author"] = line[7:]
+            elif line.startswith("author-time "):
+                current_blame["time"] = int(line[12:])
+            elif line.startswith("summary "):
+                current_blame["summary"] = line[8:]
+            elif line.startswith("\t"):
+                # Line content marks the end of a porcelain block
+                lines.append(current_blame.copy())
+        return {"blame": lines}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+@router.get("/history")
+async def get_history(path: str = Query(...), user=Depends(get_current_user)):
+    try:
+        # Get history with hash, author, time, and summary
+        res = run_git(["log", "--pretty=format:%h|%an|%at|%s", path])
+        history = []
+        if res:
+            for line in res.split("\n"):
+                if not line: continue
+                parts = line.split("|", 3)
+                if len(parts) == 4:
+                    h, a, t, s = parts
+                    history.append({
+                        "hash": h,
+                        "author": a,
+                        "time": int(t),
+                        "summary": s
+                    })
+        return {"history": history}
+    except Exception as e:
+        return {"history": []}

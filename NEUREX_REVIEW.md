@@ -63,6 +63,16 @@ While the architecture is incredibly sound, I have identified a few areas that r
 
 ---
 
+7.  **Native LSP Hub & Neural Features (Phase 13 Milestone)**:
+    *   *Status*: **RESOLVED** (v0.1.7-stable).
+    *   *Implementation*:
+        *   **Native-First Architecture**: Completely decoupled Neurex from VS Code plugin dependencies by implementing a native backend LSP manager.
+        *   **WebSocket JSON-RPC Bridge**: Established a dedicated per-language WebSocket channel to ensure zero-latency code intelligence (completions, definition, signature help).
+        *   **Neural Lens UI**: Developed a high-fidelity visual layer for inline diagnostics ("Error Lens") and git authorship ("GitLens") using Monaco delta decorations and group-aware markers.
+        *   **Distributed Discovery**: Implemented system-wide PATH scanning to automatically detect and utilize existing language servers (Pyright, Clangd, Rust-Analyzer, etc.) without user configuration.
+
+---
+
 ## 4. Strategic Recommendations for Next Deployment
 
 1.  **Phase 13: Distributed RPC Pooling**

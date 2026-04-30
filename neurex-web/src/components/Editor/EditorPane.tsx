@@ -4,12 +4,14 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import MonacoEditor, { Editor, DiffEditor } from "@monaco-editor/react";
 import { useStore } from "../../lib/store";
+import { API_BASE } from "../../lib/config";
 import { 
   Files, ChevronDown, Save, FileCode, Check, AlertCircle, 
   Sparkles, X, CornerDownLeft, Loader2, Activity, Cpu, Zap, Layout 
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { ContextMenu } from "../ContextMenu/ContextMenu";
+import { lspManager } from "../../lib/lsp";
 import "./EditorPane.css";
 
 export function EditorPane() {
@@ -17,8 +19,17 @@ export function EditorPane() {
     openFiles, activeFile, setFileContent, saveFile, 
     presence, pendingJump, clearPendingJump, 
     setCursorPosition, upsertTask, hiveStats, infraMetrics,
-    acceptDiff, discardDiff
+    acceptDiff, discardDiff, token
   } = useStore();
+
+  const [supportedLangs, setSupportedLangs] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/languages/supported`)
+      .then(r => r.json())
+      .then(data => setSupportedLangs(data.languages))
+      .catch(() => {});
+  }, []);
   
   const editorRef = useRef<any>(null);
   const active = openFiles.find((f) => f.path === activeFile);
@@ -342,10 +353,85 @@ export function EditorPane() {
             onChange={(val) => setFileContent(active.path, val ?? "")}
             onMount={(editor, monaco) => {
               editorRef.current = editor;
+
+              if (active && token && supportedLangs.includes(active.language)) {
+                lspManager.connect(active.language, token);
+              }
+
               const { sendPresence } = (window as any).neurexWS || {};
               
+              // ── Neural Error Lens ──────────────────────────────────────
+              let errorLensDecorations: string[] = [];
+              const updateErrorLens = () => {
+                const model = editor.getModel();
+                if (!model) return;
+                const markers = monaco.editor.getModelMarkers({ resource: model.uri });
+                
+                // Group by line to avoid overlapping messages
+                const markersByLine: Record<number, any[]> = {};
+                markers.forEach(m => {
+                  if (!markersByLine[m.endLineNumber]) markersByLine[m.endLineNumber] = [];
+                  markersByLine[m.endLineNumber].push(m);
+                });
+
+                const newDecorations = Object.entries(markersByLine).map(([line, lineMarkers]) => {
+                  const worstMarker = lineMarkers.sort((a, b) => b.severity - a.severity)[0];
+                  const messages = lineMarkers.map(m => m.message).join(' | ');
+                  
+                  return {
+                    range: new monaco.Range(parseInt(line), 1, parseInt(line), 1),
+                    options: {
+                      isWholeLine: true,
+                      after: {
+                        content: `   ⬡ ${messages}`,
+                        inlineClassName: `error-lens-msg error-lens-msg--${worstMarker.severity === 8 ? 'error' : 'warning'}`
+                      }
+                    }
+                  };
+                });
+                errorLensDecorations = editor.deltaDecorations(errorLensDecorations, newDecorations);
+              };
+
+              monaco.editor.onDidChangeMarkers(() => updateErrorLens());
+
+              // ── Neural GitLens Blame ───────────────────────────────────
+              let blameDecorations: string[] = [];
+              const updateBlame = async (lineNumber: number) => {
+                if (!active || !token) return;
+                try {
+                  const res = await fetch(`${API_BASE}/api/git/blame?path=${active.path}`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                  });
+                  if (!res.ok) return;
+                  const { blame } = await res.json();
+                  const info = blame[lineNumber - 1];
+                  if (!info) return;
+
+                  const timeStr = new Date(info.time * 1000).toLocaleDateString();
+                  const newDecorations = [{
+                    range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+                    options: {
+                      isWholeLine: true,
+                      after: {
+                        content: `   ${info.author} • ${info.summary} • ${timeStr}`,
+                        inlineClassName: 'git-blame-ghost'
+                      }
+                    }
+                  }];
+                  blameDecorations = editor.deltaDecorations(blameDecorations, newDecorations);
+                } catch (err) {}
+              };
+
+              let lastLine = -1;
               editor.onDidChangeCursorPosition((e) => {
-                setCursorPosition(e.position.lineNumber, e.position.column);
+                const currentLine = e.position.lineNumber;
+                setCursorPosition(currentLine, e.position.column);
+                
+                if (currentLine !== lastLine) {
+                  updateBlame(currentLine);
+                  lastLine = currentLine;
+                }
+                
                 if (sendPresence) {
                   sendPresence({
                     active_file: active.path,
@@ -387,7 +473,12 @@ export function EditorPane() {
                 setIsInlineVisible(true);
               });
 
-              editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
+              editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, async () => {
+                // Trigger formatting if available
+                const formatAction = editor.getAction('editor.action.formatDocument');
+                if (formatAction) {
+                  await formatAction.run();
+                }
                 saveFile(active.path);
               });
             }}

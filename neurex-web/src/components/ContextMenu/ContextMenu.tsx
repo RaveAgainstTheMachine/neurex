@@ -3,10 +3,12 @@ import React, { useEffect, useState, useCallback } from 'react';
 import './ContextMenu.css';
 
 interface ContextMenuItem {
-  label: string;
+  label?: string;
   icon?: React.ReactNode;
-  action: () => void;
+  action?: (target: HTMLElement) => void;
   danger?: boolean;
+  shortcut?: string;
+  type?: 'separator' | 'item';
 }
 
 interface ContextMenuProps {
@@ -17,12 +19,15 @@ interface ContextMenuProps {
 export function ContextMenu({ items, targetSelector }: ContextMenuProps) {
   const [visible, setVisible] = useState(false);
   const [pos, setPos] = useState({ x: 0, y: 0 });
+  const [targetElement, setTargetElement] = useState<HTMLElement | null>(null);
 
   const handleContext = useCallback((e: MouseEvent) => {
     const target = e.target as HTMLElement;
-    if (target.closest(targetSelector)) {
+    const matched = target.closest(targetSelector) as HTMLElement;
+    if (matched) {
       e.preventDefault();
       setPos({ x: e.clientX, y: e.clientY });
+      setTargetElement(matched);
       setVisible(true);
     } else {
       setVisible(false);
@@ -49,17 +54,24 @@ export function ContextMenu({ items, targetSelector }: ContextMenuProps) {
       onClick={(e) => e.stopPropagation()}
     >
       {items.map((item, i) => (
-        <div 
-          key={i} 
-          className={`context-menu__item ${item.danger ? 'danger' : ''}`}
-          onClick={() => {
-            item.action();
-            setVisible(false);
-          }}
-        >
-          {item.icon && <span className="context-menu__icon">{item.icon}</span>}
-          <span className="context-menu__label">{item.label}</span>
-        </div>
+        item.type === 'separator' ? (
+          <div key={i} className="context-menu__separator" />
+        ) : (
+          <div 
+            key={i} 
+            className={`context-menu__item ${item.danger ? 'danger' : ''}`}
+            onClick={() => {
+              if (item.action && targetElement) item.action(targetElement);
+              setVisible(false);
+            }}
+          >
+            <div className="context-menu__item-left">
+              {item.icon && <span className="context-menu__icon">{item.icon}</span>}
+              <span className="context-menu__label">{item.label}</span>
+            </div>
+            {item.shortcut && <span className="context-menu__shortcut">{item.shortcut}</span>}
+          </div>
+        )
       ))}
     </div>
   );

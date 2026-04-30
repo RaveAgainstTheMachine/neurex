@@ -15,7 +15,7 @@ load_dotenv()
 
 from core.memory.worker import MemoryWorker
 from core.context.rules_parser import RulesParser
-from api.routes import chat, tasks, files, infra, notifications, skills, settings, auth, memory, update, observability, git
+from api.routes import chat, tasks, files, infra, notifications, skills, settings, auth, memory, update, observability, git, languages
 from api.websocket import router as ws_router
 from core.task_graph import init_db
 from core.logger import setup_logging
@@ -69,13 +69,17 @@ async def lifespan(app: FastAPI):
 
     # Trigger initial hardware benchmark
     from core.infrastructure.benchmarker import benchmarker
-    asyncio.create_task(benchmarker.run_benchmark())
+    # Initialise LSP Manager
+    from core.languages.lsp_manager import lsp_manager
+    app.state.lsp_manager = lsp_manager
 
     log.info("neurex.ready")
     yield
 
     # Teardown
     try:
+        if hasattr(app.state, "lsp_manager"):
+            await app.state.lsp_manager.cleanup()
         if hasattr(app.state, "memory_worker"):
             await app.state.memory_worker.stop()
         if hasattr(app.state, "pty_manager"):
@@ -112,6 +116,7 @@ app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(memory.router, prefix="/api/memory", tags=["memory"])
 app.include_router(update.router)
 app.include_router(observability.router)
+app.include_router(languages.router, prefix="/api/languages", tags=["languages"])
 app.include_router(ws_router, tags=["websocket"])
 
 

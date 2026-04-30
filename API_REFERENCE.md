@@ -16,6 +16,8 @@
 - [Files](#files)
 - [Infrastructure & Mesh](#infrastructure--mesh)
 - [Hive Mind (Memory)](#hive-mind-memory)
+- [Language Intelligence & LSP](#language-intelligence--lsp)
+- [Git & Version Control](#git--version-control)
 - [Skills & Extensions](#skills--extensions)
 - [Settings](#settings)
 - [Notifications](#notifications)
@@ -501,6 +503,55 @@ Returns metadata about the current Hive Mind state.
 Wipe the entire collective memory store.
 
 **Auth**: `admin` ⚠️ Destructive — irreversible.
+
+---
+
+---
+
+## Language Intelligence & LSP
+
+Neurex provides a native LSP Hub that bridges standard Language Server Protocol traffic from system-installed servers to the web interface.
+
+### `GET /api/languages/supported`
+Returns a list of languages that have a detected LSP on the host system.
+
+**Response `200`**:
+```json
+{ "languages": ["python", "typescript", "rust", "go"] }
+```
+
+### `WS /api/websocket/ws/lsp/{lang}`
+WebSocket bridge for raw LSP JSON-RPC traffic. Acts as a transparent proxy to the backend LSP process.
+
+**Query params**:
+| Param | Description |
+|:---|:---|
+| `token` | Auth token |
+| `workspace` | Root path for the LSP server |
+
+---
+
+## Git & Version Control
+
+Direct git management for the workspace.
+
+### `GET /api/git/status`
+Returns the current branch and porcelain status of the workspace.
+
+### `GET /api/git/diff?path={path}`
+Returns the diff between `HEAD` and the current disk state.
+
+### `GET /api/git/blame?path={path}`
+Returns line-by-line authorship information (Hash, Author, Summary, Time).
+
+### `GET /api/git/history?path={path}`
+Returns the commit history for a specific file.
+
+### `POST /api/git/stage`
+Stage a file (`git add`). Body: `{ "path": "string" }`.
+
+### `POST /api/git/commit`
+Commit staged changes. Body: `{ "message": "string" }`.
 
 ---
 

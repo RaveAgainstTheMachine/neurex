@@ -15,6 +15,7 @@ import { AIPanel } from "./components/AIPanel/AIPanel";
 import { AgentPanel } from "./components/AgentPanel/AgentPanel";
 import { Terminal } from "./components/Terminal/Terminal";
 import { SkillsPanel } from "./components/SkillsPanel/SkillsPanel";
+import { GitTimeline } from "./components/GitTimeline/GitTimeline";
 import { SettingsPanel } from "./components/SettingsPanel/SettingsPanel";
 import { HiveMindPanel } from "./components/HiveMindPanel/HiveMindPanel";
 import { PresenceBar } from "./components/PresenceBar/PresenceBar";
@@ -78,7 +79,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
-type SidebarTab = "explorer" | "search" | "git" | "agent" | "skills" | "history" | "infra" | "system";
+type SidebarTab = "explorer" | "search" | "git" | "agent" | "skills" | "history" | "timeline" | "infra" | "system";
 
 export default function App() {
   return (
@@ -92,7 +93,8 @@ const SIDEBAR_ITEMS: { id: SidebarTab; icon: React.FC<any>; label: string }[] = 
   { id: "explorer", icon: Files,          label: "Explorer" },
   { id: "search",   icon: Search,         label: "Search" },
   { id: "git",      icon: GitBranch,      label: "Source Control" },
-  { id: "history",  icon: Clock,          label: "History" },
+  { id: "timeline", icon: Clock,          label: "File Timeline" },
+  { id: "history",  icon: MessageSquare,  label: "Chat History" },
   { id: "infra",    icon: Cpu,            label: "AI Infrastructure" },
   { id: "system",   icon: Shield,         label: "System Logs" },
   { id: "skills",   icon: Puzzle,         label: "Skills & Extensions" },
@@ -414,6 +416,7 @@ function AppContent() {
                     {sidebarTab === "system"   && <SystemLogsPanel />}
                     {sidebarTab === "search"   && <SearchPanel onExpand={(s) => sidebarRef.current?.resize(s)} />}
                     {sidebarTab === "git"      && <SourceControlPanel />}
+                    {sidebarTab === "timeline" && <GitTimeline />}
                     {sidebarTab === "skills"   && <SkillsPanel />}
                     {sidebarTab === "agent"    && <AgentPanel />}
                   </Panel>

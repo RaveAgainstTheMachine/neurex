@@ -2,6 +2,30 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
+## [0.1.7] - 2026-04-29 (NATIVE LSP & NEURAL LENS)
+### Added
+- **Native LSP Hub**: transitioned to a high-performance, native Language Server Protocol architecture:
+  - **Backend LSP Manager**: automated discovery and lifecycle management of system-installed language servers (Python, TS, Rust, Go, etc.).
+  - **WebSocket JSON-RPC Bridge**: low-latency bidirectional streaming for real-time code intelligence.
+  - **Top-100 Language Support**: extensible configuration map covering the world's most popular programming languages.
+- **Neural Error Lens**: implemented a native, high-fidelity inline diagnostic system:
+  - **Inline Error Messages**: groups and renders diagnostics (Errors/Warnings) directly after code lines with thematic neon accents.
+  - **Real-time Synchronization**: updates decorations instantly as the LSP reports markers.
+- **Neural GitLens Suite**:
+  - **Commit Blame Ghost Text**: renders authorship metadata (author, summary, date) for the active line directly in the editor.
+  - **File Timeline Sidebar**: a dedicated, visual history tracker with commit nodes and glassmorphic cards.
+- **Intelligent Formatting**: integrated "Format on Save" logic that leverages the LSP's formatting capabilities (Black, Prettier, etc.) automatically.
+- **New API Endpoints**: added `/api/languages/supported`, `/api/git/blame`, and `/api/git/history` to support the new intelligence layer.
+
+### Fixed
+- **LSP Client Initialization**: modernized the frontend client to use the `initServices` (v10+) pattern for cleaner Monaco service registration.
+- **Network Efficiency**: optimized Git blame updates to only trigger on line-number changes, significantly reducing backend telemetry load.
+
+### Changed
+- Renamed the "History" sidebar tab to "Chat History" and introduced the new "File Timeline" tab.
+- Re-architected the editor's mounting lifecycle to support dynamic LSP attachment.
+29. 
+
 ## [0.1.6] - 2026-04-29 (ADVANCED INTERACTION & UX)
 ### Added
 - **Unified Context Menu System**: implemented high-fidelity, 'Neural' right-click menus across all critical surfaces:

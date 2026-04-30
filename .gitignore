@@ -34,3 +34,4 @@ workspace/
 # ── Docker ────────────────────────────────────────────────────────────────────
 *.log
 neurex-web/dist/
+node_modules/
