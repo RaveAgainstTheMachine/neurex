@@ -22,9 +22,9 @@ A ChromaDB vector store that semantically indexes the entire workspace.
 Handles decentralized communication between multiple Neurex nodes.
 - **Load Balancing**: Routes LLM requests to nodes with the lowest VRAM utilization.
 - **Protocol**: Zero-trust, encrypted WebSocket streams.
-+
-+## 5. Language Intelligence Hub
-+Provides native, plugin-free code intelligence for the IDE.
-+- **LSP Manager**: Automated discovery of system-installed language servers and "Autopilot" provisioning for 100+ languages.
-+- **Neural Lens Suite**: Renders real-time inline diagnostics (Error Lens) and authorship context (GitLens) using high-fidelity Monaco decorations.
-+- **Custom Intelligence**: Supports workspace-level overrides via `.neurex/lsp.json` for proprietary language support.
+
+## 5. [[Language-Intelligence]] Hub
+Provides native, plugin-free code intelligence for the IDE.
+- **LSP Manager**: Automated discovery of system-installed language servers and "Autopilot" provisioning for 100+ languages.
+- **Neural Lens Suite**: Renders real-time inline diagnostics (Error Lens) and authorship context (GitLens) using high-fidelity Monaco decorations.
+- **Custom Intelligence**: Supports workspace-level overrides via `.neurex/lsp.json` for proprietary language support.
