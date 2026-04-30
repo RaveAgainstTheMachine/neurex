@@ -7,6 +7,7 @@ import {
   WholeWord, Regex as RegexIcon, Replace as ReplaceIcon, Check, MoreHorizontal
 } from "lucide-react";
 import { useStore } from "../../lib/store";
+import { toast } from "react-hot-toast";
 import "./SearchPanel.css";
 
 import { API_BASE } from "../../lib/config";
@@ -33,22 +34,18 @@ export function SearchPanel({ onExpand }: { onExpand?: (s: number) => void }) {
   const clearSearch = useStore((s) => s.clearSearch);
   
   const [searching, setSearching] = useState(false);
-  const [expanded, setExpanded] = useState(true);
   const [showReplace, setShowReplace] = useState(false);
   const [replaceQuery, setReplaceQuery] = useState("");
   const [replacing, setReplacing] = useState(false);
   const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>({});
+  const [showDetails, setShowDetails] = useState(false);
 
   const { openFile, setPendingJump, token } = useStore();
 
   useEffect(() => {
     if (searchState.results.length > 0 && onExpand) {
-      onExpand(35); // Expand to 35% when results exist
+      onExpand(35);
     }
-    
-    return () => {
-      if (onExpand) onExpand(18); // Shrink back on unmount
-    };
   }, [searchState.results.length, onExpand]);
 
   const handleSearch = async (e?: React.FormEvent) => {
@@ -72,7 +69,6 @@ export function SearchPanel({ onExpand }: { onExpand?: (s: number) => void }) {
       const data = await res.json();
       setSearch({ results: Array.isArray(data) ? data : [] });
       
-      // Auto-expand all files on new search
       const nextExpanded: Record<string, boolean> = {};
       (Array.isArray(data) ? data : []).forEach(r => { nextExpanded[r.path] = true; });
       setExpandedFiles(nextExpanded);
@@ -104,7 +100,7 @@ export function SearchPanel({ onExpand }: { onExpand?: (s: number) => void }) {
         })
       });
       if (res.ok) {
-        // Refresh search results after replace
+        toast.success("Replaced all occurrences");
         handleSearch();
       }
     } catch (err) {
@@ -121,10 +117,10 @@ export function SearchPanel({ onExpand }: { onExpand?: (s: number) => void }) {
       });
       if (!r.ok) throw new Error("Failed to read");
       const data = await r.json();
-      openFile(path, data.content ?? "", getLanguage(path));
+      openFile(path, data.content ?? "", getLanguage(path), true);
       setPendingJump(path, line);
     } catch (err) {
-      openFile(path, "// Error loading file", getLanguage(path));
+      toast.error("Failed to open file");
     }
   };
 
@@ -137,141 +133,153 @@ export function SearchPanel({ onExpand }: { onExpand?: (s: number) => void }) {
     return groups;
   }, [searchState.results]);
 
-  const toggleFile = (path: string) => {
-    setExpandedFiles(prev => ({ ...prev, [path]: !prev[path] }));
+  const renderContentWithHighlights = (content: string, query: string) => {
+    if (!query) return content;
+    try {
+      const flags = searchState.caseSensitive ? "g" : "gi";
+      const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(`(${escapedQuery})`, flags);
+      const parts = content.split(regex);
+      return parts.map((part, i) => 
+        regex.test(part) ? <span key={i} className="search-highlight">{part}</span> : part
+      );
+    } catch (e) {
+      return content;
+    }
   };
 
   return (
     <div className="search-panel">
-      <div className="search-panel__header" onClick={() => setExpanded(!expanded)}>
-        {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-        <span>SEARCH</span>
-      </div>
-      
-      {expanded && (
-        <div className="search-panel__controls">
-          <div className="search-panel__inputs-group">
-            <div className="search-panel__row">
+      <div className="search-panel__inputs">
+        <div className="search-panel__row">
+          <button 
+            className={`replace-toggle ${showReplace ? "active" : ""}`}
+            onClick={() => setShowReplace(!showReplace)}
+            title="Toggle Replace"
+          >
+            {showReplace ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          </button>
+          <div className="search-input-container">
+            <input
+              type="text"
+              className="search-input"
+              placeholder="Search"
+              value={searchState.query}
+              onChange={(e) => setSearch({ query: e.target.value })}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+            />
+            <div className="search-input-actions">
               <button 
-                className={`search-expand-btn ${showReplace ? "active" : ""}`} 
-                onClick={() => setShowReplace(!showReplace)}
-                title="Toggle Replace"
+                className={`input-action ${searchState.caseSensitive ? "active" : ""}`}
+                onClick={() => setSearch({ caseSensitive: !searchState.caseSensitive })}
+                title="Match Case"
               >
-                {showReplace ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                <CaseSensitive size={14} />
               </button>
-              <div className="search-input-wrapper">
-                <input
-                  type="text"
-                  className="search-input"
-                  placeholder="Search"
-                  value={searchState.query}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setSearch({ query: val });
-                    if (!val.trim()) clearSearch();
-                  }}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                />
-                <div className="search-options">
-                  <button 
-                    type="button" title="Match Case"
-                    className={`search-opt-btn ${searchState.caseSensitive ? "active" : ""}`}
-                    onClick={() => setSearch({ caseSensitive: !searchState.caseSensitive })}
-                  >
-                    <CaseSensitive size={16} />
-                  </button>
-                  <button 
-                    type="button" title="Match Whole Word"
-                    className={`search-opt-btn ${searchState.wholeWord ? "active" : ""}`}
-                    onClick={() => setSearch({ wholeWord: !searchState.wholeWord })}
-                  >
-                    <WholeWord size={16} />
-                  </button>
-                  <button 
-                    type="button" title="Use Regular Expression"
-                    className={`search-opt-btn ${searchState.useRegex ? "active" : ""}`}
-                    onClick={() => setSearch({ useRegex: !searchState.useRegex })}
-                  >
-                    <RegexIcon size={16} />
-                  </button>
-                </div>
-              </div>
+              <button 
+                className={`input-action ${searchState.wholeWord ? "active" : ""}`}
+                onClick={() => setSearch({ wholeWord: !searchState.wholeWord })}
+                title="Match Whole Word"
+              >
+                <WholeWord size={14} />
+              </button>
+              <button 
+                className={`input-action ${searchState.useRegex ? "active" : ""}`}
+                onClick={() => setSearch({ useRegex: !searchState.useRegex })}
+                title="Use Regular Expression"
+              >
+                <RegexIcon size={14} />
+              </button>
             </div>
-
-            {showReplace && (
-              <div className="search-panel__row animate-slide-down">
-                <div className="search-expand-spacer" />
-                <div className="search-input-wrapper">
-                  <input
-                    type="text"
-                    className="search-input"
-                    placeholder="Replace"
-                    value={replaceQuery}
-                    onChange={(e) => setReplaceQuery(e.target.value)}
-                  />
-                  <div className="search-options">
-                    <button 
-                      type="button" 
-                      title="Replace All"
-                      className="search-opt-btn replace-all-btn"
-                      onClick={handleReplaceAll}
-                      disabled={replacing || !searchState.query}
-                    >
-                      {replacing ? <Loader2 size={16} className="animate-spin" /> : <ReplaceIcon size={16} />}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="search-extra-inputs">
-            <input 
-              type="text" placeholder="files to include" className="search-extra-input"
-              value={searchState.includeGlob} onChange={(e) => setSearch({ includeGlob: e.target.value })}
-            />
-            <input 
-              type="text" placeholder="files to exclude" className="search-extra-input"
-              value={searchState.excludeGlob} onChange={(e) => setSearch({ excludeGlob: e.target.value })}
-            />
           </div>
         </div>
-      )}
 
-      <div className="search-results">
-        {searchState.results.length > 0 && (
-          <div className="search-results-count">
-            <span>{Object.keys(groupedResults).length} files, {searchState.results.length} results</span>
-            <button className="search-clear-btn" onClick={clearSearch} title="Clear Results"><X size={12} /></button>
+        {showReplace && (
+          <div className="search-panel__row replace-row">
+            <div className="replace-spacer" />
+            <div className="search-input-container">
+              <input
+                type="text"
+                className="search-input"
+                placeholder="Replace"
+                value={replaceQuery}
+                onChange={(e) => setReplaceQuery(e.target.value)}
+              />
+              <div className="search-input-actions">
+                <button 
+                  className="input-action"
+                  onClick={handleReplaceAll}
+                  title="Replace All"
+                  disabled={replacing || !searchState.query}
+                >
+                  {replacing ? <Loader2 size={14} className="animate-spin" /> : <ReplaceIcon size={14} />}
+                </button>
+              </div>
+            </div>
           </div>
         )}
-        
-        {searchState.results.length === 0 && !searching && searchState.query && (
-          <div className="search-empty">No results found.</div>
+
+        <div className="search-details-toggle" onClick={() => setShowDetails(!showDetails)}>
+          <MoreHorizontal size={14} />
+          <span>{showDetails ? "Hide" : "Show"} Advanced Search Options</span>
+        </div>
+
+        {showDetails && (
+          <div className="search-advanced">
+            <div className="advanced-row">
+              <label>files to include</label>
+              <input 
+                type="text" placeholder="e.g. *.ts, src/**"
+                value={searchState.includeGlob}
+                onChange={(e) => setSearch({ includeGlob: e.target.value })}
+              />
+            </div>
+            <div className="advanced-row">
+              <label>files to exclude</label>
+              <input 
+                type="text" placeholder="e.g. node_modules/**, dist/**"
+                value={searchState.excludeGlob}
+                onChange={(e) => setSearch({ excludeGlob: e.target.value })}
+              />
+            </div>
+          </div>
         )}
-        
+      </div>
+
+      <div className="search-panel__results">
+        {searchState.results.length > 0 && (
+          <div className="results-header">
+            <span>{searchState.results.length} results in {Object.keys(groupedResults).length} files</span>
+            <button className="clear-btn" onClick={clearSearch} title="Clear Search Results">
+              <X size={12} />
+            </button>
+          </div>
+        )}
+
         {searching && (
-          <div className="search-loading">
-            <Loader2 size={24} className="animate-spin" />
-            <span>Searching throughout codebase...</span>
+          <div className="search-status">
+            <Loader2 size={16} className="animate-spin" />
+            <span>Searching...</span>
           </div>
         )}
 
         {Object.entries(groupedResults).map(([path, matches]) => (
-          <div key={path} className={`search-file-group ${expandedFiles[path] ? "expanded" : ""}`}>
-            <div className="search-file-header" onClick={() => toggleFile(path)}>
+          <div key={path} className="search-result-group">
+            <div className="search-result-file" onClick={() => setExpandedFiles(prev => ({ ...prev, [path]: !prev[path] }))}>
               {expandedFiles[path] ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-              <FileText size={14} className="search-file-icon" />
-              <span className="search-file-name">{path.split('/').pop()}</span>
-              <span className="search-file-path">{path.substring(0, path.lastIndexOf('/'))}</span>
-              <span className="search-file-count">{matches.length}</span>
+              <FileText size={14} className="file-icon" />
+              <span className="file-name">{path.split('/').pop()}</span>
+              <span className="file-path">{path.substring(0, path.lastIndexOf('/'))}</span>
+              <span className="match-count">{matches.length}</span>
             </div>
             {expandedFiles[path] && (
-              <div className="search-file-matches">
+              <div className="search-result-matches">
                 {matches.map((match, idx) => (
                   <div key={idx} className="search-match" onClick={() => handleOpenResult(path, match.line)}>
-                    <span className="search-match__line">{match.line}</span>
-                    <span className="search-match__content">{match.content}</span>
+                    <span className="match-line">{match.line}</span>
+                    <span className="match-content">
+                      {renderContentWithHighlights(match.content, searchState.query)}
+                    </span>
                   </div>
                 ))}
               </div>

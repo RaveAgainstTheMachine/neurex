@@ -8,36 +8,64 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <style>
+      :root {
+        --accent-pre: #9c6fff;
+        --glow-pre: rgba(156, 111, 255, 0.5);
+      }
       body, #root { height: 100%; margin: 0; overflow: hidden; background: #09090b; color: #e8e8f0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
       
       /* Pre-JS Loading Screen */
       #preloader {
-        position: fixed; inset: 0; background: #09090b; z-index: 99999;
+        position: fixed; inset: 0; background: #050508; z-index: 99999;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
-        transition: opacity 0.4s ease-out, visibility 0.4s;
+        transition: opacity 0.5s ease-out, visibility 0.5s;
+        gap: 30px;
       }
       #preloader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
       
+      .preloader-logo {
+        position: relative;
+        font-size: 50px;
+        color: var(--accent-pre);
+        filter: drop-shadow(0 0 20px var(--glow-pre));
+        animation: logo-pulse 2s infinite ease-in-out;
+      }
+      
       .preloader-title {
-        font-size: 28px; font-weight: 900; letter-spacing: 0.4em; color: #fff; margin-bottom: 24px;
-        background: linear-gradient(90deg, #fff, #9c6fff, #fff);
+        font-size: 24px; font-weight: 900; letter-spacing: 0.5em; color: #fff;
+        background: linear-gradient(90deg, #fff, var(--accent-pre), #fff);
         -webkit-background-clip: text; -webkit-text-fill-color: transparent;
         background-size: 200% auto; animation: shimmer 3s infinite linear;
       }
       
-      .preloader-bar { width: 240px; height: 2px; background: rgba(255,255,255,0.05); border-radius: 1px; overflow: hidden; }
+      .preloader-bar { width: 180px; height: 2px; background: rgba(255,255,255,0.05); border-radius: 1px; overflow: hidden; }
       .preloader-progress {
-        height: 100%; width: 20%; background: #9c6fff;
-        box-shadow: 0 0 15px rgba(156, 111, 255, 0.5);
-        animation: loader-ramp 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        height: 100%; width: 20%; background: var(--accent-pre);
+        box-shadow: 0 0 20px var(--glow-pre);
+        animation: loader-ramp 4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
       }
 
       @keyframes shimmer { to { background-position: 200% center; } }
-      @keyframes loader-ramp { 0% { width: 5%; } 100% { width: 65%; } }
+      @keyframes loader-ramp { 0% { width: 5%; } 100% { width: 85%; } }
+      @keyframes logo-pulse {
+        0%, 100% { transform: scale(1); filter: drop-shadow(0 0 15px var(--glow-pre)); }
+        50% { transform: scale(1.1); filter: drop-shadow(0 0 25px var(--glow-pre)); }
+      }
     </style>
+    <script>
+      // Apply theme before render
+      try {
+        const theme = JSON.parse(localStorage.getItem('neurex_theme') || '{}');
+        if (theme.accent_color) {
+          document.documentElement.style.setProperty('--accent-pre', theme.accent_color);
+          document.documentElement.style.setProperty('--glow-pre', theme.glow_color || theme.accent_color + '66');
+        }
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="preloader">
+      <div class="preloader-logo">⬡</div>
       <div class="preloader-title">NEUREX</div>
       <div class="preloader-bar">
         <div class="preloader-progress" id="preloader-progress"></div>

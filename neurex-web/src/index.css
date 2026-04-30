@@ -25,9 +25,12 @@
   --text-inverse:   hsl(240, 10%, 4%);
 
   /* Accents */
+  --accent-primary:      var(--accent-purple); /* Default, can be overridden */
+  --accent-primary-glow: var(--glow-purple);
   --accent-blue:   hsl(210, 100%, 65%);
   --accent-purple: hsl(265, 85%, 68%);
   --purple-main:   hsl(265, 85%, 68%);
+  --purple-light:  hsl(265, 90%, 80%);
   --glow-purple:   hsla(265, 85%, 68%, 0.4);
   --accent-amber:  hsl(35, 95%, 58%);
   --accent-green:  hsl(150, 80%, 52%);
@@ -57,6 +60,13 @@
   --font-size-sm:  12px;
   --font-size-md:  13px;
   --font-size-base: 14px;
+
+  /* Compatibility Aliases */
+  --bg-panel:     var(--bg-surface);
+  --border-color: var(--border);
+  --text-main:    var(--text-primary);
+  --neurex-purple: var(--accent-purple);
+  --shadow-lg:    0 12px 32px rgba(0, 0, 0, 0.5);
 }
 
 html, body, #root {
@@ -79,10 +89,16 @@ html, body, #root {
 }
 
 /* Scrollbar */
-::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: hsla(0, 0%, 100%, 0.1); border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: hsla(265, 85%, 68%, 0.3); }
+::-webkit-scrollbar-thumb { 
+  background: hsla(0, 0%, 100%, 0.05); 
+  border-radius: 10px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background: hsla(0, 0%, 100%, 0.1); border: 3px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-corner { background: transparent; }
 
 button { 
   font-family: var(--font-ui); 
@@ -98,7 +114,14 @@ input, textarea, select {
   background: var(--bg-input);
   color: var(--text-primary);
   padding: 6px 10px;
+  border-radius: var(--radius-sm);
   outline: none;
+  transition: border-color 0.2s;
+}
+
+select option {
+  background: var(--bg-surface);
+  color: var(--text-primary);
 }
 
 input:focus { border-color: var(--border-focus); }
@@ -120,10 +143,11 @@ input:focus { border-color: var(--border-focus); }
 
 /* Status Text Colors */
 .text-green { color: var(--accent-green); }
+.text-accent { color: var(--accent-primary); }
+.text-purple { color: var(--accent-primary); }
 .text-orange { color: var(--accent-amber); }
 .text-red { color: var(--accent-red); }
 .text-cyan { color: var(--accent-cyan); }
-.text-purple { color: var(--accent-purple); }
 
 /* Buttons */
 .btn {
@@ -150,17 +174,17 @@ input:focus { border-color: var(--border-focus); }
   border-color: var(--text-secondary);
 }
 
-.btn--purple {
-  background: rgba(139, 92, 246, 0.05);
-  border-color: rgba(139, 92, 246, 0.2);
-  color: var(--accent-purple);
+.btn--accent, .btn--purple {
+  background: color-mix(in srgb, var(--accent-primary), transparent 95%);
+  border-color: color-mix(in srgb, var(--accent-primary), transparent 80%);
+  color: var(--accent-primary);
 }
 
-.btn--purple:hover {
-  background: var(--accent-purple);
-  border-color: var(--accent-purple);
+.btn--accent:hover, .btn--purple:hover {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
   color: white;
-  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 0 20px var(--accent-primary-glow);
 }
 
 .btn--green {
@@ -201,3 +225,20 @@ input:focus { border-color: var(--border-focus); }
 
 .btn--sm { padding: 6px 12px; font-size: 10px; }
 .btn--full { width: 100%; }
+
+/* Global Fix for white dropdowns in modals */
+select, 
+select option,
+.settings-select,
+.settings-select option {
+  background-color: #0d0d12 !important;
+  color: #ffffff !important;
+}
+
+.infra-modal-overlay select,
+.modal-overlay select,
+.infra-modal select {
+  background-color: #0d0d12 !important;
+  color: #ffffff !important;
+  border: 1px solid var(--border);
+}

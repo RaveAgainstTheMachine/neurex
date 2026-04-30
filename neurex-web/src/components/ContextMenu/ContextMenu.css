@@ -1,54 +1,56 @@
-/* src/components/ContextMenu/ContextMenu.css */
 .context-menu {
   position: fixed;
   z-index: 10000;
-  background: var(--bg-card);
-  backdrop-filter: blur(12px);
+  background: var(--bg-sidebar);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-  padding: 6px;
-  min-width: 180px;
-  animation: context-pop 0.1s ease-out;
-}
-
-@keyframes context-pop {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  padding: 4px 0;
+  min-width: 160px;
+  border-radius: 4px;
+  user-select: none;
 }
 
 .context-menu__item {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  border-radius: 4px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-primary);
+  justify-content: space-between;
+  padding: 4px 12px;
   cursor: pointer;
-  transition: all 0.1s;
+  font-size: 12px;
+  color: var(--text-primary);
+  gap: 20px;
 }
 
 .context-menu__item:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--accent-purple);
+  background: var(--accent-primary);
+  color: white;
 }
 
-.context-menu__item.danger {
-  color: #ff5555;
-}
-
-.context-menu__item.danger:hover {
-  background: rgba(255, 0, 0, 0.1);
+.context-menu__item-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .context-menu__icon {
+  width: 14px;
   display: flex;
   align-items: center;
-  color: var(--text-muted);
+  justify-content: center;
+  opacity: 0.8;
 }
 
-.context-menu__item:hover .context-menu__icon {
-  color: inherit;
+.context-menu__shortcut {
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.context-menu__separator {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+.context-menu__item.danger:hover {
+  background: #e81123;
 }

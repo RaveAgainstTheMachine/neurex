@@ -1,0 +1,82 @@
+/* src/components/StatusBar/StatusBar.css */
+.status-bar {
+  height: 22px;
+  background: #007acc;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0;
+  font-size: 12px;
+  user-select: none;
+  flex-shrink: 0;
+  z-index: 2000;
+}
+
+.status-bar--disconnected {
+  background: #6a6a6a;
+}
+
+.status-bar__left, .status-bar__right {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.status-bar__center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  height: 100%;
+}
+
+.status-segment {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  height: 100%;
+  cursor: default;
+  white-space: nowrap;
+  transition: background 0.2s, color 0.2s;
+}
+
+.status-segment:last-child { 
+  border-right: none; 
+}
+
+.status-segment--interactive:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.status-change-count {
+  font-size: 9px;
+  background: var(--bg-active);
+  padding: 1px 4px;
+  border-radius: 4px;
+  color: var(--accent-cyan);
+  font-weight: bold;
+}
+
+.swarm-pulse {
+  width: 6px; 
+  height: 6px; 
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.swarm-pulse--active {
+  background: var(--accent-cyan);
+  box-shadow: 0 0 10px var(--accent-cyan);
+}
+
+.text-red {
+  color: var(--accent-red) !important;
+}
+
+@keyframes animate-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}

@@ -262,6 +262,9 @@ export function SettingsPanel() {
     }
   };
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState("Commonly Used");
+
   if (loading || !localSettings) {
     return (
       <div className="settings-panel loading">
@@ -273,29 +276,51 @@ export function SettingsPanel() {
     );
   }
 
+  const categories = [
+    { id: "Commonly Used", icon: Zap },
+    { id: "Text Editor", icon: Sliders },
+    { id: "AI Runtime", icon: Cpu },
+    { id: "Network & Mesh", icon: Network },
+    { id: "Account & Security", icon: ShieldCheck },
+  ];
+
   return (
     <div className="settings-panel">
       <div className="settings-panel__header">
-        <div className="settings-panel__title-bar">
-          <div className="settings-icon-wrapper">
-            <SettingsIcon size={20} className="text-purple" />
-          </div>
-          <div>
-            <h2>Control Center</h2>
-            <p className="settings-panel__subtitle">Node ID: {store.user?.id?.slice(0,8) || "Local"}</p>
-          </div>
+        <div className="settings-search">
+          <input 
+            type="text" 
+            placeholder="Search settings" 
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+          />
         </div>
         <div className="settings-panel__actions">
-          <button className="btn btn--outline" onClick={store.logout}>
-            <LogOut size={14} /> Log Out
-          </button>
           <button className="btn btn--purple btn--save" onClick={handleSave} disabled={saving || isViewer}>
             <Save size={14} /> {saving ? "Saving..." : "Commit Changes"}
           </button>
         </div>
       </div>
 
-      <div className="settings-panel__content">
+      <div className="settings-body">
+        <aside className="settings-sidebar">
+          {categories.map(cat => (
+            <div 
+              key={cat.id} 
+              className={`settings-sidebar-item ${activeCategory === cat.id ? 'active' : ''}`}
+              onClick={() => setActiveCategory(cat.id)}
+            >
+              <cat.icon size={14} />
+              <span>{cat.id}</span>
+            </div>
+          ))}
+        </aside>
+        
+        <div className="settings-main">
+          {/* Main settings content will be filtered by category or search */}
+          <div className="settings-view-header">
+            <h2>{activeCategory}</h2>
+          </div>
         
         {/* ACCOUNT OVERVIEW */}
         <section className="settings-group">

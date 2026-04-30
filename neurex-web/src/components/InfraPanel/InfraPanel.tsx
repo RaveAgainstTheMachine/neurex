@@ -165,7 +165,18 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
           <div className="infra-section__title">AGENT RECOMMENDATIONS</div>
           <div className="recommendation-grid">
             {recommendations.map((rec) => (
-              <div key={rec.id} className="rec-card">
+              <div 
+                key={rec.id} 
+                className="rec-card"
+                onClick={() => setSelectedModel({ 
+                  name: rec.model.split(' ')[0], 
+                  engine: 'ollama', 
+                  params: rec.specs, 
+                  context_window: 32768, 
+                  vram_required_gb: parseInt(rec.specs.match(/(\d+)G VRAM/)?.[1] || "0"),
+                  recommended_tasks: [rec.role]
+                })}
+              >
                 <div className="rec-header">
                   <span className="rec-role">{rec.role}</span>
                   <span className="rec-specs">{rec.specs}</span>
@@ -173,16 +184,8 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
                 <div className="rec-model">{rec.model}</div>
                 <button 
                   className="rec-deploy-btn" 
-                  onClick={() => setSelectedModel({ 
-                    name: rec.model.split(' ')[0], 
-                    engine: 'ollama', 
-                    params: rec.specs, 
-                    context_window: 32768, 
-                    vram_required_gb: parseInt(rec.specs) || 0,
-                    recommended_tasks: [rec.role]
-                  })}
                 >
-                  DEPLOY
+                  DETAILS
                 </button>
               </div>
             ))}
@@ -301,7 +304,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
               <div className="infra-modal__stats">
                 <div className="stat-box">
                   <span className="stat-label">VRAM REQ</span>
-                  <span className="stat-value">{selectedModel.vram_required_gb}GB</span>
+                  <span className="stat-value">{selectedModel.vram_required_gb > 0 ? `${selectedModel.vram_required_gb}GB` : 'AUTO'}</span>
                 </div>
                 <div className="stat-box">
                   <span className="stat-label">CONTEXT</span>

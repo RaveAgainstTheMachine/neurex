@@ -25,7 +25,7 @@ export function GitTimeline() {
       headers: { "Authorization": `Bearer ${token}` }
     })
       .then(r => r.json())
-      .then(data => setHistory(data.history))
+      .then(data => setHistory(data?.history || []))
       .catch(() => setHistory([]))
       .finally(() => setLoading(false));
   }, [activeFile, token]);

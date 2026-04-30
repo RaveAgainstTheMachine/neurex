@@ -502,3 +502,27 @@
   from { opacity: 0; transform: translateY(20px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+/* ── Modal Specific Controls ── */
+.settings-select {
+  width: 100%;
+  background: rgba(30, 30, 35, 1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: white !important;
+  padding: 8px 12px;
+  font-size: 12px;
+  outline: none;
+  cursor: pointer;
+  appearance: auto; /* Fallback to auto but with dark bg */
+}
+
+.settings-select option {
+  background: #1a1a1f;
+  color: white;
+}
+
+.settings-select:focus {
+  border-color: var(--accent-purple);
+  box-shadow: 0 0 0 1px var(--accent-purple);
+}

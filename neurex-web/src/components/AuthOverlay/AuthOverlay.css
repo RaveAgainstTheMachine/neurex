@@ -13,9 +13,9 @@
   position: absolute;
   inset: 0;
   background-image: 
-    radial-gradient(circle at 50% 50%, rgba(156, 111, 255, 0.15) 0%, transparent 50%),
-    linear-gradient(rgba(156, 111, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(156, 111, 255, 0.05) 1px, transparent 1px);
+    radial-gradient(circle at 50% 50%, var(--accent-primary-glow) 0%, transparent 50%),
+    linear-gradient(var(--accent-primary-glow) 1px, transparent 1px),
+    linear-gradient(90deg, var(--accent-primary-glow) 1px, transparent 1px);
   background-size: 100% 100%, 40px 40px, 40px 40px;
   opacity: 0.6;
   animation: mesh-pulse 10s infinite alternate;
@@ -32,20 +32,20 @@
   position: relative;
   z-index: 1;
   text-align: center;
-  border: 1px solid rgba(156, 111, 255, 0.2);
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(156, 111, 255, 0.1);
+  border: 1px solid var(--accent-primary-glow);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--accent-primary-glow);
 }
 
 .auth-logo {
   width: 64px;
   height: 64px;
   margin: 0 auto 24px;
-  background: var(--accent-purple);
+  background: var(--accent-primary);
   border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 24px rgba(156, 111, 255, 0.4), 0 0 40px rgba(156, 111, 255, 0.2);
+  box-shadow: 0 8px 24px var(--accent-primary-glow), 0 0 40px var(--accent-primary-glow);
 }
 
 .auth-logo__inner {
@@ -88,9 +88,9 @@
 }
 
 .auth-input:focus-within {
-  border-color: var(--accent-purple);
-  background: rgba(156, 111, 255, 0.05);
-  box-shadow: 0 0 0 4px rgba(156, 111, 255, 0.1);
+  border-color: var(--accent-primary);
+  background: var(--accent-primary-glow);
+  box-shadow: 0 0 0 4px var(--accent-primary-glow);
 }
 
 .auth-input__icon {
@@ -116,7 +116,7 @@
   justify-content: center;
   gap: 12px;
   margin-top: 8px;
-  box-shadow: 0 8px 24px rgba(156, 111, 255, 0.2);
+  box-shadow: 0 8px 24px var(--accent-primary-glow);
 }
 
 .auth-footer {
@@ -135,7 +135,7 @@
 }
 
 .auth-toggle:hover {
-  color: var(--accent-purple);
+  color: var(--accent-primary);
 }
 
 .auth-badge {

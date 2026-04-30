@@ -197,8 +197,8 @@ export function AuthOverlay() {
       <div className="auth-overlay">
         <div className="auth-mesh-bg" />
         <div className="auth-loader">
-          <Loader2 className="animate-spin text-purple" size={32} />
-          <span>Syncing Mesh...</span>
+          <Loader2 className="animate-spin text-accent" size={32} />
+          <span>Syncing Neural Mesh...</span>
         </div>
       </div>
     );
@@ -211,7 +211,7 @@ export function AuthOverlay() {
         <div className="auth-card glass">
           <div className="auth-card__header">
             <div className="auth-logo">
-              <div className="auth-logo__inner">⬡</div>
+              <div className="auth-logo__inner logo-pulse">⬡</div>
             </div>
             <h2>Master Initialization</h2>
             <p className="text-muted">No administrative presence detected. Synthesis required.</p>
@@ -272,7 +272,7 @@ export function AuthOverlay() {
         <div className="auth-card glass">
           <div className="auth-card__header">
             <div className="auth-logo">
-              <div className="auth-logo__inner"><Shield size={32} /></div>
+              <div className="auth-logo__inner logo-pulse"><Shield size={32} /></div>
             </div>
             <h2>Update Credentials</h2>
             <p className="text-muted">You must establish a permanent password for this identity</p>
@@ -306,7 +306,7 @@ export function AuthOverlay() {
         <div className="auth-card glass">
           <div className="auth-card__header">
             <div className="auth-logo">
-              <div className="auth-logo__inner"><Shield size={32} /></div>
+              <div className="auth-logo__inner logo-pulse"><Shield size={32} /></div>
             </div>
             <h2>Verification Required</h2>
             <p className="text-muted">Enter the 6-digit code from your authenticator app</p>
@@ -346,7 +346,7 @@ export function AuthOverlay() {
       <div className="auth-card glass">
         <div className="auth-card__header">
           <div className="auth-logo">
-            <div className="auth-logo__inner">⬡</div>
+            <div className="auth-logo__inner logo-pulse">⬡</div>
           </div>
           <h2>{isLogin ? "Neural Link Established" : "Synthesize New Identity"}</h2>
           <p className="text-muted">

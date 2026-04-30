@@ -3,9 +3,10 @@ import { immer } from "zustand/middleware/immer";
 import { subscribeWithSelector } from "zustand/middleware";
 import toast from "react-hot-toast";
 import { terminalRegistry } from "../components/Terminal/Terminal";
-import type { NeurexStore, TaskNode } from "./types";
+import type { NeurexStore, TaskNode, Diagnostic } from "./types";
 
 import { API_BASE } from "./config";
+import { api } from "./api";
 
 export const useStore = create<NeurexStore>()(
   subscribeWithSelector(
@@ -13,6 +14,7 @@ export const useStore = create<NeurexStore>()(
     // ── App Lifecycle ────────────────────────────────────────────────
     isInitialized: false,
     isInitializing: false,
+    lastLocalSave: 0,
     setIsInitialized: (val) => set((s) => { s.isInitialized = val; }),
     setIsInitializing: (val) => set((s) => { s.isInitializing = val; }),
     
@@ -72,20 +74,16 @@ export const useStore = create<NeurexStore>()(
       toast.error("Logged out");
     },
     refreshMe: async () => {
-      const token = get().token;
-      if (!token) return;
+      if (!get().token) return;
       try {
-        const res = await fetch(`${API_BASE}/api/auth/me`, {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const user = await res.json();
-          localStorage.setItem("user", JSON.stringify(user));
-          set((s) => { s.user = user; });
-        } else if (res.status === 401) {
+        const user = await api.get<any>("/api/auth/me");
+        localStorage.setItem("user", JSON.stringify(user));
+        set((s) => { s.user = user; });
+      } catch (err) {
+        if (err instanceof Error && err.message.includes("401")) {
           get().logout();
         }
-      } catch (err) {}
+      }
     },
 
     // ── Infra ─────────────────────────────────────────────────────────
@@ -95,87 +93,75 @@ export const useStore = create<NeurexStore>()(
     infraSkills: [],
     infraPeers: [],
     hiveStats: { total_nodes: 0, memory_count: 0 },
-    theme: { 
-      accent_color: "#9c6fff", 
-      glow_color: "#9c6fff66",
-      enable_glassmorphism: true,
-      enable_animations: true,
-      enable_swarm_glow: true,
-      menu_mode: "horizontal",
-      terminal_line_height: 1.2,
-      terminal_font_size: 13,
-      terminal_font_family: "'JetBrains Mono', 'Fira Code', monospace",
-      terminal_cursor_style: "block"
-    },
+    theme: (() => {
+      const saved = localStorage.getItem("neurex_theme");
+      const base = { 
+        accent_color: "#9c6fff", 
+        glow_color: "#9c6fff66",
+        enable_glassmorphism: true,
+        enable_animations: true,
+        enable_swarm_glow: true,
+        menu_mode: "horizontal",
+        terminal_line_height: 1.2,
+        terminal_font_size: 13,
+        terminal_font_family: "'JetBrains Mono', 'Fira Code', monospace",
+        terminal_cursor_style: "block"
+      };
+      try {
+        return saved ? { ...base, ...JSON.parse(saved) } : base;
+      } catch (e) { return base; }
+    })(),
     settings: null,
     setSettings: (settings) => set((s) => { s.settings = settings; }),
     refreshSettings: async () => {
-      const token = get().token;
-      if (!token) return;
+      if (!get().token) return;
       try {
-        const res = await fetch(`${API_BASE}/api/settings/`, {
-          headers: { "Authorization": `Bearer ${token}` }
+        const data = await api.get<any>("/api/settings/");
+        set((s) => { s.settings = data; });
+        // Also sync theme
+        get().setTheme({
+          accent_color: data.accent_color,
+          glow_color: data.glow_color,
+          enable_glassmorphism: data.enable_glassmorphism,
+          enable_animations: data.enable_animations,
+          enable_swarm_glow: data.enable_swarm_glow,
+          menu_mode: data.menu_mode || "horizontal",
+          terminal_line_height: data.terminal_line_height || 1.2,
+          terminal_font_size: data.terminal_font_size || 13,
+          terminal_font_family: data.terminal_font_family || "'JetBrains Mono', 'Fira Code', monospace",
+          terminal_cursor_style: data.terminal_cursor_style || "block"
         });
-        if (res.ok) {
-          const data = await res.json();
-          set((s) => { s.settings = data; });
-          // Also sync theme
-          get().setTheme({
-            accent_color: data.accent_color,
-            glow_color: data.glow_color,
-            enable_glassmorphism: data.enable_glassmorphism,
-            enable_animations: data.enable_animations,
-            enable_swarm_glow: data.enable_swarm_glow,
-            menu_mode: data.menu_mode || "horizontal",
-            terminal_line_height: data.terminal_line_height || 1.2,
-            terminal_font_size: data.terminal_font_size || 13,
-            terminal_font_family: data.terminal_font_family || "'JetBrains Mono', 'Fira Code', monospace",
-            terminal_cursor_style: data.terminal_cursor_style || "block"
-          });
-        }
       } catch (err) {
         console.error("Settings sync failed", err);
       }
     },
     setTheme: (theme) => set((s) => { 
       s.theme = { ...s.theme, ...theme };
+      localStorage.setItem("neurex_theme", JSON.stringify(s.theme));
       const root = document.documentElement;
-      if (theme.accent_color) root.style.setProperty('--accent-purple', theme.accent_color);
-      if (theme.accent_color) root.style.setProperty('--purple-main', theme.accent_color);
-      if (theme.glow_color) root.style.setProperty('--glow-purple', theme.glow_color);
+      if (s.theme.accent_color) {
+        root.style.setProperty('--accent-purple', s.theme.accent_color);
+        root.style.setProperty('--purple-main', s.theme.accent_color);
+        root.style.setProperty('--accent-primary', s.theme.accent_color);
+      }
+      if (s.theme.glow_color) {
+        root.style.setProperty('--glow-purple', s.theme.glow_color);
+        root.style.setProperty('--accent-primary-glow', s.theme.glow_color);
+      }
     }),
     refreshTheme: async () => {
       // Logic moved into refreshSettings for efficiency
       await get().refreshSettings();
     },
     refreshInfra: async () => {
-      const token = get().token;
-      if (!token) return;
-      
+      if (!get().token) return;
       try {
-        const headers = { "Authorization": `Bearer ${token}` };
-        
-        // 1. Core status is required first to handle auth check
-        const statusRes = await fetch(`${API_BASE}/api/infra/status`, { headers });
-        if (statusRes.status === 401) {
-          get().logout();
-          return;
-        }
-        const statusData = await statusRes.json();
-        
-        // 2. Parallelize everything else for maximum speed
-        const [regRes, skillsRes, peersRes, memoryRes] = await Promise.all([
-          fetch(`${API_BASE}/api/infra/registry`, { headers }),
-          fetch(`${API_BASE}/api/infra/skills`, { headers }),
-          fetch(`${API_BASE}/api/infra/mesh/peers`, { headers }),
-          fetch(`${API_BASE}/api/memory/stats`)
-        ]);
-
-        const [regData, skillsData, peersData, hiveData] = await Promise.all([
-          regRes.json(),
-          skillsRes.json(),
-          peersRes.json(),
-          memoryRes.json()
+        const [statusData, regData, skillsData, peersData, hiveData] = await Promise.all([
+          api.get<any>("/api/infra/status"),
+          api.get<any[]>("/api/infra/registry"),
+          api.get<any[]>("/api/infra/skills"),
+          api.get<any[]>("/api/infra/mesh/peers"),
+          api.get<any>("/api/memory/stats")
         ]);
 
         set((s) => {
@@ -186,8 +172,10 @@ export const useStore = create<NeurexStore>()(
           s.infraPeers = Array.isArray(peersData) ? peersData : [];
           s.hiveStats = hiveData;
         });
-
       } catch (e) {
+        if (e instanceof Error && e.message.includes("401")) {
+          get().logout();
+        }
         console.error("Infra refresh failed", e);
       }
     },
@@ -195,11 +183,30 @@ export const useStore = create<NeurexStore>()(
     // ── Editor ────────────────────────────────────────────────────────
     openFiles: JSON.parse(localStorage.getItem("neurex_open_files") || "[]"),
     activeFile: localStorage.getItem("neurex_active_file"),
+    editorPanes: [{ id: "pane-main", path: localStorage.getItem("neurex_active_file") }],
+    setEditorPanes: (panes) => set((s) => { s.editorPanes = panes; }),
+    splitEditor: (direction) => set((s) => {
+      if (s.editorPanes.length < 2) {
+        const id = `pane-${Math.random().toString(36).substring(7)}`;
+        s.editorPanes.push({ id, path: s.activeFile });
+      }
+    }),
+    closePane: (paneId) => set((s) => {
+      if (s.editorPanes.length > 1) {
+        s.editorPanes = s.editorPanes.filter(p => p.id !== paneId);
+      }
+    }),
+    setPaneFile: (paneId, path) => set((s) => {
+      const pane = s.editorPanes.find(p => p.id === paneId);
+      if (pane) pane.path = path;
+    }),
     cursorPosition: { line: 1, ch: 1 },
     setCursorPosition: (line, ch) => set((s) => { s.cursorPosition = { line, ch }; }),
+    activeFileLanguage: "plaintext",
     setFileLanguage: (path, language) => set((s) => {
       const f = s.openFiles.find(x => x.path === path);
       if (f) f.language = language;
+      if (s.activeFile === path) s.activeFileLanguage = language;
     }),
 
     // ── Speech ────────────────────────────────────────────────────────
@@ -211,36 +218,137 @@ export const useStore = create<NeurexStore>()(
 
     // ── File Tree ─────────────────────────────────────────────────────
     fileTree: [],
+    diagnostics: [],
+    workspaceDiagnostics: {} as Record<string, any[]>,
+    setWorkspaceDiagnostics: (path: string, diagnostics: any[]) => {
+      set((s) => {
+        if (!diagnostics || diagnostics.length === 0) {
+          delete s.workspaceDiagnostics[path];
+        } else {
+          s.workspaceDiagnostics[path] = diagnostics;
+        }
+        // Update the flat diagnostics list for the status bar/problems view
+        s.diagnostics = Object.values(s.workspaceDiagnostics).flat() as Diagnostic[];
+      });
+    },
+    setDiagnostics: (path: string, items: any[]) => set((s) => {
+      const other = s.diagnostics.filter((d: any) => d.path !== path);
+      s.diagnostics = [...other, ...items.map(i => ({ ...i, path }))];
+    }),
+    expandedFolders: new Set<string>(JSON.parse(localStorage.getItem("neurex_expanded_folders") || "[]")),
+    collapsedFolders: new Set<string>(JSON.parse(localStorage.getItem("neurex_collapsed_folders") || "[]")),
+    toggleFolder: (path, val) => set((s) => {
+      const isExpanded = val !== undefined ? val : !s.expandedFolders.has(path);
+      
+      if (isExpanded) {
+        s.expandedFolders.add(path);
+        s.collapsedFolders.delete(path);
+      } else {
+        s.expandedFolders.delete(path);
+        s.collapsedFolders.add(path);
+      }
+      
+      localStorage.setItem("neurex_expanded_folders", JSON.stringify(Array.from(s.expandedFolders)));
+      localStorage.setItem("neurex_collapsed_folders", JSON.stringify(Array.from(s.collapsedFolders)));
+    }),
+    collapseSignal: 0,
+    collapseAllFolders: () => set((s) => { 
+      s.collapseSignal += 1;
+      s.expandedFolders.clear();
+      s.collapsedFolders.clear();
+      localStorage.setItem("neurex_expanded_folders", "[]");
+      localStorage.setItem("neurex_collapsed_folders", "[]");
+    }),
+    gitBranch: "main",
+    gitChanges: [],
+    refreshGitStatus: async () => {
+      try {
+        const data = await api.get<any>("/api/git/status");
+        set((s) => {
+          s.gitBranch = data.branch;
+          s.gitChanges = data.changes;
+        });
+      } catch (err) {}
+    },
     setFileTree: (tree) => set((s) => { s.fileTree = tree; }),
     refreshFileTree: async () => {
       try {
-        const token = get().token;
-        if (!token) return;
-        const r = await fetch(`${API_BASE}/api/files/tree?depth=2`, {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
-        if (r.status === 401) {
-          get().logout();
-          return;
-        }
-        const data = await r.json();
+        const data = await api.get<any>("/api/files/tree?depth=2");
         set((s) => { s.fileTree = Array.isArray(data) ? data : [data]; });
       } catch (err) {
         console.error("Failed to fetch file tree:", err);
       }
     },
+    setWorkspace: async (path: string) => {
+      try {
+        await api.post("/api/files/workspace", { path });
+        toast.success("Workspace Switched");
+        set((s) => { 
+          s.fileTree = []; 
+          s.openFiles = []; 
+          s.activeFile = null;
+          s.editorPanes = [{ id: "pane-main", path: null }];
+          s.expandedFolders = new Set();
+          s.collapsedFolders = new Set();
+        });
+        localStorage.setItem("neurex_open_files", "[]");
+        localStorage.setItem("neurex_active_file", "");
+        localStorage.setItem("neurex_expanded_folders", "[]");
+        localStorage.setItem("neurex_collapsed_folders", "[]");
+        await get().refreshFileTree();
+        await get().refreshGitStatus();
+      } catch (err: any) {
+        toast.error(err.message || "Switch failed");
+      }
+    },
+    closeWorkspace: async () => {
+      try {
+        await api.post("/api/files/workspace", { path: "" });
+        set((s) => {
+          s.fileTree = [];
+          s.openFiles = [];
+          s.activeFile = null;
+          s.editorPanes = [{ id: "pane-main", path: null }];
+          s.expandedFolders = new Set();
+          s.collapsedFolders = new Set();
+        });
+        localStorage.setItem("neurex_open_files", "[]");
+        localStorage.setItem("neurex_active_file", "");
+        localStorage.setItem("neurex_expanded_folders", "[]");
+        localStorage.setItem("neurex_collapsed_folders", "[]");
+        toast.success("Folder Closed");
+      } catch (err: any) {
+        toast.error("Failed to close folder");
+      }
+    },
+    createFile: async (path: string) => {
+      const tid = toast.loading(`Creating file: ${path}...`);
+      try {
+        await api.post("/api/files/save", { path, content: "" });
+        toast.success(`File ${path} created`, { id: tid });
+        get().refreshFileTree();
+      } catch (err: any) {
+        toast.error(err.message || "Creation failed", { id: tid });
+      }
+    },
+    createFolder: async (path: string) => {
+      const tid = toast.loading(`Creating folder: ${path}...`);
+      try {
+        await api.post(`/api/files/create-folder?path=${encodeURIComponent(path)}`);
+        toast.success(`Folder ${path} created`, { id: tid });
+        get().refreshFileTree();
+      } catch (err: any) {
+        toast.error(err.message || "Creation failed", { id: tid });
+      }
+    },
     fetchSubtree: async (path: string) => {
       try {
-        const token = get().token;
-        const r = await fetch(`${API_BASE}/api/files/tree?path=${encodeURIComponent(path)}&depth=1`, {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
-        const data = await r.json();
+        const data = await api.get<any>(`/api/files/tree?path=${encodeURIComponent(path)}&depth=1`);
         set((s) => {
           const updateNode = (nodes: any[]) => {
             for (const node of nodes) {
               if (node.path === path) {
-                node.children = data.children;
+                node.children = data.children || data;
                 return true;
               }
               if (node.children && updateNode(node.children)) return true;
@@ -292,6 +400,11 @@ export const useStore = create<NeurexStore>()(
       });
       localStorage.setItem("neurex_conv_id", id);
     },
+    send: (payload) => { /* placeholder set by App.tsx */ },
+    sendMessage: (content) => {
+      get().addMessage({ role: "user", content });
+      get().send({ type: "message", content });
+    },
 
     // ── Tasks ─────────────────────────────────────────────────────────
     tasks: {},
@@ -301,24 +414,50 @@ export const useStore = create<NeurexStore>()(
     clearTasks: () => set((s) => { s.tasks = {}; }),
 
     // ── Editor Actions ───────────────────────────────────────────────
-    openFile: (path, content, language) => {
+    openFile: (path, content, language, isPreview = false) => {
       if (!path) return;
       set((s) => {
-        const exists = s.openFiles.some(f => f.path === path);
-        if (!exists) {
-          s.openFiles.push({ path, content, language, isDirty: false });
+        const existingIdx = s.openFiles.findIndex(f => f.path === path);
+        if (existingIdx !== -1) {
+          if (!isPreview) {
+            s.openFiles[existingIdx].isPreview = false;
+          }
+          s.activeFile = path;
+        } else {
+          // If we are opening a preview, and there's already a preview file, replace it
+          if (isPreview) {
+            const previewIdx = s.openFiles.findIndex(f => f.isPreview);
+            if (previewIdx !== -1) {
+              s.openFiles[previewIdx] = { path, content, language, isDirty: false, isPreview: true };
+            } else {
+              s.openFiles.push({ path, content, language, isDirty: false, isPreview: true });
+            }
+          } else {
+            s.openFiles.push({ path, content, language, isDirty: false, isPreview: false });
+          }
+          s.activeFile = path;
         }
-        s.activeFile = path;
+        s.activeFileLanguage = language || "plaintext";
         localStorage.setItem("neurex_open_files", JSON.stringify(s.openFiles));
         localStorage.setItem("neurex_active_file", path);
       });
       setTimeout(() => (window as any).hideOverlays?.(), 0);
     },
     closeFile: (path) => set((s) => {
-      s.openFiles = s.openFiles.filter(f => f.path !== path);
-      if (s.activeFile === path) {
-        s.activeFile = s.openFiles[s.openFiles.length - 1]?.path ?? null;
+      const idx = s.openFiles.findIndex((f) => f.path === path);
+      if (idx !== -1) {
+        s.openFiles.splice(idx, 1);
       }
+      
+      if (s.activeFile === path) {
+        s.activeFile = s.openFiles.length > 0 ? s.openFiles[s.openFiles.length - 1].path : null;
+      }
+      
+      // Update panes
+      s.editorPanes.forEach(p => {
+        if (p.path === path) p.path = s.activeFile;
+      });
+      
       localStorage.setItem("neurex_open_files", JSON.stringify(s.openFiles));
       localStorage.setItem("neurex_active_file", s.activeFile || "");
     }),
@@ -355,6 +494,8 @@ export const useStore = create<NeurexStore>()(
     setActiveFile: (path) => { 
       set((s) => { 
         s.activeFile = path; 
+        const file = s.openFiles.find(f => f.path === path);
+        s.activeFileLanguage = file?.language || "plaintext";
         localStorage.setItem("neurex_active_file", path || "");
       });
       setTimeout(() => (window as any).hideOverlays?.(), 0);
@@ -368,25 +509,25 @@ export const useStore = create<NeurexStore>()(
       }
     }),
     setDiff: (path, original, modified) => set((s) => {
+      const ext = path.split('.').pop();
+      const language = ext === 'ts' ? 'typescript' : ext === 'tsx' ? 'typescriptreact' : ext === 'js' ? 'javascript' : ext === 'py' ? 'python' : 'plaintext';
+      
       const f = s.openFiles.find(f => f.path === path);
       if (f) {
         f.originalContent = original;
         f.content = modified;
+        f.language = language;
       } else {
-        s.openFiles.push({ path, content: modified, originalContent: original, language: "typescript", isDirty: false });
+        s.openFiles.push({ path, content: modified, originalContent: original, language, isDirty: false });
       }
       s.activeFile = path;
     }),
     diffFile: async (path: string) => {
       try {
-        const token = get().token;
-        const res = await fetch(`${API_BASE}/api/git/diff?path=${encodeURIComponent(path)}`, {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
-        const data = await res.json();
+        const data = await api.get<any>(`/api/git/diff?path=${encodeURIComponent(path)}`);
         get().setDiff(path, data.original, data.modified);
-      } catch (err) {
-        toast.error("Failed to load diff");
+      } catch (err: any) {
+        toast.error(err.message || "Failed to load diff");
       }
     },
     acceptDiff: (path) => set((s) => {
@@ -410,64 +551,41 @@ export const useStore = create<NeurexStore>()(
       if (!file) return;
 
       try {
-        const token = get().token;
-        await fetch(`${API_BASE}/api/files/save`, {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify({ path, content: file.content }),
-        });
+        await api.post("/api/files/save", { path, content: file.content });
         set((s) => {
           const f = s.openFiles.find((x) => x.path === path);
           if (f) f.isDirty = false;
+          s.lastLocalSave = Date.now();
         });
         toast.success(`Saved ${path.split("/").pop()}`);
-      } catch (err) {
-        toast.error(`Failed to save ${path}`);
+      } catch (err: any) {
+        toast.error(err.message || `Failed to save ${path}`);
         console.error("Failed to save file:", err);
       }
     },
     renameFile: async (oldPath, newPath) => {
       try {
-        const token = get().token;
-        const res = await fetch(`${API_BASE}/api/files/rename`, {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify({ old_path: oldPath, new_path: newPath }),
+        await api.post("/api/files/rename", { old_path: oldPath, new_path: newPath });
+        toast.success("File renamed");
+        get().refreshFileTree();
+        // Update open files if applicable
+        set(s => {
+          const f = s.openFiles.find(x => x.path === oldPath);
+          if (f) f.path = newPath;
+          if (s.activeFile === oldPath) s.activeFile = newPath;
         });
-        if (res.ok) {
-          toast.success("File renamed");
-          get().refreshFileTree();
-          // Update open files if applicable
-          set(s => {
-            const f = s.openFiles.find(x => x.path === oldPath);
-            if (f) f.path = newPath;
-            if (s.activeFile === oldPath) s.activeFile = newPath;
-          });
-        }
-      } catch (err) {
-        toast.error("Rename failed");
+      } catch (err: any) {
+        toast.error(err.message || "Rename failed");
       }
     },
     deleteFile: async (path) => {
       try {
-        const token = get().token;
-        const res = await fetch(`${API_BASE}/api/files/delete?path=${encodeURIComponent(path)}`, {
-          method: "DELETE",
-          headers: { "Authorization": `Bearer ${token}` }
-        });
-        if (res.ok) {
-          toast.success("File deleted");
-          get().refreshFileTree();
-          get().closeFile(path);
-        }
-      } catch (err) {
-        toast.error("Delete failed");
+        await api.delete(`/api/files/delete?path=${encodeURIComponent(path)}`);
+        toast.success("File deleted");
+        get().refreshFileTree();
+        get().closeFile(path);
+      } catch (err: any) {
+        toast.error(err.message || "Delete failed");
       }
     },
 
@@ -585,6 +703,40 @@ export const useStore = create<NeurexStore>()(
     clearPendingJump: () => set((s) => { s.pendingJump = null; }),
     // ── Modals ───────────────────────────────────────────────────────
     modalOpen: false,
-    setModalOpen: (val) => set((s) => { s.modalOpen = val; }),
+    setModalOpen: (val) => set((s) => { 
+      s.modalOpen = typeof val === 'function' ? val(s.modalOpen) : val; 
+    }),
+
+    // ── UI State & Panel Management ───────────────────────────────────
+    sidebarTab: localStorage.getItem("neurex_sidebar_tab") || "explorer",
+    setSidebarTab: (tab) => set((s) => {
+      s.sidebarTab = tab;
+      s.showSettings = false;
+      s.showHiveMind = false;
+      localStorage.setItem("neurex_sidebar_tab", tab);
+    }),
+    sidebarOrder: JSON.parse(localStorage.getItem("neurex_sidebar_order") || '["explorer", "search", "git", "history", "agent", "infra", "skills", "system", "timeline"]'),
+    setSidebarOrder: (order) => set((s) => {
+      s.sidebarOrder = order;
+      localStorage.setItem("neurex_sidebar_order", JSON.stringify(order));
+    }),
+    showAIPanel: localStorage.getItem("neurex_show_ai") !== "false",
+    setShowAIPanel: (val) => set((s) => {
+      const next = typeof val === 'function' ? val(s.showAIPanel) : val;
+      s.showAIPanel = next;
+      localStorage.setItem("neurex_show_ai", String(next));
+    }),
+    showSettings: false,
+    setShowSettings: (val) => set((s) => { 
+      const next = typeof val === 'function' ? val(s.showSettings) : val;
+      s.showSettings = next; 
+      if (next) s.showHiveMind = false;
+    }),
+    showHiveMind: false,
+    setShowHiveMind: (val) => set((s) => { 
+      const next = typeof val === 'function' ? val(s.showHiveMind) : val;
+      s.showHiveMind = next; 
+      if (next) s.showSettings = false;
+    }),
   })))
 );

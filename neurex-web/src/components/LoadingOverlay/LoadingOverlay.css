@@ -24,8 +24,8 @@
 }
 
 .logo-pulse {
-  color: var(--accent-purple);
-  filter: drop-shadow(0 0 15px var(--accent-purple));
+  color: var(--accent-primary);
+  filter: drop-shadow(0 0 15px var(--accent-primary-glow));
   animation: logo-pulse 2s infinite ease-in-out;
 }
 
@@ -33,7 +33,7 @@
   position: absolute;
   width: 100px;
   height: 100px;
-  border: 2px solid var(--accent-purple);
+  border: 2px solid var(--accent-primary);
   border-radius: 50%;
   opacity: 0.3;
   animation: ring-expand 2s infinite ease-out;
@@ -45,7 +45,7 @@
   letter-spacing: 0.3em;
   color: #fff;
   margin: 0;
-  background: linear-gradient(to right, #fff, var(--accent-purple), #fff);
+  background: linear-gradient(to right, #fff, var(--accent-primary), #fff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-size: 200% auto;
@@ -71,16 +71,16 @@
   height: 100%;
   width: 0%;
   background: linear-gradient(90deg, 
-    var(--accent-purple) 0%, 
+    var(--accent-primary) 0%, 
     #fff 50%, 
-    var(--accent-purple) 100%
+    var(--accent-primary) 100%
   );
   background-size: 200% 100%;
   /* Kinetic, precise transition - no bounce, just smooth flow */
   transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 
-    0 0 20px hsla(260, 90%, 70%, 0.4),
-    0 0 40px hsla(260, 90%, 70%, 0.2);
+    0 0 20px var(--accent-primary-glow),
+    0 0 40px var(--accent-primary-glow);
   animation: bar-shimmer 1.5s infinite linear;
   position: relative;
 }
@@ -108,7 +108,7 @@
 }
 
 .loading-percentage {
-  color: var(--accent-purple);
+  color: var(--accent-primary);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -116,8 +116,8 @@
 }
 
 @keyframes logo-pulse {
-  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 15px var(--accent-purple)); }
-  50% { transform: scale(1.1); filter: drop-shadow(0 0 25px var(--accent-purple)); }
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 15px var(--accent-primary-glow)); }
+  50% { transform: scale(1.1); filter: drop-shadow(0 0 25px var(--accent-primary-glow)); }
 }
 
 @keyframes ring-expand {

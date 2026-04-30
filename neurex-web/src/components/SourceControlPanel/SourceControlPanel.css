@@ -143,14 +143,19 @@
 .change-item {
   display: flex;
   align-items: center;
-  padding: 4px 12px;
-  gap: 12px;
+  padding: 0 8px;
+  gap: 8px;
   cursor: pointer;
-  transition: background 0.1s;
+  transition: background 0.05s;
+  height: 22px; /* Standard VS Code height */
+  user-select: none;
 }
 
-.change-item:hover { background: rgba(255, 255, 255, 0.03); }
-.change-item.active { background: rgba(100, 50, 255, 0.1); }
+.change-item:hover { background: var(--bg-hover); }
+.change-item.active { 
+  background: var(--bg-active);
+  color: var(--text-primary);
+}
 
 .change-item__main {
   flex: 1;
@@ -160,8 +165,7 @@
   min-width: 0;
 }
 
-.change-icon { color: var(--text-muted); }
-.change-item.active .change-icon { color: var(--accent-purple); }
+.change-icon { color: var(--text-muted); opacity: 0.7; }
 
 .change-info {
   display: flex;
@@ -171,18 +175,22 @@
 
 .change-name {
   font-size: 13px;
-  color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.change-item.status--modified .change-name { color: #e2c08d; }
+.change-item.status--added .change-name { color: #81b88b; }
+.status--untracked .change-name { color: #73c991; }
+
 .change-path {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-left: 4px;
 }
 
 .change-item__actions {
@@ -201,21 +209,58 @@
   justify-content: center;
 }
 
-.status--modified { color: #e2c08d; }
-.status--added { color: #81b88b; }
-.status--deleted { color: #c74e39; }
-.status--untracked { color: #73c991; }
+.change-item__children {
+  position: relative;
+}
 
-.stage-btn {
-  width: 20px;
-  height: 20px;
+.change-item--folder .change-name {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* Tree Indent Guides */
+.change-item__indent-guide {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+}
+
+.change-item:hover .change-item__indent-guide {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.change-item__arrow {
+  width: 16px;
+  height: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-muted);
-  opacity: 0;
-  transition: opacity 0.1s;
 }
 
-.change-item:hover .stage-btn { opacity: 1; }
-.stage-btn:hover { color: var(--text-primary); }
+.change-list__empty {
+  padding: 8px 24px;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.view-toggle-btn {
+  color: var(--text-muted);
+  padding: 2px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.view-toggle-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.view-toggle-btn.active {
+  color: var(--accent-purple);
+  background: rgba(100, 50, 255, 0.1);
+}

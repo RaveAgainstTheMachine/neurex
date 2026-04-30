@@ -44,24 +44,58 @@
 
 .editor-tab:hover { background: var(--bg-hover); color: var(--text-primary); }
 .editor-tab.active { background: var(--bg-app); color: var(--text-primary); }
+
 .editor-tab.active::after {
   content: "";
   position: absolute;
-  top: 0; left: 0; right: 0; height: 2px;
-  background: var(--accent-purple);
-  box-shadow: 0 0 8px var(--accent-purple);
+  top: 0; left: 0; right: 0; height: 1px;
+  background: var(--accent-primary);
+  box-shadow: 0 0 8px var(--accent-primary);
+  z-index: 2;
 }
 
-.editor-tab__icon { opacity: 0.6; }
+/* VS Code style bottom border for active tab to blend with breadcrumbs */
+.editor-tab.active::before {
+  content: "";
+  position: absolute;
+  bottom: -1px; left: 0; right: 0; height: 1px;
+  background: var(--bg-app);
+  z-index: 3;
+}
+
+.editor-tab__icon { opacity: 0.7; }
 .editor-tab__close {
-  width: 16px; height: 16px;
+  width: 18px; height: 18px;
   display: flex; align-items: center; justify-content: center;
   border-radius: 4px;
   font-size: 14px;
-  opacity: 1;
-  color: var(--text-primary);
+  opacity: 0; /* Hidden by default like VS Code */
+  color: var(--text-muted);
+  margin-left: 4px;
+  transition: all 0.1s;
 }
-.editor-tab__close:hover { background: var(--bg-active); opacity: 1; color: var(--text-red); }
+
+.editor-tab:hover .editor-tab__close,
+.editor-tab.active .editor-tab__close {
+  opacity: 1;
+}
+
+.editor-tab.is-dirty .editor-tab__close {
+  opacity: 0; /* Show dot instead */
+}
+
+.editor-tab.is-dirty:hover .editor-tab__close {
+  opacity: 1; /* Show X on hover even if dirty */
+}
+
+.editor-tab.is-dirty:hover .dirty-dot {
+  display: none;
+}
+
+.editor-tab__close:hover { 
+  background: var(--bg-active); 
+  color: var(--text-primary); 
+}
 
 .dirty-dot {
   width: 6px; height: 6px;
@@ -90,115 +124,116 @@
 
 .save-btn { color: var(--accent-purple); font-weight: 600; }
 
+.editor-group-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 4px;
+  padding-left: 4px;
+  border-left: 1px solid var(--border);
+}
+
+.rotate-90 { transform: rotate(90deg); }
+
 .editor-monaco {
   flex: 1;
   position: relative;
   min-height: 0;
 }
 
-.editor-empty {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* ── Breadcrumbs ────────────────────────────────────────────────── */
+.editor-breadcrumbs {
+  height: 22px;
   background: var(--bg-app);
-}
-
-.editor-empty__content {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 16px;
-  max-width: 400px;
-  text-align: center;
-}
-
-.editor-empty__logo {
-  font-size: 80px;
-  color: var(--accent-purple);
-  margin-bottom: 24px;
-  text-shadow: 0 0 30px rgba(100, 50, 255, 0.4);
-}
-
-.editor-empty__title {
-  font-size: 24px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  color: white;
-  margin-bottom: 8px;
-}
-
-.editor-empty__subtitle {
+  padding: 0 12px;
+  gap: 4px;
+  font-size: 12px;
   color: var(--text-muted);
-  font-size: 14px;
-  max-width: 400px;
-  margin: 0 auto 40px;
-  line-height: 1.6;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  width: 100%;
-  max-width: 800px;
-  margin-bottom: 40px;
-}
-
-.dashboard-card {
-  padding: 24px;
+.breadcrumb-item {
   display: flex;
-  flex-direction: column;
-  gap: 16px;
-  text-align: left;
-  background: rgba(255, 255, 255, 0.02);
+  align-items: center;
+  gap: 4px;
+  padding: 0 4px;
+  height: 22px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.1s;
+  position: relative;
+}
+
+.breadcrumb-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.breadcrumb-picker {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: var(--bg-sidebar);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  z-index: 1000;
+  min-width: 180px;
+  padding: 4px 0;
+  border-radius: 4px;
 }
 
-.dashboard-card:hover {
-  background: rgba(255, 255, 255, 0.04);
-  transform: translateY(-4px);
-  border-color: var(--accent-purple);
-}
-
-.dashboard-card__header {
+.breadcrumb-picker-item {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.breadcrumb-picker-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.breadcrumb-item.file {
+  color: var(--text-secondary);
+}
+
+.breadcrumb-separator {
+  opacity: 0.4;
   font-size: 10px;
-  font-weight: 800;
-  color: var(--text-muted);
-  letter-spacing: 0.1em;
 }
 
-.big-stat {
-  font-size: 48px;
-  font-weight: 900;
-  color: white;
-  line-height: 1;
-}
-
-.stat-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-muted);
-  margin-top: 4px;
-}
-
-.quick-actions {
+/* ── Editor Watermark ───────────────────────────────────────────── */
+.editor-watermark {
   display: flex;
-  gap: 16px;
+  flex-direction: column;
+  gap: 12px;
+  opacity: 0.3;
+  user-select: none;
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+.watermark-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 40px;
 }
 
-.animate-float {
-  animation: float 4s ease-in-out infinite;
+.watermark-label {
+  font-size: 13px;
+}
+
+.watermark-shortcut {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
 /* ── Inline AI Prompt ────────────────────────────────────────────── */
@@ -281,7 +316,7 @@
 .remote-cursor--user { color: var(--accent-purple); }
 
 /* ── Neural Lens Styles ────────────────────────────────────────── */
-.error-lens-msg {
+.error-lens-error, .error-lens-warning {
   font-style: italic;
   font-size: 11px;
   opacity: 0.7;
@@ -289,12 +324,12 @@
   pointer-events: none;
 }
 
-.error-lens-msg--error {
+.error-lens-error {
   color: var(--accent-red);
   text-shadow: 0 0 5px rgba(239, 68, 68, 0.4);
 }
 
-.error-lens-msg--warning {
+.error-lens-warning {
   color: var(--accent-amber);
 }
 
@@ -341,4 +376,9 @@
 
 .animate-slide-down {
   animation: slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.editor-tab.is-preview .editor-tab__name {
+  font-style: italic;
+  opacity: 0.8;
 }

@@ -65,9 +65,8 @@ export function CommandPalette({ isOpen, onClose, title, items, placeholder }: C
     <div className="palette-overlay" onClick={onClose}>
       <div className="palette-container animate-scale" onClick={e => e.stopPropagation()} ref={paletteRef}>
         <div className="palette-header">
-          <div className="palette-title">{title}</div>
           <div className="palette-search">
-            <Search size={16} />
+            <Search size={14} />
             <input 
               ref={inputRef}
               type="text" 

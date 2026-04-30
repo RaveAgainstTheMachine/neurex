@@ -229,80 +229,36 @@
   width: 100%;
 }
 
-/* ── Status Bar ──────────────────────────────────────────────────── */
-.status-bar {
-  height: 26px;
-  background: var(--bg-sidebar);
-  border-top: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 12px;
-  font-size: 11px;
-  color: var(--text-secondary); /* Brighter than text-muted */
-  user-select: none;
-}
-
-.status-bar__left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.status-ws, .status-intel {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 26px;
-}
-
-.status-ws--connected {
-  color: var(--accent-cyan);
-  text-shadow: 0 0 8px hsla(180, 85%, 58%, 0.4);
-}
-
-.status-ws--connecting {
-  color: var(--accent-amber);
-  animation: animate-pulse 2s infinite;
-}
-
-.status-ws--disconnected {
-  color: var(--accent-red);
-}
-
-.status-segments { display: flex; align-items: center; }
-
-.status-segment {
-  height: 26px;
-  padding: 0 12px;
-  border-right: 1px solid var(--border);
-  display: flex; align-items: center; gap: 6px;
-  color: inherit; /* Use status-bar color */
-  cursor: default;
-  white-space: nowrap;
-}
-
-.status-segment:last-child { border-right: none; }
-
-.status-segment--interactive:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
-  cursor: pointer;
-}
-
-.swarm-pulse {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--text-muted);
-}
-
-.swarm-pulse--active {
-  background: var(--accent-cyan);
-  box-shadow: 0 0 10px var(--accent-cyan);
-}
-
 /* ── Resize Handles ──────────────────────────────────────────────── */
 .resize-handle {
-  width: 4px; background: transparent; transition: background 0.2s; z-index: 50;
+  position: relative;
+  transition: background 0.2s;
+  z-index: 50;
+  background: transparent;
 }
-.resize-handle--vertical { height: 4px; width: 100%; cursor: row-resize; }
-.resize-handle:hover, .resize-handle[data-resize-handle-state="drag"] {
-  background: var(--accent-purple);
+
+.resize-handle--horizontal {
+  width: 1px;
+  cursor: col-resize;
+  background: var(--border);
+}
+
+.resize-handle--vertical {
+  height: 1px;
+  width: 100%;
+  cursor: row-resize;
+  background: var(--border);
+}
+
+.resize-handle:hover, 
+.resize-handle[data-resize-handle-state="drag"] {
+  background: var(--accent-primary);
+  box-shadow: 0 0 10px var(--accent-primary-glow);
+}
+
+/* Hit Area expansion */
+.resize-handle::after {
+  content: "";
+  position: absolute;
+  top: -4px; left: -4px; right: -4px; bottom: -4px;
 }

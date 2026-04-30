@@ -250,163 +250,87 @@ export function SkillsPanel() {
         skill={selectedSkill}
         onClose={() => setSelectedSkill(null)}
       />
-      <div className="skills-panel__header animate-slide-up">
-        <div className="skills-panel__title-bar">
-          <h2 className="skills-panel__title">Agent Skills</h2>
-          <div className="skills-tabs">
-            <button 
-              id="tab-installed"
-              className={tab === "installed" ? "active" : ""} 
-              onClick={() => setTab("installed")}
-            >
-              Installed
-            </button>
-            <button 
-              id="tab-discover"
-              className={tab === "discover" ? "active" : ""} 
-              onClick={() => setTab("discover")}
-            >
-              Discover
-            </button>
-          </div>
+      
+      <div className="extensions-header">
+        <div className="extensions-search-container">
+          <input 
+            type="text" 
+            placeholder="Search Skills in Marketplace" 
+            className="extensions-search-input"
+            value={tab === "installed" ? "" : marketSearch}
+            onChange={(e) => tab === "installed" ? setTab("discover") : setMarketSearch(e.target.value)}
+          />
+          <div className="extensions-search-icon"><Search size={14} /></div>
         </div>
-        <p className="skills-panel__subtitle">
-          Extend Neurex via the <a href="https://skillsmp.com" target="_blank" className="text-purple hover-glow">Reasoning Marketplace</a>
-        </p>
       </div>
 
-      {tab === "installed" && (
-        <div className="skills-panel__install animate-slide-up">
-          <p className="skills-install-hint">
-            Paste a <strong>Git repository URL</strong> or a <strong>skillsmp.com</strong> link below to synthesize new agent capabilities.
-          </p>
-          <div className="skills-input">
-            <Globe size={14} className="skills-input__icon" />
-            <input 
-              id="skill-install-url"
-              type="text" 
-              placeholder="Git repository URL..." 
-              value={newSkillUrl}
-              onChange={(e) => setNewSkillUrl(e.target.value)}
-              disabled={installing}
-            />
-            <button 
-              id="btn-install-skill"
-              className="btn btn--purple" 
-              onClick={() => handleInstall(newSkillUrl)}
-              disabled={installing || !newSkillUrl}
-            >
-              {installing ? <Loader2 className="animate-spin" size={14} /> : <Plus size={14} />}
-            </button>
+      <div className="extensions-content">
+        <div className="extensions-section">
+          <div className="extensions-section-header">
+            <ChevronDown size={14} />
+            <span>INSTALLED</span>
+          </div>
+          <div className="extensions-list">
+            {skills.map(skill => (
+              <div key={skill.id} className="extension-item" onClick={() => fetchSkillDetails(skill.id)}>
+                <div className="extension-icon">
+                  <Puzzle size={24} className="text-purple" />
+                </div>
+                <div className="extension-details">
+                  <div className="extension-name-row">
+                    <span className="extension-name">{skill.name}</span>
+                    <button 
+                      className="extension-manage"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setConfirmState({ show: true, skillId: skill.id });
+                      }}
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                  <span className="extension-description">{skill.description}</span>
+                  <div className="extension-footer">
+                    <span className="extension-author">Neurex Core</span>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      )}
 
-      <div className="skills-panel__list">
-        {loading ? (
-          <div className="skills-loading">
-            <Loader2 className="animate-spin" size={24} />
+        <div className="extensions-section">
+          <div className="extensions-section-header">
+            <ChevronDown size={14} />
+            <span>DISCOVER</span>
           </div>
-        ) : (
-          <>
-            {tab === "installed" && skills.length === 0 && (
-              <div className="skills-empty animate-scale">
-                <Puzzle size={32} className="text-purple opacity-20" />
-                <p>No skills installed yet.</p>
-              </div>
-            )}
-            {tab === "installed" && skills.map((skill, idx) => (
-              <div 
-                key={skill.id} 
-                id={`skill-installed-${skill.id}`}
-                className="skill-card skill-card--clickable animate-slide-up" 
-                style={{ animationDelay: `${idx * 0.05}s` }}
-                onClick={() => fetchSkillDetails(skill.id)}
-              >
-                <div className="skill-card__header">
-                  <div className="skill-card__info">
-                    <h3 className="skill-card__name">{skill.name}</h3>
-                    <span className="skill-card__badge">{skill.tools_count} tools</span>
-                  </div>
-                  <button 
-                    id={`btn-delete-${skill.id}`}
-                    className="skill-card__delete"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setConfirmState({ show: true, skillId: skill.id });
-                    }}
-                  >
-                    <Trash2 size={12} />
-                  </button>
+          <div className="extensions-list">
+            {filteredMarketplace.map(item => (
+              <div key={item.id} className="extension-item extension-item--discover">
+                <div className="extension-icon">
+                  <Globe size={24} className="text-cyan" />
                 </div>
-                <p className="skill-card__desc">{skill.description}</p>
-                <div className="skill-card__footer">
-                  <span className="skill-card__link">
-                    Deep Inspection →
-                  </span>
-                </div>
-              </div>
-            ))}
-
-            {tab === "discover" && (
-              <div className="marketplace-controls animate-slide-up">
-                <div className="skills-input">
-                  <Search size={14} className="skills-input__icon" />
-                  <input 
-                    id="marketplace-search"
-                    type="text" 
-                    placeholder="Search marketplace..." 
-                    value={marketSearch}
-                    onChange={(e) => setMarketSearch(e.target.value)}
-                  />
-                </div>
-                <div className="market-categories">
-                  {["All", "Core", "Code", "Web", "Data"].map(cat => (
+                <div className="extension-details">
+                  <div className="extension-name-row">
+                    <span className="extension-name">{item.name}</span>
                     <button 
-                      key={cat} 
-                      id={`market-cat-${cat.toLowerCase()}`}
-                      className={`market-cat-btn ${marketCategory === cat ? 'active' : ''}`}
-                      onClick={() => setMarketCategory(cat)}
+                      className="btn btn--purple btn--xs"
+                      onClick={() => handleInstall(item.url)}
+                      disabled={installing}
                     >
-                      {cat}
+                      Install
                     </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {tab === "discover" && filteredMarketplace.map((item, idx) => (
-              <div 
-                key={item.id} 
-                id={`market-item-${item.id}`}
-                className="skill-card skill-card--discover animate-slide-up"
-                style={{ animationDelay: `${idx * 0.05}s` }}
-              >
-                <div className="skill-card__header">
-                  <div className="skill-card__info">
-                    <div className="skill-card__top">
-                      <h3 className="skill-card__name">{item.name}</h3>
-                      <span className="market-badge">{item.category}</span>
-                    </div>
-                    <div className="skill-card__subinfo">
-                      <span className="skill-card__author">by {item.author}</span>
-                      <span className="market-stars"><Star size={8} fill="currentColor" /> {item.stars}</span>
-                    </div>
                   </div>
-                  <button 
-                    id={`btn-install-curated-${item.id}`}
-                    className="btn btn--purple btn--small"
-                    onClick={() => handleInstall(item.url)}
-                    disabled={installing}
-                  >
-                    {installing ? <Loader2 className="animate-spin" size={12} /> : "Install"}
-                  </button>
+                  <span className="extension-description">{item.description}</span>
+                  <div className="extension-footer">
+                    <span className="extension-author">{item.author}</span>
+                    <span className="extension-rating"><Star size={8} fill="currentColor" /> {item.stars}</span>
+                  </div>
                 </div>
-                <p className="skill-card__desc">{item.description}</p>
               </div>
             ))}
-          </>
-        )}
+          </div>
+        </div>
       </div>
     </div>
   );

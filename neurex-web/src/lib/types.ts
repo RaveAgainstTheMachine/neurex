@@ -53,6 +53,7 @@ export interface OpenFile {
   originalContent?: string;
   language: string;
   isDirty: boolean;
+  isPreview?: boolean;
 }
 
 export interface ModelProfile {
@@ -120,6 +121,15 @@ export interface SearchResult {
   content: string;
 }
 
+export interface Diagnostic {
+  path: string;
+  message: string;
+  severity: number;
+  line: number;
+  column: number;
+  source: string;
+}
+
 export interface SearchState {
   query: string;
   results: SearchResult[];
@@ -165,8 +175,25 @@ export interface NeurexStore {
 
   // File Tree
   fileTree: FileNode[];
+  diagnostics: Diagnostic[];
+  workspaceDiagnostics: Record<string, Diagnostic[]>;
+  collapseSignal: number;
   setFileTree: (tree: FileNode[]) => void;
   refreshFileTree: () => Promise<void>;
+  fetchSubtree: (path: string) => Promise<void>;
+  expandedFolders: Set<string>;
+  collapsedFolders: Set<string>;
+  toggleFolder: (path: string, val?: boolean) => void;
+  gitBranch: string;
+  gitChanges: any[];
+  refreshGitStatus: () => Promise<void>;
+  setWorkspace: (path: string) => Promise<void>;
+  closeWorkspace: () => Promise<void>;
+  createFile: (path: string) => Promise<void>;
+  createFolder: (path: string) => Promise<void>;
+  collapseAllFolders: () => void;
+  setDiagnostics: (path: string, items: any[]) => void;
+  setWorkspaceDiagnostics: (path: string, diagnostics: Diagnostic[]) => void;
 
   // Chat
   messages: ChatMessage[];
@@ -180,6 +207,7 @@ export interface NeurexStore {
   setConversations: (convs: { conversation_id: string; last_message: string }[]) => void;
   setPreferredModel: (model: string) => void;
   newConversation: () => void;
+  sendMessage: (content: string) => void;
 
   // Tasks
   tasks: Record<string, TaskNode>;
@@ -192,13 +220,19 @@ export interface NeurexStore {
   setCursorPosition: (line: number, ch: number) => void;
   openFiles: OpenFile[];
   activeFile: string | null;
-  openFile: (path: string, content: string, language: string) => void;
+  activeFileLanguage: string;
+  openFile: (path: string, content: string, language: string, isPreview?: boolean) => void;
   closeFile: (path: string) => void;
   closeOthers: (path: string) => void;
   closeToRight: (path: string) => void;
   closeSaved: () => void;
   closeAllFiles: () => void;
   setActiveFile: (path: string | null) => void;
+  editorPanes: { id: string; path: string | null }[];
+  setEditorPanes: (panes: { id: string; path: string | null }[]) => void;
+  splitEditor: (direction: "horizontal" | "vertical") => void;
+  closePane: (id: string) => void;
+  setPaneFile: (paneId: string, path: string | null) => void;
   setFileContent: (path: string, content: string) => void;
   setDiff: (path: string, original: string, modified: string) => void;
   acceptDiff: (path: string) => void;
@@ -210,7 +244,6 @@ export interface NeurexStore {
   pendingJump: { path: string; line: number; timestamp: number } | null;
   setPendingJump: (path: string, line: number) => void;
   clearPendingJump: () => void;
-  fetchSubtree: (path: string) => Promise<void>;
 
   // WS
   wsStatus: "connecting" | "connected" | "disconnected";
@@ -236,7 +269,7 @@ export interface NeurexStore {
 
   // Modals
   modalOpen: boolean;
-  setModalOpen: (val: boolean) => void;
+  setModalOpen: (val: boolean | ((v: boolean) => boolean)) => void;
   // Hive
   hiveStats: { total_nodes: number; memory_count: number };
   // Theme
@@ -258,4 +291,17 @@ export interface NeurexStore {
   settings: any | null;
   setSettings: (settings: any) => void;
   refreshSettings: () => Promise<void>;
+  send: (payload: any) => void;
+
+  // UI State & Panel Management
+  sidebarTab: string;
+  setSidebarTab: (tab: string) => void;
+  sidebarOrder: string[];
+  setSidebarOrder: (order: string[]) => void;
+  showAIPanel: boolean;
+  setShowAIPanel: (val: boolean | ((v: boolean) => boolean)) => void;
+  showSettings: boolean;
+  setShowSettings: (val: boolean | ((v: boolean) => boolean)) => void;
+  showHiveMind: boolean;
+  setShowHiveMind: (val: boolean | ((v: boolean) => boolean)) => void;
 }

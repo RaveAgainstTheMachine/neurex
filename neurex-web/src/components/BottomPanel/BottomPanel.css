@@ -1,0 +1,257 @@
+/* src/components/BottomPanel/BottomPanel.css */
+.bottom-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.bottom-panel__header {
+  height: 35px;
+  background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+}
+
+.bottom-panel__tabs {
+  display: flex;
+  gap: 16px;
+}
+
+.terminal-area {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+
+.terminal-container {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+
+.terminal-sidebar {
+  width: 180px;
+  background: var(--bg-sidebar);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.terminal-list {
+  display: flex;
+  flex-direction: column;
+  padding: 8px 0;
+}
+
+.terminal-list-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.terminal-list-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.terminal-list-item.active {
+  background: var(--bg-active);
+  color: var(--text-primary);
+}
+
+.terminal-list-item__name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.terminal-list-item__close {
+  opacity: 0;
+  color: var(--text-muted);
+}
+
+.terminal-list-item:hover .terminal-list-item__close {
+  opacity: 1;
+}
+
+.terminal-list-item__close:hover {
+  color: var(--accent-red);
+}
+
+.terminal-add-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  border-radius: 4px;
+}
+
+.terminal-add-btn:hover { 
+  background: var(--bg-hover); 
+  color: var(--text-primary); 
+}
+
+.bottom-tab {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  padding: 4px 0;
+  border-bottom: 2px solid transparent;
+  text-transform: uppercase;
+}
+
+.bottom-tab.active {
+  color: var(--text-primary);
+  border-bottom-color: var(--accent-primary);
+}
+
+.tab-badge {
+  background: var(--accent-purple);
+  color: white;
+  font-size: 9px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+.bottom-panel__content {
+  flex: 1;
+  overflow: hidden;
+  background: #050507;
+  position: relative;
+}
+
+.bottom-panel__tab-content {
+  height: 100%;
+  width: 100%;
+}
+
+/* Problems View Styles */
+.problems-view {
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.problems-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.problem-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 2px 8px;
+  cursor: pointer;
+  transition: background 0.1s;
+  min-height: 22px;
+}
+
+.problem-item:hover {
+  background: var(--bg-hover);
+}
+
+.problems-file-group {
+  margin-bottom: 8px;
+}
+
+.problems-file-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  position: sticky;
+  top: 0;
+  background: #050507;
+  z-index: 10;
+}
+
+.problems-file-header:hover {
+  background: var(--bg-hover);
+}
+
+.problems-file-path {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+.problem-item.error { color: #f48771; }
+.problem-item.warning { color: #cca700; }
+.problem-item.info { color: #75beff; }
+
+.problem-icon {
+  margin-top: 2px;
+}
+
+.problem-item.error .problem-icon { color: var(--accent-red); }
+.problem-item.warning .problem-icon { color: var(--accent-amber); }
+
+.problem-info {
+  flex: 1;
+}
+
+.problem-message {
+  font-size: 13px;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.problem-location {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.problem-action {
+  opacity: 0;
+  transition: opacity 0.2s;
+  color: var(--accent-purple);
+}
+
+.problem-item:hover .problem-action {
+  opacity: 1;
+}
+
+.output-log {
+  padding: 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+  overflow-y: auto;
+}
+
+.bottom-panel__line {
+  margin-bottom: 2px;
+}

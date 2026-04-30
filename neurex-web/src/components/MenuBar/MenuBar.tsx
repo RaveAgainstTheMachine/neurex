@@ -22,10 +22,8 @@ interface MenuBarProps {
   mode?: "vertical" | "horizontal";
 }
 
-export function MenuBar({ mode = "horizontal" }: MenuBarProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function MenuBar() {
   const [activeSection, setActiveSection] = useState<string | null>(null);
-  const [expandedSections, setExpandedSections] = useState<string[]>(["File"]);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const { 
     logout, saveFile, activeFile, setTheme, theme, 
@@ -37,7 +35,6 @@ export function MenuBar({ mode = "horizontal" }: MenuBarProps) {
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
         setActiveSection(null);
       }
     };
@@ -77,6 +74,14 @@ export function MenuBar({ mode = "horizontal" }: MenuBarProps) {
       ]
     },
     {
+      title: "Selection",
+      options: [
+        { label: "Select All", shortcut: "Ctrl+A" },
+        { label: "Expand Selection", shortcut: "Shift+Alt+Right" },
+        { label: "Shrink Selection", shortcut: "Shift+Alt+Left" },
+      ]
+    },
+    {
       title: "View",
       options: [
         { label: "Appearance", submenu: [
@@ -92,12 +97,27 @@ export function MenuBar({ mode = "horizontal" }: MenuBarProps) {
       ]
     },
     {
+      title: "Go",
+      options: [
+        { label: "Back", shortcut: "Alt+Left" },
+        { label: "Forward", shortcut: "Alt+Right" },
+        { separator: true },
+        { label: "Go to File...", shortcut: "Ctrl+P" },
+        { label: "Go to Symbol...", shortcut: "Ctrl+Shift+O" },
+      ]
+    },
+    {
+      title: "Run",
+      options: [
+        { label: "Start Debugging", shortcut: "F5", action: runActiveFile },
+        { label: "Run Without Debugging", shortcut: "Ctrl+F5" },
+      ]
+    },
+    {
       title: "Terminal",
       options: [
         { label: "New Terminal", shortcut: "Ctrl+Shift+`", action: () => addTerminalSession() },
         { label: "Split Terminal", shortcut: "Ctrl+Shift+5" },
-        { separator: true },
-        { label: "Run Active File", shortcut: "F5" },
         { separator: true },
         { label: "Clear Terminal", shortcut: "Ctrl+L", action: clearActiveTerminal },
         { label: "Kill Terminal", action: () => closeTerminalSession(activeTerminalId) }
@@ -109,8 +129,6 @@ export function MenuBar({ mode = "horizontal" }: MenuBarProps) {
         { label: "Welcome", action: () => window.open("https://github.com/frosty-hq/neurex", "_blank") },
         { label: "Documentation", action: () => window.open("https://github.com/frosty-hq/neurex/wiki", "_blank") },
         { label: "Show All Commands", shortcut: "Ctrl+Shift+P" },
-        { separator: true },
-        { label: "Check for Updates..." },
         { separator: true },
         { label: "About Neurex" }
       ]
@@ -174,69 +192,26 @@ export function MenuBar({ mode = "horizontal" }: MenuBarProps) {
 
   return (
     <div className="menu-bar" ref={menuRef}>
-      <button 
-        className={`burger-trigger ${isOpen ? "active" : ""}`}
-        onClick={() => {
-          setIsOpen(!isOpen);
-          setActiveSection(null);
-        }}
-        title="Main Menu"
-      >
-        <Menu size={22} />
-      </button>
-
-      {isOpen && mode === "vertical" && (
-        <div className="menu-drawer animate-slide-right">
-          <div className="menu-drawer__header">
-            <Menu size={16} />
-            <span>NEUREX</span>
-          </div>
-          <div className="menu-drawer__content">
-            {menus.map(section => (
-              <div key={section.title} className={`menu-section ${expandedSections.includes(section.title) ? "expanded" : ""}`}>
-                <button 
-                  className="menu-section__header"
-                  onClick={() => setExpandedSections(prev => prev.includes(section.title) ? [] : [section.title])}
-                  onMouseEnter={() => {
-                    if (expandedSections.length > 0) {
-                      setExpandedSections([section.title]);
-                    }
-                  }}
-                >
-                  <div className="chevron-icon">›</div>
-                  <span>{section.title}</span>
-                </button>
-                {expandedSections.includes(section.title) && renderOptions(section.options, () => setIsOpen(false))}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {isOpen && mode === "horizontal" && (
-        <div className="menu-horizontal-bar animate-slide-down">
-          {menus.map(section => (
-            <div key={section.title} className="menu-horizontal-item">
-              <button 
-                className={`menu-horizontal-btn ${activeSection === section.title ? "active" : ""}`}
-                onClick={() => setActiveSection(activeSection === section.title ? null : section.title)}
-                onMouseEnter={() => {
-                  if (activeSection) {
-                    setActiveSection(section.title);
-                  }
-                }}
-              >
-                {section.title}
-              </button>
-              {activeSection === section.title && (
-                <div className="menu-horizontal-dropdown animate-fade-in">
-                   {renderOptions(section.options, () => { setIsOpen(false); setActiveSection(null); })}
-                </div>
-              )}
+      {menus.map(section => (
+        <div key={section.title} className="menu-item">
+          <button 
+            className={`menu-btn ${activeSection === section.title ? "active" : ""}`}
+            onClick={() => setActiveSection(activeSection === section.title ? null : section.title)}
+            onMouseEnter={() => {
+              if (activeSection) {
+                setActiveSection(section.title);
+              }
+            }}
+          >
+            {section.title}
+          </button>
+          {activeSection === section.title && (
+            <div className="menu-dropdown">
+                {renderOptions(section.options, () => { setActiveSection(null); })}
             </div>
-          ))}
+          )}
         </div>
-      )}
+      ))}
     </div>
   );
 }

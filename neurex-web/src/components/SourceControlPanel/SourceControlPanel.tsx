@@ -3,12 +3,13 @@
 
 import { useState, useEffect } from "react";
 import { 
-  GitBranch, GitCommit, GitPullRequest, RotateCw, Plus, Minus, 
+  GitBranch, RotateCw, Plus, Minus, 
   Check, MoreHorizontal, ChevronDown, ChevronRight, FileText, 
-  AlertCircle, History, Sparkles, Wand2 
+  History, Sparkles, List, Share2, Folder
 } from "lucide-react";
 import { useStore } from "../../lib/store";
 import toast from "react-hot-toast";
+import React from "react";
 import "./SourceControlPanel.css";
 
 import { API_BASE } from "../../lib/config";
@@ -27,6 +28,25 @@ export function SourceControlPanel() {
   const [loading, setLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [expanded, setExpanded] = useState({ staged: true, unstaged: true });
+  const [viewMode, setViewMode] = useState<'tree' | 'flat'>(() => {
+    return (localStorage.getItem("neurex_sc_view_mode") as 'tree' | 'flat') || 'tree';
+  });
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+
+  const toggleViewMode = () => {
+    const next = viewMode === 'tree' ? 'flat' : 'tree';
+    setViewMode(next);
+    localStorage.setItem("neurex_sc_view_mode", next);
+  };
+
+  const toggleNode = (path: string) => {
+    setExpandedNodes(prev => {
+      const next = new Set(prev);
+      if (next.has(path)) next.delete(path);
+      else next.add(path);
+      return next;
+    });
+  };
 
   const fetchGitStatus = async () => {
     setLoading(true);
@@ -115,6 +135,13 @@ export function SourceControlPanel() {
       <div className="source-control__header">
         <div className="source-control__title">SOURCE CONTROL</div>
         <div className="source-control__actions">
+          <button 
+            className={`view-toggle-btn ${viewMode === 'tree' ? 'active' : ''}`}
+            onClick={toggleViewMode}
+            title={viewMode === 'tree' ? "Switch to Flat View" : "Switch to Tree View"}
+          >
+            {viewMode === 'tree' ? <Share2 size={14} /> : <List size={14} />}
+          </button>
           <button onClick={fetchGitStatus} title="Refresh" className={`icon-btn ${loading ? "animate-spin" : ""}`}>
             <RotateCw size={14} />
           </button>
@@ -163,14 +190,26 @@ export function SourceControlPanel() {
               <span>STAGED</span>
               <span className="count-badge">{stagedChanges.length}</span>
             </div>
-            {expanded.staged && stagedChanges.map(change => (
-              <ChangeItem 
-                key={change.path} 
-                change={change} 
-                onToggle={() => toggleStage(change.path, true)}
-                onClick={() => diffFile(change.path)}
-              />
-            ))}
+            {expanded.staged && (
+              viewMode === 'flat' ? (
+                stagedChanges.map(change => (
+                  <ChangeItem 
+                    key={change.path} 
+                    change={change} 
+                    onToggle={() => toggleStage(change.path, true)}
+                    onClick={() => diffFile(change.path)}
+                  />
+                ))
+              ) : (
+                <GitTree 
+                  changes={stagedChanges} 
+                  onToggle={(path) => toggleStage(path, true)} 
+                  onSelect={diffFile}
+                  expandedNodes={expandedNodes}
+                  onToggleNode={toggleNode}
+                />
+              )
+            )}
           </div>
         )}
 
@@ -183,25 +222,123 @@ export function SourceControlPanel() {
           {expanded.unstaged && unstagedChanges.length === 0 && (
             <div className="change-list__empty">No pending changes</div>
           )}
-          {expanded.unstaged && unstagedChanges.map(change => (
-            <ChangeItem 
-              key={change.path} 
-              change={change} 
-              onToggle={() => toggleStage(change.path, false)}
-              onClick={() => diffFile(change.path)}
-            />
-          ))}
+          {expanded.unstaged && (
+            viewMode === 'flat' ? (
+              unstagedChanges.map(change => (
+                <ChangeItem 
+                  key={change.path} 
+                  change={change} 
+                  onToggle={() => toggleStage(change.path, false)}
+                  onClick={() => diffFile(change.path)}
+                />
+              ))
+            ) : (
+              <GitTree 
+                changes={unstagedChanges} 
+                onToggle={(path) => toggleStage(path, false)} 
+                onSelect={diffFile}
+                expandedNodes={expandedNodes}
+                onToggleNode={toggleNode}
+              />
+            )
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-function ChangeItem({ change, onToggle, onClick }: { change: GitChange; onToggle: () => void; onClick: () => void }) {
+interface ChangeNode {
+  name: string;
+  path: string;
+  type: 'file' | 'folder';
+  children: Record<string, ChangeNode>;
+  change?: GitChange;
+}
+
+function GitTree({ changes, onToggle, onSelect, expandedNodes, onToggleNode }: { 
+  changes: GitChange[], 
+  onToggle: (p: string) => void, 
+  onSelect: (p: string) => void,
+  expandedNodes: Set<string>,
+  onToggleNode: (p: string) => void
+}) {
+  const buildTree = (changes: GitChange[]) => {
+    const root: Record<string, ChangeNode> = {};
+    
+    changes.forEach(change => {
+      const parts = change.path.split('/');
+      let current = root;
+      let fullPath = "";
+      
+      parts.forEach((part, i) => {
+        fullPath += (fullPath ? "/" : "") + part;
+        const isLast = i === parts.length - 1;
+        
+        if (!current[part]) {
+          current[part] = {
+            name: part,
+            path: fullPath,
+            type: isLast ? 'file' : 'folder',
+            children: {},
+            change: isLast ? change : undefined
+          };
+        }
+        current = current[part].children;
+      });
+    });
+    return root;
+  };
+
+  const tree = buildTree(changes);
+
+  const renderNodes = (nodes: Record<string, ChangeNode>, depth = 0) => {
+    return Object.values(nodes)
+      .sort((a, b) => {
+        if (a.type !== b.type) return a.type === 'folder' ? -1 : 1;
+        return a.name.localeCompare(b.name);
+      })
+      .map(node => {
+        const isExpanded = expandedNodes.has(node.path);
+        const hasChildren = Object.keys(node.children).length > 0;
+
+        return (
+          <React.Fragment key={node.path}>
+            <ChangeItem 
+              change={node.change || { path: node.path, status: 'modified', staged: false } as any}
+              isFolder={node.type === 'folder'}
+              depth={depth}
+              isExpanded={isExpanded}
+              onToggle={() => node.type === 'file' ? onToggle(node.path) : onToggleNode(node.path)}
+              onClick={() => node.type === 'file' ? onSelect(node.path) : onToggleNode(node.path)}
+            />
+            {node.type === 'folder' && isExpanded && (
+              <div className="change-item__children">
+                {renderNodes(node.children, depth + 1)}
+              </div>
+            )}
+          </React.Fragment>
+        );
+      });
+  };
+
+  return <div className="git-tree">{renderNodes(tree)}</div>;
+}
+
+function ChangeItem({ 
+  change, onToggle, onClick, isFolder, depth = 0, isExpanded 
+}: { 
+  change: GitChange; 
+  onToggle: () => void; 
+  onClick: () => void;
+  isFolder?: boolean;
+  depth?: number;
+  isExpanded?: boolean;
+}) {
   const { activeFile } = useStore();
   const isActive = activeFile === change.path;
 
-  const statusChar = {
+  const statusChar = isFolder ? null : {
     modified: "M",
     added: "A",
     deleted: "D",
@@ -210,24 +347,49 @@ function ChangeItem({ change, onToggle, onClick }: { change: GitChange; onToggle
   }[change.status];
 
   return (
-    <div className={`change-item ${isActive ? "active" : ""}`} onClick={onClick}>
+    <div 
+      className={`change-item ${isActive ? "active" : ""} ${isFolder ? "change-item--folder" : `status--${change.status}`}`} 
+      onClick={onClick}
+      style={{ paddingLeft: 8 + depth * 12 }}
+    >
+      {/* Indent Guides */}
+      {Array.from({ length: depth }).map((_, i) => (
+        <div 
+          key={i} 
+          className="change-item__indent-guide" 
+          style={{ left: 12 + i * 12 }} 
+        />
+      ))}
+
       <div className="change-item__main">
-        <FileText size={14} className="change-icon" />
+        {isFolder ? (
+          <div className="change-item__arrow">
+            {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          </div>
+        ) : null}
+        
+        {isFolder ? <Folder size={14} className="change-icon" /> : <FileText size={14} className="change-icon" />}
+        
         <div className="change-info">
           <span className="change-name">{change.path.split("/").pop()}</span>
-          <span className="change-path">{change.path.substring(0, change.path.lastIndexOf("/"))}</span>
         </div>
+        {!isFolder && depth === 0 && (
+          <span className="change-path">{change.path.substring(0, change.path.lastIndexOf("/"))}</span>
+        )}
       </div>
-      <div className="change-item__actions">
-        <span className={`status-badge status--${change.status}`}>{statusChar}</span>
-        <button 
-          className="stage-btn" 
-          onClick={(e) => { e.stopPropagation(); onToggle(); }}
-          title={change.staged ? "Unstage" : "Stage"}
-        >
-          {change.staged ? <Minus size={14} /> : <Plus size={14} />}
-        </button>
-      </div>
+      
+      {!isFolder && (
+        <div className="change-item__actions">
+          <span className="status-badge">{statusChar}</span>
+          <button 
+            className="stage-btn" 
+            onClick={(e) => { e.stopPropagation(); onToggle(); }}
+            title={change.staged ? "Unstage" : "Stage"}
+          >
+            {change.staged ? <Minus size={14} /> : <Plus size={14} />}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef, useMemo } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
-import {
-  Files, MessageSquare, Settings, GitBranch, Search, Bot, Activity, Clock, Cpu, Shield, Puzzle, Layout, AlertTriangle, BrainCircuit, Braces, Terminal as TerminalIcon, Plus, RefreshCw, LogOut, Moon, Sun, Save, X
-} from "lucide-react";
+import { AlertTriangle } from "lucide-react";
+import { StatusBar } from "./components/StatusBar/StatusBar";
+import { BottomPanel } from "./components/BottomPanel/BottomPanel";
 import { NeurexLogo } from "./components/Icons/NeurexLogo";
 import { FileExplorer } from "./components/FileExplorer/FileExplorer";
+import { ActivityBar } from "./components/ActivityBar/ActivityBar";
 import { ConversationList } from "./components/ConversationList/ConversationList";
 import { InfraPanel } from "./components/InfraPanel/InfraPanel";
 import { SystemLogsPanel } from "./components/SystemLogs/SystemLogs";
@@ -25,6 +26,7 @@ import { CommandPalette } from "./components/CommandPalette/CommandPalette";
 import { API_BASE } from "./lib/config";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useNotifications } from "./hooks/useNotifications";
+import { useGlobalShortcuts } from "./hooks/useGlobalShortcuts";
 import { useStore } from "./lib/store";
 import { Toaster, toast } from "react-hot-toast";
 import { UpdateNotifier } from "./components/UpdateNotifier/UpdateNotifier";
@@ -32,23 +34,6 @@ import { FlightRecorder } from "./components/FlightRecorder/FlightRecorder";
 import { LoadingOverlay } from "./components/LoadingOverlay/LoadingOverlay";
 import { MobileView } from "./components/MobileView/MobileView";
 import { ContextMenu } from "./components/ContextMenu/ContextMenu";
-import { 
-  DndContext, 
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
-  useSortable,
-} from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import "./App.css";
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
@@ -89,62 +74,10 @@ export default function App() {
   );
 }
 
-const SIDEBAR_ITEMS: { id: SidebarTab; icon: React.FC<any>; label: string }[] = [
-  { id: "explorer", icon: Files,          label: "Explorer" },
-  { id: "search",   icon: Search,         label: "Search" },
-  { id: "git",      icon: GitBranch,      label: "Source Control" },
-  { id: "timeline", icon: Clock,          label: "File Timeline" },
-  { id: "history",  icon: MessageSquare,  label: "Chat History" },
-  { id: "infra",    icon: Cpu,            label: "AI Infrastructure" },
-  { id: "system",   icon: Shield,         label: "System Logs" },
-  { id: "skills",   icon: Puzzle,         label: "Skills & Extensions" },
-  { id: "agent",    icon: Bot,            label: "Agents" },
-];
 
-function SortableActivityItem({ id, active, onClick, icon: Icon, label, badge }: { id: string; active: boolean; onClick: () => void; icon: React.FC<any>; label: string; badge?: number | string }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 10 : 1,
-    cursor: "pointer",
-  };
-
-  return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="activity-item-wrapper">
-      <button className={`activity-btn ${active ? "active" : ""}`} onClick={onClick} title={label}>
-        <Icon size={20} />
-        {badge && <span className="activity-badge animate-scale">{badge}</span>}
-        {active && <div className="activity-indicator" />}
-      </button>
-    </div>
-  );
-}
 
 function AppContent() {
-  const [sidebarOrder, setSidebarOrder] = useState<string[]>(() => {
-    const saved = localStorage.getItem("neurex_sidebar_order");
-    return saved ? JSON.parse(saved) : SIDEBAR_ITEMS.map(i => i.id);
-  });
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  );
-
-  const handleSidebarDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    if (over && active.id !== over.id) {
-      setSidebarOrder((items) => {
-        const oldIndex = items.indexOf(active.id as string);
-        const newIndex = items.indexOf(over.id as string);
-        const next = arrayMove(items, oldIndex, newIndex);
-        localStorage.setItem("neurex_sidebar_order", JSON.stringify(next));
-        return next;
-      });
-    }
-  };
 
   useNotifications();
   const { 
@@ -152,17 +85,38 @@ function AppContent() {
     token, activeConversationId, modalOpen, tasks, hiveStats, 
     theme, cursorPosition, openFiles, activeFile, setFileLanguage, logout, saveFile,
     refreshFileTree, activeTerminalId, addTerminalSession, clearActiveTerminal, 
-    runActiveFile, setModalOpen, closeTerminalSession
+    runActiveFile, setModalOpen, closeTerminalSession, editorPanes, diagnostics,
+    gitBranch, gitChanges, refreshGitStatus,
+    sidebarTab, setSidebarTab, sidebarOrder, setSidebarOrder,
+    showAIPanel, setShowAIPanel, showSettings, setShowSettings, 
+    showHiveMind, setShowHiveMind
   } = useStore();
   
+  // ── Poll Git Status ──
+  useEffect(() => {
+    if (token) {
+      refreshGitStatus();
+      const timer = setInterval(refreshGitStatus, 30000); // 30s
+      return () => clearInterval(timer);
+    }
+  }, [token, refreshGitStatus]);
+
   const [visualProgress, setVisualProgress] = useState(25);
-  const [sidebarTab, setSidebarTab] = useState<SidebarTab>((localStorage.getItem("neurex_sidebar_tab") as SidebarTab) || "explorer");
-  const [showAIPanel, setShowAIPanel] = useState(true);
-  const [showSettings, setShowSettings] = useState(false);
-  const [showHiveMind, setShowHiveMind] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const { send } = useWebSocket(activeConversationId);
+  useEffect(() => {
+    useStore.setState({ send });
+  }, [send]);
   const sidebarRef = useRef<any>(null);
+
+  useEffect(() => {
+    if (theme) {
+      document.documentElement.style.setProperty('--accent-primary', theme.accent_color);
+      document.documentElement.style.setProperty('--accent-primary-glow', theme.glow_color);
+      document.documentElement.style.setProperty('--accent-purple', theme.accent_color);
+      document.documentElement.style.setProperty('--glow-purple', theme.glow_color);
+    }
+  }, [theme]);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -173,51 +127,7 @@ function AppContent() {
   // Command Palette States
   const [paletteMode, setPaletteMode] = useState<"none" | "language" | "indent" | "encoding" | "global">("none");
 
-  useEffect(() => {
-    const handleGlobalKey = (e: KeyboardEvent) => {
-      // Command Palette
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "P") {
-        e.preventDefault();
-        setPaletteMode("global");
-      }
-      // Global Search
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "F") {
-        e.preventDefault();
-        setSidebarTab("search");
-      }
-      // Save File
-      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
-        e.preventDefault();
-        if (activeFile) {
-          saveFile(activeFile);
-        }
-      }
-      // Settings
-      if ((e.metaKey || e.ctrlKey) && e.key === ",") {
-        e.preventDefault();
-        setModalOpen(true);
-      }
-      // New Terminal
-      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === "`") {
-        e.preventDefault();
-        addTerminalSession();
-      }
-      // Clear Terminal
-      if ((e.metaKey || e.ctrlKey) && e.key === "l") {
-        // Only if terminal might be focused or we want it global
-        // Usually Ctrl+L is expected global in IDEs to clear focused terminal
-        e.preventDefault();
-        clearActiveTerminal();
-      }
-      // Run Active File
-      if (e.key === "F5") {
-        e.preventDefault();
-        runActiveFile();
-      }
-    };
-    window.addEventListener("keydown", handleGlobalKey);
-    return () => window.removeEventListener("keydown", handleGlobalKey);
-  }, [activeFile, saveFile, addTerminalSession, clearActiveTerminal, runActiveFile, setModalOpen]);
+  useGlobalShortcuts({ setPaletteMode, setSidebarTab, setShowAIPanel });
 
   // ── Event Listeners (Bypass) ──
   useEffect(() => {
@@ -283,7 +193,7 @@ function AppContent() {
     };
 
     checkStatus();
-  }, [token, onboardingRequired, isInitialized, setIsInitialized]);
+  }, [token, onboardingRequired]);
 
   useEffect(() => {
     // Bounce back to 18% when switching tabs or clearing search
@@ -292,15 +202,8 @@ function AppContent() {
     }
   }, [sidebarTab]);
 
-  const updateSidebarTab = (tab: SidebarTab) => {
-    setSidebarTab(tab);
-    localStorage.setItem("neurex_sidebar_tab", tab);
-    setShowSettings(false); 
-    setShowHiveMind(false);
-  };
 
   const activeTaskCount = Object.values(tasks).filter(t => t.status === "THINKING" || t.status === "WRITING" || t.status === "TESTING").length;
-  const activeFileLanguage = openFiles.find(f => f.path === activeFile)?.language || "plaintext";
   const isAIActive = Object.values(tasks).some(t => t.status === "THINKING" || t.status === "WRITING");
 
   const languageItems = useMemo(() => [
@@ -311,9 +214,9 @@ function AppContent() {
     { id: "new-file", label: "File: New File", category: "General", action: () => {} },
     { id: "save-file", label: "File: Save", category: "General", action: () => activeFile && saveFile(activeFile) },
     { id: "refresh-explorer", label: "File: Refresh Explorer", category: "General", action: refreshFileTree },
-    { id: "view-explorer", label: "View: Show Explorer", category: "Navigation", action: () => updateSidebarTab("explorer") },
-    { id: "view-git", label: "View: Show Source Control", category: "Navigation", action: () => updateSidebarTab("git") },
-    { id: "view-search", label: "View: Show Search", category: "Navigation", action: () => updateSidebarTab("search") },
+    { id: "view-explorer", label: "View: Show Explorer", category: "Navigation", action: () => setSidebarTab("explorer") },
+    { id: "view-git", label: "View: Show Source Control", category: "Navigation", action: () => setSidebarTab("git") },
+    { id: "view-search", label: "View: Show Search", category: "Navigation", action: () => setSidebarTab("search") },
     { id: "toggle-ai", label: "View: Toggle AI Assistant", category: "View", action: () => setShowAIPanel(!showAIPanel) },
     { id: "toggle-settings", label: "View: Toggle Settings", category: "View", action: () => setModalOpen(!modalOpen) },
     { id: "new-terminal", label: "Terminal: New Terminal", category: "Terminal", action: () => addTerminalSession() },
@@ -330,25 +233,6 @@ function AppContent() {
         {(!token || onboardingRequired) && <AuthOverlay />}
         {!isInitialized && <LoadingOverlay progress={visualProgress} />}
         
-        <ContextMenu 
-          targetSelector=".file-explorer-item"
-          items={[
-            { label: 'Open File', action: () => {} },
-            { label: 'Reveal in Explorer', action: () => {} },
-            { label: 'Copy Path', action: () => {} },
-            { label: 'Delete File', action: () => {}, danger: true }
-          ]}
-        />
-
-        <ContextMenu 
-          targetSelector=".editor-pane"
-          items={[
-            { label: 'Format Document', action: () => {} },
-            { label: 'Peek Definition', action: () => {} },
-            { label: 'Refactor with AI', action: () => {} },
-            { label: 'Stage Changes', action: () => {} }
-          ]}
-        />
         <CommandPalette 
           isOpen={paletteMode === "global"} 
           onClose={() => setPaletteMode("none")} 
@@ -362,7 +246,6 @@ function AppContent() {
           title="Select Language Mode"
           items={languageItems}
         />
-
         <Toaster position="top-right" />
         
         <div className="app__root">
@@ -370,42 +253,7 @@ function AppContent() {
             <MobileView send={send} />
           ) : (
             <div className="app__main-layout">
-              <div className="activity-bar">
-                <div className="activity-bar__top">
-                  <MenuBar mode={theme.menu_mode} />
-                  <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleSidebarDragEnd}>
-                    <SortableContext items={sidebarOrder} strategy={verticalListSortingStrategy}>
-                      {sidebarOrder.map(id => {
-                        const item = SIDEBAR_ITEMS.find(i => i.id === id);
-                        if (!item) return null;
-                        let badge = undefined;
-                        if (id === "agent" && activeTaskCount > 0) badge = activeTaskCount;
-                        return (
-                          <SortableActivityItem
-                            key={id} id={id} icon={item.icon} label={item.label}
-                            active={sidebarTab === id && !showSettings && !showHiveMind}
-                            onClick={() => updateSidebarTab(id as SidebarTab)}
-                            badge={badge}
-                          />
-                        );
-                      })}
-                    </SortableContext>
-                  </DndContext>
-                </div>
-                <div className="activity-bar__bottom">
-                  <button className={`activity-btn ${showHiveMind ? "active" : ""}`} onClick={() => { setShowHiveMind(!showHiveMind); setShowSettings(false); }} title="Hive Mind (Knowledge Base)">
-                    <BrainCircuit size={20} className="text-cyan" />
-                    {showHiveMind && <div className="activity-indicator" />}
-                  </button>
-                  <button className={`activity-btn ${showAIPanel ? "active" : ""}`} onClick={() => setShowAIPanel(!showAIPanel)} title="Toggle AI Assistant (Cmd+L)">
-                    <MessageSquare size={20} />
-                  </button>
-                  <button className={`activity-btn ${showSettings ? "active" : ""}`} onClick={() => { setShowSettings(!showSettings); setShowHiveMind(false); }} title="IDE Settings">
-                    <Settings size={20} />
-                    {showSettings && <div className="activity-indicator" />}
-                  </button>
-                </div>
-              </div>
+                <ActivityBar />
 
               <div className="app__body">
                 <PanelGroup direction="horizontal" className="app__panels">
@@ -425,7 +273,18 @@ function AppContent() {
                     <PanelGroup direction="vertical" className="app__v-panels">
                       <Panel minSize={20} className="app__editor-wrapper">
                         <PresenceBar />
-                        {showSettings ? <SettingsPanel /> : showHiveMind ? <HiveMindPanel /> : <EditorPane />}
+                        {showSettings ? <SettingsPanel /> : showHiveMind ? <HiveMindPanel /> : (
+                          <PanelGroup direction="horizontal">
+                            {editorPanes.map((pane, idx) => (
+                              <React.Fragment key={pane.id}>
+                                {idx > 0 && <ResizeHandle />}
+                                <Panel minSize={20}>
+                                  <EditorPane paneId={pane.id} />
+                                </Panel>
+                              </React.Fragment>
+                            ))}
+                          </PanelGroup>
+                        )}
                       </Panel>
                       <ResizeHandle vertical />
                       <Panel defaultSize={25} minSize={5} className="app__bottom-wrapper">
@@ -443,43 +302,12 @@ function AppContent() {
                   )}
                 </PanelGroup>
 
-                <div className="status-bar">
-                  <div className="status-bar__left">
-                    <span className={`status-ws status-ws--${wsStatus}`} title={`Mesh Network: ${wsStatus}`}>
-                      <Activity size={10} />
-                      <span>
-                        {wsStatus !== "connected" 
-                          ? "MESH DISCONNECTED" 
-                          : hiveStats.total_nodes > 1 
-                            ? "NEUREX MESH ACTIVE" 
-                            : "NEUREX LOCAL ACTIVE"}
-                      </span>
-                    </span>
-                    <div className="status-intel" title="Hive Statistics">
-                      <div className={`swarm-pulse ${wsStatus === "connected" ? "swarm-pulse--active" : ""}`} />
-                      <span>{hiveStats.total_nodes} NODES ACTIVE</span>
-                    </div>
-                  </div>
-                  <div className="status-bar__right">
-                    <div className="status-segments">
-                      <span className="status-segment" title="Cursor Position">Ln {cursorPosition.line}, Col {cursorPosition.ch}</span>
-                      <button className="status-segment status-segment--interactive" onClick={() => setPaletteMode("indent")} title="Select Indentation">Spaces: 2</button>
-                      <button className="status-segment status-segment--interactive" onClick={() => setPaletteMode("encoding")} title="Select Encoding">UTF-8</button>
-                      <button className="status-segment" title="End of Line Sequence">LF</button>
-                      <button className="status-segment status-segment--interactive" onClick={() => setPaletteMode("language")} title="Select Language Mode">
-                        <Braces size={10} />
-                        <span>{activeFileLanguage.toUpperCase()}</span>
-                      </button>
-                      {isAIActive && (
-                        <button className="status-segment animate-pulse" title="Neurex is composing...">
-                          <Activity size={10} className="text-cyan" />
-                          <span>Compose</span>
-                        </button>
-                      )}
-                    </div>
-                    <UpdateNotifier />
-                  </div>
-                </div>
+                <StatusBar 
+                  wsStatus={wsStatus} 
+                  setPaletteMode={setPaletteMode}
+                  setSidebarTab={setSidebarTab}
+                  isAIActive={isAIActive}
+                />
               </div>
             </div>
           )}
@@ -491,7 +319,6 @@ function AppContent() {
     throw err;
   }
 }
-
 function ResizeHandle({ vertical = false }: { vertical?: boolean }) {
   return (
     <PanelResizeHandle className={`resize-handle ${vertical ? "resize-handle--vertical" : "resize-handle--horizontal"}`}>
@@ -500,68 +327,3 @@ function ResizeHandle({ vertical = false }: { vertical?: boolean }) {
   );
 }
 
-function BottomPanel({ send }: { send: (p: any) => void }) {
-  const [activeTab, setActiveTab] = useState<"terminal" | "output" | "flight">("terminal");
-  const { terminalSessions, activeTerminalId, setActiveTerminalId, addTerminalSession, closeTerminalSession, tasks, activeConversationId } = useStore();
-  
-  const lines = Object.values(tasks).filter((t) => t.result || t.error).flatMap((t) => {
-    const out = [];
-    if (t.result) out.push(`[${t.agent_type}] ${t.result}`);
-    if (t.error)  out.push(`[ERROR] ${t.error}`);
-    return out;
-  });
-
-  return (
-    <div className="bottom-panel">
-      <div className="bottom-panel__header">
-        <div className="bottom-panel__tabs">
-          <button className={`bottom-tab ${activeTab === "terminal" ? "active" : ""}`} onClick={() => setActiveTab("terminal")} title="Integrated Terminal">TERMINAL</button>
-          <button className={`bottom-tab ${activeTab === "output" ? "active" : ""}`} onClick={() => setActiveTab("output")} title="Build & Task Output">OUTPUT</button>
-          <button className={`bottom-tab ${activeTab === "flight" ? "active" : ""}`} onClick={() => setActiveTab("flight")} title="AI Flight Recorder">FLIGHT LOG</button>
-        </div>
-        
-        {activeTab === "terminal" && (
-          <div className="terminal-session-switcher">
-            {terminalSessions.map((s) => (
-              <div key={s.id} className={`terminal-tab ${activeTerminalId === s.id ? "active" : ""}`} onClick={() => setActiveTerminalId(s.id)}>
-                <span className="terminal-tab__name">{s.name}</span>
-                {terminalSessions.length > 1 && (
-                  <button className="terminal-tab__close" onClick={(e) => { e.stopPropagation(); closeTerminalSession(s.id); }}><X size={10} /></button>
-                )}
-              </div>
-            ))}
-            <button className="terminal-add-btn" onClick={() => addTerminalSession()} title="New Terminal"><Plus size={14} /></button>
-          </div>
-        )}
-      </div>
-      <div className="bottom-panel__content">
-        <div 
-          className="bottom-panel__tab-content" 
-          style={{ display: activeTab === "terminal" ? "block" : "none" }}
-        >
-          {activeTerminalId && (
-            <Terminal 
-              key={activeTerminalId}
-              sessionId={activeTerminalId}
-              isActive={activeTab === "terminal"}
-              onInput={(data) => send({ type: "terminal_input", sessionId: activeTerminalId, data })} 
-              onResize={(rows, cols) => send({ type: "terminal_resize", sessionId: activeTerminalId, rows, cols })} 
-            />
-          )}
-        </div>
-        <div 
-          className="bottom-panel__tab-content output-log"
-          style={{ display: activeTab === "output" ? "block" : "none" }}
-        >
-          {lines.map((l, i) => <div key={i} className="bottom-panel__line">{l}</div>)}
-        </div>
-        <div 
-          className="bottom-panel__tab-content"
-          style={{ display: activeTab === "flight" ? "block" : "none" }}
-        >
-          <FlightRecorder conversationId={activeConversationId} />
-        </div>
-      </div>
-    </div>
-  );
-}

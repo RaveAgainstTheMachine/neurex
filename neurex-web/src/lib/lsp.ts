@@ -1,24 +1,27 @@
-// neurex-web/src/lib/lsp.ts
-import { listen } from 'vscode-ws-jsonrpc';
+import { WebSocketMessageReader, WebSocketMessageWriter } from 'vscode-ws-jsonrpc';
 import {
     MonacoLanguageClient,
-    MessageConnection,
-    CloseAction,
-    ErrorAction
 } from 'monaco-languageclient';
-import { initServices } from 'monaco-languageclient/vscodeApiWrapper';
+import { MonacoVscodeApiWrapper } from 'monaco-languageclient/vscodeApiWrapper';
 import { API_BASE } from './config';
+import { api } from './api';
+import { useStore } from './store';
 
 let servicesInitialized = false;
 
 export async function createLSPConnection(lang: string, token: string): Promise<MonacoLanguageClient> {
     if (!servicesInitialized) {
-        await initServices({
-            userServices: {
-                // Add specific VSCode services here if needed
+        const wrapper = new MonacoVscodeApiWrapper({
+            $type: 'classic',
+            viewsConfig: {
+                $type: 'EditorService'
             },
-            debugLogging: true
+            serviceOverrides: {
+                // Add overrides if needed
+            },
+            logLevel: 1 // Info
         });
+        await wrapper.start();
         servicesInitialized = true;
     }
 
@@ -41,27 +44,36 @@ export async function createLSPConnection(lang: string, token: string): Promise<
                 dispose: () => webSocket.close()
             };
 
-            listen({
-                webSocket: socket as any,
-                onConnection: (connection: MessageConnection) => {
-                    const languageClient = new MonacoLanguageClient({
-                        name: `${lang.toUpperCase()} Language Client`,
-                        clientOptions: {
-                            documentSelector: [lang],
-                            errorHandler: {
-                                error: () => ErrorAction.Continue,
-                                closed: () => CloseAction.DoNotRestart
-                            }
-                        },
-                        connectionProvider: {
-                            get: () => Promise.resolve(connection)
-                        }
-                    });
-                    languageClient.start();
-                    console.log(`LSP started for ${lang}`);
-                    resolve(languageClient);
-                }
+            const messageTransports = {
+                reader: new WebSocketMessageReader(socket as any),
+                writer: new WebSocketMessageWriter(socket as any)
+            };
+
+            const languageClient = new MonacoLanguageClient({
+                name: `${lang.toUpperCase()} Language Client`,
+                clientOptions: {
+                    documentSelector: [lang],
+                    errorHandler: {
+                        error: () => ({ action: 1 }), // ErrorAction.Continue
+                        closed: () => ({ action: 1 }) // CloseAction.DoNotRestart
+                    }
+                },
+                messageTransports
             });
+
+            languageClient.onNotification('textDocument/publishDiagnostics', (params: any) => {
+                const uri = params.uri;
+                let path = uri.replace('file://', '');
+                const wsPath = window.localStorage.getItem('workspace_path') || '';
+                if (path.startsWith(wsPath)) {
+                    path = path.substring(wsPath.length).replace(/^\//, '');
+                }
+                useStore.getState().setWorkspaceDiagnostics(path, params.diagnostics);
+            });
+
+            languageClient.start();
+            console.log(`LSP started for ${lang}`);
+            resolve(languageClient);
         };
         webSocket.onerror = (err) => reject(err);
     });
@@ -98,13 +110,9 @@ class LSPManager {
 export const lspManager = new LSPManager();
 
 export async function installLanguageServer(lang: string, token: string) {
-    const res = await fetch(`${API_BASE}/api/languages/install/${lang}`, {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${token}` }
-    });
-    if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.detail || "Installation failed");
+    try {
+        return await api.post(`/api/languages/install/${lang}`);
+    } catch (err: any) {
+        throw new Error(err.message || "Installation failed");
     }
-    return res.json();
 }

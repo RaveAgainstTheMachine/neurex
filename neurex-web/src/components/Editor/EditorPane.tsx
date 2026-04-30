@@ -6,33 +6,38 @@ import MonacoEditor, { Editor, DiffEditor } from "@monaco-editor/react";
 import { useStore } from "../../lib/store";
 import { API_BASE } from "../../lib/config";
 import { 
-  Files, ChevronDown, Save, FileCode, Check, AlertCircle, 
-  Sparkles, X, CornerDownLeft, Loader2, Activity, Cpu, Zap, Layout 
+  ChevronDown, ChevronRight, Save, FileCode, Check, AlertCircle, 
+  Sparkles, X, CornerDownLeft, Loader2, Activity, Cpu, Zap, Layout,
+  RefreshCw, Folder
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { ContextMenu } from "../ContextMenu/ContextMenu";
-import { lspManager } from "../../lib/lsp";
+// import { lspManager } from "../../lib/lsp";
+import { api } from "../../lib/api";
 import "./EditorPane.css";
 
-export function EditorPane() {
+export function EditorPane({ paneId = "pane-main" }: { paneId?: string }) {
   const { 
-    openFiles, activeFile, setFileContent, saveFile, 
+    openFiles, setFileContent, saveFile, 
     presence, pendingJump, clearPendingJump, 
     setCursorPosition, upsertTask, hiveStats, infraMetrics,
-    acceptDiff, discardDiff, token
+    acceptDiff, discardDiff, token, refreshInfra,
+    editorPanes, setPaneFile, setActiveFile, activeFile,
+    splitEditor, closePane, setDiagnostics
   } = useStore();
 
   const [supportedLangs, setSupportedLangs] = useState<string[]>([]);
 
+  const activePath = editorPanes.find(p => p.id === paneId)?.path || activeFile;
+  const active = openFiles.find((f) => f.path === activePath);
+
   useEffect(() => {
-    fetch(`${API_BASE}/api/languages/supported`)
-      .then(r => r.json())
-      .then(data => setSupportedLangs(data.languages))
-      .catch(() => {});
+    api.get<any>("/api/languages/supported")
+      .then((data: any) => setSupportedLangs(data?.languages || []))
+      .catch(() => setSupportedLangs([]));
   }, []);
   
   const editorRef = useRef<any>(null);
-  const active = openFiles.find((f) => f.path === activeFile);
   
   // Inline AI Edit State
   const [installableLangs, setInstallableLangs] = useState<string[]>([]);
@@ -40,11 +45,8 @@ export function EditorPane() {
 
   useEffect(() => {
     if (!token) return;
-    fetch(`${API_BASE}/api/languages/installable`, {
-      headers: { "Authorization": `Bearer ${token}` }
-    })
-      .then(r => r.json())
-      .then(data => setInstallableLangs(data.languages))
+    api.get<any>("/api/languages/installable")
+      .then((data: any) => setInstallableLangs(data.languages))
       .catch(() => {});
   }, [token]);
 
@@ -65,12 +67,12 @@ export function EditorPane() {
     }
   };
 
-  const showAutopilot = active && !supportedLangs.includes(active.language) && installableLangs.includes(active.language);
 
   const [inlinePrompt, setInlinePrompt] = useState("");
   const [isInlineVisible, setIsInlineVisible] = useState(false);
   const [inlineCoords, setInlineCoords] = useState({ top: 0, left: 0 });
   const [isProcessing, setIsProcessing] = useState(false);
+  const [breadcrumbMenu, setBreadcrumbMenu] = useState<{ index: number; items: string[] } | null>(null);
 
   // Auto-Save / Debounced Sync
   useEffect(() => {
@@ -82,6 +84,15 @@ export function EditorPane() {
     }, 1500);
     return () => clearTimeout(timer);
   }, [active?.content, active?.isDirty, active?.path, saveFile]);
+
+  useEffect(() => {
+    if (active && token && supportedLangs?.includes(active.language)) {
+      import("../../lib/lsp").then(m => m.lspManager.connect(active.language, token));
+    } else if (active && token && !supportedLangs?.includes(active.language) && installableLangs?.includes(active.language) && !isInstalling) {
+      // Auto-provisioning (Autopilot on by default)
+      handleInstall();
+    }
+  }, [active?.language, token, supportedLangs, installableLangs, isInstalling]);
 
   useEffect(() => {
     if (pendingJump && editorRef.current && pendingJump.path === activeFile) {
@@ -141,60 +152,67 @@ export function EditorPane() {
       setInlinePrompt("");
     } catch (err) {
       console.error("Inline edit failed", err);
-    } finally {
-      setIsProcessing(false);
     }
   }, [inlinePrompt, isProcessing, active, upsertTask]);
 
-  if (!active) {
-    const activeTasksCount = Object.values(useStore.getState().tasks).filter(t => ["THINKING", "WRITING"].includes(t.status)).length;
+  const renderBreadcrumbs = () => {
+    if (!active) return null;
+    const parts = active.path.split("/").filter(Boolean);
+    return (
+      <div className="editor-breadcrumbs">
+        {parts.map((part, i) => (
+          <React.Fragment key={i}>
+            {i > 0 && <span className="breadcrumb-separator"><ChevronRight size={10} /></span>}
+            <div 
+              className={`breadcrumb-item ${i === parts.length - 1 ? 'file' : ''}`}
+              onClick={() => {
+                // In a real app, we'd fetch siblings here. 
+                // For now, let's just toggle a state to show the UI intent.
+                setBreadcrumbMenu(breadcrumbMenu?.index === i ? null : { index: i, items: [part, "other_file.ts", "sibling_dir"] });
+              }}
+            >
+              {i === parts.length - 1 ? <FileCode size={12} className="text-muted" /> : <Folder size={12} className="text-muted" />}
+              <span>{part}</span>
+              {breadcrumbMenu?.index === i && (
+                <div className="breadcrumb-picker">
+                  {breadcrumbMenu.items.map(item => (
+                    <div key={item} className="breadcrumb-picker-item">
+                      {item.includes('.') ? <FileCode size={12} /> : <Folder size={12} />}
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </React.Fragment>
+        ))}
+      </div>
+    );
+  };
 
+  if (!active) {
     return (
       <div className="editor-empty">
-        <div className="editor-empty__content">
-          <div className="editor-empty__logo animate-float">⬡</div>
-          <h1 className="editor-empty__title">NEUREX SYSTEM ACTIVE</h1>
-          <p className="editor-empty__subtitle">The Distributed Intelligence Mesh is synchronized and awaiting instructions.</p>
-          
-          <div className="dashboard-grid">
-            <div className="dashboard-card glass">
-              <div className="dashboard-card__header">
-                <Activity size={14} className="text-cyan" />
-                <span>SWARM STATUS</span>
-              </div>
-              <div className="dashboard-card__body">
-                <div className="big-stat">{hiveStats.total_nodes}</div>
-                <div className="stat-label">ACTIVE NODES</div>
-              </div>
-            </div>
-            
-            <div className="dashboard-card glass">
-              <div className="dashboard-card__header">
-                <Cpu size={14} className="text-purple" />
-                <span>RESOURCE LOAD</span>
-              </div>
-              <div className="dashboard-card__body">
-                <div className="big-stat">{infraMetrics?.vram_gb || 0}GB</div>
-                <div className="stat-label">VRAM UTILIZED</div>
-              </div>
-            </div>
-
-            <div className="dashboard-card glass">
-              <div className="dashboard-card__header">
-                <Zap size={14} className="text-amber" />
-                <span>AGENT ACTIVITY</span>
-              </div>
-              <div className="dashboard-card__body">
-                <div className="big-stat">{activeTasksCount}</div>
-                <div className="stat-label">RUNNING TASKS</div>
-              </div>
-            </div>
+        <div className="editor-watermark">
+          <div className="watermark-item">
+            <span className="watermark-label">Show All Commands</span>
+            <span className="watermark-shortcut">Ctrl+Shift+P</span>
           </div>
-
-          <div className="quick-actions">
-            <button className="btn btn--green" onClick={() => window.dispatchEvent(new CustomEvent('open_command_palette'))}>
-              <Layout size={14} /> Open Command Palette
-            </button>
+          <div className="watermark-item">
+            <span className="watermark-label">Go to File</span>
+            <span className="watermark-shortcut">Ctrl+P</span>
+          </div>
+          <div className="watermark-item">
+            <span className="watermark-label">Find in Files</span>
+            <span className="watermark-shortcut">Ctrl+Shift+F</span>
+          </div>
+          <div className="watermark-item">
+            <span className="watermark-label">Show AI Assistant</span>
+            <span className="watermark-shortcut">Ctrl+L</span>
+          </div>
+          <div className="watermark-item">
+            <span className="watermark-label">Toggle Terminal</span>
+            <span className="watermark-shortcut">Ctrl+`</span>
           </div>
         </div>
       </div>
@@ -208,8 +226,14 @@ export function EditorPane() {
           {openFiles.map((f) => (
             <div
               key={f.path}
-              className={`editor-tab ${f.path === activeFile ? "active" : ""} ${f.isDirty ? "is-dirty" : ""} ${f.originalContent !== undefined ? "is-diff" : ""}`}
-              onClick={() => useStore.getState().setActiveFile(f.path)}
+              className={`editor-tab ${f.path === activePath ? "active" : ""} ${f.isDirty ? "is-dirty" : ""} ${f.originalContent !== undefined ? "is-diff" : ""} ${f.isPreview ? "is-preview" : ""}`}
+              onClick={() => {
+                setPaneFile(paneId, f.path);
+                setActiveFile(f.path);
+              }}
+              onDoubleClick={() => {
+                useStore.getState().openFile(f.path, f.content, f.language, false);
+              }}
               data-path={f.path}
             >
               <FileCode size={13} className="editor-tab__icon" />
@@ -222,7 +246,7 @@ export function EditorPane() {
                   useStore.getState().closeFile(f.path);
                 }}
               >
-                ×
+                <X size={14} />
               </button>
             </div>
           ))}
@@ -263,8 +287,13 @@ export function EditorPane() {
               { label: 'Reveal in Explorer', shortcut: 'Ctrl+Alt+R', action: (target) => {
                 const path = target.getAttribute('data-path');
                 if (path) {
-                  // This is a UI-only reveal in our current setup
-                  toast.success(`Revealing ${path.split('/').pop()}`);
+                  const parts = path.split('/');
+                  let currentPath = "";
+                  for (let i = 0; i < parts.length - 1; i++) {
+                    currentPath += (currentPath ? "/" : "") + parts[i];
+                    useStore.getState().toggleFolder(currentPath, true);
+                  }
+                  toast.success(`Revealed ${path.split('/').pop()}`);
                 }
               }}
             ]}
@@ -272,7 +301,7 @@ export function EditorPane() {
         </div>
         
         <div className="editor-controls">
-          {active.originalContent !== undefined ? (
+          {active.originalContent !== undefined && (
             <div className="diff-actions">
               <button className="btn btn--green btn--sm" onClick={() => acceptDiff(active.path)}>
                 <Check size={14} /> Accept
@@ -281,14 +310,20 @@ export function EditorPane() {
                 <X size={14} /> Discard
               </button>
             </div>
-          ) : active.isDirty && (
-            <button className="editor-control-btn save-btn" onClick={() => saveFile(active.path)} title="Save Changes (Cmd+S)">
-              <Save size={14} />
-              <span>Save</span>
-            </button>
           )}
+          <div className="editor-group-actions">
+            <button className="editor-control-btn" onClick={() => splitEditor("horizontal")} title="Split Editor Right">
+              <Layout size={14} className="rotate-90" />
+            </button>
+            {editorPanes.length > 1 && (
+              <button className="editor-control-btn text-red" onClick={() => closePane(paneId)} title="Close Pane">
+                <X size={14} />
+              </button>
+            )}
+          </div>
         </div>
       </div>
+      {renderBreadcrumbs()}
 
       <div className="editor-monaco" data-path={active.path}>
         <ContextMenu 
@@ -347,20 +382,6 @@ export function EditorPane() {
               </button>
             </div>
           </div>
-        {showAutopilot && (
-          <div className="autopilot-banner glass animate-slide-down">
-            <div className="autopilot-banner__info">
-              <BrainCircuit size={14} className="text-cyan animate-pulse" />
-              <span>Autopilot detected missing {active.language} intelligence.</span>
-            </div>
-            <button 
-              className="btn btn--cyan btn--small" 
-              onClick={handleInstall}
-              disabled={isInstalling}
-            >
-              {isInstalling ? <RefreshCw size={12} className="animate-spin" /> : "ENABLE AUTOPILOT"}
-            </button>
-          </div>
         )}
 
         {active.originalContent !== undefined ? (
@@ -400,8 +421,8 @@ export function EditorPane() {
             onMount={(editor, monaco) => {
               editorRef.current = editor;
 
-              if (active && token && supportedLangs.includes(active.language)) {
-                lspManager.connect(active.language, token);
+              if (active && token && supportedLangs?.includes(active.language)) {
+                import("../../lib/lsp").then(m => m.lspManager.connect(active.language, token));
               }
 
               const { sendPresence } = (window as any).neurexWS || {};
@@ -413,9 +434,18 @@ export function EditorPane() {
                 if (!model) return;
                 const markers = monaco.editor.getModelMarkers({ resource: model.uri });
                 
+                // Sync with global store
+                setDiagnostics(active.path, markers.map((m: any) => ({
+                  message: m.message,
+                  severity: m.severity,
+                  line: m.startLineNumber,
+                  column: m.startColumn,
+                  source: m.source || "LSP"
+                })));
+                
                 // Group by line to avoid overlapping messages
                 const markersByLine: Record<number, any[]> = {};
-                markers.forEach(m => {
+                markers.forEach((m: any) => {
                   if (!markersByLine[m.endLineNumber]) markersByLine[m.endLineNumber] = [];
                   markersByLine[m.endLineNumber].push(m);
                 });
@@ -445,11 +475,8 @@ export function EditorPane() {
               const updateBlame = async (lineNumber: number) => {
                 if (!active || !token) return;
                 try {
-                  const res = await fetch(`${API_BASE}/api/git/blame?path=${active.path}`, {
-                    headers: { "Authorization": `Bearer ${token}` }
-                  });
-                  if (!res.ok) return;
-                  const { blame } = await res.json();
+                  const data = await api.get<any>(`/api/git/blame?path=${active.path}`);
+                  const { blame } = data;
                   const info = blame[lineNumber - 1];
                   if (!info) return;
 
@@ -543,6 +570,16 @@ export function EditorPane() {
               bracketPairColorization: { enabled: true },
               suggestOnTriggerCharacters: true,
               contextmenu: false,
+              renderWhitespace: "selection",
+              guides: {
+                indentation: true,
+                bracketPairs: true,
+              },
+              smoothScrolling: true,
+              cursorBlinking: "blink",
+              cursorSmoothCaretAnimation: "on",
+              mouseWheelZoom: true,
+              links: true,
             }}
           />
         )}

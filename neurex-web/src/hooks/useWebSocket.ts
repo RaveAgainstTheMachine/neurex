@@ -9,6 +9,7 @@ export function useWebSocket(conversationId: string) {
   const token = useStore(s => s.token);
   const user = useStore(s => s.user);
   const userId = user?.username || "anonymous";
+  const refreshTimeout = useRef<NodeJS.Timeout | null>(null);
   
   const setWsStatus = useStore(s => s.setWsStatus);
   const upsertTask = useStore(s => s.upsertTask);
@@ -102,6 +103,27 @@ export function useWebSocket(conversationId: string) {
               const nextLocks = { ...s.locks };
               delete nextLocks[data.path];
               s.setLocks(nextLocks);
+              break;
+            case "diagnostics_updated":
+              if (data.path && data.diagnostics) {
+                s.setWorkspaceDiagnostics(data.path, data.diagnostics);
+              }
+              // Skip refresh if we just saved locally (likely our own change)
+              if (Date.now() - s.lastLocalSave < 3000) break;
+
+              if (refreshTimeout.current) clearTimeout(refreshTimeout.current);
+              refreshTimeout.current = setTimeout(() => {
+                s.refreshFileTree();
+              }, 1500);
+              break;
+            case "file_system_changed":
+              // Skip refresh if we just saved locally (likely our own change)
+              if (Date.now() - s.lastLocalSave < 3000) break;
+
+              if (refreshTimeout.current) clearTimeout(refreshTimeout.current);
+              refreshTimeout.current = setTimeout(() => {
+                s.refreshFileTree();
+              }, 1500);
               break;
             case "error":
               const errorMsg = typeof data === "object" ? JSON.stringify(data) : data;
