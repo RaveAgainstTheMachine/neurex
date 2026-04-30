@@ -1,4 +1,3 @@
-/* src/components/StatusBar/StatusBar.css */
 .status-bar {
   height: 22px;
   background: #007acc;
@@ -11,6 +10,7 @@
   user-select: none;
   flex-shrink: 0;
   z-index: 2000;
+  position: relative;
 }
 
 .status-bar--disconnected {
@@ -38,45 +38,125 @@
   height: 100%;
   cursor: default;
   white-space: nowrap;
-  transition: background 0.2s, color 0.2s;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 12px;
 }
 
-.status-segment:last-child { 
-  border-right: none; 
-}
-
-.status-segment--interactive:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
+.status-segment--interactive {
   cursor: pointer;
 }
 
+.status-segment--interactive:hover, .status-segment--interactive.active {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.status-segments {
+  display: flex;
+  height: 100%;
+}
+
+.status-ai-pulse {
+  background: rgba(255, 255, 255, 0.1);
+  font-weight: 600;
+}
+
 .status-change-count {
+  font-size: 10px;
+  opacity: 0.8;
+}
+
+.status-segment--mesh {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.status-segment--notification {
+  position: relative;
+}
+
+.notification-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: #f48771;
+  color: white;
   font-size: 9px;
-  background: var(--bg-active);
-  padding: 1px 4px;
-  border-radius: 4px;
-  color: var(--accent-cyan);
-  font-weight: bold;
+  min-width: 12px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
 }
 
-.swarm-pulse {
-  width: 6px; 
-  height: 6px; 
-  border-radius: 50%;
-  background: var(--text-muted);
+/* Notifications Center */
+.notifications-center {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  width: 350px;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border);
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.4);
+  display: flex;
+  flex-direction: column;
+  z-index: 5000;
 }
 
-.swarm-pulse--active {
-  background: var(--accent-cyan);
-  box-shadow: 0 0 10px var(--accent-cyan);
+.notifications-header {
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  background: rgba(0,0,0,0.1);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
 }
 
-.text-red {
-  color: var(--accent-red) !important;
+.notifications-list {
+  max-height: 400px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
-@keyframes animate-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+.notification-item {
+  display: flex;
+  padding: 12px;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+
+.notification-item:hover {
+  background: var(--bg-hover);
+}
+
+.notification-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.notification-title {
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.notification-time {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.notification-empty {
+  padding: 20px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
 }
