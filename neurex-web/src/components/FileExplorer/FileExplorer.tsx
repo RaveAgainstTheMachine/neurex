@@ -3,7 +3,8 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { 
   ChevronRight, ChevronDown, File, Folder, FolderOpen, RefreshCw, Loader2,
   FileJson, FileCode, FileText, Settings, GitGraph, 
-  Database, Terminal as TerminalIcon, FilePlus, FolderPlus, FoldVertical, X
+  Database, Terminal as TerminalIcon, FilePlus, FolderPlus, FoldVertical, X,
+  Braces, Square
 } from "lucide-react";
 import { useStore } from "../../lib/store";
 import type { FileNode } from "../../lib/types";
@@ -65,7 +66,7 @@ const FileItem = React.memo(function FileItem({ node, depth }: {
     if (node.type !== "dir") return false;
     if (node.path && collapsedFolders.has(node.path)) return false;
     if (node.path && expandedFolders.has(node.path)) return true;
-    return depth < 1; // Default open root
+    return depth < 1; 
   }, [node.path, node.type, depth, expandedFolders, collapsedFolders, collapseSignal]);
 
   const isDir = node.type === "dir";
@@ -74,7 +75,6 @@ const FileItem = React.memo(function FileItem({ node, depth }: {
 
   useEffect(() => {
     if (expanded && isDir && node.path && (node.children === null || node.children === undefined)) {
-      // Stagger subtree fetching to avoid network bursts
       const delay = Math.random() * 500; 
       const timer = setTimeout(() => {
         if (expanded && isDir && node.path) {
@@ -104,106 +104,102 @@ const FileItem = React.memo(function FileItem({ node, depth }: {
     return status;
   }, [node, openFiles, isDir]);
 
-    const handleDoubleClick = async (e: React.MouseEvent) => {
-      if (isDir) return;
-      e.stopPropagation();
-      try {
-        const data = await api.get<{ content: string }>(`/api/files/read?path=${encodeURIComponent(node.path!)}`);
-        openFile(node.path!, data.content ?? "", getLanguage(node.path!), false);
-      } catch (err) {}
-    };
+  const handleDoubleClick = async (e: React.MouseEvent) => {
+    if (isDir) return;
+    e.stopPropagation();
+    try {
+      const data = await api.get<{ content: string }>(`/api/files/read?path=${encodeURIComponent(node.path!)}`);
+      openFile(node.path!, data.content ?? "", getLanguage(node.path!), false);
+    } catch (err) {}
+  };
 
-    const handleClick = async (e: React.MouseEvent) => {
-      if (isDir) {
-        if (!expanded && node.path && (!node.children || node.children.length === 0)) {
-          setFetching(true);
-          await fetchSubtree(node.path);
-          setFetching(false);
-        }
-        if (node.path) toggleFolder(node.path);
-      } else if (node.path) {
-        const alreadyOpen = openFiles.find(f => f.path === node.path);
-        if (alreadyOpen) { 
-          setActiveFile(node.path); 
-          return; 
-        }
-
-        try {
-          const data = await api.get<{ content: string }>(`/api/files/read?path=${encodeURIComponent(node.path)}`);
-          openFile(node.path, data.content ?? "", getLanguage(node.path), true);
-        } catch (err) {}
+  const handleClick = async (e: React.MouseEvent) => {
+    if (isDir) {
+      if (!expanded && node.path && (!node.children || node.children.length === 0)) {
+        setFetching(true);
+        await fetchSubtree(node.path);
+        setFetching(false);
       }
-    };
+      if (node.path) toggleFolder(node.path);
+    } else if (node.path) {
+      const alreadyOpen = openFiles.find(f => f.path === node.path);
+      if (alreadyOpen) { 
+        setActiveFile(node.path); 
+        return; 
+      }
 
-    return (
-      <div className="file-tree-node">
-          <div
-            className={`file-item ${isActive ? "file-item--active" : ""} status-${node.status || 'none'} ${(node.errors ?? 0) > 0 ? 'status-error' : ''} ${node.has_m ? 'has-m' : ''} ${node.has_u ? 'has-u' : ''}`}
-            style={{ paddingLeft: 8 + depth * 12 }}
-            onClick={handleClick}
-            onDoubleClick={handleDoubleClick}
-            data-path={node.path}
-            data-type={node.type}
-            data-name={node.name}
-            data-depth={depth}
-          >
-            {/* Render Indent Guides */}
-            {Array.from({ length: depth }).map((_, i) => (
-              <div 
-                key={i} 
-                className="indent-guide" 
-                style={{ left: 12 + i * 12 }} 
-              />
-            ))}
-        <div className="file-item__main">
-          {isDir ? (
-            <span className="file-item__arrow">
-              {fetching ? <Loader2 size={10} className="animate-spin" /> : (expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />)}
-            </span>
-          ) : (
-            <span className="file-item__spacer" />
-          )}
-          {getFileIcon(node.name, isDir, expanded)}
-          <span className="file-item__name">{node.name}</span>
-        </div>
+      try {
+        const data = await api.get<{ content: string }>(`/api/files/read?path=${encodeURIComponent(node.path)}`);
+        openFile(node.path, data.content ?? "", getLanguage(node.path), true);
+      } catch (err) {}
+    }
+  };
 
-        <div className="file-item__status">
-          {!isDir && node.status === "M" && <span className="git-indicator git-indicator--modified" title={`Modified: ${node.path}`}>M</span>}
-          {!isDir && node.status === "U" && <span className="git-indicator git-indicator--untracked" title={`Untracked: ${node.path}`}>U</span>}
-          
-          {aggregate.dirty && <span className="indicator-dot indicator-dot--dirty" title={`Unsaved changes in: ${node.path}`} />}
-          {(node.errors ?? 0) > 0 && (
-            <span className="problem-badge" title={`${node.errors} problems in: ${node.path}`}>
-              {node.errors}
-            </span>
-          )}
+  return (
+    <div className="file-tree-node">
+        <div
+          className={`file-item ${isActive ? "file-item--active" : ""} status-${node.status || 'none'} ${(node.errors ?? 0) > 0 ? 'status-error' : ''} ${node.has_m ? 'has-m' : ''} ${node.has_u ? 'has-u' : ''}`}
+          style={{ paddingLeft: 8 + depth * 12 }}
+          onClick={handleClick}
+          onDoubleClick={handleDoubleClick}
+          data-path={node.path}
+          data-type={node.type}
+          data-name={node.name}
+          data-depth={depth}
+        >
+          {Array.from({ length: depth }).map((_, i) => (
+            <div 
+              key={i} 
+              className="indent-guide" 
+              style={{ left: 12 + i * 12 }} 
+            />
+          ))}
+      <div className="file-item__main">
+        {isDir ? (
+          <span className="file-item__arrow">
+            {fetching ? <Loader2 size={10} className="animate-spin" /> : (expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />)}
+          </span>
+        ) : (
+          <span className="file-item__spacer" />
+        )}
+        {getFileIcon(node.name, isDir, expanded)}
+        <span className="file-item__name">{node.name}</span>
+      </div>
 
-          {isDir && (node.has_m || node.has_u) && (
-            <div className="folder-indicators">
-              {node.has_m && <div className="indicator-bubble indicator-bubble--modified" title={`Modified contents in: ${node.path}`}>M</div>}
-              {node.has_u && <div className="indicator-bubble indicator-bubble--untracked" title={`Untracked contents in: ${node.path}`}>U</div>}
-            </div>
-          )}
-          {isDir && (depth === 0 || ["neurex-api", "neurex-web", "neurex-landing", "core", "api"].includes(node.name)) && (
-            <span className="item-emphasis" title={node.path} />
-          )}
-        </div>
+      <div className="file-item__status">
+        {!isDir && node.status === "M" && <span className="git-indicator git-indicator--modified" title={`Modified: ${node.path}`}>M</span>}
+        {!isDir && node.status === "U" && <span className="git-indicator git-indicator--untracked" title={`Untracked: ${node.path}`}>U</span>}
+        
+        {aggregate.dirty && <span className="indicator-dot indicator-dot--dirty" title={`Unsaved changes in: ${node.path}`} />}
+        {(node.errors ?? 0) > 0 && (
+          <span className="problem-badge" title={`${node.errors} problems in: ${node.path}`}>
+            {node.errors}
+          </span>
+        )}
 
-        </div>
-      {isDir && expanded && node.children && (
-        <div className="file-item__children">
-          {node.children?.filter(child => child && child.name)
-            .sort((a, b) => (a.type === "dir" ? -1 : 1) || (a.name || "").localeCompare(b.name || ""))
-            .map((child) => (
-              <FileItem 
-                key={child.path || child.name} 
-                node={child} 
-                depth={depth + 1} 
-              />
-            ))}
-        </div>
-      )}
-    </div>
+        {isDir && (node.has_m || node.has_u) && (
+          <div className="folder-indicators">
+            {node.has_m && <div className="indicator-bubble indicator-bubble--modified" title={`Modified contents in: ${node.path}`}>M</div>}
+            {node.has_u && <div className="indicator-bubble indicator-bubble--untracked" title={`Untracked contents in: ${node.path}`}>U</div>}
+          </div>
+        )}
+      </div>
+
+      </div>
+    {isDir && expanded && node.children && (
+      <div className="file-item__children">
+        {node.children?.filter(child => child && child.name)
+          .sort((a, b) => (a.type === "dir" ? -1 : 1) || (a.name || "").localeCompare(b.name || ""))
+          .map((child) => (
+            <FileItem 
+              key={child.path || child.name} 
+              node={child} 
+              depth={depth + 1} 
+            />
+          ))}
+      </div>
+    )}
+  </div>
   );
 });
 
@@ -214,20 +210,21 @@ export function FileExplorer() {
   const createFile = useStore(s => s.createFile);
   const createFolder = useStore(s => s.createFolder);
   const collapseAllFolders = useStore(s => s.collapseAllFolders);
-  const collapseSignal = useStore(s => s.collapseSignal);
   const deleteFile = useStore(s => s.deleteFile);
   const renameFile = useStore(s => s.renameFile);
   const addTerminalSession = useStore(s => s.addTerminalSession);
   const closeWorkspace = useStore(s => s.closeWorkspace);
+  const activeFile = useStore(s => s.activeFile);
+  const openFiles = useStore(s => s.openFiles);
+  const toggleFolder = useStore(s => s.toggleFolder);
+  const setPendingJump = useStore(s => s.setPendingJump);
 
   const [loading, setLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<{ path: string, name: string } | null>(null);
   const [inputDialog, setInputDialog] = useState<{ type: 'file' | 'folder', dir: string } | null>(null);
   const [folderBrowserOpen, setFolderBrowserOpen] = useState(false);
-  const activeFile = useStore(s => s.activeFile);
-  const toggleFolder = useStore(s => s.toggleFolder);
+  const [sections, setSections] = useState({ open: true, workspace: true, outline: true });
 
-  // Auto-reveal active file in explorer
   useEffect(() => {
     if (activeFile) {
       const parts = activeFile.split('/');
@@ -252,26 +249,38 @@ export function FileExplorer() {
     }
   };
 
-  const handleOpenFolder = () => {
-    setFolderBrowserOpen(true);
-  };
+  const handleOpenFolder = () => setFolderBrowserOpen(true);
+  const handleCreateFile = (dir: string = "") => setInputDialog({ type: 'file', dir });
+  const handleCreateFolder = (dir: string = "") => setInputDialog({ type: 'folder', dir });
 
-  const handleCreateFile = (dir: string = "") => {
-    setInputDialog({ type: 'file', dir });
-  };
+  const activeContent = useMemo(() => {
+    return openFiles.find(f => f.path === activeFile)?.content || "";
+  }, [activeFile, openFiles]);
 
-  const handleCreateFolder = (dir: string = "") => {
-    setInputDialog({ type: 'folder', dir });
-  };
+  const symbols = useMemo(() => {
+    if (!activeContent) return [];
+    const lines = activeContent.split("\n");
+    const results: { name: string; line: number; type: "func" | "class" | "const" }[] = [];
+    
+    // Simple regex for TS/JS/Python
+    const funcRegex = /^(?:export\s+)?(?:async\s+)?function\s+([a-zA-Z0-9_]+)/;
+    const arrowFuncRegex = /^(?:export\s+)?const\s+([a-zA-Z0-9_]+)\s*=\s*(?:async\s*)?\([^)]*\)\s*=>/;
+    const classRegex = /^(?:export\s+)?class\s+([a-zA-Z0-9_]+)/;
+    const pyDefRegex = /^\s*def\s+([a-zA-Z0-9_]+)\s*\(/;
+    const pyClassRegex = /^\s*class\s+([a-zA-Z0-9_]+)\s*(?:\(|:)/;
 
-
-  const [sections, setSections] = useState({
-    open: true,
-    workspace: true,
-    outline: false
-  });
-
-  const openFiles = useStore(s => s.openFiles);
+    lines.forEach((line, i) => {
+      let match;
+      if ((match = line.match(funcRegex)) || (match = line.match(pyDefRegex))) {
+        results.push({ name: match[1], line: i + 1, type: "func" });
+      } else if ((match = line.match(classRegex)) || (match = line.match(pyClassRegex))) {
+        results.push({ name: match[1], line: i + 1, type: "class" });
+      } else if ((match = line.match(arrowFuncRegex))) {
+        results.push({ name: match[1], line: i + 1, type: "func" });
+      }
+    });
+    return results;
+  }, [activeContent]);
 
   return (
     <div className="file-explorer">
@@ -341,6 +350,17 @@ export function FileExplorer() {
           {sections.outline ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
           <span>OUTLINE</span>
         </div>
+        {sections.outline && symbols.length > 0 && (
+          <div className="sidebar-section__content outline-list">
+            {symbols.map((sym, i) => (
+              <div key={i} className="outline-item" onClick={() => setPendingJump(activeFile!, sym.line)}>
+                {sym.type === "class" ? <Braces size={12} className="text-purple" /> : <Square size={10} className="text-cyan" />}
+                <span>{sym.name}</span>
+                <span className="outline-line">:{sym.line}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
       
       <FolderBrowser 
@@ -371,30 +391,6 @@ export function FileExplorer() {
         targetSelector=".file-item"
         items={[
           { label: 'Open', shortcut: 'Enter', action: (target) => target.click() },
-          { label: 'Open to the Side', shortcut: 'Ctrl+Enter', action: (target) => target.click() },
-          { label: 'Open in Integrated Terminal', action: (target) => {
-            const path = target.getAttribute('data-path');
-            const type = target.getAttribute('data-type');
-            if (path) {
-              const dir = type === 'dir' ? path : path.split('/').slice(0, -1).join('/');
-              addTerminalSession(dir);
-            }
-          }},
-          { type: 'separator' },
-          { label: 'Copy Path', shortcut: 'Ctrl+Alt+C', action: (target) => {
-            const path = target.getAttribute('data-path');
-            if (path) {
-              navigator.clipboard.writeText(path);
-              toast.success("Path copied");
-            }
-          }},
-          { label: 'Copy Relative Path', shortcut: 'Ctrl+Shift+Alt+C', action: (target) => {
-            const path = target.getAttribute('data-path');
-            if (path) {
-              navigator.clipboard.writeText(path.replace(/^\/+/, ''));
-              toast.success("Relative path copied");
-            }
-          }},
           { type: 'separator' },
           { label: 'New File', action: (target) => {
             const path = target.getAttribute('data-path');
@@ -409,18 +405,6 @@ export function FileExplorer() {
             if (path) handleCreateFolder(dir || "");
           }},
           { type: 'separator' },
-          { label: 'Rename...', shortcut: 'F2', action: (target) => {
-            const path = target.getAttribute('data-path');
-            const name = target.getAttribute('data-name');
-            if (path) {
-              // We should use an InputDialog for rename too, but for now let's keep it or fix it later
-              const newName = prompt("Rename to:", name || "");
-              if (newName && newName !== name) {
-                const newPath = path.split('/').slice(0, -1).concat(newName).join('/');
-                renameFile(path, newPath);
-              }
-            }
-          }},
           { label: 'Delete', shortcut: 'Delete', danger: true, action: (target) => {
             const path = target.getAttribute('data-path');
             const name = target.getAttribute('data-name');
@@ -441,15 +425,6 @@ export function FileExplorer() {
           else createFolder(fullPath);
         }}
         onClose={() => setInputDialog(null)}
-      />
-
-      <FolderBrowser
-        isOpen={folderBrowserOpen}
-        onConfirm={(path) => {
-          setWorkspace(path);
-          setFolderBrowserOpen(false);
-        }}
-        onClose={() => setFolderBrowserOpen(false)}
       />
     </div>
   );
