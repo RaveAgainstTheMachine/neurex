@@ -6,6 +6,13 @@ import { enableMapSet } from "immer";
 import App from "./App";
 import "./index.css";
 
+// Import workers using Vite's ?worker syntax
+import JsonWorker from 'monaco-editor/esm/vs/language/json/json.worker?worker';
+import CssWorker from 'monaco-editor/esm/vs/language/css/css.worker?worker';
+import HtmlWorker from 'monaco-editor/esm/vs/language/html/html.worker?worker';
+import TsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker';
+import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
+
 enableMapSet();
 
 // Register PWA Service Worker
@@ -15,18 +22,18 @@ registerSW({ immediate: false });
 (window as any).MonacoEnvironment = {
   getWorker: function (_: any, label: string) {
     if (label === 'json') {
-      return new Worker(new URL('monaco-editor/esm/vs/language/json/json.worker?worker', import.meta.url));
+      return new JsonWorker();
     }
     if (label === 'css' || label === 'scss' || label === 'less') {
-      return new Worker(new URL('monaco-editor/esm/vs/language/css/css.worker?worker', import.meta.url));
+      return new CssWorker();
     }
     if (label === 'html' || label === 'handlebars' || label === 'razor') {
-      return new Worker(new URL('monaco-editor/esm/vs/language/html/html.worker?worker', import.meta.url));
+      return new HtmlWorker();
     }
     if (label === 'typescript' || label === 'javascript') {
-      return new Worker(new URL('monaco-editor/esm/vs/language/typescript/ts.worker?worker', import.meta.url));
+      return new TsWorker();
     }
-    return new Worker(new URL('monaco-editor/esm/vs/editor/editor.worker?worker', import.meta.url));
+    return new EditorWorker();
   }
 };
 

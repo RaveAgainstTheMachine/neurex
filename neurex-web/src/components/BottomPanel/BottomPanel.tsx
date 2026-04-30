@@ -112,7 +112,7 @@ export function BottomPanel({ send }: BottomPanelProps) {
                 </div>
                 
                 {Object.entries(
-                  diagnostics.reduce((acc: Record<string, Diagnostic[]>, d: Diagnostic) => {
+                  diagnostics.reduce((acc: Record<string, any[]>, d: any) => {
                     if (!acc[d.path]) acc[d.path] = [];
                     acc[d.path].push(d);
                     return acc;

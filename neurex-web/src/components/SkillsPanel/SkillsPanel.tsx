@@ -13,7 +13,7 @@ interface Skill {
   url: string;
 }
 
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronRight } from "lucide-react";
 
 function ConfirmModal({ 
   show, 

@@ -28,6 +28,9 @@ export default defineConfig({
       '@codingame/monaco-vscode-api'
     ]
   },
+  worker: {
+    format: 'es'
+  },
   plugins: [
     react(),
     VitePWA({

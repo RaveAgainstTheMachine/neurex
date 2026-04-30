@@ -9,7 +9,7 @@ export function useWebSocket(conversationId: string) {
   const token = useStore(s => s.token);
   const user = useStore(s => s.user);
   const userId = user?.username || "anonymous";
-  const refreshTimeout = useRef<NodeJS.Timeout | null>(null);
+  const refreshTimeout = useRef<any>(null);
   
   const setWsStatus = useStore(s => s.setWsStatus);
   const upsertTask = useStore(s => s.upsertTask);

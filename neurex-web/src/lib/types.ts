@@ -152,6 +152,7 @@ export interface NeurexStore {
   isInitializing: boolean;
   setIsInitialized: (val: boolean) => void;
   setIsInitializing: (val: boolean) => void;
+  lastLocalSave: number;
 
   // Auth
   onboardingRequired: boolean;
