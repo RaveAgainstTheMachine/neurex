@@ -32,5 +32,17 @@ Following the "Deceptively Simple Tasks" guidelines for repository-specific patt
 - **YAML Frontmatter Parsing**: Added an advanced parser that extracts `author`, `version`, and `instructions` from markdown documentation (`SKILL.md`). This allows Neurex to correctly display community-contributed skills that lack a standard `manifest.json`.
 - **Logic Extension Classification**: Introduced a new skill "type" system that identifies prompt-only skills and displays them as **Logic Extensions** instead of showing a confusing "0 tools" count.
 
+## 5. Intelligence Layer (LSP Hub & Neural Lens)
+In alignment with the "Neural" aesthetic, the IDE's core intelligence layer has been refactored for native high-fidelity rendering.
+
+### Neural Lens Design:
+- **Inline Grouping**: Diagnostics are grouped by line and rendered as **ghost-text** decorations. This eliminates the "squiggles-only" limitation, providing immediate context without requiring hover.
+- **Neon Accents**: Errors and warnings use a specialized thematic color-mix (`hsl(0, 100%, 50%)` for errors, `hsl(45, 100%, 50%)` for warnings) with a subtle neon glow, ensuring they are unmistakable against the dark workspace.
+- **Git Authorship**: Commit metadata is injected as low-opacity, italicized ghost-text, maintaining a premium "unobtrusive intelligence" feel.
+
+### Autopilot UI:
+- **Contextual Banners**: The `AutopilotBanner` uses the project's standard glassmorphism and slide-down animations.
+- **Actionable Feedback**: Features a pulsing `BrainCircuit` icon and real-time loading states for the automated provisioning process.
+
 ---
 *Status: All changes verified against Neurex IDE Design System.*

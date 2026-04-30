@@ -5,6 +5,9 @@ Neurex is a high-performance, agentic IDE built for absolute technical precision
 ## 核心 (Core Modules)
 
 - **[[Architecture]]**: Deep dive into the Orchestrator, TaskGraph, and Mesh Hub.
+- **Language Intelligence**:
+  - **Universal LSP Hub**: Native support for 100+ languages with dynamic discovery and Autopilot provisioning.
+  - **Neural Lens Suite**: Real-time inline diagnostics and Git authorship decorations.
 - **[[Security-and-Auth]]**: Detailed guide on RBAC, Invite Codes, and JWT Hardening.
 - **[[Skill-System]]**: How to build and install MCP-compatible toolsets via Git.
 - **[[Hardware-Acceleration]]**: Configuring Metal (Apple), ROCm (AMD), and SYCL (Intel).

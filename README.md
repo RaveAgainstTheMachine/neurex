@@ -10,6 +10,7 @@ While traditional AI IDEs (Cursor, Windsurf) act as "Assistants," Neurex acts as
 2.  **Distributed Swarm**: Pool VRAM across your local network to run massive models (32B+) that would normally require a server farm.
 3.  **Total Observability**: The **Flight Recorder** streams every reasoning trace and tool-call in real-time. No "Black Box" magic—just transparent intelligence.
 4.  **Collective Memory**: A decentralized vector-memory that allows agents to "recall" architectural precedents across projects and sessions.
+5.  **Universal Intelligence**: A native, plugin-free **LSP Hub** supporting 100+ languages with **Neural Lens** (inline diagnostics) and **Neural GitLens** (authorship context).
 
 ## Quick Start
 

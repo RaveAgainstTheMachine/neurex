@@ -9,6 +9,9 @@ Neurex is a high-performance, AI-native IDE designed for distributed development
 - **Dynamic Micro-animations**: State-aware pulses and transitions for AI activity.
 
 ## 🧠 Intelligence
+- **Universal LSP Hub**: Native, plugin-free code intelligence for **100+ languages** with dynamic fallback and Autopilot provisioning.
+- **Neural Error Lens**: High-fidelity, inline diagnostics grouping and neon-themed error rendering.
+- **Neural GitLens**: Real-time commit blame and file history rendered directly as ghost-text decorations.
 - **AI-Native Sidebar**: Persistent reasoning traces and chat integration.
 - **Hive Mind Integration**: Access to the collective knowledge base of the Neurex mesh.
 - **Composition Indicators**: Visual feedback when the IDE is "thinking" or "writing".
