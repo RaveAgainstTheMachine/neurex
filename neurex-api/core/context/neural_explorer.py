@@ -14,14 +14,18 @@ class NeuralExplorer:
     def __init__(self, context_manager: ContextManager):
         self.ctx = context_manager
         self.call_graph: Dict[str, List[str]] = {} # file -> list of referenced files
+        # Phase 44.2: Fast Search Cache
+        self._search_cache: Dict[str, List[Dict[str, Any]]] = {}
 
     async def hybrid_search(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
         """
-        Performs a hybrid search:
-        1. Semantic Search (ChromaDB)
-        2. Relational Expansion (Call Graph)
-        3. Context Ranking
+        Performs a cached hybrid search.
         """
+        cache_key = f"{query}:{limit}"
+        if cache_key in self._search_cache:
+            log.info("neural_explorer.cache_hit", query=query)
+            return self._search_cache[cache_key]
+
         log.info("neural_explorer.search_init", query=query)
         
         # 1. Semantic Retrieval
@@ -42,11 +46,13 @@ class NeuralExplorer:
                     seen_files.add(n)
                     
         # 3. Ranking logic (Simplified)
+        self._search_cache[cache_key] = expanded_results
         return expanded_results
 
     def update_call_graph(self, file_path: str, references: List[str]):
-        """Updates the relational mapping for a file."""
+        """Updates the relational mapping and invalidates the search cache."""
         self.call_graph[file_path] = references
+        self._search_cache.clear() # Invalidate on change
         log.debug("neural_explorer.graph_updated", file=file_path, refs=len(references))
 
 # NeuralExplorer will be initialized in the Orchestrator with the ContextManager.
