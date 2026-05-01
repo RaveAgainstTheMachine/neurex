@@ -8,7 +8,7 @@
 - **No Placeholders**: Never emit "...", "rest of code remains the same", or partial snippets. Always write complete, functional files unless explicitly performing a targeted `replace_file_content` for a single line.
 - **Verification First**: Before claiming a task is done, verify the service starts. Use `make dev-api` or `make dev-web` to check for compilation/runtime errors.
 - **Atomic Commits**: Git commits must be atomic and descriptive. Format: `[service] <type>: <description>`. Example: `[api] feat: add pty session timeout`.
-- **Documentation Parity**: If you change a route, update `API_REFERENCE.md`. If you change architecture, update `ARCHITECTURE.md`. If you change state, update the `CHANGELOG.md`.
+- **Documentation Parity**: Every git commit MUST be preceded by a full documentation audit. Update `API_REFERENCE.md` for route changes, `ARCHITECTURE.md` for logic shifts, `CHANGELOG.md` for versioning, and `NEUREX_REVIEW.md` for architectural milestones.
 - **Confirmation Rule**: Before any thinking or action, you must explicitly state that you have read and are applying these rules (Source of Law: .antigravityrules).
 - **Refactoring Integrity**: When refactoring React components or Backend routes, NEVER leave orphaned syntax (e.g., missing `);`), corrupted dependency arrays, or missing imports. Test the specific modified block for logical completeness before saving.
 
