@@ -46,6 +46,8 @@ class BaseAgent(ABC):
         self.autonomy_level = autonomy_level
         self.compressor = ContextCompressor(ctx)
         self.skeptical_memory = SkepticalMemory(os.getenv("WORKSPACE_PATH", os.getcwd()))
+        # Phase 44.13: Persistent Reasoning Client
+        self._client: httpx.AsyncClient = httpx.AsyncClient(timeout=300)
 
     @abstractmethod
     async def execute(
@@ -109,7 +111,7 @@ class BaseAgent(ABC):
         model: str | None = None,
         tools: list[dict] | None = None,
     ) -> AsyncGenerator[dict, None]:
-        """Stream from Mesh/Local and yield tokens/tool_calls."""
+        """Stream from Mesh/Local with high-speed token chunking."""
         payload: dict[str, Any] = {
             "model": model or self.model or get_default_model(),
             "messages": messages,
@@ -125,33 +127,47 @@ class BaseAgent(ABC):
         from core.infrastructure.mesh import mesh_router
         ollama_url = await mesh_router.get_best_inference_node(payload["model"])
         full_text = ""
+        token_buffer = []
         
-        async with httpx.AsyncClient(timeout=300) as client:
-            headers = {}
-            if "ollama_proxy" in ollama_url:
-                peer_url = ollama_url.split("/api/infra")[0]
-                if peer_url in mesh_router.peers:
-                    headers["Authorization"] = f"Bearer {mesh_router.peers[peer_url].token}"
+        headers = {}
+        if "ollama_proxy" in ollama_url:
+            peer_url = ollama_url.split("/api/infra")[0]
+            if peer_url in mesh_router.peers:
+                headers["Authorization"] = f"Bearer {mesh_router.peers[peer_url].token}"
 
-            target_url = f"{ollama_url}/api/chat" if "ollama_proxy" not in ollama_url else ollama_url.replace("ollama_proxy", "ollama_proxy/api/chat")
+        target_url = f"{ollama_url}/api/chat" if "ollama_proxy" not in ollama_url else ollama_url.replace("ollama_proxy", "ollama_proxy/api/chat")
 
-            async with client.stream("POST", target_url, json=payload, headers=headers) as resp:
-                resp.raise_for_status()
-                async for line in resp.aiter_lines():
-                    if not line: continue
-                    try:
-                        import json
-                        data = json.loads(line)
-                    except: continue
-                    msg = data.get("message", {})
-                    if msg.get("tool_calls"):
-                        for tc in msg["tool_calls"]: yield {"type": "tool_call", "call": tc}
-                    content = msg.get("content", "")
-                    if content:
-                        full_text += content
-                        yield {"type": "token", "text": content}
-                    if data.get("done"):
-                        yield {"type": "done", "full_text": full_text}
+        async with self._client.stream("POST", target_url, json=payload, headers=headers) as resp:
+            resp.raise_for_status()
+            async for line in resp.aiter_lines():
+                if not line: continue
+                try:
+                    import json
+                    data = json.loads(line)
+                except: continue
+                
+                msg = data.get("message", {})
+                if msg.get("tool_calls"):
+                    # Flush token buffer before tool call
+                    if token_buffer:
+                        yield {"type": "token", "text": "".join(token_buffer)}
+                        token_buffer = []
+                    for tc in msg["tool_calls"]: yield {"type": "tool_call", "call": tc}
+                
+                content = msg.get("content", "")
+                if content:
+                    full_text += content
+                    token_buffer.append(content)
+                    # Yield in chunks of 10 tokens to reduce WS pressure
+                    if len(token_buffer) >= 10:
+                        yield {"type": "token", "text": "".join(token_buffer)}
+                        token_buffer = []
+                
+                if data.get("done"):
+                    # Flush remaining tokens
+                    if token_buffer:
+                        yield {"type": "token", "text": "".join(token_buffer)}
+                    yield {"type": "done", "full_text": full_text}
 
     async def dispatch_tool(self, tool_call: dict, conversation_id: str) -> str:
         """Route a tool_call with Federated Governance."""
