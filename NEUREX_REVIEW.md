@@ -187,14 +187,27 @@ While the architecture is incredibly sound, I have identified a few areas that r
         *   **Neural Harness Engine**: Developed a model-agnostic execution loop (`harness/engine.py`) that standardizes tool-calling and observation handling.
         *   **OS Model Prioritization**: Integrated Qwen-2.5-Coder as the default driver for the harness, enabling state-of-the-art autonomy without vendor lock-in.
 
+23. **Skeptical Memory & Worktrees (Phase 31 Milestone)**:
+    *   Status: **RESOLVED** (v0.2.1-stable).
+    *   Implementation:
+        *   **Zero-Trust Verification**: Enforced `SkepticalMemory` directives in `BaseAgent`, requiring agents to verify file contents via `grep`/`read` before mutations.
+        *   **Sticky-Note Context**: Implemented `.neurex/MEMORY.md` as a high-speed pointer file for context restoration.
+        *   **Isolated Swarms**: Developed `WorktreeManager` to spawn swarm sub-agents in parallel Git Worktrees, eliminating race conditions.
+
+24. **YOLO Permission Classifier (Phase 32 Milestone)**:
+    *   Status: **RESOLVED** (v0.2.1-stable).
+    *   Implementation:
+        *   **Auto-Approval Logic**: Integrated a fast classifier into `MCPClient` that bypasses authorization for 'safe' tools (e.g. `read_file`, `ls`, `grep`).
+        *   **Latency Reduction**: Dramatically improved exploration performance by removing human-in-the-loop/RBAC overhead for read-only actions.
+
 ---
 
 ## 4. Strategic Recommendations for Next Deployment
 
-1.  **Phase 31: Multi-Agent Symbolic Debugging**
-    *   Develop a "Symbolic Replay" agent that can step through code execution in a virtual environment to identify root causes of logical regressions.
-2.  **Phase 32: Neural Documentation Synthesis**
-    *   Implement an autonomous documentarian that maintains the `docs/` folder in real-time, generating architectural diagrams and API specs based on AST changes.
+1.  **Phase 33: Kairos Background Daemon (autoDream)**
+    *   Implement an always-on service that monitors repository changes and asynchronously updates the `MEMORY.md` and `intel.json` context.
+2.  **Phase 34: ULTRAPLAN Deep Thinking Mode**
+    *   Develop a multi-pass architecture planning system that offloads complex design tasks to a remote high-compute model (or a specialized local loop).
 
 ---
 **Report Concluded.**
