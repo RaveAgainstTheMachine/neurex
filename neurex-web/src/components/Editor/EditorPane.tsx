@@ -16,14 +16,23 @@ import { api } from "../../lib/api";
 import "./EditorPane.css";
 
 export function EditorPane({ paneId = "pane-main" }: { paneId?: string }) {
-  const { 
-    openFiles, setFileContent, saveFile, 
-    presence, pendingJump, clearPendingJump, 
-    setCursorPosition, upsertTask, hiveStats, infraMetrics,
-    acceptDiff, discardDiff, token, refreshInfra,
-    editorPanes, setPaneFile, setActiveFile, activeFile,
-    splitEditor, closePane, updateDiagnostics, togglePin
-  } = useStore();
+  // Phase 44.17: Strict State Selection (Prevent Editor churn)
+  const openFiles = useStore(s => s.openFiles);
+  const setFileContent = useStore(s => s.setFileContent);
+  const saveFile = useStore(s => s.saveFile);
+  const presence = useStore(s => s.presence);
+  const pendingJump = useStore(s => s.pendingJump);
+  const clearPendingJump = useStore(s => s.clearPendingJump);
+  const setCursorPosition = useStore(s => s.setCursorPosition);
+  const token = useStore(s => s.token);
+  const refreshInfra = useStore(s => s.refreshInfra);
+  const editorPanes = useStore(s => s.editorPanes);
+  const activeFile = useStore(s => s.activeFile);
+  const setActiveFile = useStore(s => s.setActiveFile);
+  const splitEditor = useStore(s => s.splitEditor);
+  const closePane = useStore(s => s.closePane);
+  const updateDiagnostics = useStore(s => s.updateDiagnostics);
+  const togglePin = useStore(s => s.togglePin);
 
   const [supportedLangs, setSupportedLangs] = useState<string[]>([]);
 
