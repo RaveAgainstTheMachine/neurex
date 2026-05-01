@@ -193,5 +193,25 @@ class BaseAgent(ABC):
                 log.warning("mutation_lint_failure", file=path, reason=reason)
                 return f"MUTATION_REJECTED: Your proposed change violates project architectural standards. Reason: {reason}"
 
+            # 3. Swarm Consensus (Phase 45: Runtime Evolution)
+            from core.collaboration.consensus import consensus_manager
+            if consensus_manager.is_protected(path):
+                proposal = consensus_manager.get_proposal(path)
+                if not proposal:
+                    # First attempt to mutate a protected asset
+                    res = await consensus_manager.submit_proposal(path, args.get("content") or "", requester)
+                    return res
+                
+                # If we're here, a proposal exists. Check if consensus reached.
+                # Note: The Coder automatically votes YES on submission.
+                # Other agents (Reviewer, Planner) will cast votes during their execution loops.
+                yes_votes = sum(1 for v in proposal.votes.values() if v)
+                if yes_votes < 3:
+                    return f"CONSENSUS_REQUIRED: Waiting for swarm agreement on '{path}'. Current votes: {yes_votes}/3"
+                
+                # Consensus reached! Clear proposal and allow mutation
+                consensus_manager.clear_proposal(path)
+                log.info("mutation_approved_by_consensus", file=path)
+
         log.info("tool_dispatch", tool=name, args=args)
         return await self.mcp.call(name, args, autonomy_level=self.autonomy_level, conversation_id=conversation_id)

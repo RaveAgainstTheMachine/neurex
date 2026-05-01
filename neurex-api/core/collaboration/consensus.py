@@ -1,84 +1,72 @@
 """
 core/collaboration/consensus.py
-Neural Swarm Consensus: Implements voting-based code mutations.
-Ensures that multiple agents approve major architectural changes before application.
-"""
-from __future__ import annotations
+Phase 45: Sentient IDE (Swarm Consensus)
+Manages voting and agreement protocols for critical architectural mutations.
+\"\"\"
+import os
 import structlog
-from typing import List, Dict, Any
-from core.observability.flight_recorder import record_decision
+from typing import Dict, List, Set
+from datetime import datetime, timezone
 
 log = structlog.get_logger()
 
+class ConsensusProposal:
+    def __init__(self, path: str, content: str, requester: str):
+        self.path = path
+        self.content = content
+        self.requester = requester
+        self.votes: Dict[str, bool] = {} # agent_id -> approved
+        self.created_at = datetime.now(timezone.utc)
+
 class ConsensusManager:
-    def __init__(self, threshold: float = 0.66):
-        self.threshold = threshold # Quorum percentage
+    def __init__(self):
+        self.proposals: Dict[str, ConsensusProposal] = {} # path -> proposal
+        self.protected_paths = [
+            "core/agents/",
+            "core/infrastructure/",
+            "core/collaboration/",
+            "core/task_graph.py",
+            "neurex-api/core/",
+            "neurex-web/src/lib/store.ts"
+        ]
 
-    async def evaluate_mutation(self, proposal: Dict[str, Any], reviewers: List[Any], conversation_id: str) -> bool:
-        """
-        Coordinates a voting cycle among reviewer agents.
-        Proposal: {"path": "...", "content": "...", "rationale": "..."}
-        """
-        votes = []
-        log.info("consensus.start_cycle", path=proposal["path"], reviewer_count=len(reviewers))
+    def is_protected(self, path: str) -> bool:
+        \"\"\"Checks if a file requires swarm consensus for mutation.\"\"\"
+        return any(path.endswith(p) or p in path for p in self.protected_paths)
+
+    async def submit_proposal(self, path: str, content: str, requester: str) -> str:
+        \"\"\"Submits a mutation proposal for consensus voting.\"\"\"
+        proposal = ConsensusProposal(path, content, requester)
+        # The requester (Coder) automatically votes YES
+        proposal.votes[requester] = True
+        self.proposals[path] = proposal
         
-        for agent in reviewers:
-            try:
-                vote = await self._collect_vote(agent, proposal)
-                votes.append(vote)
-                log.info("consensus.vote_received", agent=agent.agent_type, approved=vote["approved"])
-            except Exception as e:
-                log.warning("consensus.reviewer_failed", agent=agent.agent_type, error=str(e))
+        log.info("consensus.proposal_submitted", path=path, requester=requester)
+        return f"CONSENSUS_REQUIRED: Mutation submitted for Swarm Review. Current votes: {len(proposal.votes)}/3"
 
-        if not votes:
+    async def cast_vote(self, path: str, voter_id: str, approved: bool) -> bool:
+        \"\"\"Casts a vote for a proposal. Returns True if consensus reached.\"\"\"
+        if path not in self.proposals:
             return False
+            
+        proposal = self.proposals[path]
+        proposal.votes[voter_id] = approved
+        
+        log.info("consensus.vote_cast", path=path, voter=voter_id, approved=approved)
+        
+        # Threshold: At least 3 positive votes from distinct agents (e.g. Coder, Reviewer, Planner)
+        yes_votes = sum(1 for v in proposal.votes.values() if v)
+        if yes_votes >= 3:
+            log.info("consensus.reached", path=path)
+            return True
+            
+        return False
 
-        approvals = sum(1 for v in votes if v["approved"])
-        score = approvals / len(votes)
-        is_passed = score >= self.threshold
+    def get_proposal(self, path: str) -> ConsensusProposal:
+        return self.proposals.get(path)
 
-        # Record the outcome
-        summary = {
-            "path": proposal["path"],
-            "score": score,
-            "passed": is_passed,
-            "votes": votes
-        }
-        await record_decision(conversation_id, "consensus_engine", "mutation_vote", str(summary))
-        
-        log.info("consensus.cycle_complete", passed=is_passed, score=score)
-        return is_passed
-
-    async def _collect_vote(self, agent, proposal: Dict[str, Any]) -> Dict[str, Any]:
-        """Asks an agent to review a mutation proposal."""
-        prompt = f"""
-        CONSENSUS REVIEW REQUEST:
-        File: {proposal['path']}
-        Rationale: {proposal['rationale']}
-        Proposed Content Snippet:
-        {proposal['content'][:1000]}
-        
-        Analyze this change for:
-        1. Architectural integrity.
-        2. Performance regressions.
-        3. Security vulnerabilities.
-        
-        Output your vote in JSON: {{"approved": true/false, "rationale": "..."}}
-        """
-        messages = [{"role": "user", "content": prompt}]
-        full_text = ""
-        async for chunk in agent.stream(messages):
-            if chunk["type"] == "token":
-                full_text += chunk["text"]
-        
-        try:
-            import json
-            # Extract JSON from potential markdown
-            clean_text = full_text.strip()
-            if "```json" in clean_text:
-                clean_text = clean_text.split("```json")[1].split("```")[0].strip()
-            return json.loads(clean_text)
-        except:
-            return {"approved": False, "rationale": f"Failed to parse vote: {full_text[:100]}"}
+    def clear_proposal(self, path: str):
+        if path in self.proposals:
+            del self.proposals[path]
 
 consensus_manager = ConsensusManager()
