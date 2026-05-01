@@ -54,3 +54,9 @@ As Neurex evolves into a self-regulating Mesh, the UI must provide visual clarit
 - **Consensus Glow**: Files or tasks waiting for Swarm Consensus must be decorated with a pulsing **Mesh Purple** border. Interactive tooltips should display the current vote count (e.g., `2/3 VOTES`) with real-time updates.
 - **Evolution Bloom**: Upon a successful logic hot-swap (Runtime Evolution), a brief (300ms) bloom/shimmer effect should sweep across the relevant code block to signal that the "soul" of the logic has evolved.
 - **Maintenance Indicators**: Background re-indexing triggered by Predictive Maintenance should be represented by a minimal, rotating "Neural Spinner" in the status bar, avoiding intrusive UI blockages.
+
+### 7. Neural Compute Visualization (Phase 47)
+As Neurex virtualizes hardware pools, the UI must visualize the "Physicality of the Mesh".
+- **VRAM Pool Shimmer**: When a task utilizes virtualized VRAM sharding, the resource gauge should display a "Liquid Shimmer" effect (multi-color gradient sweep) to signal that memory is being pooled from multiple nodes.
+- **Quantization Flux**: If a model is dynamically re-quantized (Autonomous Re-Quantization), a "Digitization Pulse" (static/pixel noise transition) should flicker across the model origin badge to signal the shift in precision.
+- **Swap Pulse**: Active swapping between RAM and VRAM (Neural Swap-Space) should be represented by a rhythmic, bi-directional "Data Pulse" between the RAM and VRAM gauges.

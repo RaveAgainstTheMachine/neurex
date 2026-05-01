@@ -234,3 +234,23 @@ The `LiveReloader` service enables the Mesh to update its own core logic without
 The IDE proactively manages its own intelligence state to ensure long-term stability and reliability.
 - **Churn Heuristics**: The `MaintenanceService` monitors filesystem events from the `Watcher`. When codebase churn exceeds a defined threshold, it triggers a background workspace re-indexing.
 - **Stale Index Detection**: Periodically refreshes RAG and Memory pointers to ensure the agentic context remains synchronized with the physical reality of the codebase.
+
+## 14. Neural Mesh Integration (Phase 46)
+Phase 46 evolves the Mesh into a coherent, unified neural substrate where compute and context are pooled across federated nodes.
+
+### 14.1 Attention Pooling (Distributed Reasoning)
+The `AttentionCoordinator` orchestrates federated reasoning by distributing specific attention heads across Mesh nodes.
+- **Federated Parallelism**: Enables sub-ms parallelization of model mechanisms, effectively pooling the collective intelligence of all available nodes into a single 'Virtual Super-Brain'.
+
+### 14.2 Global Context Sharding (KV-Cache Federation)
+Massive context windows (128k+ tokens) are sharded across the Mesh to circumvent individual VRAM limitations.
+- **Context Sharding**: The `ContextSharder` slices the input space into federated segments, each managed by a distinct node's K/V cache.
+- **Unified Memory**: Allows high-reasoning tasks on massive repositories without requiring high-VRAM 'Whale' nodes.
+
+### 14.3 Predictive Neural Prefetching
+The `NeuralPrefetcher` eliminates cold-start latency by priming nodes based on agent trajectory.
+- **Trajectory Analysis**: Inspects upcoming swarm plans to pre-emptively load model weights and specific neural contexts into VRAM.
+
+### 14.4 Sub-ms Mesh Backplane (KV-Sync)
+The `KVSyncProtocol` ensures neural coherence during distributed sessions.
+- **State Propagation**: Synchronizes hidden state deltas and K/V cache updates between nodes with targeted sub-5ms latency, ensuring architectural consistency across the federated substrate.
