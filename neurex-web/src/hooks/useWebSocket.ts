@@ -69,6 +69,17 @@ export function useWebSocket(conversationId: string) {
         state.setWsStatus("disconnected");
       };
 
+      // Phase 44.22: Token Buffering (Prevent UI thread saturation)
+      let tokenBuffer = "";
+      let tokenTimer: any = null;
+
+      const flushTokens = () => {
+        if (!tokenBuffer) return;
+        useStore.getState().appendToken(tokenBuffer);
+        tokenBuffer = "";
+        tokenTimer = null;
+      };
+
       socket.onmessage = (e) => {
         try {
           const msg = JSON.parse(e.data);
@@ -87,9 +98,14 @@ export function useWebSocket(conversationId: string) {
               (data.tasks as TaskNode[]).forEach(s.upsertTask);
               break;
             case "token":
-              s.appendToken(data as string);
+              // Buffer tokens for O(1) store update overhead
+              tokenBuffer += data as string;
+              if (!tokenTimer) {
+                tokenTimer = setTimeout(flushTokens, 40); // 25fps flush
+              }
               break;
             case "done":
+              flushTokens(); // Ensure buffer is empty
               (data.tasks as TaskNode[]).forEach(s.upsertTask);
               break;
             case "terminal_output":
