@@ -22,6 +22,7 @@ Neurex is a high-performance, AI-native IDE designed for distributed development
 - **Source Control**: Native Git staging and commit interface.
 - **Interactive Status Bar**: Real-time control over indentation, encoding, and language.
 - **Monaco Engine**: Full VS Code-grade editing experience.
+- **Multi-Root Workspace Engine**: Simultaneous management of disparate project roots with root-aware searching, editor tabs, and contextual terminal anchoring.
 
 ## 🌐 Mesh Infrastructure
 - **Real-time Synchronization**: WebSocket-based heartbeat and node tracking.

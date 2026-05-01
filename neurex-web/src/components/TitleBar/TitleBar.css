@@ -1,4 +1,5 @@
 .title-bar {
+  position: relative;
   height: 30px;
   background: var(--bg-sidebar);
   display: flex;
@@ -14,50 +15,34 @@
   display: flex;
   align-items: center;
   height: 100%;
+  z-index: 2;
 }
 
 .title-bar__logo {
-  padding: 0 10px;
-  color: var(--accent-primary);
-  font-size: 14px;
-}
-
-.title-bar__menu {
-  display: flex;
-  height: 100%;
-}
-
-.title-bar__menu-item {
-  padding: 0 8px;
-  font-size: 12px;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: background 0.1s;
-}
-
-.title-bar__menu-item:hover {
-  background: var(--bg-hover);
-  color: var(--text-primary);
+  padding: 0 12px;
+  color: var(--accent-purple);
+  font-size: 16px;
+  filter: drop-shadow(0 0 4px var(--glow-purple));
 }
 
 .title-bar__center {
-  font-size: 11px;
-  color: var(--text-muted);
-  flex: 1;
-  text-align: center;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  padding: 0 20px;
+  pointer-events: none;
+  z-index: 1;
 }
 
 .title-bar__right {
   display: flex;
   align-items: center;
   height: 100%;
+  z-index: 2;
 }
 
 .window-controls {

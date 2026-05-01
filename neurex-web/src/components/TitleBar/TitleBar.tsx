@@ -4,8 +4,26 @@ import { MenuBar } from "../MenuBar/MenuBar";
 import "./TitleBar.css";
 
 export function TitleBar() {
-  const { activeFile } = useStore();
+  const { activeFile, workspaceFolders, openFiles } = useStore();
   const projectName = "Neurex";
+
+  const titleText = React.useMemo(() => {
+    const workspaceName = workspaceFolders.length > 1 
+      ? "Workspace" 
+      : (workspaceFolders[0]?.split("/").pop() || projectName);
+    
+    if (!activeFile) return workspaceName;
+    
+    const file = openFiles.find(f => f.path === activeFile);
+    const fileName = activeFile.split("/").pop();
+    const folderName = file?.root ? file.root.split("/").pop() : workspaceName;
+    
+    return `${fileName} — ${folderName}`;
+  }, [activeFile, workspaceFolders, openFiles]);
+
+  React.useEffect(() => {
+    document.title = `${titleText} - ${projectName}`;
+  }, [titleText]);
 
   return (
     <div className="title-bar">
@@ -15,7 +33,7 @@ export function TitleBar() {
       </div>
       
       <div className="title-bar__center">
-        {activeFile ? `${activeFile.split("/").pop()} — ${projectName}` : projectName}
+        {titleText}
       </div>
       
       <div className="title-bar__right">

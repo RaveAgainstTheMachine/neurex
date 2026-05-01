@@ -288,6 +288,7 @@ List workspace directory contents.
 | Param | Default | Description |
 |:---|:---|:---|
 | `path` | `.` | Relative directory path |
+| `root_path` | null | **Optional**. The project root for multi-folder workspaces. |
 
 **Response `200`**:
 ```json
@@ -303,7 +304,7 @@ Write or overwrite a file. Acquires a collaboration lock before writing.
 
 **Body**:
 ```json
-{ "path": "src/utils.py", "content": "def foo(): ..." }
+{ "path": "src/utils.py", "content": "def foo(): ...", "root_path": "optional-root" }
 ```
 
 **Auth**: `developer` or higher  
@@ -325,7 +326,7 @@ Upload a binary file to the workspace.
 ### `GET /api/files/search`
 Search for files matching a query (filename substring).
 
-**Query params**: `?query=auth`
+**Query params**: `?query=auth&root_path=/abs/path`
 
 ---
 
@@ -710,6 +711,7 @@ The WebSocket is the primary channel for all real-time agent interaction, termin
 | `approve_task` | `{ task_id: string }` | Approve a single HITL-gated task |
 | `cancel_task` | `{ task_id: string }` | Cancel a pending task |
 | `terminal_input` | `{ data: string }` | PTY stdin |
+| `terminal_sync` | `{ cwd: string }` | **New**. Initialize/Sync PTY with directory anchoring |
 | `terminal_resize` | `{ rows: int, cols: int }` | Resize PTY |
 
 ### Server → Client Messages

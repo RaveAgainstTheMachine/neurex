@@ -21,6 +21,7 @@ import { SettingsPanel } from "./components/SettingsPanel/SettingsPanel";
 import { HiveMindPanel } from "./components/HiveMindPanel/HiveMindPanel";
 import { PresenceBar } from "./components/PresenceBar/PresenceBar";
 import { AuthOverlay } from "./components/AuthOverlay/AuthOverlay";
+import { TitleBar } from "./components/TitleBar/TitleBar";
 import { MenuBar } from "./components/MenuBar/MenuBar";
 import { CommandPalette } from "./components/CommandPalette/CommandPalette";
 import { API_BASE } from "./lib/config";
@@ -89,7 +90,7 @@ function AppContent() {
     gitBranch, gitChanges, refreshGitStatus,
     sidebarTab, setSidebarTab, sidebarOrder, setSidebarOrder,
     showAIPanel, setShowAIPanel, showSettings, setShowSettings, 
-    showHiveMind, setShowHiveMind
+    showHiveMind, setShowHiveMind, settings
   } = useStore();
   
   // ── Poll Git Status ──
@@ -103,11 +104,16 @@ function AppContent() {
 
   const [visualProgress, setVisualProgress] = useState(25);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  
   const { send } = useWebSocket(activeConversationId);
   useEffect(() => {
     useStore.setState({ send });
   }, [send]);
+
   const sidebarRef = useRef<any>(null);
+  const handleSidebarResize = React.useCallback((size: number) => {
+    sidebarRef.current?.resize(size);
+  }, []);
 
   useEffect(() => {
     if (theme) {
@@ -219,7 +225,10 @@ function AppContent() {
     { id: "view-search", label: "View: Show Search", category: "Navigation", action: () => setSidebarTab("search") },
     { id: "toggle-ai", label: "View: Toggle AI Assistant", category: "View", action: () => setShowAIPanel(!showAIPanel) },
     { id: "toggle-settings", label: "View: Toggle Settings", category: "View", action: () => setModalOpen(!modalOpen) },
-    { id: "new-terminal", label: "Terminal: New Terminal", category: "Terminal", action: () => addTerminalSession() },
+    { id: "new-terminal", label: "Terminal: New Terminal", category: "Terminal", action: () => {
+      const active = useStore.getState().openFiles.find(f => f.path === useStore.getState().activeFile);
+      addTerminalSession(undefined, active?.root);
+    } },
     { id: "clear-terminal", label: "Terminal: Clear Terminal", category: "Terminal", action: clearActiveTerminal },
     { id: "kill-terminal", label: "Terminal: Kill Active Session", category: "Terminal", action: () => closeTerminalSession(activeTerminalId) },
     { id: "run-file", label: "Terminal: Run Active File", category: "Terminal", action: runActiveFile },
@@ -248,7 +257,8 @@ function AppContent() {
         />
         <Toaster position="top-right" />
         
-        <div className="app__root">
+        <div className={`app__root ${settings?.menu_mode === 'horizontal' ? 'with-horizontal-menu' : ''}`}>
+          {settings?.menu_mode === 'horizontal' && <TitleBar />}
           {isMobile ? (
             <MobileView send={send} />
           ) : (
@@ -256,13 +266,13 @@ function AppContent() {
                 <ActivityBar />
 
               <div className="app__body">
-                <PanelGroup direction="horizontal" className="app__panels">
+                <PanelGroup direction="horizontal" className="app__panels" storage={localStorage} autoSaveId="neurex-main-layout">
                   <Panel ref={sidebarRef} defaultSize={18} minSize={10} maxSize={40} className="app__sidebar">
                     {sidebarTab === "explorer" && <FileExplorer />}
                     {sidebarTab === "history"  && <ConversationList />}
-                    {sidebarTab === "infra"    && <InfraPanel onExpand={(s) => sidebarRef.current?.resize(s)} currentSize={sidebarRef.current?.getSize() || 18} />}
+                    {sidebarTab === "infra"    && <InfraPanel onExpand={handleSidebarResize} currentSize={sidebarRef.current?.getSize() || 18} />}
                     {sidebarTab === "system"   && <SystemLogsPanel />}
-                    {sidebarTab === "search"   && <SearchPanel onExpand={(s) => sidebarRef.current?.resize(s)} />}
+                    {sidebarTab === "search"   && <SearchPanel onExpand={handleSidebarResize} />}
                     {sidebarTab === "git"      && <SourceControlPanel />}
                     {sidebarTab === "timeline" && <GitTimeline />}
                     {sidebarTab === "skills"   && <SkillsPanel />}
@@ -270,11 +280,11 @@ function AppContent() {
                   </Panel>
                   <ResizeHandle />
                   <Panel minSize={30} className="app__main-content">
-                    <PanelGroup direction="vertical" className="app__v-panels">
+                    <PanelGroup direction="vertical" className="app__v-panels" storage={localStorage} autoSaveId="neurex-v-layout">
                       <Panel minSize={20} className="app__editor-wrapper">
                         <PresenceBar />
                         {showSettings ? <SettingsPanel /> : showHiveMind ? <HiveMindPanel /> : (
-                          <PanelGroup direction="horizontal">
+                          <PanelGroup direction="horizontal" storage={localStorage} autoSaveId="neurex-h-layout">
                             {editorPanes.map((pane, idx) => (
                               <React.Fragment key={pane.id}>
                                 {idx > 0 && <ResizeHandle />}
@@ -287,7 +297,14 @@ function AppContent() {
                         )}
                       </Panel>
                       <ResizeHandle vertical />
-                      <Panel defaultSize={25} minSize={5} className="app__bottom-wrapper">
+                      <Panel 
+                        defaultSize={25} 
+                        minSize={0} 
+                        collapsible={true}
+                        onCollapse={() => console.log("Panel Collapsed")}
+                        ref={(ref) => { (window as any).neurexBottomPanel = ref; }}
+                        className="app__bottom-wrapper"
+                      >
                         <BottomPanel send={send} />
                       </Panel>
                     </PanelGroup>

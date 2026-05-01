@@ -28,3 +28,10 @@ Provides native, plugin-free code intelligence for the IDE.
 - **LSP Manager**: Automated discovery of system-installed language servers and "Autopilot" provisioning for 100+ languages.
 - **Neural Lens Suite**: Renders real-time inline diagnostics (Error Lens) and authorship context (GitLens) using high-fidelity Monaco decorations.
 - **Custom Intelligence**: Supports workspace-level overrides via `.neurex/lsp.json` for proprietary language support.
+32. 
+33. ## 6. Multi-Root Workspace
+34. Enables enterprise-grade management of multiple project folders within a single session.
+35. - **Root-Scoped Operations**: All file APIs are root-aware, using strict path resolution to prevent cross-project traversal.
+36. - **Contextual PTY**: Integrated terminals are anchored to specific project roots. When spawning a shell, the system automatically detects the current file's root and sets the `cwd` (working directory) accordingly.
+37. - **Dynamic Breadcrumbs**: Provides instant orientation by prefixing file paths with their workspace root name.
+38. 

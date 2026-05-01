@@ -3,49 +3,110 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import List, Optional
 import subprocess
 import os
+from pathlib import Path
 
 from .auth import get_current_user
+from .files import get_workspace
 # subprocess-based git management
 
-router = APIRouter(prefix="/api/git", tags=["git"])
+router = APIRouter()
 
-def run_git(args: List[str]):
+def run_git(args: List[str], cwd: Optional[str] = None):
+    workspace = get_workspace()
+    if not cwd:
+        cwd = str(workspace)
+    
     try:
-        res = subprocess.run(["git"] + args, capture_output=True, text=True, check=True)
+        res = subprocess.run(["git"] + args, capture_output=True, text=True, check=True, cwd=cwd)
         return res.stdout.strip()
     except subprocess.CalledProcessError as e:
         raise HTTPException(status_code=500, detail=f"Git error: {e.stderr}")
+def get_all_git_roots(workspace: Path) -> List[Path]:
+    """Find all directories containing a .git folder within the workspace."""
+    roots = []
+    # Check workspace itself
+    if (workspace / ".git").is_dir():
+        roots.append(workspace)
+    
+    # Scan subdirectories (shallow scan for performance, but deep enough for common patterns)
+    try:
+        # We use a limited depth find to avoid performance issues in massive node_modules etc
+        res = subprocess.run(
+            ["find", ".", "-maxdepth", "4", "-name", ".git", "-type", "d"],
+            cwd=workspace, capture_output=True, text=True, timeout=5
+        )
+        for line in res.stdout.splitlines():
+            if line:
+                # remove /.git and convert to absolute
+                root = (workspace / line).parent.resolve()
+                if root not in roots:
+                    roots.append(root)
+    except:
+        pass
+    return roots
 
 @router.get("/status")
 async def get_status(user=Depends(get_current_user)):
     try:
-        branch = run_git(["rev-parse", "--abbrev-ref", "HEAD"])
-        status_raw = run_git(["status", "--porcelain"])
+        workspace = get_workspace()
+        git_roots = get_all_git_roots(workspace)
         
-        changes = []
-        if status_raw:
-            for line in status_raw.split("\n"):
-                if not line: continue
-                # XY path
-                status_codes = line[:2]
-                path = line[3:]
+        all_changes = []
+        main_branch = "unknown"
+        
+        for root in git_roots:
+            try:
+                # Get branch for this root
+                branch = subprocess.run(
+                    ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                    cwd=root, capture_output=True, text=True, check=True
+                ).stdout.strip()
                 
-                # Simplified status mapping
-                status = "modified"
-                if "A" in status_codes: status = "added"
-                if "D" in status_codes: status = "deleted"
-                if "?" in status_codes: status = "untracked"
+                if root == workspace or main_branch == "unknown":
+                    main_branch = branch
                 
-                # Staged if first char is not space
-                staged = status_codes[0] != " " and status_codes[0] != "?"
+                # Get status for this root
+                status_raw = subprocess.run(
+                    ["git", "status", "--porcelain"],
+                    cwd=root, capture_output=True, text=True, check=True
+                ).stdout.strip()
                 
-                changes.append({
-                    "path": path,
-                    "status": status,
-                    "staged": staged
-                })
+                if status_raw:
+                    for line in status_raw.split("\n"):
+                        if not line: continue
+                        status_codes = line[:2]
+                        path = line[3:].strip()
+                        
+                        # Handle renames (R  old -> new)
+                        if "R" in status_codes and " -> " in path:
+                            path = path.split(" -> ")[1].strip()
+
+                        # Resolve path relative to workspace root
+                        abs_path = (root / path).resolve()
+                        try:
+                            rel_to_workspace = str(abs_path.relative_to(workspace))
+                        except ValueError:
+                            rel_to_workspace = path # Fallback
+
+                        # Simplified status mapping
+                        status = "modified"
+                        if "A" in status_codes: status = "added"
+                        if "D" in status_codes: status = "deleted"
+                        if "?" in status_codes: status = "untracked"
+                        
+                        # Staged if first char is not space
+                        staged = status_codes[0] != " " and status_codes[0] != "?"
+                        
+                        all_changes.append({
+                            "path": rel_to_workspace,
+                            "status": status,
+                            "staged": staged,
+                            "repo_root": str(root)
+                        })
+            except:
+                continue
                 
-        return {"branch": branch, "changes": changes}
+        return {"branch": main_branch, "changes": all_changes}
     except Exception as e:
         return {"branch": "unknown", "changes": []}
 
@@ -70,7 +131,8 @@ async def get_diff(path: str = Query(...), user=Depends(get_current_user)):
             pass # File might be new
             
         # Get current from disk
-        with open(path, "r") as f:
+        file_path = get_workspace() / path
+        with open(file_path, "r") as f:
             modified = f.read()
             
         return {"original": original, "modified": modified}

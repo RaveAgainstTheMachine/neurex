@@ -45,7 +45,7 @@ async def _reapply_firewall() -> dict:
 
 @router.get("/")
 async def get_settings():
-    return settings_manager.get_all()
+    return {"settings": settings_manager.get_all()}
 
 
 # Settings that ONLY Admins can change

@@ -68,7 +68,7 @@ export async function createLSPConnection(lang: string, token: string): Promise<
                 if (path.startsWith(wsPath)) {
                     path = path.substring(wsPath.length).replace(/^\//, '');
                 }
-                useStore.getState().setWorkspaceDiagnostics(path, params.diagnostics);
+                useStore.getState().updateDiagnostics(path, params.diagnostics);
             });
 
             languageClient.start();

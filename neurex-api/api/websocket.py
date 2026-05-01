@@ -44,17 +44,23 @@ async def _authenticate(websocket: WebSocket) -> bool:
         return False
 
 
-async def _persist_message(session: AsyncSession, conversation_id: str, role: str, content: str, graph_id: str | None = None):
-    """Persist a chat message to SQLite so history survives reconnects."""
+async def _persist_message(conversation_id: str, role: str, content: str, graph_id: str | None = None):
+    """Persist a chat message to SQLite so history survives reconnects. Uses its own session for isolation."""
+    from core.task_graph import AsyncSession, engine
     from api.routes.chat import ChatMessage
-    msg = ChatMessage(
-        conversation_id=conversation_id,
-        role=role,
-        content=content,
-        graph_id=graph_id,
-    )
-    session.add(msg)
-    await session.commit()
+    try:
+        async with AsyncSession(engine) as session:
+            msg = ChatMessage(
+                conversation_id=conversation_id,
+                role=role,
+                content=content,
+                graph_id=graph_id,
+            )
+            session.add(msg)
+            await session.commit()
+            log.debug("ws.message_persisted", role=role, conversation_id=conversation_id)
+    except Exception as e:
+        log.error("ws.persist_failed", error=str(e))
 
 
 @router.websocket("/ws/{conversation_id}")
@@ -142,7 +148,8 @@ async def websocket_endpoint(
                     continue
 
                 if msg_type == "terminal_sync":
-                    s = pty_manager.get_or_create_session(pty_sid, get_output_handler(requested_sid))
+                    cwd = msg.get("cwd")
+                    s = pty_manager.get_or_create_session(pty_sid, get_output_handler(requested_sid), cwd=cwd)
                     if requested_sid not in attached_sessions:
                         attached_sessions.add(requested_sid)
                     if s.history:
@@ -173,26 +180,29 @@ async def websocket_endpoint(
                     if not content:
                         continue
 
-                    await _persist_message(session, conversation_id, "user", content)
+                    await _persist_message(conversation_id, "user", content)
 
                     assistant_tokens = []
                     last_graph_id = None
                     try:
                         async for event in orch.run(content, conversation_id, model=requested_model):
                             await websocket.send_json(event)
-                            await asyncio.sleep(0)
                             if event.get("event") == "token":
                                 assistant_tokens.append(event["data"])
                             if event.get("event") in ("plan_ready", "done"):
                                 last_graph_id = event.get("data", {}).get("graph_id")
+                            await asyncio.sleep(0)
                     except Exception as e:
                         log.error("ws.orch_run_error", error=str(e))
                         await websocket.send_json({"event": "error", "data": str(e)})
                     finally:
-                        if assistant_tokens:
+                        # Persist assistant response if any tokens were produced, 
+                        # or if a graph was started (to link history to graph)
+                        if assistant_tokens or last_graph_id:
+                            text_content = "".join(assistant_tokens) if assistant_tokens else "Plan generated."
                             await _persist_message(
-                                session, conversation_id, "assistant",
-                                "".join(assistant_tokens), last_graph_id
+                                conversation_id, "assistant",
+                                text_content, last_graph_id
                             )
 
                 if msg_type == "approve_plan":
@@ -204,13 +214,13 @@ async def websocket_endpoint(
                     try:
                         async for event in orch.resume(graph_id, conversation_id):
                             await websocket.send_json(event)
-                            await asyncio.sleep(0)
                             if event.get("event") == "token":
                                 assistant_tokens.append(event["data"])
+                            await asyncio.sleep(0)
                     finally:
                         if assistant_tokens:
                             await _persist_message(
-                                session, conversation_id, "assistant",
+                                conversation_id, "assistant",
                                 "".join(assistant_tokens), graph_id
                             )
 

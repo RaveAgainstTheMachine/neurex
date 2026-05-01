@@ -1,6 +1,57 @@
 # Changelog
 
 All notable changes to the Neurex project will be documented in this file.
+## [0.2.0] - 2026-04-30 (GRACEFUL RESIZING & LAYOUT PERSISTENCE)
+### Added
+- **Persistent Workspace Layouts**: integrated automatic storage for sidebar, terminal, and assistant panel dimensions using `react-resizable-panels` and `localStorage`.
+- **Advanced Panel Controls**: added Maximize, Collapse, and Clear actions to the Bottom Panel header for streamlined workspace management.
+- **VSCodium Parity**: achieved layout parity with professional editors by ensuring terminal reflow and panel state preservation across sessions.
+- **Title Bar Restoration**: fixed a layout regression where the `TitleBar` was omitted during panel refactoring; restored reactive visibility based on `menu_mode`.
+- **Title Bar Alignment & UX**: refined the `TitleBar` with absolute centering for project/file names and fluid `MenuBar` integration for VSCodium parity; fixed a layout bug where the title was detached from the header.
+- **Window Title Synchronization**: implemented automatic syncing between the IDE's active context and the browser's `document.title`.
+- **Resizable Sidebar Sections**: restructured the `FileExplorer` into resizable vertical panels with imperative accordion behavior for Open Editors, Workspace, and Outline.
+- **Persistent Sidebar Headers**: ensured section titles (Editors, Workspace, Outline) remain visible when minimized by implementing minimum panel sizing and visibility-toggling content.
+- **Bottom-Anchored Outline**: ensured the Code Outline is anchored to the bottom of the sidebar and expands upwards reactively.
+- **Explorer Padding & Alignment**: standardized indentation and padding across all sidebar sections to ensure a consistent vertical rhythm and professional aesthetic.
+- **Advanced Code Outline**: implemented functional symbol extraction for TS/JS/PY with dedicated icons and click-to-jump navigation.
+- **Theme-Aware Status Bar**: refactored the `StatusBar` to use the primary accent color and implemented a reactive "Swarm Glow" animation for mesh-active nodes.
+- **Dual-Pane Settings UI**: completely redesigned the `SettingsPanel` with a professional sidebar navigation, categorical filtering, and refined form controls for a "tight" administrative experience.
+- **Global Layout API**: exposed internal panel controls to the global namespace for inter-component coordination.
+
+## [0.1.9] - 2026-04-30 (LSP STABILITY & API PARITY)
+### Fixed
+- **Diagnostic State Consistency**: fixed a regression in `EditorPane.tsx` by migrating to the unified `updateDiagnostics` action, resolving TypeScript compilation errors.
+- **Infinite Notification Loop Fix**: resolved a recursive installation loop by fixing binary discovery logic and implementing a parallel installation lock in `LSPManager`.
+- **LSP Installation Circuit-Breaker**: added a failure registry to `LSPManager` that halts redundant installation attempts for failing language servers, preventing log flooding and server overhead.
+- **Linux-Native Recipes**: updated LSP installation commands to use `curl` and `npm` instead of `brew`, ensuring compatibility with the current Linux environment.
+- **Infrastructure API Parity**: added missing `/api/infra/engines`, `/api/infra/metrics`, and `/api/infra/peers` endpoints to resolve 404 errors during frontend initialization.
+- **Internal Server Error Handling**: hardened the language installation route to provide clearer error reporting and prevent generic 500 crashes.
+
+## [0.1.8] - 2026-04-30 (MULTI-FOLDER WORKSPACE ARCHITECTURE)
+### Added
+- **Multi-Root Workspace Engine**: introduced the ability to anchor the IDE to multiple disparate project roots simultaneously:
+  - **Root-Aware Backend**: updated all file API endpoints (`/read`, `/save`, `/search`, `/delete`, `/rename`) to propagate and respect a `root_path` context.
+  - **Contextual Terminal Anchoring**: integrated directory-aware PTY spawning. New terminals automatically inherit the workspace root of the active file.
+  - **Dynamic Breadcrumbs**: added root-prefixed path navigation in the editor for instant cross-project orientation.
+  - **Multi-Root Search**: enabled parallel semantic and substring searching across all registered workspace folders with grouped results.
+- **UI/UX Parity Updates**:
+  - **Workspace Tabs**: editor tabs now display subtle root tags to distinguish between files with identical names in different project folders.
+  - **Title Bar Integration**: the main application title now reflects the specific project root of the active session.
+  - **Menu Bar Synchronization**: updated "Save" and "New Terminal" actions across all menus to be context-aware.
+
+### Fixed
+- **Search Result Grouping**: resolved a collision bug where search results from different roots but identical relative paths were incorrectly merged.
+- **Store Logic**: modernized `NeurexStore` to track `root` identifiers for all `openFiles` and `terminalSessions`.
+- **API Security**: hardened path resolution to prevent cross-root traversal via standard `Path.resolve` validation.
+
+### Changed
+- Refactored `FileExplorer` to propagate `root_path` via DOM context for robust right-click operation routing.
+- Updated `PTYManager` to decouple session initialization from the global `WORKSPACE_PATH`.
+- **Core Refactoring & Protocol Compliance**:
+  - **Forbidden Print Removal**: purged all `print()` statements from the backend in favor of structured `structlog` logging.
+  - **Store Optimization**: refactored `useStore` to unify diagnostics management and improve workspace synchronization reliability.
+  - **PTY Stability**: added robust directory validation and fallbacks in `PTYSession` to prevent shell startup failures in multi-root environments.
+
 
 ## [0.1.7] - 2026-04-29 (NATIVE LSP & NEURAL LENS)
 ### Added

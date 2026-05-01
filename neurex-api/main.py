@@ -54,6 +54,10 @@ async def lifespan(app: FastAPI):
     from core.infrastructure.insomnia import insomnia_service
     insomnia_service.sync()
 
+    # Start File Watcher
+    from core.infrastructure.watcher import watcher_service
+    watcher_service.start()
+
     # Start Distributed RPC Server
     from core.infrastructure.distributed import distributed_manager
     await distributed_manager.start_rpc_server()
@@ -69,9 +73,17 @@ async def lifespan(app: FastAPI):
 
     # Trigger initial hardware benchmark
     from core.infrastructure.benchmarker import benchmarker
+    log.info("lsp.init_start")
     # Initialise LSP Manager
     from core.languages.lsp_manager import lsp_manager
     app.state.lsp_manager = lsp_manager
+    
+    # Pre-emptively start LSPs for workspace languages
+    from api.routes.files import get_workspace
+    workspace_path = str(get_workspace())
+    log.info("lsp.workspace_sync", path=workspace_path)
+    asyncio.create_task(lsp_manager.initialize_workspace(workspace_path))
+    log.info("lsp.init_queued")
 
     log.info("neurex.ready")
     yield
@@ -114,9 +126,10 @@ app.include_router(skills.router, prefix="/api/skills", tags=["skills"])
 app.include_router(settings.router, prefix="/api/settings", tags=["settings"])
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(memory.router, prefix="/api/memory", tags=["memory"])
-app.include_router(update.router)
-app.include_router(observability.router)
+app.include_router(update.router, prefix="/api/update", tags=["update"])
+app.include_router(observability.router, prefix="/api/observability", tags=["observability"])
 app.include_router(languages.router, prefix="/api/languages", tags=["languages"])
+app.include_router(git.router, prefix="/api/git", tags=["git"])
 app.include_router(ws_router, tags=["websocket"])
 
 

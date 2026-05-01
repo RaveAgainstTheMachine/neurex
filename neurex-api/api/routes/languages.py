@@ -6,7 +6,7 @@ import os
 from .auth import get_current_user
 from core.languages.lsp_manager import lsp_manager, LSP_RECIPES
 
-router = APIRouter(prefix="/api/languages", tags=["languages"])
+router = APIRouter()
 
 @router.get("/supported")
 async def get_supported():

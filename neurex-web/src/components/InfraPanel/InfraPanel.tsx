@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from "react";
 import { 
   Play, Square, RefreshCcw, Cpu, Zap, Search, 
   Brain, Braces, Video, AudioLines, 
-  Thermometer, Gauge, Eye, X
+  Thermometer, Gauge, Eye, X, Image as ImageIcon
 } from "lucide-react";
 import "./InfraPanel.css";
 import { useStore } from "../../lib/store";
@@ -17,6 +17,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
   const engines = useStore(s => s.infraEngines);
   const metrics = useStore(s => s.infraMetrics);
   const registry = useStore(s => s.infraRegistry);
+  const skills = useStore(s => s.infraSkills);
   const peers = useStore(s => s.infraPeers);
   const fetchData = useStore(s => s.refreshInfra);
 
@@ -24,6 +25,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
   const [hfResults, setHfResults] = useState<ModelProfile[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState<ModelProfile | null>(null);
+  const [quantization, setQuantization] = useState("4-bit (Fastest)");
 
   useEffect(() => {
     fetchData();
@@ -33,7 +35,8 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
       clearInterval(timer);
       onExpand(18);
     };
-  }, [fetchData, onExpand]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Debounced search for Hugging Face ONLY
   useEffect(() => {
@@ -58,23 +61,31 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
   }, [searchQuery]);
 
   const recommendations = [
-    { id: 'thinking', role: 'THINKING', model: 'deepseek-r1 (thinking)', specs: '32B • 20G VRAM', icon: Brain },
-    { id: 'coding', role: 'CODING', model: 'qwen2.5-coder (coding)', specs: '32B • 20G VRAM', icon: Braces },
-    { id: 'vision', role: 'VISION', model: 'llama3.2-vision (vision)', specs: '11B • 8.5G VRAM', icon: Eye },
-    { id: 'media', role: 'MEDIA', model: 'llama3.2-vision (vision)', specs: '11B • 8.5G VRAM', icon: Image },
-    { id: 'video', role: 'VIDEO', model: 'ltx-video (video)', specs: 'Multi-Modal • 24G VRAM', icon: Video },
-    { id: 'audio', role: 'AUDIO', model: 'whisper-large-v3-turbo (transcribe)', specs: '1.5B • 4G VRAM', icon: AudioLines },
+    { id: 'thinking', role: 'THINKING', model: 'deepseek-r1', specs: '32B • 20G VRAM', icon: Brain },
+    { id: 'coding', role: 'CODING', model: 'qwen2.5-coder', specs: '32B • 20G VRAM', icon: Braces },
+    { id: 'vision', role: 'VISION', model: 'llama3.2-vision', specs: '11B • 8.5G VRAM', icon: Eye },
+    { id: 'media', role: 'MEDIA', model: 'llama3.2-vision', specs: '11B • 8.5G VRAM', icon: ImageIcon },
+    { id: 'video', role: 'VIDEO', model: 'ltx-video', specs: 'Multi-Modal • 24G VRAM', icon: Video },
+    { id: 'audio', role: 'AUDIO', model: 'whisper-large-v3-turbo', specs: '1.5B • 4G VRAM', icon: AudioLines },
   ];
 
   const handlePullModel = async (engine: string, model: string) => {
     setLoading(true);
+    let targetModel = model;
+    
+    // Simple mapping for quantization tags for Ollama
+    if (engine === 'ollama' && !model.includes(':')) {
+      if (quantization.includes('4-bit')) targetModel += ':q4_K_M';
+      else if (quantization.includes('8-bit')) targetModel += ':q8_0';
+    }
+
     try {
-      const res = await fetch(`${API_BASE}/api/infra/model/pull?engine=${engine}&model=${model}`, { 
+      const res = await fetch(`${API_BASE}/api/infra/model/pull?engine=${engine}&model=${targetModel}`, { 
         method: "POST",
         headers: { "Authorization": `Bearer ${useStore.getState().token}` }
       });
       if (!res.ok) throw new Error(await res.text());
-      toast.success(`Deploying ${model} to node...`);
+      toast.success(`Deploying ${targetModel} to node...`);
       fetchData();
     } catch (err: any) {
       toast.error(err.message);
@@ -97,6 +108,20 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
       toast.error(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleSkill = async (skillId: string, enable: boolean) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/infra/skills/${skillId}/toggle?enable=${enable}`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${useStore.getState().token}` }
+      });
+      if (!res.ok) throw new Error(await res.text());
+      toast.success(`Skill ${skillId} ${enable ? 'enabled' : 'disabled'}`);
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.message);
     }
   };
 
@@ -152,9 +177,9 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
         <Gauge size={16} className="text-purple" />
         <span>INFRASTRUCTURE HUB</span>
         <div className="mesh-indicator" title="Mesh Status">
-          <span>24GB</span>
+          <span>{metrics?.vram_gb || 0}GB VRAM</span>
           <div className="mesh-divider" />
-          <span>47.7G FREE</span>
+          <span>{metrics?.ram_used_gb || 0}G / {metrics?.ram_total_gb || 0}G RAM</span>
           <RefreshCcw size={12} className="ml-2 hover-rotate cursor-pointer" onClick={() => fetchData()} />
         </div>
       </div>
@@ -168,14 +193,18 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
               <div 
                 key={rec.id} 
                 className="rec-card"
-                onClick={() => setSelectedModel({ 
-                  name: rec.model.split(' ')[0], 
-                  engine: 'ollama', 
-                  params: rec.specs, 
-                  context_window: 32768, 
-                  vram_required_gb: parseInt(rec.specs.match(/(\d+)G VRAM/)?.[1] || "0"),
-                  recommended_tasks: [rec.role]
-                })}
+                onClick={() => {
+                  const [mName] = rec.model.split(':');
+                  setSelectedModel({ 
+                    name: mName, 
+                    engine: 'ollama', 
+                    params: rec.specs.split(' ')[0], 
+                    context_window: 32768, 
+                    vram_required_gb: parseInt(rec.specs.match(/(\d+)G VRAM/)?.[1] || "0"),
+                    recommended_tasks: [rec.role],
+                    description: `Recommended model for ${rec.role} tasks on this hardware.`
+                  });
+                }}
               >
                 <div className="rec-header">
                   <span className="rec-role">{rec.role}</span>
@@ -185,7 +214,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
                 <button 
                   className="rec-deploy-btn" 
                 >
-                  DETAILS
+                  DEPLOY
                 </button>
               </div>
             ))}
@@ -200,7 +229,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
               <div key={e.name} className={`engine-row ${e.status === 'running' ? 'active' : ''}`}>
                 <div className="engine-main">
                   <div className="engine-name">{e.name}</div>
-                  <div className="engine-status">{e.status.toUpperCase()}</div>
+                  <div className="engine-status">{e.status.toUpperCase()} {e.version && `• ${e.version}`}</div>
                 </div>
                 <div className="engine-controls">
                   {e.status === 'running' ? (
@@ -221,6 +250,30 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
             ))}
           </div>
         </div>
+
+        {/* SKILLS */}
+        {skills && skills.length > 0 && (
+          <div className="infra-section">
+            <div className="infra-section__title">ACTIVE SKILLS & MCP</div>
+            <div className="skill-list">
+              {skills.map(skill => (
+                <div key={skill.id} className="skill-row">
+                  <div className="skill-info">
+                    <div className="skill-name">{skill.name}</div>
+                    <div className="skill-meta">{skill.tools_count} Tools • {skill.author}</div>
+                  </div>
+                  <div className="skill-toggle">
+                    <input 
+                      type="checkbox" 
+                      checked={skill.enabled} 
+                      onChange={(e) => handleToggleSkill(skill.id, e.target.checked)}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* MODEL CATALOG */}
         <div className="infra-section">
@@ -269,7 +322,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
                       {((m as any).origin === 'HF' || (m as any).origin === 'NODE') && (
                         <button 
                           className="catalog-deploy-btn"
-                          onClick={() => setSelectedModel(m)}
+                          onClick={(e) => { e.stopPropagation(); setSelectedModel(m); }}
                         >
                           DEPLOY
                         </button>
@@ -321,7 +374,11 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
                 <div className="config-grid">
                   <div className="config-item">
                     <span>Quantization</span>
-                    <select className="settings-select">
+                    <select 
+                      className="settings-select" 
+                      value={quantization}
+                      onChange={(e) => setQuantization(e.target.value)}
+                    >
                       <option>4-bit (Fastest)</option>
                       <option>8-bit (Balanced)</option>
                       <option>FP16 (High Precision)</option>
@@ -352,7 +409,13 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
                 className="btn btn--purple" 
                 disabled={loading}
                 onClick={async () => {
-                  await handlePullModel(selectedModel.engine, selectedModel.name);
+                  let modelName = selectedModel.name;
+                  // For Ollama models, apply quantization tags if not already present
+                  if (selectedModel.engine === 'ollama' && !modelName.includes(':')) {
+                    if (quantization.startsWith('4-bit')) modelName = `${modelName}:q4_K_M`;
+                    else if (quantization.startsWith('8-bit')) modelName = `${modelName}:q8_0`;
+                  }
+                  await handlePullModel(selectedModel.engine, modelName);
                   setSelectedModel(null);
                 }}
               >

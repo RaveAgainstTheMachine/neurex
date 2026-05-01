@@ -9,6 +9,7 @@ interface ContextMenuItem {
   danger?: boolean;
   shortcut?: string;
   type?: 'separator' | 'item';
+  visible?: (target: HTMLElement) => boolean;
 }
 
 interface ContextMenuProps {
@@ -47,13 +48,19 @@ export function ContextMenu({ items, targetSelector }: ContextMenuProps) {
 
   if (!visible) return null;
 
+  const filteredItems = items.filter(item => {
+    if (!item.visible) return true;
+    if (!targetElement) return false;
+    return item.visible(targetElement);
+  });
+
   return (
     <div 
       className="context-menu" 
       style={{ top: pos.y, left: pos.x }}
       onClick={(e) => e.stopPropagation()}
     >
-      {items.map((item, i) => (
+      {filteredItems.map((item, i) => (
         item.type === 'separator' ? (
           <div key={i} className="context-menu__separator" />
         ) : (

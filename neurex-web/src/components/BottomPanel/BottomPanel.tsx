@@ -17,7 +17,7 @@ export function BottomPanel({ send }: BottomPanelProps) {
   const [activeTab, setActiveTab] = useState<"terminal" | "output" | "flight" | "problems">("terminal");
   const { 
     terminalSessions, activeTerminalId, setActiveTerminalId, 
-    addTerminalSession, closeTerminalSession, tasks, activeConversationId,
+    addTerminalSession, closeTerminalSession, clearActiveTerminal, tasks, activeConversationId,
     diagnostics, sendMessage
   } = useStore();
   
@@ -48,8 +48,38 @@ export function BottomPanel({ send }: BottomPanelProps) {
         
         <div className="bottom-panel__actions">
           {activeTab === "terminal" && (
-            <button className="terminal-add-btn" onClick={() => addTerminalSession()} title="New Terminal"><Plus size={14} /></button>
+            <>
+              <button 
+                className="terminal-add-btn" 
+                onClick={() => {
+                  const active = useStore.getState().openFiles.find(f => f.path === useStore.getState().activeFile);
+                  addTerminalSession(undefined, active?.root);
+                }} 
+                title="New Terminal"
+              >
+                <Plus size={14} />
+              </button>
+              <button className="terminal-add-btn" onClick={() => clearActiveTerminal()} title="Clear Terminal">
+                <X size={14} />
+              </button>
+            </>
           )}
+          <div className="bottom-panel__divider" />
+          <button className="terminal-add-btn" onClick={() => {
+            const panel = (window as any).neurexBottomPanel;
+            if (panel) {
+              const isMaximized = panel.getSize() > 80;
+              panel.resize(isMaximized ? 25 : 90);
+            }
+          }} title="Toggle Maximize">
+            <ChevronRight size={14} style={{ transform: "rotate(-90deg)" }} />
+          </button>
+          <button className="terminal-add-btn" onClick={() => {
+            const panel = (window as any).neurexBottomPanel;
+            if (panel) panel.collapse();
+          }} title="Close Panel">
+            <X size={14} />
+          </button>
         </div>
       </div>
       <div className="bottom-panel__content">
@@ -58,15 +88,24 @@ export function BottomPanel({ send }: BottomPanelProps) {
           style={{ display: activeTab === "terminal" ? "flex" : "none" }}
         >
           <div className="terminal-container">
-            {activeTerminalId && (
-              <Terminal 
-                key={activeTerminalId}
-                sessionId={activeTerminalId}
-                isActive={activeTab === "terminal"}
-                onInput={(data) => send({ type: "terminal_input", sessionId: activeTerminalId, data })} 
-                onResize={(rows, cols) => send({ type: "terminal_resize", sessionId: activeTerminalId, rows, cols })} 
-              />
-            )}
+            {terminalSessions.map((s) => (
+              <div 
+                key={s.id} 
+                className="terminal-instance-wrapper"
+                style={{ 
+                  display: activeTerminalId === s.id ? "flex" : "none",
+                  height: "100%",
+                  width: "100%"
+                }}
+              >
+                <Terminal 
+                  sessionId={s.id}
+                  isActive={activeTab === "terminal" && activeTerminalId === s.id}
+                  onInput={(data) => send({ type: "terminal_input", sessionId: s.id, data })} 
+                  onResize={(rows, cols) => send({ type: "terminal_resize", sessionId: s.id, rows, cols })} 
+                />
+              </div>
+            ))}
           </div>
           <aside className="terminal-sidebar">
             <div className="terminal-list">

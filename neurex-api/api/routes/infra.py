@@ -155,6 +155,23 @@ class PeerRequest(BaseModel):
     token: str
     name: str
 
+@router.get("/engines")
+async def get_engines():
+    """Returns status of all inference engines."""
+    return await infra_manager.get_status()
+
+@router.get("/metrics")
+async def get_metrics():
+    """Returns current system metrics."""
+    metrics = infra_manager.get_system_metrics()
+    metrics["benchmarks"] = benchmarker.last_results
+    return metrics
+
+@router.get("/peers")
+async def get_peers_simple():
+    """Direct peer list for the frontend store."""
+    return [p.to_dict() for p in mesh_router.peers.values()]
+
 @router.get("/mesh/peers", dependencies=[Depends(require_role(UserRole.DEVELOPER))])
 async def list_peers():
     return [p.to_dict() for p in mesh_router.peers.values()]

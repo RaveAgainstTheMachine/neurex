@@ -194,6 +194,47 @@
   border-color: rgba(239, 68, 68, 0.3);
 }
 
+/* ── Skills & MCP ── */
+.skill-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skill-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.skill-row:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.skill-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: white;
+}
+
+.skill-meta {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.skill-toggle input[type="checkbox"] {
+  cursor: pointer;
+  accent-color: var(--accent-purple);
+  width: 16px;
+  height: 16px;
+}
+
 /* ── Model Catalog ── */
 .catalog-search {
   position: relative;

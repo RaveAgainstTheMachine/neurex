@@ -22,7 +22,7 @@ export function EditorPane({ paneId = "pane-main" }: { paneId?: string }) {
     setCursorPosition, upsertTask, hiveStats, infraMetrics,
     acceptDiff, discardDiff, token, refreshInfra,
     editorPanes, setPaneFile, setActiveFile, activeFile,
-    splitEditor, closePane, setDiagnostics, togglePin
+    splitEditor, closePane, updateDiagnostics, togglePin
   } = useStore();
 
   const [supportedLangs, setSupportedLangs] = useState<string[]>([]);
@@ -164,8 +164,19 @@ export function EditorPane({ paneId = "pane-main" }: { paneId?: string }) {
   const renderBreadcrumbs = () => {
     if (!active) return null;
     const parts = active.path.split("/").filter(Boolean);
+    const rootName = active.root ? active.root.split("/").pop() : null;
+    
     return (
       <div className="editor-breadcrumbs">
+        {rootName && (
+          <React.Fragment>
+            <div className="breadcrumb-item root" title={active.root}>
+              <Folder size={12} className="text-muted" />
+              <span>{rootName}</span>
+            </div>
+            <span className="breadcrumb-separator"><ChevronRight size={10} /></span>
+          </React.Fragment>
+        )}
         {parts.map((part, i) => (
           <React.Fragment key={i}>
             {i > 0 && <span className="breadcrumb-separator"><ChevronRight size={10} /></span>}
@@ -229,19 +240,23 @@ export function EditorPane({ paneId = "pane-main" }: { paneId?: string }) {
         <div className="editor-tabs">
           {sortedTabs.map((f) => (
             <div
-              key={f.path}
+              key={`${f.root}:${f.path}`}
               className={`editor-tab ${f.path === activePath ? "active" : ""} ${f.isDirty ? "is-dirty" : ""} ${f.originalContent !== undefined ? "is-diff" : ""} ${f.isPreview ? "is-preview" : ""} ${f.isPinned ? "pinned" : ""}`}
               onClick={() => {
                 setPaneFile(paneId, f.path);
                 setActiveFile(f.path);
               }}
               onDoubleClick={() => {
-                useStore.getState().openFile(f.path, f.content, f.language, false);
+                useStore.getState().openFile(f.path, f.content, f.language, false, f.root);
               }}
               data-path={f.path}
+              data-root={f.root}
             >
               <FileCode size={13} className="editor-tab__icon" />
-              <span className="editor-tab__name">{f.path.split("/").pop()}</span>
+              <div className="editor-tab__label">
+                <span className="editor-tab__name">{f.path.split("/").pop()}</span>
+                {f.root && <span className="editor-tab__root">{f.root.split("/").pop()}</span>}
+              </div>
               {f.isPinned && <Pin size={10} className="pin-icon" />}
               {f.isDirty && !f.isPinned && <span className="dirty-dot" />}
               {!f.isPinned && (
@@ -448,7 +463,7 @@ export function EditorPane({ paneId = "pane-main" }: { paneId?: string }) {
                 const markers = monaco.editor.getModelMarkers({ resource: model.uri });
                 
                 // Sync with global store
-                setDiagnostics(active.path, markers.map((m: any) => ({
+                updateDiagnostics(active.path, markers.map((m: any) => ({
                   message: m.message,
                   severity: m.severity,
                   line: m.startLineNumber,

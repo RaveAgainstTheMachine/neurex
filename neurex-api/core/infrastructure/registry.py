@@ -9,6 +9,9 @@ Data Sources:
 from enum import Enum
 from typing import List, Dict, Optional, Any
 from pydantic import BaseModel
+import structlog
+
+log = structlog.get_logger()
 
 class ModelCapability(str, Enum):
     CODING      = "coding"
@@ -94,6 +97,6 @@ async def search_huggingface(query: str) -> List[Dict[str, Any]]:
                         })
                     return results
     except Exception as e:
-        print(f"HF Search Error: {e}")
+        log.error("hf_search_error", error=str(e))
     return []
 

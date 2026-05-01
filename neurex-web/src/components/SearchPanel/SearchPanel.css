@@ -264,3 +264,18 @@
   color: white;
   border-radius: 1px;
 }
+
+.file-info {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.root-tag {
+  color: var(--accent-primary);
+  font-size: 9px;
+  font-weight: bold;
+  opacity: 0.7;
+}

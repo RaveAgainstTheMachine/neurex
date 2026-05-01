@@ -9,6 +9,7 @@ Neurex is a high-performance, agentic IDE built for absolute technical precision
 - **[[Security-and-Auth]]**: Detailed guide on RBAC, Invite Codes, and JWT Hardening.
 - **[[Skill-System]]**: How to build and install MCP-compatible toolsets via Git.
 - **[[Hardware-Acceleration]]**: Configuring Metal (Apple), ROCm (AMD), and SYCL (Intel).
+- **Multi-Root Workspaces**: Parallel management of project folders with contextual terminals.
 - **[[API-Reference]]**: Documentation for the REST and WebSocket protocols.
 
 ## 协议 (Protocols)

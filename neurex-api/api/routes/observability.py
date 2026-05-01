@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from api.routes.auth import require_role, UserRole
 from core.observability.flight_recorder import get_flight_log
 
-router = APIRouter(prefix="/api/observability", tags=["observability"])
+router = APIRouter()
 
 @router.get("/trace/{conversation_id}")
 async def fetch_flight_trace(conversation_id: str):

@@ -70,6 +70,10 @@ dev-api:
 dev-web:
 	cd neurex-web && npm run dev
 
+## Run BOTH api and web locally (one-liner)
+dev:
+	(make dev-api & make dev-web)
+
 ## Install all Python deps locally
 install-api:
 	cd neurex-api && pip install -r requirements.txt

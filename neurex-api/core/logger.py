@@ -51,6 +51,6 @@ def get_audit_logs(limit=100):
                 except Exception as e:
                     continue
     except Exception as e:
-        print(f"Error reading logs: {e}")
+        logging.error(f"Error reading logs: {e}")
         
     return logs[::-1]

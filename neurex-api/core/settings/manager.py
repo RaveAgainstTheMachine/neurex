@@ -8,7 +8,6 @@ import json
 from pathlib import Path
 from typing import Dict, Any
 
-SETTINGS_FILE = Path(os.getenv("WORKSPACE_PATH", "/workspace")) / ".neurex" / "settings.json"
 
 DEFAULT_SETTINGS = {
     # Agent Behavior
@@ -70,13 +69,19 @@ class SettingsManager:
         self.settings = DEFAULT_SETTINGS.copy()
         self._load()
 
+    def _get_settings_path(self) -> Path:
+        from api.routes.files import get_workspace
+        return get_workspace() / ".neurex" / "settings.json"
+
     def _load(self):
-        SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
-        if SETTINGS_FILE.exists():
+        path = self._get_settings_path()
+        path.parent.mkdir(parents=True, exist_ok=True)
+        # Reset to defaults before loading new file
+        self.settings = DEFAULT_SETTINGS.copy()
+        if path.exists():
             try:
-                with open(SETTINGS_FILE, "r") as f:
+                with open(path, "r") as f:
                     data = json.load(f)
-                    # Merge with defaults to ensure new keys are populated
                     for k, v in data.items():
                         if k in self.settings:
                             self.settings[k] = v
@@ -85,8 +90,12 @@ class SettingsManager:
         self._save()
 
     def _save(self):
-        with open(SETTINGS_FILE, "w") as f:
+        path = self._get_settings_path()
+        with open(path, "w") as f:
             json.dump(self.settings, f, indent=2)
+
+    def reload(self):
+        self._load()
 
     def get_all(self) -> Dict[str, Any]:
         return self.settings

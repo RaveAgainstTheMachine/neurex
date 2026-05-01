@@ -16,14 +16,14 @@ interface StatusBarProps {
 export function StatusBar({ wsStatus, setPaletteMode, setSidebarTab, isAIActive }: StatusBarProps) {
   const { 
     hiveStats, diagnostics, gitBranch, gitChanges, 
-    cursorPosition, activeFileLanguage 
+    cursorPosition, activeFileLanguage, settings 
   } = useStore();
 
   const [showNotifications, setShowNotifications] = useState(false);
   const notificationCount = 0; // Mocked for now
 
   return (
-    <div className={`status-bar status-bar--${wsStatus}`}>
+    <div className={`status-bar status-bar--${wsStatus} ${settings?.enable_swarm_glow ? "status-bar--glow" : ""}`}>
       <div className="status-bar__left">
         <button className="status-segment status-segment--interactive" onClick={() => setSidebarTab("git")}>
           <GitGraph size={12} />

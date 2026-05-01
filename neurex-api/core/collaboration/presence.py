@@ -115,4 +115,9 @@ class PresenceManager:
         for dead in dead_connections:
             self.active_connections[conversation_id].discard(dead)
 
+    async def broadcast_global(self, message: Any):
+        """Send a message to all connected clients across all conversations."""
+        for conv_id in list(self.active_connections.keys()):
+            await self.broadcast(conv_id, message)
+
 presence_manager = PresenceManager()

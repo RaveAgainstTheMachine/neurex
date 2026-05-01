@@ -37,6 +37,7 @@ export interface FileNode {
   has_m?: boolean;
   has_u?: boolean;
   errors?: number;
+  isRoot?: boolean;
 }
 
 export interface ChatMessage {
@@ -49,6 +50,7 @@ export interface ChatMessage {
 
 export interface OpenFile {
   path: string;
+  root?: string;
   content: string;
   originalContent?: string;
   language: string;
@@ -82,8 +84,11 @@ export interface InfraEngine {
 
 export interface InfraMetrics {
   vram_gb: number;
+  ram_total_gb: number;
   ram_used_gb: number;
-  cpu_usage: number;
+  ram_available_gb: number;
+  ram_percent: number;
+  cpu_percent: number;
 }
 
 export interface MeshPeer {
@@ -118,6 +123,7 @@ export interface User {
 
 export interface SearchResult {
   path: string;
+  root?: string;
   line: number;
   content: string;
 }
@@ -144,6 +150,7 @@ export interface SearchState {
 export interface TerminalSession {
   id: string;
   name: string;
+  cwd?: string;
 }
 
 export interface NeurexStore {
@@ -189,13 +196,15 @@ export interface NeurexStore {
   gitBranch: string;
   gitChanges: any[];
   refreshGitStatus: () => Promise<void>;
+  workspaceFolders: string[];
+  addWorkspaceFolder: (path: string) => Promise<void>;
+  removeWorkspaceFolder: (path: string) => void;
   setWorkspace: (path: string) => Promise<void>;
   closeWorkspace: () => Promise<void>;
-  createFile: (path: string) => Promise<void>;
-  createFolder: (path: string) => Promise<void>;
+  createFile: (path: string, root_path?: string) => Promise<void>;
+  createFolder: (path: string, root_path?: string) => Promise<void>;
   collapseAllFolders: () => void;
-  setDiagnostics: (path: string, items: any[]) => void;
-  setWorkspaceDiagnostics: (path: string, diagnostics: Diagnostic[]) => void;
+  updateDiagnostics: (path: string, diagnostics: Diagnostic[]) => void;
 
   // Chat
   messages: ChatMessage[];
@@ -223,7 +232,7 @@ export interface NeurexStore {
   openFiles: OpenFile[];
   activeFile: string | null;
   activeFileLanguage: string;
-  openFile: (path: string, content: string, language: string, isPreview?: boolean) => void;
+  openFile: (path: string, content: string, language: string, isPreview?: boolean, root?: string) => void;
   closeFile: (path: string) => void;
   closeOthers: (path: string) => void;
   closeToRight: (path: string) => void;
@@ -242,10 +251,10 @@ export interface NeurexStore {
   discardDiff: (path: string) => void;
   saveFile: (path: string) => Promise<void>;
   diffFile: (path: string) => Promise<void>;
-  renameFile: (oldPath: string, newPath: string) => Promise<void>;
-  deleteFile: (path: string) => Promise<void>;
-  pendingJump: { path: string; line: number; timestamp: number } | null;
-  setPendingJump: (path: string, line: number) => void;
+  renameFile: (oldPath: string, newPath: string, root_path?: string) => Promise<void>;
+  deleteFile: (path: string, root_path?: string) => Promise<void>;
+  pendingJump: { path: string; line: number; timestamp: number; root?: string } | null;
+  setPendingJump: (path: string, line: number, root?: string) => void;
   clearPendingJump: () => void;
 
   // WS
@@ -264,7 +273,7 @@ export interface NeurexStore {
   // Terminal
   terminalSessions: TerminalSession[];
   activeTerminalId: string;
-  addTerminalSession: (name?: string) => void;
+  addTerminalSession: (name?: string, cwd?: string) => void;
   closeTerminalSession: (id: string) => void;
   setActiveTerminalId: (id: string) => void;
   clearActiveTerminal: () => void;

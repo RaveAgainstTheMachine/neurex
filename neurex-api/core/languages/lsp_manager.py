@@ -6,13 +6,69 @@ import logging
 import shutil
 from pathlib import Path
 from typing import Dict, List, Optional
-from core.logger import get_logger
+from core.logger import log as logger
 
-logger = get_logger("lsp_manager")
+
 
 # Path to workspace-local LSP binaries
+API_ROOT = Path(__file__).parent.parent.parent
+MANAGED_LSP_DIR = API_ROOT / ".neurex" / "bin" / "lsp"
 WORKSPACE_ROOT = Path(os.getenv("WORKSPACE_PATH", "."))
-MANAGED_LSP_DIR = WORKSPACE_ROOT / ".neurex" / "bin" / "lsp"
+
+class DiagnosticTracker:
+    def __init__(self):
+        # path -> list of diagnostics
+        self.diagnostics: Dict[str, List[Dict]] = {}
+
+    def update(self, uri: str, items: List[Dict]):
+        # Convert URI to relative path
+        from urllib.parse import unquote
+        path = unquote(uri.replace("file://", ""))
+        
+        try:
+            from api.routes.files import get_workspace
+            WORKSPACE = get_workspace()
+            abs_path = Path(path).resolve()
+            if str(abs_path).startswith(str(WORKSPACE)):
+                rel_path = str(abs_path.relative_to(WORKSPACE))
+                if rel_path == ".": rel_path = ""
+                path = rel_path
+        except:
+            pass
+        
+        if not items:
+            self.diagnostics.pop(path, None)
+        else:
+            self.diagnostics[path] = items
+
+        # Trigger global broadcast for UI refresh
+        from core.collaboration.presence import presence_manager
+        asyncio.create_task(presence_manager.broadcast_global({
+            "event": "diagnostics_updated",
+            "data": {"path": path, "diagnostics": items}
+        }))
+
+    def get_for_path(self, path: str) -> List[Dict]:
+        return self.diagnostics.get(path, [])
+
+    def get_count_for_prefix(self, prefix: str) -> int:
+        """Returns the total number of diagnostics for all paths starting with prefix."""
+        count = 0
+        # Ensure prefix ends with / unless empty
+        if prefix and not prefix.endswith("/"):
+            match_prefix = prefix + "/"
+        else:
+            match_prefix = prefix
+            
+        for path, items in self.diagnostics.items():
+            if path == prefix or path.startswith(match_prefix):
+                count += len(items)
+        return count
+
+    def get_all(self) -> Dict[str, List[Dict]]:
+        return self.diagnostics
+
+diagnostic_tracker = DiagnosticTracker()
 
 LSP_COMMANDS = {
     # Core & Systems
@@ -93,10 +149,10 @@ LSP_RECIPES = {
     "astro": "npm install @astrojs/language-server",
     "graphql": "npm install graphql-language-service-cli",
     "tailwindcss": "npm install @tailwindcss/language-server",
-    "terraform": "brew install hashicorp/tap/terraform-ls",
-    "markdown": "brew install marksman",
-    "lua": "brew install lua-language-server",
-    "zig": "brew install zls",
+    "terraform": "curl -L https://github.com/hashicorp/terraform-ls/releases/latest/download/terraform-ls_linux_amd64.zip -o terraform-ls.zip && unzip terraform-ls.zip",
+    "markdown": "curl -L https://github.com/artempyanykh/marksman/releases/latest/download/marksman-linux-x64 -o marksman && chmod +x marksman",
+    "lua": "npm install lua-language-server",
+    "zig": "curl -L https://github.com/zigtools/zls/releases/latest/download/zls-x86_64-linux.tar.xz | tar -xJ",
 }
 
 class LSPSession:
@@ -106,6 +162,54 @@ class LSPSession:
         self.process: Optional[asyncio.subprocess.Process] = None
         self.cmd = LSP_COMMANDS.get(lang)
         self._running = False
+        self._output_queue = asyncio.Queue()
+        self._reader_task: Optional[asyncio.Task] = None
+
+    async def _read_loop(self):
+        """Persistent background reader for LSP stdout with proper protocol parsing."""
+        if not self.process or not self.process.stdout:
+            return
+            
+        buffer = b""
+        try:
+            while self._running:
+                chunk = await self.process.stdout.read(65536)
+                if not chunk:
+                    break
+                
+                buffer += chunk
+                
+                # Push raw chunk to queue for any active websocket listeners
+                await self._output_queue.put(chunk)
+
+                # Process buffer for diagnostics
+                while b"Content-Length:" in buffer and b"\r\n\r\n" in buffer:
+                    try:
+                        header_start = buffer.find(b"Content-Length:")
+                        header_end = buffer.find(b"\r\n\r\n", header_start)
+                        if header_end == -1: break
+                        
+                        length_line = buffer[header_start:header_end].split(b"\r\n")[0]
+                        content_length = int(length_line.split(b":")[1].strip())
+                        
+                        body_start = header_end + 4
+                        if len(buffer) < body_start + content_length:
+                            break # Wait for more data
+                        
+                        body_raw = buffer[body_start : body_start + content_length]
+                        buffer = buffer[body_start + content_length:]
+                        
+                        self.handle_json(body_raw)
+                    except Exception as e:
+                        logger.error(f"LSP header parse error: {e}")
+                        # Move past current header to avoid stuck loop
+                        buffer = buffer[buffer.find(b"Content-Length:", 1):] if b"Content-Length:" in buffer[1:] else b""
+                        break
+
+        except Exception as e:
+            logger.error(f"LSP reader loop error for {self.lang}: {e}")
+        finally:
+            self._running = False
 
     async def start(self):
         if not self.cmd:
@@ -124,6 +228,8 @@ class LSPSession:
         except Exception as e:
             logger.error(f"Failed to start LSP for {self.lang}: {e}")
             raise
+        
+        self._reader_task = asyncio.create_task(self._read_loop())
 
     async def stop(self):
         if self.process:
@@ -138,51 +244,139 @@ class LSPSession:
             await self.process.stdin.drain()
 
     async def read_stdout(self, chunk_size: int = 4096) -> bytes:
-        if self.process and self.process.stdout:
-            return await self.process.stdout.read(chunk_size)
-        return b""
+        """Read from the pre-populated output queue (consumable by WebSocket)."""
+        try:
+            # We don't use chunk_size here as we return what's in the queue
+            return await self._output_queue.get()
+        except Exception:
+            return b""
+
+    def handle_json(self, body_raw: bytes):
+        """Parse LSP JSON messages for diagnostic tracking."""
+        try:
+            body = json.loads(body_raw.decode())
+            if body.get("method") == "textDocument/publishDiagnostics":
+                params = body.get("params", {})
+                uri = params.get("uri")
+                diagnostics = params.get("diagnostics", [])
+                if uri:
+                    diagnostic_tracker.update(uri, diagnostics)
+        except Exception as e:
+            logger.error(f"Failed to parse LSP JSON: {e}")
 
 import shutil
 
 class LSPManager:
     def __init__(self):
         self.sessions: Dict[str, LSPSession] = {}
+        self.failed_installs: set[str] = set()
+        self.installing_langs: set[str] = set()
+    def _find_executable(self, name: str) -> Optional[str]:
+        # Check managed dir first (both root and node_modules/.bin)
+        managed_root = str(MANAGED_LSP_DIR)
+        managed_bin = str(MANAGED_LSP_DIR / "node_modules" / ".bin")
+        
+        search_path = f"{managed_root}:{managed_bin}:{os.environ.get('PATH', '')}"
+        return shutil.which(name, path=search_path)
 
-    def _find_executable(self, cmd: str) -> Optional[str]:
-        # 1. Check managed directory first
-        managed_path = str(MANAGED_LSP_DIR / "node_modules" / ".bin")
-        managed_exe = shutil.which(cmd, path=f"{managed_path}:{os.getenv('PATH')}")
-        if managed_exe:
-            return managed_exe
+    async def initialize_workspace(self, workspace_path: str):
+        """Scans workspace for extensions and starts LSPs for found languages."""
+        logger.info("lsp.initialize_workspace", workspace_path=workspace_path)
+        root = Path(workspace_path)
+        if not root.exists(): 
+            logger.warning("lsp.workspace_missing", workspace_path=workspace_path)
+            return
+        
+        found_langs = set()
+        ext_map = {
+            ".py": "python",
+            ".ts": "typescript",
+            ".tsx": "typescript",
+            ".js": "javascript",
+            ".jsx": "javascript",
+            ".rs": "rust",
+            ".go": "go",
+            ".c": "c",
+            ".cpp": "cpp"
+        }
+        
+        # Efficient scan with depth limit
+        IGNORED = {".git", "node_modules", "__pycache__", ".neurex_trash", "venv", ".venv"}
+        try:
+            def scan_dir(path: Path, depth: int):
+                if depth <= 0: return
+                try:
+                    for item in path.iterdir():
+                        if item.is_dir():
+                            if item.name not in IGNORED:
+                                scan_dir(item, depth - 1)
+                        elif item.suffix in ext_map:
+                            found_langs.add(ext_map[item.suffix])
+                        if len(found_langs) > 5: break
+                except: pass
             
-        # 2. Check system path
-        return shutil.which(cmd)
+            scan_dir(root, 3)
+            supported = self.get_supported_languages()
+            logger.info("lsp.scan_results", found=list(found_langs), supported=supported)
+        except Exception as e: 
+            logger.error(f"workspace_init_scan_error: {e}")
+            pass
+        
+        for lang in found_langs:
+            if lang in self.failed_installs:
+                continue
+            if lang in self.get_supported_languages():
+                logger.info(f"auto_starting_lsp: {lang} for workspace {workspace_path}")
+                try:
+                    await self.get_session(lang, workspace_path)
+                except: pass
+            elif lang in LSP_RECIPES:
+                # Autopilot: Auto-install if recipe exists but binary not found
+                logger.info(f"autopilot_installing_lsp: {lang} for workspace {workspace_path}")
+                try:
+                    await self.install_lsp(lang)
+                    # Try starting after install
+                    if lang in self.get_supported_languages():
+                        await self.get_session(lang, workspace_path)
+                except Exception as e:
+                    logger.error(f"autopilot_install_failed: {lang}, {e}")
 
     async def install_lsp(self, lang: str):
+        if lang in self.installing_langs:
+            logger.info(f"lsp_install_already_in_progress: {lang}")
+            return
+            
         if lang not in LSP_RECIPES:
             raise ValueError(f"No installation recipe for {lang}")
             
+        self.installing_langs.add(lang)
         recipe = LSP_RECIPES[lang]
         MANAGED_LSP_DIR.mkdir(parents=True, exist_ok=True)
         
         logger.info(f"installing_lsp: {lang} with recipe: {recipe}")
         
-        # Run installation in managed directory
-        process = await asyncio.create_subprocess_shell(
-            recipe,
-            cwd=str(MANAGED_LSP_DIR),
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        )
-        
-        stdout, stderr = await process.communicate()
-        
-        if process.returncode == 0:
-            logger.info(f"lsp_installed_successfully: {lang}")
-            return True
-        else:
-            logger.error(f"lsp_installation_failed: {lang}, error={stderr.decode()}")
-            raise Exception(f"Installation failed: {stderr.decode()}")
+        try:
+            # Run installation in managed directory
+            process = await asyncio.create_subprocess_shell(
+                recipe,
+                cwd=str(MANAGED_LSP_DIR),
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            
+            stdout, stderr = await process.communicate()
+            
+            if process.returncode == 0:
+                logger.info(f"lsp_installed_successfully: {lang}")
+                if lang in self.failed_installs:
+                    self.failed_installs.remove(lang)
+                return True
+            else:
+                self.failed_installs.add(lang)
+                logger.error(f"lsp_installation_failed: {lang}, error={stderr.decode()}")
+                raise Exception(f"Installation failed: {stderr.decode()}")
+        finally:
+            self.installing_langs.discard(lang)
 
     def get_supported_languages(self) -> List[str]:
         supported = []
@@ -191,22 +385,47 @@ class LSPManager:
                 supported.append(lang)
         return supported
 
+    def _find_project_root(self, start_path: Path) -> Path:
+        """Find the nearest directory containing a .git folder or common project markers."""
+        curr = start_path.resolve()
+        while curr != curr.parent:
+            # Check for git or common project markers
+            if (curr / ".git").is_dir() or (curr / "pyproject.toml").exists() or (curr / "package.json").exists():
+                return curr
+            curr = curr.parent
+        
+        # If not found in parent, check if there is a project root in a direct subdirectory
+        for item in start_path.iterdir():
+            if item.is_dir() and ((item / ".git").is_dir() or (item / "pyproject.toml").exists()):
+                return item
+                
+        return start_path
+
     async def get_session(self, lang: str, workspace_path: str) -> LSPSession:
-        session_key = f"{lang}:{workspace_path}"
+        # Adjust workspace_path to the nearest project root
+        actual_root = self._find_project_root(Path(workspace_path))
+        root_str = str(actual_root)
+        
+        session_key = f"{lang}:{root_str}"
         if session_key not in self.sessions:
             # Check for custom override in .neurex/lsp.json
-            custom_config = self._load_custom_config()
+            custom_config = self._load_custom_config(actual_root)
             if lang in custom_config:
                 LSP_COMMANDS[lang] = custom_config[lang]
             elif lang not in LSP_COMMANDS:
-                # Try to guess the command
                 guessed = self._guess_lsp_command(lang)
                 if guessed:
                     LSP_COMMANDS[lang] = guessed
                 else:
                     raise ValueError(f"No LSP command found for {lang}")
-                
-            session = LSPSession(lang, workspace_path)
+
+            # Resolve full path for the command
+            cmd = LSP_COMMANDS[lang]
+            exe_path = self._find_executable(cmd[0])
+            if exe_path:
+                cmd[0] = exe_path
+            
+            session = LSPSession(lang, root_str)
             await session.start()
             self.sessions[session_key] = session
         return self.sessions[session_key]
@@ -228,8 +447,8 @@ class LSPManager:
                 return [p, "--stdio"]
         return None
 
-    def _load_custom_config(self) -> Dict:
-        config_path = WORKSPACE_ROOT / ".neurex" / "lsp.json"
+    def _load_custom_config(self, root: Path) -> Dict:
+        config_path = root / ".neurex" / "lsp.json"
         if config_path.exists():
             try:
                 with open(config_path, "r") as f:

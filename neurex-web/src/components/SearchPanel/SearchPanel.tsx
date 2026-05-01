@@ -26,6 +26,7 @@ interface SearchResult {
   path: string;
   line: number;
   content: string;
+  root?: string;
 }
 
 export function SearchPanel({ onExpand }: { onExpand?: (s: number) => void }) {
@@ -40,7 +41,7 @@ export function SearchPanel({ onExpand }: { onExpand?: (s: number) => void }) {
   const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>({});
   const [showDetails, setShowDetails] = useState(false);
 
-  const { openFile, setPendingJump, token } = useStore();
+  const { openFile, setPendingJump, token, workspaceFolders } = useStore();
 
   useEffect(() => {
     if (searchState.results.length > 0 && onExpand) {
@@ -54,26 +55,38 @@ export function SearchPanel({ onExpand }: { onExpand?: (s: number) => void }) {
 
     setSearching(true);
     try {
-      const params = new URLSearchParams({
-        query: searchState.query,
-        case_sensitive: searchState.caseSensitive.toString(),
-        use_regex: searchState.useRegex.toString(),
-        whole_word: searchState.wholeWord.toString(),
-        include_glob: searchState.includeGlob,
-        exclude_glob: searchState.excludeGlob,
-      });
+      const folders = workspaceFolders.length > 0 ? workspaceFolders : [""];
       
-      const res = await fetch(`${API_BASE}/api/files/search?${params.toString()}`, {
-        headers: { "Authorization": `Bearer ${token}` }
+      const searchTasks = folders.map(async (folder) => {
+        const params = new URLSearchParams({
+          query: searchState.query,
+          case_sensitive: searchState.caseSensitive.toString(),
+          use_regex: searchState.useRegex.toString(),
+          whole_word: searchState.wholeWord.toString(),
+          include_glob: searchState.includeGlob,
+          exclude_glob: searchState.excludeGlob,
+          root_path: folder
+        });
+        
+        const res = await fetch(`${API_BASE}/api/files/search?${params.toString()}`, {
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        return res.json();
       });
-      const data = await res.json();
-      setSearch({ results: Array.isArray(data) ? data : [] });
+
+      const resultsArray = await Promise.all(searchTasks);
+      const flattenedResults = resultsArray.flatMap((data, i) => 
+        (Array.isArray(data) ? data : []).map((r: any) => ({ ...r, root: folders[i] }))
+      ).filter(r => r && r.path);
+      
+      setSearch({ results: flattenedResults });
       
       const nextExpanded: Record<string, boolean> = {};
-      (Array.isArray(data) ? data : []).forEach(r => { nextExpanded[r.path] = true; });
+      flattenedResults.forEach(r => { nextExpanded[r.path] = true; });
       setExpandedFiles(nextExpanded);
     } catch (err) {
       console.error("Search failed", err);
+      toast.error("Search failed");
     } finally {
       setSearching(false);
     }
@@ -83,42 +96,61 @@ export function SearchPanel({ onExpand }: { onExpand?: (s: number) => void }) {
     if (!searchState.query || replacing) return;
     setReplacing(true);
     try {
-      const res = await fetch(`${API_BASE}/api/files/replace-all`, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          query: searchState.query,
-          replacement: replaceQuery,
-          case_sensitive: searchState.caseSensitive,
-          use_regex: searchState.useRegex,
-          whole_word: searchState.wholeWord,
-          include_glob: searchState.includeGlob,
-          exclude_glob: searchState.excludeGlob,
-        })
+      const folders = workspaceFolders.length > 0 ? workspaceFolders : [""];
+      
+      const replaceTasks = folders.map(async (folder) => {
+        const res = await fetch(`${API_BASE}/api/files/replace-all`, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            query: searchState.query,
+            replacement: replaceQuery,
+            case_sensitive: searchState.caseSensitive,
+            use_regex: searchState.useRegex,
+            whole_word: searchState.wholeWord,
+            include_glob: searchState.includeGlob,
+            exclude_glob: searchState.excludeGlob,
+            root_path: folder
+          })
+        });
+        return res.json();
       });
-      if (res.ok) {
-        toast.success("Replaced all occurrences");
+
+      const results = await Promise.all(replaceTasks);
+      let totalReplaced = 0;
+      results.forEach(data => {
+        if (data.status === "ok") {
+          totalReplaced += data.replaced_count || 0;
+        }
+      });
+
+      if (totalReplaced > 0) {
+        toast.success(`Replaced ${totalReplaced} occurrences across all folders`);
         handleSearch();
+      } else {
+        toast.error("No occurrences replaced");
       }
     } catch (err) {
       console.error("Replace failed", err);
+      toast.error("Replace failed");
     } finally {
       setReplacing(false);
     }
   };
 
-  const handleOpenResult = async (path: string, line: number) => {
+  const handleOpenResult = async (path: string, line: number, root: string = "") => {
     try {
-      const r = await fetch(`${API_BASE}/api/files/read?path=${encodeURIComponent(path)}`, {
+      const params = new URLSearchParams({ path, root_path: root });
+      const r = await fetch(`${API_BASE}/api/files/read?${params.toString()}`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (!r.ok) throw new Error("Failed to read");
       const data = await r.json();
-      openFile(path, data.content ?? "", getLanguage(path), true);
-      setPendingJump(path, line);
+      openFile(path, data.content ?? "", getLanguage(path), true, root);
+      setPendingJump(path, line, root);
     } catch (err) {
       toast.error("Failed to open file");
     }
@@ -127,8 +159,9 @@ export function SearchPanel({ onExpand }: { onExpand?: (s: number) => void }) {
   const groupedResults = useMemo(() => {
     const groups: Record<string, SearchResult[]> = {};
     searchState.results.forEach(res => {
-      if (!groups[res.path]) groups[res.path] = [];
-      groups[res.path].push(res);
+      const key = res.root ? `${res.root}:${res.path}` : res.path;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(res);
     });
     return groups;
   }, [searchState.results]);
@@ -263,29 +296,39 @@ export function SearchPanel({ onExpand }: { onExpand?: (s: number) => void }) {
           </div>
         )}
 
-        {Object.entries(groupedResults).map(([path, matches]) => (
-          <div key={path} className="search-result-group">
-            <div className="search-result-file" onClick={() => setExpandedFiles(prev => ({ ...prev, [path]: !prev[path] }))}>
-              {expandedFiles[path] ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-              <FileText size={14} className="file-icon" />
-              <span className="file-name">{path.split('/').pop()}</span>
-              <span className="file-path">{path.substring(0, path.lastIndexOf('/'))}</span>
-              <span className="match-count">{matches.length}</span>
-            </div>
-            {expandedFiles[path] && (
-              <div className="search-result-matches">
-                {matches.map((match, idx) => (
-                  <div key={idx} className="search-match" onClick={() => handleOpenResult(path, match.line)}>
-                    <span className="match-line">{match.line}</span>
-                    <span className="match-content">
-                      {renderContentWithHighlights(match.content, searchState.query)}
-                    </span>
-                  </div>
-                ))}
+        {Object.entries(groupedResults).map(([key, matches]) => {
+          const first = matches[0];
+          const path = first.path;
+          const root = first.root;
+          const displayPath = path.includes('/') ? path.substring(0, path.lastIndexOf('/')) : "";
+          const rootName = root ? root.split('/').pop() : null;
+
+          return (
+            <div key={key} className="search-result-group">
+              <div className="search-result-file" onClick={() => setExpandedFiles(prev => ({ ...prev, [key]: !prev[key] }))}>
+                {expandedFiles[key] ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                <FileText size={14} className="file-icon" />
+                <div className="file-info">
+                  <span className="file-name">{path.split('/').pop()}</span>
+                  <span className="file-path">{displayPath} {rootName && <span className="root-tag">[{rootName}]</span>}</span>
+                </div>
+                <span className="match-count">{matches.length}</span>
               </div>
-            )}
-          </div>
-        ))}
+              {expandedFiles[key] && (
+                <div className="search-result-matches">
+                  {matches.map((match: any, idx) => (
+                    <div key={idx} className="search-match" onClick={() => handleOpenResult(path, match.line, match.root)}>
+                      <span className="match-line">{match.line}</span>
+                      <span className="match-content">
+                        {renderContentWithHighlights(match.content, searchState.query)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

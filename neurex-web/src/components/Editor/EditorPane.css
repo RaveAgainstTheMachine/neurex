@@ -399,3 +399,23 @@
   font-style: italic;
   opacity: 0.8;
 }
+
+.editor-tab__label {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.editor-tab__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.editor-tab__root {
+  font-size: 9px;
+  opacity: 0.4;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: -2px;
+}

@@ -28,9 +28,15 @@ export function MenuBar() {
   const { 
     logout, saveFile, activeFile, setTheme, theme, 
     addTerminalSession, closeTerminalSession, activeTerminalId, 
-    clearActiveTerminal, runActiveFile, setModalOpen, refreshFileTree 
+    clearActiveTerminal, runActiveFile, setModalOpen, refreshFileTree,
+    addWorkspaceFolder, closeWorkspace
   } = useStore();
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const handleAddFolder = () => {
+    const path = prompt("Enter folder path to add to workspace:");
+    if (path) addWorkspaceFolder(path);
+  };
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -48,9 +54,12 @@ export function MenuBar() {
       options: [
         { label: "New Text File", shortcut: "Ctrl+N" },
         { label: "Open File...", shortcut: "Ctrl+O" },
+        { label: "Add Folder to Workspace...", action: handleAddFolder },
         { separator: true },
         { label: "Save", shortcut: "Ctrl+S", action: () => activeFile && saveFile(activeFile) },
         { label: "Save All", shortcut: "Ctrl+K S" },
+        { separator: true },
+        { label: "Close Workspace", action: closeWorkspace },
         { separator: true },
         { label: "Refresh Explorer", action: refreshFileTree },
         { separator: true },
@@ -116,7 +125,10 @@ export function MenuBar() {
     {
       title: "Terminal",
       options: [
-        { label: "New Terminal", shortcut: "Ctrl+Shift+`", action: () => addTerminalSession() },
+        { label: "New Terminal", shortcut: "Ctrl+Shift+`", action: () => {
+          const active = useStore.getState().openFiles.find(f => f.path === useStore.getState().activeFile);
+          addTerminalSession(undefined, active?.root);
+        } },
         { label: "Split Terminal", shortcut: "Ctrl+Shift+5" },
         { separator: true },
         { label: "Clear Terminal", shortcut: "Ctrl+L", action: clearActiveTerminal },

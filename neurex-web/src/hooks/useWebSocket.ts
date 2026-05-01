@@ -44,9 +44,10 @@ export function useWebSocket(conversationId: string) {
       const url = `${WS_BASE}/ws/${conversationId}?token=${token}&user_id=${userId}`;
       socket = new WebSocket(url);
       ws.current = socket;
-      (window as any).neurexWS = { send, sendPresence };
-      
       state.setWsStatus("connecting");
+      
+      // Wire up the store's send method
+      useStore.setState({ send });
 
       socket.onopen = () => {
         state.setWsStatus("connected");
@@ -106,7 +107,7 @@ export function useWebSocket(conversationId: string) {
               break;
             case "diagnostics_updated":
               if (data.path && data.diagnostics) {
-                s.setWorkspaceDiagnostics(data.path, data.diagnostics);
+                s.updateDiagnostics(data.path, data.diagnostics);
               }
               // Skip refresh if we just saved locally (likely our own change)
               if (Date.now() - s.lastLocalSave < 3000) break;

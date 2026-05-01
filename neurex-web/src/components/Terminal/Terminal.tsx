@@ -124,18 +124,26 @@ export function Terminal({ sessionId, onInput, onResize, isActive }: TerminalPro
       scrollback: 5000,
       theme: {
         background: "transparent",
-        foreground: "#e8e8f0",
-        cursor: useStore.getState().theme.accent_color || "hsl(260, 90%, 70%)",
+        foreground: "#cccccc",
+        cursor: useStore.getState().theme.accent_color || "#9c6fff",
         cursorAccent: "#050507",
-        selectionBackground: `${useStore.getState().theme.accent_color || "hsl(260, 90%, 70%)"}44`,
-        black: "#0d0d0f",
-        red: "hsl(0, 85%, 65%)",
-        green: "hsl(145, 80%, 50%)",
-        yellow: "hsl(45, 95%, 60%)",
-        blue: "hsl(215, 100%, 65%)",
-        magenta: useStore.getState().theme.accent_color || "hsl(260, 90%, 70%)",
-        cyan: "hsl(185, 85%, 55%)",
-        white: "#e8e8f0",
+        selectionBackground: `${useStore.getState().theme.accent_color || "#9c6fff"}44`,
+        black: "#000000",
+        red: "#cd3131",
+        green: "#0dbc79",
+        yellow: "#e5e510",
+        blue: "#2472c8",
+        magenta: "#bc3fbc",
+        cyan: "#11a8cd",
+        white: "#e5e5e5",
+        brightBlack: "#666666",
+        brightRed: "#f14c4c",
+        brightGreen: "#23d18b",
+        brightYellow: "#f5f543",
+        brightBlue: "#3b8eea",
+        brightMagenta: "#d670d6",
+        brightCyan: "#29b8db",
+        brightWhite: "#e5e5e5",
       },
       fontFamily: theme.terminal_font_family,
       fontSize: theme.terminal_font_size,
@@ -191,9 +199,9 @@ export function Terminal({ sessionId, onInput, onResize, isActive }: TerminalPro
     }
 
     term.onData((data) => {
-      const ws = (window as any).neurexWS;
-      if (ws && ws.send) {
-        ws.send({ type: "terminal_input", sessionId, data });
+      const send = useStore.getState().send;
+      if (send) {
+        send({ type: "terminal_input", sessionId, data });
       } else {
         onInputRef.current(data);
       }
@@ -207,9 +215,10 @@ export function Terminal({ sessionId, onInput, onResize, isActive }: TerminalPro
       doFit();
       xtermRef.current.refresh(0, xtermRef.current.rows - 1);
       
-      const ws = (window as any).neurexWS;
-      if (ws && ws.send) {
-        ws.send({ type: "terminal_sync", sessionId });
+      const send = useStore.getState().send;
+      if (send) {
+        const session = useStore.getState().terminalSessions.find(s => s.id === sessionId);
+        send({ type: "terminal_sync", sessionId, cwd: session?.cwd });
       }
     }, 150);
 

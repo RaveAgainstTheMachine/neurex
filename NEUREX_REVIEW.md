@@ -71,6 +71,29 @@ While the architecture is incredibly sound, I have identified a few areas that r
         *   **Neural Lens UI**: Developed a high-fidelity visual layer for inline diagnostics ("Error Lens") and git authorship ("GitLens") using Monaco delta decorations and group-aware markers.
         *   **Distributed Discovery**: Implemented system-wide PATH scanning to automatically detect and utilize existing language servers (Pyright, Clangd, Rust-Analyzer, etc.) without user configuration.
 
+8.  **Multi-Folder Workspace Architecture (Phase 14 Milestone)**:
+    *   *Status*: **RESOLVED** (v0.1.8-stable).
+    *   *Implementation*:
+        *   **Root-Aware Contextualization**: Re-architected the entire filesystem interaction layer to support multiple project roots. All operations (read, save, search, delete) are now scoped to specific workspace folders using a validated `root_path`.
+        *   **Contextual PTY Anchoring**: Synchronized terminal session spawning with the active file context, enabling automatic directory anchoring (`cwd`) for shells based on the currently viewed project.
+        *   **Unified UI Orientation**: Enhanced the Editor, Search Panel, and Breadcrumb components with dynamic root tagging, providing clear visual orientation in multi-project environments.
+
+9.  **LSP Stability & API Parity (Phase 15 Milestone)**:
+    *   *Status*: **RESOLVED** (v0.1.9-stable).
+    *   *Implementation*:
+        *   **Installation Circuit-Breaker**: Implemented a `failed_installs` registry and an `installing_langs` lock in `LSPManager` to terminate infinite retry loops and redundant parallel installations.
+        *   **Binary Discovery Correction**: Fixed `_find_executable` to correctly scan the `MANAGED_LSP_DIR` for standalone binaries (e.g., `marksman`), ensuring the system recognizes newly installed LSPs immediately.
+        *   **Linux-Native Recipes**: Transitioned brittle `brew` installation recipes to robust, architecture-aware `curl` and `npm` commands for generic Linux environments.
+        *   **API Alignment**: Synchronized the backend `InfrastructureManager` with the frontend store's data expectations, resolving 404 errors by exposing explicit `engines`, `metrics`, and `peers` endpoints.
+
+10. **Graceful Resizing & Layout Persistence (Phase 16 Milestone)**:
+    *   *Status*: **RESOLVED** (v0.2.0-stable).
+    *   *Implementation*:
+        *   **Persistent Panel Layouts**: Integrated `localStorage` storage for all `PanelGroup` components, ensuring that sidebar widths, terminal heights, and AI panel dimensions are preserved across browser sessions.
+        *   **Advanced Panel Controls**: Enhanced the `BottomPanel` with professional IDE features, including a **Maximize** toggle (80%+ height) and a **Collapsible** state for immediate workspace decluttering.
+        *   **Global Layout Ref API**: Exposed panel control refs to the global namespace, enabling seamless inter-component layout mutations (e.g., the Status Bar or Breadcrumbs triggering panel visibility).
+        *   **Optimized Terminal Reflow**: Hardened the `ResizeObserver` loop in the `Terminal` component with `requestAnimationFrame` debouncing, ensuring that the xterm.js grid remains perfectly synchronized with its container during active drags.
+
 ---
 
 ## 4. Strategic Recommendations for Next Deployment

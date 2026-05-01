@@ -10,6 +10,7 @@ Neurex is built as a distributed Master-Worker system composed of a centralized 
 - **ChromaDB**: Vector database for semantic memory and codebase indexing.
 - **llama-rpc-server**: Low-level distributed tensor pooling for cross-node inference.
 - **MemoryWorker**: Background process for real-time filesystem indexing.
+- **Multi-Root Workspace Engine**: A root-aware filesystem abstraction layer that enables parallel project management within a single IDE session.
 
 ### 1.2 Data Flow: Distributed Inference
 1.  **Request**: The `Orchestrator` requests a token completion.
@@ -147,6 +148,24 @@ Real-time state is synchronized across the mesh via WebSockets:
 - **Presence Bar**: Displays active users and agent personas in the current session.
 - **Visual Locking**: The File Explorer renders pulsing lock badges for files currently being mutated by the swarm.
 - **Shared Scratchpad**: A collective in-memory buffer allowing agents to pass technical "gotchas" and findings to their swarm siblings.
+
+## 11. Multi-Root Workspace Model
+
+Neurex supports enterprise-grade multi-project management through a root-aware architecture.
+
+### 11.1 Root-Scoped File Operations
+All file system API endpoints are "root-aware." When a workspace contains multiple folders, operations (Read, Save, Search, Delete, Rename) include a `root_path` parameter. The backend validates paths against their specific project root using strict resolution checks, preventing cross-root traversal.
+
+### 11.2 Contextual Terminal Management
+Integrated terminals in Neurex are anchored to specific project contexts. 
+- **Anchoring**: When a new terminal is spawned, it interrogates the IDE's active state to determine the current file's root.
+- **PTY Spawning**: The `PTYManager` initializes the shell process with the identified `cwd` (current working directory), ensuring that `git` commands and build scripts run in the correct project environment.
+
+### 11.3 State Synchronization & UI Context
+The frontend `NeurexStore` tracks the source root for every asset:
+- **Tabs**: Editor tabs use `${root}:${path}` identifiers to support duplicate filenames across different projects.
+- **Navigation**: Breadcrumbs are prefixed with the workspace root name to provide instant spatial orientation.
+- **Presence**: User and agent presence are scoped to the active project root, allowing for focused collaboration.
 ## 10. Language Intelligence & LSP Hub
 
 Neurex implements a high-performance, native LSP Hub that provides IDE-grade intelligence without the overhead of external plugins.

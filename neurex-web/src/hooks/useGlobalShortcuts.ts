@@ -47,6 +47,17 @@ export function useGlobalShortcuts({ setPaletteMode, setSidebarTab, setShowAIPan
         e.preventDefault();
         clearActiveTerminal();
       }
+      // Pin/Unpin Tab
+      if (e.altKey && e.key === "p") {
+        e.preventDefault();
+        if (activeFile) useStore.getState().togglePin(activeFile);
+      }
+      // Go to File (Quick Open)
+      if ((e.metaKey || e.ctrlKey) && e.key === "p" && !e.shiftKey && !e.altKey) {
+        e.preventDefault();
+        // Trigger global search or a specific quick-open event
+        window.dispatchEvent(new CustomEvent('open_quick_open'));
+      }
       // Toggle AI Panel
       if ((e.metaKey || e.ctrlKey) && e.key === "L") {
         e.preventDefault();

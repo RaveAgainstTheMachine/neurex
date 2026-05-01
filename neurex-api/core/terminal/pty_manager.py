@@ -16,10 +16,10 @@ class PTYManager:
     def __init__(self):
         self.sessions: Dict[str, PTYSession] = {}
 
-    def get_or_create_session(self, session_id: str, on_output: Optional[Callable[[str], None]] = None) -> PTYSession:
+    def get_or_create_session(self, session_id: str, on_output: Optional[Callable[[str], None]] = None, cwd: Optional[str] = None) -> PTYSession:
         if session_id not in self.sessions:
-            log.info("pty.create_session", session_id=session_id)
-            session = PTYSession(session_id)
+            log.info("pty.create_session", session_id=session_id, cwd=cwd)
+            session = PTYSession(session_id, cwd=cwd)
             self.sessions[session_id] = session
             session.start()
         
@@ -42,12 +42,18 @@ class PTYManager:
             del self.sessions[session_id]
 
 class PTYSession:
-    def __init__(self, session_id: str):
+    def __init__(self, session_id: str, cwd: Optional[str] = None):
         self.session_id = session_id
         self.listeners: set[Callable[[str], None]] = set()
         self.proc: Optional[PtyProcessUnicode] = None
         self.task: Optional[asyncio.Task] = None
-        self.workspace = os.getenv("WORKSPACE_PATH", os.getcwd())
+        requested_workspace = cwd or os.getenv("WORKSPACE_PATH")
+        if requested_workspace and os.path.exists(requested_workspace):
+            self.workspace = requested_workspace
+        else:
+            self.workspace = os.getenv("WORKSPACE_PATH", os.getcwd())
+            if requested_workspace:
+                log.warning("pty.invalid_cwd", session=session_id, requested=requested_workspace, falling_back=self.workspace)
         self.history = ""
         self.max_history = 50000 # Keep last 50k chars
 
