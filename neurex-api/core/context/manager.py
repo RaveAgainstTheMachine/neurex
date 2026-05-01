@@ -7,6 +7,7 @@ from __future__ import annotations
 import asyncio
 import os
 import structlog
+from core.context.neural_explorer import NeuralExplorer
 
 log = structlog.get_logger()
 
@@ -28,6 +29,7 @@ class ContextManager:
         self._reranker = None
         self._enc = None
         self._available = False
+        self.explorer = NeuralExplorer(self)
 
         try:
             import tiktoken

@@ -92,15 +92,16 @@ class BaseAgent(ABC):
         return "\n".join(parts)
 
     async def rag_context(self, query: str, n: int = 5) -> str:
-        """Retrieve relevant code chunks from ChromaDB."""
-        chunks = await self.ctx.retrieve(query, n_results=n)
+        """Retrieve relevant code chunks via Neural RAG 2.0 (Hybrid Search)."""
+        # Phase 25: Using NeuralExplorer for AST-aware hybrid retrieval
+        chunks = await self.ctx.explorer.hybrid_search(query, limit=n)
         if not chunks:
             return ""
         formatted = "\n\n".join(
             f"# {c['metadata'].get('file', 'unknown')} (line {c['metadata'].get('start_line', '?')})\n{c['document']}"
             for c in chunks
         )
-        # Apply Neural Compression
+        # Apply Neural Compression (Phase 22)
         compressed = await self.compressor.compress_context(formatted)
         return f"<codebase_context>\n{compressed}\n</codebase_context>"
 
