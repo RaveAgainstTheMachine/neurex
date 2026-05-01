@@ -255,6 +255,11 @@ class MeshRouter:
             tasks = [self.check_health(url) for url in self.peers.keys()]
             if tasks:
                 await asyncio.gather(*tasks)
+            
+            # Phase 47: Sync Virtual VRAM Pool
+            from core.infrastructure.vram_pool import vram_pool
+            await vram_pool.synchronize_mesh_resources()
+            
             await asyncio.sleep(interval_seconds)
 
 mesh_router = MeshRouter()
