@@ -231,11 +231,18 @@ export function FileExplorer() {
     setSections(s => ({ ...s, [key]: newVal }));
     
     if (key === 'open' && openEditorsRef.current) {
-      newVal ? openEditorsRef.current.resize(15) : openEditorsRef.current.resize(4);
+      newVal ? openEditorsRef.current.resize(10) : openEditorsRef.current.resize(4);
     } else if (key === 'workspace' && explorerRef.current) {
-      newVal ? explorerRef.current.resize(70) : explorerRef.current.resize(10);
+      newVal ? explorerRef.current.resize(80) : explorerRef.current.resize(10);
     } else if (key === 'outline' && outlineRef.current) {
-      newVal ? outlineRef.current.resize(15) : outlineRef.current.resize(4);
+      if (newVal) {
+        outlineRef.current.resize(20);
+        // Shrink explorer to make room
+        if (explorerRef.current) explorerRef.current.resize(70);
+      } else {
+        outlineRef.current.resize(4);
+        if (explorerRef.current) explorerRef.current.resize(90);
+      }
     }
   };
 
@@ -271,7 +278,7 @@ export function FileExplorer() {
         {/* ── Explorer ──────────────────────────────────────────────────── */}
         <Panel 
           ref={explorerRef}
-          defaultSize={70} 
+          defaultSize={90} 
           minSize={10} 
           className="sidebar-section"
         >
