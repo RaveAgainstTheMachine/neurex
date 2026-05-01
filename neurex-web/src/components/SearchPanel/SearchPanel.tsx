@@ -41,7 +41,11 @@ export function SearchPanel({ onExpand }: { onExpand?: (s: number) => void }) {
   const [expandedFiles, setExpandedFiles] = useState<Record<string, boolean>>({});
   const [showDetails, setShowDetails] = useState(false);
 
-  const { openFile, setPendingJump, token, workspaceFolders } = useStore();
+  // Phase 44.23: Strict State Selection (Prevent Search churn)
+  const openFile = useStore(s => s.openFile);
+  const setPendingJump = useStore(s => s.setPendingJump);
+  const token = useStore(s => s.token);
+  const workspaceFolders = useStore(s => s.workspaceFolders);
 
   useEffect(() => {
     if (searchState.results.length > 0 && onExpand) {
