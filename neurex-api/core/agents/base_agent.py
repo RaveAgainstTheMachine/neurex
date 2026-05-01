@@ -86,7 +86,13 @@ class BaseAgent(ABC):
         except Exception:
             pass
             
-        parts.append("\n- SCRATCHPAD RULE: Use `set_scratchpad` to store critical findings for sibling agents.")
+        # 4. Swarm Collective Intelligence Injection (Phase 49)
+        from core.infrastructure.knowledge_base import swarm_kb
+        domain = "generic-coding" # Default domain
+        lessons = swarm_kb.query_lessons(domain)
+        if lessons:
+            best_lessons = "\n".join([f"- {l.pattern_id} (Fitness: {l.success_delta})" for l in lessons[:3]])
+            parts.append(f"\n\n<global_collective_intelligence>\nDomain: {domain}\nTop Patterns:\n{best_lessons}\n</global_collective_intelligence>")
 
         if extra:
             parts.append(f"\n\n{extra}")
