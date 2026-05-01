@@ -25,6 +25,10 @@ All notable changes to the Neurex project will be documented in this file.
     - **Token-Streaming Buffering (Frontend)**: Implemented 40ms buffering in the WebSocket hook to aggregate incoming LLM tokens, reducing store update frequency and relieving main-thread pressure during high-speed reasoning bursts.
     - **Memoized Component Rendering**: Integrated `React.memo` for high-frequency list items in the `FlightRecorder` (Traces) and `AIPanel` (TaskCards), ensuring DOM updates are isolated and efficient.
     - **O(1) Explorer Aggregation**: Replaced recursive tree-walks in the `FileExplorer` with shallow status lookups, ensuring consistent performance even in massive workspaces with thousands of files.
+- **Phase 45: Sentient IDE (Autonomous Self-Repair)**:
+    - **Neural Linter**: Launched a real-time architectural validation layer that interrogates the Internal Reasoning Engine to verify all proposed code mutations against `ARCHITECTURE.md` and `DESIGN_SYSTEM.md`.
+    - **Autonomous Self-Repair Loops**: Implemented 'Reflection and Repair' logic in the `CoderAgent`, enabling agents to detect architectural rejections or tool failures and autonomously regenerate compliant mutations without human intervention.
+    - **Regulated Mutation Pipeline**: Integrated the Neural Linter into the `BaseAgent` tool dispatch, establishing a zero-trust mutation environment where all swarm activity must adhere to project-wide performance and design mandates.
 
 ### Fixed
 - **Chat Persistence Fix**: Resolved a critical race condition in the WebSocket handler by using isolated database sessions for user/assistant message recording.
