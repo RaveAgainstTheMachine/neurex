@@ -111,3 +111,40 @@ async def audit_codebase_health() -> str:
 
     log.info("intel.audit_complete")
     return json.dumps(results, indent=2)
+
+async def check_design_compliance(file_path: str) -> str:
+    """
+    Analyze a file (usually .tsx or .css) for compliance with DESIGN_SYSTEM.md.
+    Checks for usage of CSS variables, BEM naming, and glassmorphism tokens.
+    """
+    ws = Path(WORKSPACE_PATH)
+    path = ws / file_path
+    if not path.exists():
+        return f"Error: file {file_path} not found."
+
+    with open(path, "r") as f:
+        content = f.read()
+
+    findings = []
+    
+    # 1. Check for hardcoded colors instead of variables
+    import re
+    hex_colors = re.findall(r'#(?:[0-9a-fA-F]{3}){1,2}', content)
+    if hex_colors:
+        findings.append(f"Hardcoded hex colors found: {', '.join(set(hex_colors))}. Use CSS variables from index.css.")
+
+    # 2. Check for glassmorphism tokens in CSS
+    if path.suffix == ".css":
+        if "backdrop-filter" not in content and "glass" not in content.lower():
+            findings.append("No glassmorphism tokens detected. Ensure the component follows the premium aesthetic.")
+
+    # 3. Check for BEM naming in TSX
+    if path.suffix in [".tsx", ".jsx"]:
+        if "className" in content and "__" not in content and "--" not in content:
+            # Very loose check, just a hint
+            findings.append("BEM naming convention (__ or --) not detected in classNames. Verify styling standard.")
+
+    if not findings:
+        return "Design Compliance: ✅ Pass. No major violations detected."
+    
+    return "Design Compliance: ⚠️ Warnings found:\n- " + "\n- ".join(findings)
