@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback, Suspense, lazy } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, FileCode } from "lucide-react";
+import { DynamicRenderer, UIBlueprint } from './components/DynamicUI/DynamicRenderer';
 import { StatusBar } from "./components/StatusBar/StatusBar";
 import { BottomPanel } from "./components/BottomPanel/BottomPanel";
 import { NeurexLogo } from "./components/Icons/NeurexLogo";
@@ -68,14 +69,44 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 type SidebarTab = "explorer" | "search" | "git" | "agent" | "skills" | "history" | "timeline" | "infra" | "system";
 
 export default function App() {
+  const [blueprint, setBlueprint] = useState<UIBlueprint | null>(null);
+  
+  // Listen for Dynamic UI updates
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'UI_BLUEPRINT') {
+          setBlueprint(data.payload);
+        }
+      } catch (e) {}
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
   return (
     <ErrorBoundary>
-      <AppContent />
+      <div className="h-screen w-screen bg-obsidian text-white overflow-hidden flex flex-col font-inter">
+        {/* Dynamic UI Overlay (Phase 42) */}
+        {blueprint && (
+          <div className="fixed inset-0 z-50 bg-obsidian/80 backdrop-blur-xl flex items-center justify-center p-12">
+            <div className="max-w-4xl w-full bg-void border border-white/5 rounded-3xl shadow-2xl overflow-y-auto max-h-[80vh]">
+              <button 
+                className="absolute top-6 right-6 text-white/20 hover:text-white"
+                onClick={() => setBlueprint(null)}
+              >
+                [ CLOSE ]
+              </button>
+              <DynamicRenderer blueprint={blueprint} />
+            </div>
+          </div>
+        )}
+        <AppContent />
+      </div>
     </ErrorBoundary>
   );
 }
-
-
 
 function AppContent() {
 
