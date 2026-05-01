@@ -3,7 +3,7 @@ core/infrastructure/attention_pool.py
 Phase 46: Deep Neural Integration (Mesh Context Sharding)
 Coordinates federated attention heads and distributed neural context across the Mesh.
 Enables sub-ms context sharding and cross-node attention pooling.
-\"\"\"
+"""
 import asyncio
 import structlog
 from typing import List, Dict, Any, Optional
@@ -24,7 +24,7 @@ class ContextSharder:
         self.shard_size = shard_size
 
     def shard_context(self, context: str) -> List[str]:
-        \"\"\"Slices a massive context string into federated shards.\"\"\"
+        """Slices a massive context string into federated shards."""
         # Simple character-based sharding for now (assuming 1 token ~ 4 chars)
         char_shard_size = self.shard_size * 4
         shards = [context[i:i + char_shard_size] for i in range(0, len(context), char_shard_size)]
@@ -38,9 +38,9 @@ class AttentionCoordinator:
         self.shard_lock = asyncio.Lock()
 
     async def distribute_attention(self, session_id: str, prompt: str, total_heads: int = 32):
-        \"\"\"
+        """
         Splits a reasoning burst into multiple attention shards and context shards.
-        \"\"\"
+        """
         peers = [p for p in mesh_router.peers.values() if p.status == "online"]
         if not peers:
             log.warning("attention.no_peers_available")
@@ -74,7 +74,7 @@ class AttentionCoordinator:
         return self._aggregate_heads(results)
 
     async def _dispatch_shard(self, session_id: str, shard: AttentionShard, prompt: str):
-        \"\"\"Dispatches a specific attention head range to a Mesh node.\"\"\"
+        """Dispatches a specific attention head range to a Mesh node."""
         peer = mesh_router.peers.get(shard.node_id)
         if not peer:
             return None
@@ -91,7 +91,7 @@ class AttentionCoordinator:
             return None
 
     def _aggregate_heads(self, results: List[Any]) -> Dict[str, Any]:
-        \"\"\"Pools the results from all attention shards into a unified hidden state.\"\"\"
+        """Pools the results from all attention shards into a unified hidden state."""
         valid_results = [r for r in results if r]
         log.info("attention.pooling_complete", success_rate=f"{len(valid_results)}/{len(results)}")
         return {"status": "pooled", "count": len(valid_results)}
