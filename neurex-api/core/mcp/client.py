@@ -21,6 +21,7 @@ from core.mcp.tools.skills_builder import create_skill, publish_skill
 from core.mcp.tools.mesh_intel import get_mesh_topology, check_peer_suitability
 from core.context.scratchpad import set_scratchpad_value, get_scratchpad, clear_scratchpad
 from core.observability.flight_recorder import record_decision, get_flight_log
+from core.mcp.servers.claude_harness import run_claude_harness
 
 
 log = structlog.get_logger()
@@ -54,6 +55,7 @@ TOOL_REGISTRY: dict[str, callable] = {
     "clear_scratchpad":          clear_scratchpad,
     "record_decision":           record_decision,
     "get_flight_log":            get_flight_log,
+    "claude_harness":            run_claude_harness,
 }
 class MCPClient:
     """
