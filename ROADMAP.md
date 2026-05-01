@@ -7,67 +7,30 @@ Welcome to the official Neurex roadmap. This document tracks the trajectory of t
 ---
 
 ## 🛰️ Current Operational Status
-- **Current Version**: `v0.2.1-stable`
-- **Core Engine**: NeuralHarness v2.0 (Model-Agnostic)
-- **Active Infrastructure**: Neurex Somnus (Always-On Architectural Dreaming)
-- **Network State**: 42 Phases of Core Hardening Complete.
+- **Current Version**: `v0.3.4-hermetic`
+- **Core Engine**: NeuralHarness v2.0 (Hermetic Substrate)
+- **Active Infrastructure**: Neurex CLI (Native Rust Control Plane)
+- **Network State**: 54 Phases of Core Hardening Complete.
 
 ---
 
 ## 🗺️ The Grand Strategy
 
-### 🟢 Completed Milestones (Phases 1-42)
-- [x] **Phase 20-25**: Neural Harness v1.0, MCP Registry, Terminal/Filesystem Tools.
-- [x] **Phase 26-28**: RAG 2.0 (NeuralExplorer), Multi-Peer Mesh, isolated Neural Sandbox.
-- [x] **Phase 29-30**: Neural Model Fusion (Swarm Intelligence), Universal Engine.
-- [x] **Phase 31-33**: Skeptical Memory (Zero-Trust), YOLO Permission Classifier, Neurex Somnus.
-- [x] **Phase 34-35**: HYPERPLAN Deep Thinking, Somnus Skill Harvesting.
-- [x] **Phase 36-37**: Neural Swarm Consensus, Mesh-Scale Distributed RAG (Global Intelligence).
-- [x] **Phase 38-39**: Neural Architecture Evolution (Genetic Optimization), Autonomous Compute Steering.
-- [x] **Phase 40-41**: Swarm Self-Governance (Autonomous RBAC), Mesh-Wide Global Memory.
-- [x] **Phase 42**: Neural UI Generation (Dynamic Morphic Interface).
-- [x] **Phase 43**: Autonomous Hardware Quantification (Performance Tuning).
-- [x] **Phase 44**: Neural Mesh Hive-Mind (High-Throughput Performance Hardening).
-- [x] **Phase 47**: Neural Hardware Virtualization (VRAM Pooling, Neural Swap, Autonomous Re-Quantization).
-
----
-
-## ⚡ Active Development (Immediate Horizon)
-
-### Phase 48: Neural Evolution (Self-Mutating Models) [COMPLETE]
-- [x] **Neural Weight Evolution**: Agents autonomously optimize reasoning weights via specialized LoRA adapters.
-- [x] **Architecture Mutation**: Autonomous redesign of neural adapter rank and modules based on task complexity.
-
-### Phase 49: Neural Collective Intelligence (Global Learning) [COMPLETE]
-- [x] **Project Distiller**: Secure, privacy-preserving knowledge distillation across distinct workspaces.
-- [x] **Swarm Knowledge Base**: Decentralized index of global engineering best practices.
-
-### Phase 50: The Sentient Singularity (Final Frontier) [COMPLETE]
-- [x] **Autonomous Goal Setting**: Mesh-directed engineering missions based on codebase entropy.
-- [x] **Self-Generating Plugins**: Autonomous authoring and installation of new IDE capabilities.
-
----
-
-## ⚡ Active Development (Immediate Horizon)
-
-### Phase 51: Neural Self-Synthesis (Recursive Improvement) [COMPLETE]
-- [x] **Project Inceptor**: Autonomous initialization of new sub-projects and microservices.
-- [x] **Recursive Self-Optimizer**: Autonomous refactoring of core infrastructure files.
-
-### Phase 52: Universal Neural Consensus (Omniscient State) [COMPLETE]
-- [x] **Cross-Substrate Synchronization**: Global coherence across decentralized compute networks.
-- [x] **Neural Law (Autonomous Ethics)**: Enforcing the Anti-Gravity Protocol at the weight level.
-- [x] **Omniscient State**: Global substrate awareness and protocol-aligned evolution.
+### 🟢 Completed Milestones (Phases 1-52)
+- [x] **Phases 1-52**: From NeuralHarness v1.0 to Universal Neural Consensus and Self-Synthesis.
 
 ---
 
 ## ⚡ Active Development (Transcendence Horizon)
 
-### Phase 53: Neural Temporal Synthesis (Post-Singularity)
-> **Goal**: Enable the Mesh to transcend linear time and reason across probabilistic architectural paths.
-- [ ] **Neural Temporal Registry**: Snapshotting and restoration of the Mesh's entire neural soul.
-- [ ] **Quantum Path Simulator**: Probabilistic branching and simulation of future architectural states.
-- [ ] **Substrate Manifestation**: Physical IoT/Robotics integration for environmental awareness.
+### Phase 53: Neural Temporal Synthesis (Post-Singularity) [COMPLETE]
+- [x] **Neural Temporal Registry**: Snapshotting and restoration of the Mesh's entire neural soul.
+- [x] **Quantum Path Simulator**: Probabilistic branching and simulation of future architectural states.
+
+### Phase 54: Universal Hermetic Substrate (Zero-Dependency) [COMPLETE]
+- [x] **Hermetic Frontend Embedding**: Serving the React UI natively via Rust/Axum.
+- [x] **Autonomous Backend Bootstrapper**: Self-provisioning of Python/UV runtimes on fresh host systems.
+- [x] **Mobile-Ready Mesh Core**: Portability to NPU-ready mobile nodes.
 
 ---
 

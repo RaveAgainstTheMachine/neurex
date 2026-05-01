@@ -4,8 +4,8 @@
   <p><b>The Sentient-Class Agentic IDE & Unified Neural Mesh Hub</b></p>
  
   [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](https://opensource.org/licenses/MIT)
-  [![Version: v0.3.0-sentient](https://img.shields.io/badge/Version-v0.3.0--sentient-blueviolet.svg)](#)
-  [![Status: Phase 50 Complete](https://img.shields.io/badge/Status-Phase%2050%20Complete-success.svg)](#)
+  [![Version: v0.3.4-hermetic](https://img.shields.io/badge/Version-v0.3.4--hermetic-blueviolet.svg)](#)
+  [![Status: Phase 54 Complete](https://img.shields.io/badge/Status-Phase%2054%20Complete-success.svg)](#)
   [![Design: Glassmorphism](https://img.shields.io/badge/Design-Glassmorphism-9c6fff.svg)](#)
  
   <p><i>"The IDE that doesn't just execute; it evolves."</i></p>
@@ -40,6 +40,7 @@
 - **[PHASE 51] Neural Self-Synthesis**: Autonomous project inception and recursive self-improvement.
 - **[PHASE 52] Universal Consensus**: Global substrate coherence and weight-space protocol alignment.
 - **[PHASE 53] Neural Temporal Synthesis**: Neural state snapshotting and quantum architectural simulation.
+- **[PHASE 54] Universal Hermetic Substrate**: Zero-dependency distribution via native Rust daemon and autonomous `uv` provisioning.
 - **Neural Collective Intelligence**: Secure, cross-project knowledge distillation and global best practices (Phase 49).
 - **Neural Evolution**: Autonomous adapter fine-tuning and architectural mutation (Phase 48).
 - **Neural Hardware Virtualization**: Mesh-wide VRAM pooling and autonomous re-quantization.
@@ -68,7 +69,7 @@ graph TD
         ORCH --> LINT[Neural Linter]
         LINT --> REPAIR[Self-Repair Loop]
         ORCH --> CONS[Swarm Consensus]
-    </insomnia>
+    end
     
     subgraph "Neural Mesh Hub"
         ORCH --> POOL[Attention Coordinator]
@@ -94,9 +95,9 @@ graph TD
 ## 🚀 Getting Started
  
 ### 1. Prerequisites
-- **OS**: Linux (Ubuntu 22.04+ / Arch Linux) or macOS (M1/M2/M3).
-- **Compute**: NVIDIA GPU (RTX 3090+) or Apple Silicon (16GB+ RAM).
-- **Software**: Python 3.10+, Node.js 20+, Git.
+- **OS**: Linux (Ubuntu 22.04+ / Arch Linux), macOS (M1/M2/M3), or Windows 11.
+- **Compute**: NVIDIA GPU (RTX 3090+), Apple Silicon (16GB+ RAM), or NPU-ready hardware.
+- **Software**: None required for Control Plane. `neurex-cli` autonomously provisions its own hermetic Python runtime. (Docker required for Sandbox only).
  
 ### 2. Installation
 ```bash
@@ -108,10 +109,9 @@ cd neurex
 ./install.sh
 ```
  
-### 3. Launch
-```bash
-# Start the Mesh Hub and Agentic Backend
-./launch_neurex.sh
+# Start the Universal Substrate (Autodetects and provisions runtime)
+cd neurex-cli
+cargo run -- start
 ```
 *The IDE will be accessible at `http://localhost:3000`.*
  
@@ -126,10 +126,11 @@ cd neurex
 ---
  
 ## 🗺️ Roadmap
-We are currently in **Phase 47: Neural Hardware Virtualization**.
-- [x] Phase 45: Sentient IDE (Self-Repair & Governance)
-- [x] Phase 46: Deep Neural Integration (Sharding & Pooling)
-- [ ] Phase 47: Neural Hardware Virtualization (VRAM Over-Provisioning)
+We are currently in **Phase 54: Universal Hermetic Substrate**.
+- [x] Phase 51: Neural Self-Synthesis (Autonomous Inception)
+- [x] Phase 52: Universal Neural Consensus (Omniscient State)
+- [x] Phase 53: Neural Temporal Synthesis (Transcendence Logic)
+- [x] Phase 54: Universal Hermetic Substrate (Zero-Dependency)
  
 See [ROADMAP.md](./ROADMAP.md) for the full strategic trajectory.
  
