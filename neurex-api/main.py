@@ -109,10 +109,14 @@ async def lifespan(app: FastAPI):
     log.info("neurex.shutdown")
 
 
+from fastapi.responses import ORJSONResponse
+
 app = FastAPI(
-    title="Neurex API",
-    version="0.1.0",
+    title="Neurex Neural Mesh",
+    description="Decentralized Autonomous Agentic Infrastructure",
+    version="0.2.1-stable",
     lifespan=lifespan,
+    default_response_class=ORJSONResponse
 )
 
 app.add_middleware(

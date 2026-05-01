@@ -63,16 +63,21 @@ class SwarmManager:
         
         from core.infrastructure.compute_monitor import compute_monitor
         
-        for i, sub in enumerate(plan):
-            # Phase 39: Autonomous Compute Steering
-            # Identify the best node based on thermal efficiency and VRAM availability
-            peer_url = await compute_monitor.get_best_node_for_task(required_vram_gb=4.0)
-            
-            if peer_url == "local":
-                # Use default local router if steering suggests local or fails
-                peer_url = await mesh_router.get_best_inference_node()
+        # Phase 44.3: Concurrency Control (Max 5 parallel peer calls)
+        semaphore = asyncio.Semaphore(5)
+        
+        async def _semaphore_dispatch(i, sub):
+            async with semaphore:
+                # Phase 39: Autonomous Compute Steering
+                peer_url = await compute_monitor.get_best_node_for_task(required_vram_gb=4.0)
                 
-            dispatch_tasks.append(self._run_sub_task(swarm, i, sub, peer_url))
+                if peer_url == "local":
+                    peer_url = await mesh_router.get_best_inference_node()
+                    
+                return await self._run_sub_task(swarm, i, sub, peer_url)
+
+        for i, sub in enumerate(plan):
+            dispatch_tasks.append(_semaphore_dispatch(i, sub))
             
         await asyncio.gather(*dispatch_tasks)
         swarm.status = "completed"
