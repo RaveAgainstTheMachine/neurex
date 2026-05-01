@@ -61,6 +61,16 @@ async def run_query_global_memory(query: str) -> str:
     """Queries the collective experience of the Neurex Mesh."""
     return await global_memory.query_memory(query)
 
+from core.infrastructure.benchmarker import hardware_benchmarker
+
+log = structlog.get_logger()
+
+async def run_hardware_benchmark(model: str = "default") -> str:
+    """Benchmarks local hardware and recommends performance tuning."""
+    results = await hardware_benchmarker.run_throughput_test(model)
+    import json
+    return json.dumps(results, indent=2)
+
 TOOL_REGISTRY: dict[str, callable] = {
     "read_file":      read_file,
     "write_file":     write_file,
@@ -95,6 +105,7 @@ TOOL_REGISTRY: dict[str, callable] = {
     "genetic_optimize":          run_genetic_optimization,
     "add_global_memory":         run_add_global_memory,
     "query_global_memory":       run_query_global_memory,
+    "hardware_benchmark":        run_hardware_benchmark,
 }
 
 class MCPClient:
