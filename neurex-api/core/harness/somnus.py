@@ -36,7 +36,7 @@ class SomnusHandler(FileSystemEventHandler):
             asyncio.run_coroutine_threadsafe(self.dream(), self.loop)
 
     async def dream(self):
-        """The 'autoDream' loop: synthesizes changes into persistent memory."""
+        """The 'autoDream' loop: synthesizes changes and harvests mesh skills."""
         log.info("somnus.auto_dream_start")
         try:
             # 1. Update project intel (AST-aware)
@@ -47,6 +47,10 @@ class SomnusHandler(FileSystemEventHandler):
             memory = SkepticalMemory(self.ws)
             summary = f"Somnus autoDream completed at {time.ctime()}. Codebase structure synchronized."
             memory.update_memory(summary)
+
+            # 3. Harvest Mesh Skills (Phase 35)
+            from core.skills.harvester import harvester
+            await harvester.harvest_from_mesh()
             
             log.info("somnus.auto_dream_complete")
         except Exception as e:
