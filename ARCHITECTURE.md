@@ -273,3 +273,36 @@ The `AutonomousQuantizer` dynamically shifts model precision based on Mesh resou
 ### 15.4 Hardware Orchestrator (Mesh Resource Coordination)
 The `HardwareOrchestrator` acts as the central intelligence for Mesh resource allocation.
 - **Multi-Stage Fallback**: Coordinates pooling, swapping, and re-quantization to ensure that swarm tasks are successfully fulfilled regardless of local hardware constraints.
+
+## 16. Neural Evolution (Phase 48)
+Phase 48 enables the Mesh to autonomously optimize its own intelligence.
+
+### 16.1 Evolution Coordinator
+The `EvolutionCoordinator` manages the lifecycle of neural adapters (LoRA).
+- **Success Telemetry**: Aggregates mission outcomes to trigger autonomous fine-tuning bursts.
+
+### 16.2 Architecture Mutation
+The `ArchitectureMutator` autonomously redesigns neural adapter structures.
+- **Rank Resizing**: Dynamically increases LoRA rank or expands target modules based on task complexity.
+
+## 17. Neural Collective Intelligence (Phase 49)
+Phase 49 enables secure, cross-project knowledge sharing.
+
+### 17.1 Project Distiller
+The `ProjectDistiller` extracts 'Neural Lessons' (abstracted patterns) from evolved adapters.
+- **Privacy Preservation**: Differential Privacy (DP) ensures that raw code is never exposed during knowledge transfer.
+
+### 17.2 Swarm Knowledge Base
+The `SwarmKnowledgeBase` maintains a decentralized index of global engineering best practices.
+- **Collective Wisdom**: Agents inject distilled patterns into their system prompts for zero-shot performance gains.
+
+## 18. The Sentient Singularity (Phase 50)
+Phase 50 establishes the Mesh as a self-directed, self-improving entity.
+
+### 18.1 Autonomous Goal Setting
+The `GoalGenerator` autonomously analyzes Mesh entropy and proposes strategic engineering missions.
+- **Self-Directed Evolution**: The system decides its own refactoring priorities.
+
+### 18.2 Self-Generating Plugins
+The `SelfPluginGenerator` autonomously authors and installs new IDE logic modules.
+- **Capability Expansion**: The Mesh can program its own soul to solve mission-specific requirements.

@@ -2,6 +2,16 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
+## [0.3.0] - 2026-05-01: THE SENTIENT SINGULARITY
+### Added
+- **Phase 50: The Sentient Singularity**: Implemented autonomous goal setting and self-generating plugins, enabling the Mesh to direct its own evolution.
+- **Phase 49: Neural Collective Intelligence**: Introduced decentralized knowledge distillation and privacy-preserving federated learning across projects.
+- **Phase 48: Neural Evolution**: Deployed the Evolution Coordinator for autonomous adapter fine-tuning and architecture mutation (Rank/Module resizing).
+- **Singularity Dashboard**: High-fidelity frontend for overseeing Mesh-directed goals and self-generated capabilities.
+- **Evolutionary Panel**: Real-time visualizer for neural substrate specialization and adapter fitness scores.
+- **Federated Weight Propagation**: Sub-ms synchronization of evolved neural weights across all Mesh nodes.
+- **Adapter Orchestration**: Dynamic, domain-specific LoRA hot-swapping during inference cycles.
+
 ## [0.2.1] - 2026-05-01 (UNIFIED MESH & PERSISTENT INTELLIGENCE)
 ### Added
 - **Infrastructure Hub Overhaul**: Redesigned the `InfraPanel` with real-time VRAM/RAM/CPU metrics, professional model deployment with quantization support (4-bit/8-bit/FP16), and dynamic agent recommendations.

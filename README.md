@@ -5,7 +5,7 @@
  
   [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](https://opensource.org/licenses/MIT)
   [![Version: v0.3.0-sentient](https://img.shields.io/badge/Version-v0.3.0--sentient-blueviolet.svg)](#)
-  [![Status: Phase 46 Complete](https://img.shields.io/badge/Status-Phase%2046%20Complete-success.svg)](#)
+  [![Status: Phase 50 Complete](https://img.shields.io/badge/Status-Phase%2050%20Complete-success.svg)](#)
   [![Design: Glassmorphism](https://img.shields.io/badge/Design-Glassmorphism-9c6fff.svg)](#)
  
   <p><i>"The IDE that doesn't just execute; it evolves."</i></p>
@@ -36,9 +36,12 @@
 ## ✨ Key Features
  
 ### 🧠 Sentient Autonomy
-- **Neural Linter**: Real-time architectural validation of every code mutation against `ARCHITECTURE.md`.
-- **Autonomous Self-Repair**: Intelligent agents that detect and fix their own regressions.
+- **The Sentient Singularity**: Autonomous goal setting and self-generating capabilities (Phase 50).
+- **Neural Collective Intelligence**: Secure, cross-project knowledge distillation and global best practices (Phase 49).
+- **Neural Evolution**: Autonomous adapter fine-tuning and architectural mutation (Phase 48).
 - **Neural Hardware Virtualization**: Mesh-wide VRAM pooling and autonomous re-quantization.
+- **Neural Linter**: Real-time architectural validation of every code mutation.
+- **Autonomous Self-Repair**: Intelligent agents that detect and fix their own regressions.
 - **Deep Neural Integration**: Federated attention pooling and context sharding.
 - **Predictive Prefetching**: Eliminates cold-start latency by warming model weights based on agent trajectory.
  

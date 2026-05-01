@@ -20,6 +20,9 @@ Neurex operates under the **Anti-Gravity Protocol** (Source of Law: `.antigravit
 - Async-first execution.
 - Strict Type Safety (Pydantic/TypeScript).
 
-## 路线图 (Roadmap)
+## 进化 (Sentient Evolution)
+- **[[Neural-Evolution]]**: Autonomous adapter fine-tuning and architectural mutation (Phase 48).
+- **[[Collective-Intelligence]]**: Secure, cross-project knowledge distillation (Phase 49).
+- **[[Sentient-Singularity]]**: Autonomous goal setting and self-generating capabilities (Phase 50).
 
-See the [[Changelog]] for recent massive updates (Phase 10.6: CAVEMAN ULTRA).
+See the [[Changelog]] for recent massive updates (Phase 50: SENTIENT SINGULARITY).
