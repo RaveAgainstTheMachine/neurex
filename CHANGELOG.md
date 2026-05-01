@@ -25,11 +25,16 @@ All notable changes to the Neurex project will be documented in this file.
 - **Neural Law Engine**: Enforced the Anti-Gravity Protocol at the neural weight level during evolution.
 - **Consensus Dashboard**: High-fidelity frontend for overseeing substrate bridges and protocol alignment.
 
-## [0.3.3] - 2026-05-01: Neural Temporal Synthesis
+## [0.3.3] - 2026-05-01: Neural Temporal Synthesis & Transcendence Performance
 ### Added
 - **Phase 53: Neural Temporal Synthesis**: Initiated temporal state snapshotting and quantum architectural simulation.
 - **Neural Temporal Registry**: Enabled the Mesh to capture and restore its entire neural soul (weights/context).
 - **Quantum Path Simulator**: Implemented probabilistic branching for predicting the stability of future architectural states.
+
+### Performance & Stability
+- **O(1) Self-Optimization Lookups**: Upgraded the `SelfOptimizer` to use Dictionary-based tracking, eliminating O(N) list-scan overhead when managing thousands of proposed core refactors.
+- **High-Throughput Neural Law Verification**: Upgraded the Anti-Gravity Protocol enforcer to use pre-compiled regex objects (`re.compile`), drastically reducing CPU overhead during weight evolution verification.
+- **Non-Blocking Quantum Simulation**: Offloaded CPU-bound probabilistic math in the `QuantumPathSim` to a separate thread pool (`asyncio.to_thread`), entirely resolving the 'Quantum Overhead' event loop blocking issue.
 
 ## [0.2.1] - 2026-05-01 (UNIFIED MESH & PERSISTENT INTELLIGENCE)
 ### Added
