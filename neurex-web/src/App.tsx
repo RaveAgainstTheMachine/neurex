@@ -23,6 +23,7 @@ import { HiveMindPanel } from "./components/HiveMindPanel/HiveMindPanel";
 import { EvolutionPanel } from "./components/EvolutionPanel/EvolutionPanel";
 import { SingularityDashboard } from "./components/SingularityDashboard/SingularityDashboard";
 import { SynthesisDashboard } from "./components/SynthesisDashboard/SynthesisDashboard";
+import { ConsensusDashboard } from "./components/ConsensusDashboard/ConsensusDashboard";
 import { PresenceBar } from "./components/PresenceBar/PresenceBar";
 import { AuthOverlay } from "./components/AuthOverlay/AuthOverlay";
 import { TitleBar } from "./components/TitleBar/TitleBar";
@@ -334,6 +335,7 @@ function AppContent() {
                     {sidebarTab === "evolution" && <EvolutionPanel />}
                     {sidebarTab === "singularity" && <SingularityDashboard />}
                     {sidebarTab === "synthesis" && <SynthesisDashboard />}
+                    {sidebarTab === "consensus" && <ConsensusDashboard />}
                   </Panel>
                   <ResizeHandle />
                   <Panel minSize={30} className="app__main-content">
