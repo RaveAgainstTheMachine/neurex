@@ -16,7 +16,7 @@ from core.mcp.tools.browser import (
 )
 from core.mcp.tools.workspace import deep_clean, analyze_project_structure
 from core.mcp.tools.security import security_scan
-from core.mcp.tools.intel import synthesize_project_intel, query_project_intel
+from core.mcp.tools.intel import synthesize_project_intel, query_project_intel, audit_codebase_health, check_design_compliance
 from core.mcp.tools.skills_builder import create_skill, publish_skill
 from core.mcp.tools.mesh_intel import get_mesh_topology, check_peer_suitability
 from core.context.scratchpad import set_scratchpad_value, get_scratchpad, clear_scratchpad
