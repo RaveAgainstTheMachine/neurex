@@ -232,12 +232,21 @@ While the architecture is incredibly sound, I have identified a few areas that r
         *   **Voting Protocol**: Integrated a 'Consensus Round' into the `SwarmManager`, requiring a 2/3 quorum for any sub-task classified as a 'mutation'.
         *   **Auditability**: Ensured that all votes, rationales, and consensus outcomes are permanently logged for architectural accountability.
 
+29. **Mesh-Scale Distributed RAG (Phase 37 Milestone)**:
+    *   Status: **RESOLVED** (v0.2.1-stable).
+    *   Implementation:
+        *   **Federated Search**: Developed the `FederatedRAG` engine (`context/federated_rag.py`) to query the local AST index and all active peer nodes concurrently.
+        *   **Global Context Awareness**: Upgraded the `BaseAgent` retrieval loop to provide agents with a comprehensive map of the entire decentralized system.
+        *   **Decentralized Intelligence**: Enabled cross-node dependency tracking and shared architectural pattern discovery across the Mesh.
+
 ---
 
 ## 4. Strategic Recommendations for Next Deployment
 
-1.  **Phase 37: Mesh-Scale Distributed RAG (Global Intelligence)**
-    *   Develop a federated search loop that can query the AST-aware intelligence indices of all nodes in the Mesh, providing agents with 'global' architectural awareness.
+1.  **Phase 38: Neural Architecture Evolution (Self-Optimization)**
+    *   Implement a 'Genetic Agent' that periodically clones modules, mutates them for performance optimization, and uses ULTRAPLAN + Consensus to decide if the new version should replace the old.
+2.  **Phase 39: Autonomous Mesh Load-Balancing (Compute Steering)**
+    *   Develop a service that monitors the VRAM/CPU heat across the Mesh and autonomously migrates long-running 'Harness' tasks to nodes with the highest available intelligence-per-watt.
 2.  **Phase 38: Neural Architecture Evolution (Self-Optimization)**
     *   Implement a 'Genetic Agent' that periodically clones modules, mutates them for performance optimization, and uses ULTRAPLAN + Consensus to decide if the new version should replace the old.
 
