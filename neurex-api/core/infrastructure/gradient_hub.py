@@ -47,7 +47,15 @@ class GradientHub:
             # Simulated aggregation overhead
             await asyncio.sleep(0.5) 
             
-            # Here we would finalize the .bin / .safetensors adapter file
+            # Phase 48: Finalize and Broadcast Evolved Weights
+            from core.infrastructure.weight_sync import weight_sync
+            from core.infrastructure.evolution import evolution_coordinator
+            
+            adapter = next((a for a in evolution_coordinator.adapters.values() if a.id == adapter_id), None)
+            if adapter:
+                local_path = await weight_sync.finalize_local_mutation(adapter_id, adapter.version, b"merged_weights")
+                await weight_sync.propagate_adapter(adapter_id, adapter.version, local_path)
+
             log.info("gradient_hub.aggregation_complete", adapter=adapter_id)
 
     async def broadcast_mutation(self, adapter_id: str, weights_blob: Any):
