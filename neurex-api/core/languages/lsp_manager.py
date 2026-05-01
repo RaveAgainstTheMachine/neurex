@@ -342,6 +342,12 @@ class LSPManager:
                     logger.error(f"autopilot_install_failed: {lang}, {e}")
 
     async def install_lsp(self, lang: str):
+        if lang in self.get_supported_languages():
+            logger.info(f"lsp_already_supported: {lang}")
+            if lang in self.failed_installs:
+                self.failed_installs.remove(lang)
+            return True
+
         if lang in self.installing_langs:
             logger.info(f"lsp_install_already_in_progress: {lang}")
             return

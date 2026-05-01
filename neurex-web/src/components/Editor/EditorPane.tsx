@@ -30,11 +30,15 @@ export function EditorPane({ paneId = "pane-main" }: { paneId?: string }) {
   const activePath = editorPanes.find(p => p.id === paneId)?.path || activeFile;
   const active = openFiles.find((f) => f.path === activePath);
 
-  useEffect(() => {
+  const fetchSupportedLangs = useCallback(() => {
     api.get<any>("/api/languages/supported")
       .then((data: any) => setSupportedLangs(data?.languages || []))
       .catch(() => setSupportedLangs([]));
   }, []);
+
+  useEffect(() => {
+    fetchSupportedLangs();
+  }, [fetchSupportedLangs]);
   
   const editorRef = useRef<any>(null);
   
@@ -57,6 +61,7 @@ export function EditorPane({ paneId = "pane-main" }: { paneId?: string }) {
       const { installLanguageServer } = await import("../../lib/lsp");
       await installLanguageServer(active.language, token);
       toast.success(`${active.language} intelligence active!`, { id: toastId });
+      fetchSupportedLangs(); // Refresh the list so the loop stops
       refreshInfra();
     } catch (err: any) {
       toast.error(err.message, { id: toastId });
@@ -83,12 +88,17 @@ export function EditorPane({ paneId = "pane-main" }: { paneId?: string }) {
   }, [active?.content, active?.isDirty, active?.path, saveFile]);
 
   useEffect(() => {
-    if (active && token && supportedLangs?.includes(active.language)) {
+    if (!active || !token) return;
+    
+    const isSupported = supportedLangs?.includes(active.language);
+    const isInstallable = installableLangs?.includes(active.language);
+
+    if (isSupported) {
       import("../../lib/lsp").then(m => m.lspManager.connect(active.language, token));
-    } else if (active && token && !supportedLangs?.includes(active.language) && installableLangs?.includes(active.language) && !isInstalling) {
+    } else if (isInstallable && !isInstalling) {
       handleInstall();
     }
-  }, [active?.language, token, supportedLangs, installableLangs, isInstalling]);
+  }, [active?.language, token, supportedLangs, installableLangs, isInstalling, handleInstall]);
 
   useEffect(() => {
     if (pendingJump && editorRef.current && pendingJump.path === activeFile) {
