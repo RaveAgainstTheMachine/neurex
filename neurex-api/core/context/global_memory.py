@@ -22,17 +22,30 @@ class GlobalMemory:
         self.patterns: List[Dict[str, Any]] = []
 
     async def add_pointer(self, key: str, content: str, node_id: str = "local"):
-        """Adds a local memory pointer and prepares for broadcast."""
+        """Adds a local memory pointer and broadcasts the delta."""
         log.info("memory.add_pointer", key=key, node=node_id)
-        self.pointers[key] = {
+        pointer = {
             "content": content,
             "source_node": node_id,
-            "timestamp": "2026-05-01T07:08:00Z" # Placeholder
+            "timestamp": "2026-05-01T07:15:00Z"
         }
+        self.pointers[key] = pointer
         await record_decision("global_memory", "pointer_added", key, content[:50])
         
-        # Broadcast to Mesh (Phase 41)
-        asyncio.create_task(self.broadcast_memory())
+        # Phase 41.1: Optimized Delta Broadcast
+        asyncio.create_task(self.broadcast_delta(key, pointer))
+
+    async def broadcast_delta(self, key: str, pointer: Dict[str, Any]):
+        """Broadcasts only the newly added pointer to peers."""
+        peers = list(mesh_router.peers.values())
+        if not peers:
+            return
+
+        payload = {"key": key, "pointer": pointer}
+        async with httpx.AsyncClient(timeout=5) as client:
+            tasks = [client.post(f"{peer.url}/api/memory/sync_delta", json=payload) for peer in peers]
+            await asyncio.gather(*tasks, return_exceptions=True)
+            log.info("memory.delta_broadcast_complete", peers=len(peers))
 
     async def query_memory(self, query: str) -> str:
         """Searches global memory for relevant context."""
