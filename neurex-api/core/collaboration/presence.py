@@ -101,23 +101,32 @@ class PresenceManager:
                     })
 
     async def broadcast(self, conversation_id: str, message: Any, exclude_user: str = None):
-        """Send a message to all connected clients in a conversation."""
+        """Phase 44.14: Parallel Multi-Socket Broadcasting."""
         if conversation_id not in self.active_connections:
             return
 
-        dead_connections = set()
-        for ws in self.active_connections[conversation_id]:
+        connections = list(self.active_connections[conversation_id])
+        if not connections:
+            return
+
+        async def safe_send(ws: WebSocket):
             try:
                 await ws.send_json(message)
+                return None
             except Exception:
-                dead_connections.add(ws)
+                return ws
 
-        for dead in dead_connections:
-            self.active_connections[conversation_id].discard(dead)
+        # Parallel dispatch to all clients in the conversation
+        results = await asyncio.gather(*[safe_send(ws) for ws in connections])
+        
+        # Cleanup dead connections
+        for ws in [r for r in results if r is not None]:
+            self.active_connections[conversation_id].discard(ws)
 
     async def broadcast_global(self, message: Any):
-        """Send a message to all connected clients across all conversations."""
-        for conv_id in list(self.active_connections.keys()):
-            await self.broadcast(conv_id, message)
+        """Parallel dispatch across all active conversations."""
+        conv_ids = list(self.active_connections.keys())
+        if conv_ids:
+            await asyncio.gather(*[self.broadcast(cid, message) for cid in conv_ids])
 
 presence_manager = PresenceManager()
