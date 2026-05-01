@@ -93,8 +93,15 @@ class MCPClient:
 
     async def call(self, tool_name: str, arguments: dict, autonomy_level: str = "limited", conversation_id: str | None = None) -> Any:
         """
-        Executes a tool call. If YOLO is enabled and tool is safe, bypasses authorization.
+        Executes a tool call. Enforces YOLO classification and Swarm Self-Governance (Phase 40).
         """
+        # Phase 40: Swarm Self-Governance Check
+        from core.security.governance import governance_manager
+        path = arguments.get("path") or arguments.get("file_path") or arguments.get("TargetFile")
+        if path and not governance_manager.is_authorized(conversation_id or "global", path):
+            log.error("governance.unauthorized_access", tool=tool_name, path=path)
+            return f"Error: Governance violation. Path '{path}' is not authorized for this task session."
+
         # Phase 32: YOLO Permission Classifier
         safe_tools = ["read_file", "list_directory", "grep_search", "web_search", "query_project_intel", "get_flight_log"]
         is_yolo = tool_name in safe_tools
