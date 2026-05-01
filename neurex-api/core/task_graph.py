@@ -11,10 +11,31 @@ from typing import Optional, List
 
 from sqlmodel import SQLModel, Field, select
 from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy import event
 from sqlalchemy.ext.asyncio import create_async_engine
 
 DATABASE_URL = "sqlite+aiosqlite:///./neurex.db"
-engine = create_async_engine(DATABASE_URL, echo=False)
+
+# Phase 44.4: High-Performance SQLite Tuning
+engine = create_async_engine(
+    DATABASE_URL, 
+    echo=False,
+    connect_args={
+        "check_same_thread": False,
+        "timeout": 30
+    }
+)
+
+# Mandatory PRAGMAs for Concurrency & Speed
+@event.listens_for(engine.sync_engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL")
+    cursor.execute("PRAGMA synchronous=NORMAL")
+    cursor.execute("PRAGMA cache_size=-64000") # 64MB Cache
+    cursor.execute("PRAGMA temp_store=MEMORY")
+    cursor.execute("PRAGMA mmap_size=30000000000") # Enable memory mapping
+    cursor.close()
 
 class UserRole(str, Enum):
     ADMIN     = "admin"      # Full control over Mesh and Settings
