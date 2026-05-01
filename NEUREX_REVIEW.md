@@ -159,14 +159,21 @@ While the architecture is incredibly sound, I have identified a few areas that r
         *   **Path-Aware Authorization**: Implemented glob-patterned filesystem rules to restrict 'Swarm' and mutation tasks to authorized directories.
         *   **Federated Security**: Established the zero-trust framework required for secure cross-node collaboration in the Mesh.
 
+19. **Neural Code Search & RAG 2.0 (Phase 25 Milestone)**:
+    *   Status: **RESOLVED** (v0.2.1-stable).
+    *   Implementation:
+        *   **Hybrid Retrieval Engine**: Implemented `NeuralExplorer` to combine vector similarity (semantic) with AST-aware graph traversal (relational).
+        *   **Dependency Expansion**: Augmented the search loop to automatically include referenced modules and interface definitions in the retrieved context.
+        *   **BaseAgent Optimization**: Replaced the legacy RAG logic with the hybrid neural loop, providing all agents with a high-fidelity map of the workspace.
+
 ---
 
 ## 4. Strategic Recommendations for Next Deployment
 
-1.  **Phase 25: Neural Code Search & RAG 2.0**
-    *   Replace simple vector retrieval with a hybrid "Neural Explorer" that combines AST-aware graph traversal with semantic embedding search.
-2.  **Phase 26: Multi-Modal Autonomous Testing**
+1.  **Phase 26: Multi-Modal Autonomous Testing**
     *   Implement an "Eye of Neurex" service that uses vision-capable models to perform visual regression testing on UI components.
+2.  **Phase 27: Self-Hosting Mesh Registry**
+    *   Develop a decentralized registry for 'Swarm' skills and peer discovery, removing the need for a central coordination node.
 
 ---
 **Report Concluded.**
