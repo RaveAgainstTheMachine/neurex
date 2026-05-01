@@ -84,5 +84,5 @@ Our UI/UX standards are documented in [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md). We
 
 ---
 
-## ⬡ The Antigravity Team
-Built with 💜 by the Advanced Agentic Coding team at Google DeepMind.
+## ⬡ Credits & Acknowledgements
+Developed by **Steven Frost** with architectural assistance and agentic core development by **Antigravity**.
