@@ -28,3 +28,5 @@ Phase 46/47 evolves hardware acceleration from local optimization to mesh-wide v
 - **Global Context Sharding**: Slices massive context windows (128k+) across the federated Mesh, pooling VRAM from all nodes.
 - **Predictive Prefetching**: Proactively warms up model weights and context into VRAM based on agent trajectory to eliminate cold-start latency.
 - **Mesh KV-Sync**: Sub-ms state propagation ensures neural coherence across the federated substrate.
+- **Hardware Orchestrator**: Central intelligence that coordinates VRAM pooling, RAM/VRAM swapping, and autonomous re-quantization to fulfill reasoning bursts under pressure.
+- **Neural Swap-Space**: High-speed PCIe paging that offloads inactive neural data to System RAM, enabling "Virtual VRAM" expansion.

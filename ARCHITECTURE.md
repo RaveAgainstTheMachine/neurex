@@ -254,3 +254,22 @@ The `NeuralPrefetcher` eliminates cold-start latency by priming nodes based on a
 ### 14.4 Sub-ms Mesh Backplane (KV-Sync)
 The `KVSyncProtocol` ensures neural coherence during distributed sessions.
 - **State Propagation**: Synchronizes hidden state deltas and K/V cache updates between nodes with targeted sub-5ms latency, ensuring architectural consistency across the federated substrate.
+
+## 15. Neural Hardware Virtualization (Phase 47)
+Phase 47 virtualizes the Mesh's physical substrate into a single, unified neural compute pool.
+
+### 15.1 Virtual VRAM Pooling (Mesh Aggregation)
+The `VirtualVRAMPool` aggregates the VRAM of all online peers into a single virtual pool.
+- **Resource Sharding**: Orchestrates massive models and context shards across multiple nodes, circumventing individual hardware limitations.
+
+### 15.2 Neural Swap-Space (RAM/VRAM Hybridization)
+The `NeuralSwapManager` implements a high-speed state manager for swapping neural data between System RAM and VRAM.
+- **PCIe Paging**: Enables "Virtual VRAM" expansion by offloading inactive layers/context to host memory during inference bursts.
+
+### 15.3 Autonomous Re-Quantization (Dynamic Precision)
+The `AutonomousQuantizer` dynamically shifts model precision based on Mesh resource pressure.
+- **Graceful Degradation**: Automatically re-quantizes models (e.g., from Q8 to IQ2) to maintain reasoning throughput when VRAM utilization reaches critical thresholds.
+
+### 15.4 Hardware Orchestrator (Mesh Resource Coordination)
+The `HardwareOrchestrator` acts as the central intelligence for Mesh resource allocation.
+- **Multi-Stage Fallback**: Coordinates pooling, swapping, and re-quantization to ensure that swarm tasks are successfully fulfilled regardless of local hardware constraints.

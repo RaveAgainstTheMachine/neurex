@@ -37,12 +37,9 @@
  
 ### 🧠 Sentient Autonomy
 - **Neural Linter**: Real-time architectural validation of every code mutation against `ARCHITECTURE.md`.
-- **Autonomous Self-Repair**: Agents detect, analyze, and fix their own logical regressions and tool failures.
-- **Swarm Consensus**: Democratic governance for critical assets, requiring a 3-agent quorum for mutations.
- 
-### 🛰️ Federated Intelligence
-- **Deep Neural Integration**: Federated attention pooling and context sharding across Mesh nodes.
-- **Mesh-Scale RAG**: Global semantic retrieval across all project nodes in the federation.
+- **Autonomous Self-Repair**: Intelligent agents that detect and fix their own regressions.
+- **Neural Hardware Virtualization**: Mesh-wide VRAM pooling and autonomous re-quantization.
+- **Deep Neural Integration**: Federated attention pooling and context sharding.
 - **Predictive Prefetching**: Eliminates cold-start latency by warming model weights based on agent trajectory.
  
 ### ⚡ Kinetic Excellence

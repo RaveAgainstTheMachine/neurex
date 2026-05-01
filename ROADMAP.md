@@ -28,17 +28,17 @@ Welcome to the official Neurex roadmap. This document tracks the trajectory of t
 - [x] **Phase 42**: Neural UI Generation (Dynamic Morphic Interface).
 - [x] **Phase 43**: Autonomous Hardware Quantification (Performance Tuning).
 - [x] **Phase 44**: Neural Mesh Hive-Mind (High-Throughput Performance Hardening).
-- [x] **Phase 46**: Deep Neural Integration (Mesh Context Sharding, Attention Pooling, Predictive Prefetching).
+- [x] **Phase 47**: Neural Hardware Virtualization (VRAM Pooling, Neural Swap, Autonomous Re-Quantization).
 
 ---
 
 ## ⚡ Active Development (Immediate Horizon)
 
-### Phase 47: Neural Hardware Virtualization (GPU Over-Provisioning)
-> **Goal**: Virtualize Mesh-wide hardware resources into a single, unified neural compute pool.
-- [ ] **Virtual VRAM Pooling**: Aggregating distributed VRAM across all Mesh nodes into a single virtual pool for massive inference tasks.
-- [ ] **Neural Swap-Space**: Implementing high-speed state swapping between System RAM and VRAM to support 70B+ models on consumer hardware.
-- [ ] **Autonomous Re-Quantization**: Dynamically re-quantizing models (e.g., Q4_K_M to IQ2_XS) on the fly to fit into the Mesh's current VRAM availability.
+### Phase 48: Neural Evolution (Self-Mutating Models)
+> **Goal**: Enable the Mesh to autonomously optimize its own neural architectures and weights.
+- [ ] **Neural Weight Evolution**: Agents autonomously fine-tuning model adapter weights (LoRA) based on project-specific architectural patterns and "Success Telemetry".
+- [ ] **Federated Fine-Tuning**: Implementing decentralized, mesh-wide weight updates where nodes pool gradients for collective model specialization.
+- [ ] **Architecture Mutation**: Swarm agents autonomously redesigning neural adapters (Adapters/Prefixes) to solve high-complexity refactoring tasks that exceed base model reasoning.
 
 ---
 

@@ -37,6 +37,11 @@ All notable changes to the Neurex project will be documented in this file.
     - **Global Context Sharding**: Implemented real-time sharding of the 128k+ token context window, allowing the Mesh to pool VRAM across federated nodes for high-context tasks.
     - **Predictive Neural Prefetching**: Integrated a prefetcher service that proactively warms up model weights and context based on agent trajectory, eliminating cold-start latency.
     - **Mesh KV-Sync Protocol**: Launched a sub-ms neural state propagation layer that synchronizes hidden states and K/V cache deltas across the Mesh backplane.
+- **Phase 47: Neural Hardware Virtualization (GPU Over-Provisioning)**:
+    - **Virtual VRAM Pool**: Launched a mesh-wide resource aggregator that treats distributed GPU memory as a single, unified neural compute pool.
+    - **Neural Swap-Space**: Implemented high-speed state swapping between System RAM and VRAM, enabling the execution of models exceeding physical VRAM capacity.
+    - **Autonomous Re-Quantizer**: Launched a dynamic precision management service that autonomously re-quantizes models (e.g., Q8 to IQ2) to fit current Mesh VRAM availability.
+    - **Hardware Orchestrator**: Integrated a central coordination layer that autonomously manages pooling, swapping, and quantization fallbacks for high-reasoning bursts.
 
 ### Fixed
 - **Chat Persistence Fix**: Resolved a critical race condition in the WebSocket handler by using isolated database sessions for user/assistant message recording.
