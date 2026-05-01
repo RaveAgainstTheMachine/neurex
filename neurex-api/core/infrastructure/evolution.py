@@ -66,6 +66,11 @@ class EvolutionCoordinator:
             adapter.version += 1
             adapter.fitness_score = 0.0 # Reset for next evolution cycle
             
+        # Phase 48: Check for structural mutation (Architecture Evolution)
+        from core.infrastructure.arch_mutator import arch_mutator
+        # Simulated performance metrics for architecture analysis
+        await arch_mutator.analyze_complexity_and_mutate(domain, {"avg_tool_rounds": 6, "repair_trigger_rate": 0.25})
+            
         log.info("evolution.mutation_complete", domain=domain, new_version=adapter.version)
 
     def get_active_adapter(self, domain: str) -> Optional[NeuralAdapter]:
