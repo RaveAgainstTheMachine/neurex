@@ -16,6 +16,7 @@ All notable changes to the Neurex project will be documented in this file.
 - **FileExplorer Root Expansion**: Fixed a bug where the workspace root directory could not be expanded due to falsy path validation.
 - **InfraMetrics Type Accuracy**: Corrected the `InfraMetrics` TypeScript interface to match the backend's resource reporting (RAM totals, CPU usage).
 - **Terminal Re-fitting**: Implemented a robust re-fit mechanism that fires when a hidden terminal becomes visible, ensuring jitter-free layout restoration.
+- **Imperative Sidebar Accordion**: Refactored the `FileExplorer` to prioritize the workspace tree; implemented programmatic collapse/expand for Open Editors and Outline sections, allowing them to shrink to headers while preserving global layout integrity.
 
 ## [0.2.0] - 2026-04-30 (GRACEFUL RESIZING & LAYOUT PERSISTENCE)
 ### Added
