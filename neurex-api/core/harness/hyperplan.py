@@ -19,19 +19,23 @@ class HyperPlan:
 
     async def generate_blueprint(self, task_description: str) -> Dict[str, Any]:
         """
-        Executes the 4-pass HYPERPLAN cycle:
-        1. Decomposition
-        2. Symbolic Trace
-        3. Optimization
-        4. Final Blueprint
+        Executes the 4-pass HYPERPLAN cycle with predictive prefetching.
         """
         log.info("hyperplan.start", task=task_description[:50])
+        
+        # Phase 44.8: Predictive Context Prefetching
+        # Start RAG search in background while Pass 1 generates decomposition
+        context_task = asyncio.create_task(self.ctx.explorer.hybrid_search(task_description, limit=15))
         
         # Pass 1: Decomposition
         decomp = await self._pass_decomposition(task_description)
         
+        # Ensure context is ready for Pass 2
+        retrieved_context = await context_task
+        log.info("hyperplan.context_primed", results=len(retrieved_context))
+        
         # Pass 2: Symbolic Trace (Context-aware)
-        trace = await self._pass_symbolic_trace(decomp)
+        trace = await self._pass_symbolic_trace(decomp, retrieved_context)
         
         # Pass 3: Optimization & Security
         optimized = await self._pass_optimization(trace)
@@ -46,8 +50,9 @@ class HyperPlan:
         prompt = f"HYPERPLAN PASS 1: DECOMPOSITION\nBreak this task into high-level modules and data flows.\nTask: {task}"
         return await self._ask_brain(prompt, "Neurex Brain (Logic)")
 
-    async def _pass_symbolic_trace(self, decomp: str) -> str:
-        prompt = f"HYPERPLAN PASS 2: SYMBOLIC TRACE\nAnalyze the data flows and identify potential side effects or race conditions.\nContext: {decomp}"
+    async def _pass_symbolic_trace(self, decomp: str, context: List[Dict[str, Any]]) -> str:
+        ctx_text = "\n".join([r.get("document", "") for r in context])
+        prompt = f"HYPERPLAN PASS 2: SYMBOLIC TRACE\nAnalyze the data flows and identify potential side effects or race conditions.\nDecomposition: {decomp}\nCode Context:\n{ctx_text}"
         return await self._ask_brain(prompt, "Neurex Brain (Logic)")
 
     async def _pass_optimization(self, trace: str) -> str:
