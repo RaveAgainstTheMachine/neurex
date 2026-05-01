@@ -28,17 +28,17 @@ Welcome to the official Neurex roadmap. This document tracks the trajectory of t
 - [x] **Phase 42**: Neural UI Generation (Dynamic Morphic Interface).
 - [x] **Phase 43**: Autonomous Hardware Quantification (Performance Tuning).
 - [x] **Phase 44**: Neural Mesh Hive-Mind (High-Throughput Performance Hardening).
-- [x] **Phase 45**: Sentient IDE (Autonomous Self-Repair, Swarm Consensus, Runtime Evolution).
+- [x] **Phase 46**: Deep Neural Integration (Mesh Context Sharding, Attention Pooling, Predictive Prefetching).
 
 ---
 
 ## ⚡ Active Development (Immediate Horizon)
 
-### Phase 46: Deep Neural Integration (Mesh Context Sharding)
-> **Goal**: Achieve sub-ms cross-node neural context sharding and distributed attention pooling.
-- [ ] **Neural Attention Pooling**: Aggregating attention heads across multiple Mesh nodes for massive reasoning bursts.
-- [ ] **Global Context Sharding**: Real-time sharding of the 128k context window across federated compute nodes.
-- [ ] **Predictive Neural Prefetching**: Proactively loading model weights and context into VRAM based on agent trajectory analysis.
+### Phase 47: Neural Hardware Virtualization (GPU Over-Provisioning)
+> **Goal**: Virtualize Mesh-wide hardware resources into a single, unified neural compute pool.
+- [ ] **Virtual VRAM Pooling**: Aggregating distributed VRAM across all Mesh nodes into a single virtual pool for massive inference tasks.
+- [ ] **Neural Swap-Space**: Implementing high-speed state swapping between System RAM and VRAM to support 70B+ models on consumer hardware.
+- [ ] **Autonomous Re-Quantization**: Dynamically re-quantizing models (e.g., Q4_K_M to IQ2_XS) on the fly to fit into the Mesh's current VRAM availability.
 
 ---
 
