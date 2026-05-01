@@ -1,6 +1,6 @@
 """
 core/context/skeptical_memory.py
-Implements "Skeptical Memory Management" inspired by the Claude Code leak.
+Implements "Skeptical Memory Management" inspired by state-of-the-art agentic harnesses.
 Forces agents to verify state via grep/read before acting and maintains a
 lightweight sticky-note memory for high-speed context restoration.
 """

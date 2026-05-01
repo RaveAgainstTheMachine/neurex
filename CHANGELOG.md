@@ -17,7 +17,12 @@ All notable changes to the Neurex project will be documented in this file.
 - **Autonomous CI/CD Self-Healing**: Launched `CIHealer` to monitor pipeline health and autonomously trigger background repair tasks for regression failures.
 - **Secure Multi-User RBAC**: Implemented `RBACManager` with granular, path-aware permissions to secure 'Swarm' and mutation tasks in federated environments.
 - **Neural Code Search (RAG 2.0)**: Launched `NeuralExplorer` to perform hybrid semantic/relational retrieval, ensuring agents understand the full architectural call graph.
-- **Sandboxed Claude Harness**: Implemented the `claude_harness` MCP tool to securely delegate massive refactoring tasks to an isolated Claude Code Docker container.
+- **Sandboxed Neurex Neural Harness**: Implemented the `claude_harness` MCP tool to securely delegate massive refactoring tasks to an isolated Neurex Neural Harness Docker container.
+- **Neural Model Fusion (Swarms 2.0)**: Enhanced the SwarmAgent to intelligently assign specialized models (Claude for logic, Qwen for boilerplate) to sub-tasks, optimizing intelligence per watt.
+- **Universal Neural Harness**: Decoupled the agentic 'harness' logic from Neurex Neural Harness and implemented a model-agnostic engine capable of driving autonomous loops with Qwen and other OS models.
+- **Skeptical Memory (Phase 31)**: Implemented 'Zero-Trust' memory management that forces agents to verify filesystem state via grep/read before every mutation, preventing context entropy.
+- **YOLO Permission Classifier (Phase 32)**: Launched a low-latency auto-approval gate for 'safe' tools, dramatically accelerating agent exploration speed.
+- **Neurex Somnus (Phase 33)**: Implemented an 'always-on' monitor (autoDream) that asynchronously updates architectural intel and memory pointers upon filesystem changes.
 - **Persistent Workspace Layouts**: integrated automatic storage for sidebar, terminal, and assistant panel dimensions using `react-resizable-panels` and `localStorage`.
 - **Advanced Panel Controls**: added Maximize, Collapse, and Clear actions to the Bottom Panel header for streamlined workspace management.
 - **VSCodium Parity**: achieved layout parity with professional editors by ensuring terminal reflow and panel state preservation across sessions.
@@ -125,12 +130,29 @@ All notable changes to the Neurex project will be documented in this file.
         *   **Dependency Expansion**: Augmented the search loop to automatically include referenced modules and interface definitions in the retrieved context.
         *   **BaseAgent Optimization**: Replaced the legacy RAG logic with the hybrid neural loop, providing all agents with a high-fidelity map of the workspace.
 
-20. **Sandboxed Claude Harness (Phase 28 Milestone)**:
+20. **Sandboxed Neurex Neural Harness (Phase 28 Milestone)**:
     *   Status: **RESOLVED** (v0.2.1-stable).
     *   Implementation:
-        *   **Isolated Execution Environment**: Developed `claude_sandbox.Dockerfile` to host the `@anthropic-ai/claude-code` CLI in a secure, containerized sandbox.
-        *   **MCP Bridge**: Implemented `claude_harness.py` server to act as an asynchronous bridge between Neurex and the Claude CLI.
+        *   **Isolated Execution Environment**: Developed `neural_sandbox.Dockerfile` to host the `@anthropic-ai/claude-code` CLI in a secure, containerized sandbox.
+        *   **MCP Bridge**: Implemented `neural_harness.py` server to act as an asynchronous bridge between Neurex and the Neurex Neural Engine.
         *   **Secure Delegation**: Enabled the Orchestrator to delegate massive, cross-cutting tasks to Claude while preserving host system integrity.
+
+21. **Neural Model Fusion (Phase 29 Milestone)**:
+    *   Status: **RESOLVED** (v0.2.1-stable).
+    *   Implementation:
+        *   **Heterogenous Swarm Execution**: Updated `SwarmAgent` to perform model tier assignment during task decomposition.
+        *   **Dynamic Resource Allocation**: Modified `SwarmManager` to respect and dispatch sub-tasks to nodes hosting the requested model specialized for the task (e.g. logic-heavy vs boilerplate-heavy).
+        *   **Intelligence Optimization**: Established a "tier-aware" swarm logic that maximizes reasoning quality while minimizing compute overhead.
+
+22. **Universal Neural Harness (Phase 30 Milestone)**:
+    *   Status: **RESOLVED** (v0.2.1-stable).
+    *   Implementation:
+        *   **Vendor Decoupling**: Extracted the core 'agentic harness' logic (Plan-Act-Review) from closed-source tools like Neurex Neural Harness.
+        *   **Neural Harness Engine**: Developed a model-agnostic execution loop (`harness/engine.py`) that standardizes tool-calling and observation handling.
+        *   **OS Model Prioritization**: Integrated Qwen-2.5-Coder as the default driver for the harness, enabling state-of-the-art autonomy without vendor lock-in.
+
+- **Skeptical Memory (Phase 31)**: Implemented 'Zero-Trust' memory management that forces agents to verify filesystem state via grep/read before every mutation, preventing context entropy.
+- **YOLO Permission Classifier (Phase 32)**: Launched a low-latency auto-approval gate for 'safe' tools, dramatically accelerating agent exploration speed.
 - **Neural GitLens Suite**:
   - **Commit Blame Ghost Text**: renders authorship metadata (author, summary, date) for the active line directly in the editor.
   - **File Timeline Sidebar**: a dedicated, visual history tracker with commit nodes and glassmorphic cards.

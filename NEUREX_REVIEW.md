@@ -166,11 +166,11 @@ While the architecture is incredibly sound, I have identified a few areas that r
         *   **Dependency Expansion**: Augmented the search loop to automatically include referenced modules and interface definitions in the retrieved context.
         *   **BaseAgent Optimization**: Replaced the legacy RAG logic with the hybrid neural loop, providing all agents with a high-fidelity map of the workspace.
 
-20. **Sandboxed Claude Harness (Phase 28 Milestone)**:
+20. **Sandboxed Neurex Neural Harness (Phase 28 Milestone)**:
     *   Status: **RESOLVED** (v0.2.1-stable).
     *   Implementation:
-        *   **Isolated Execution Environment**: Developed `claude_sandbox.Dockerfile` to host the `@anthropic-ai/claude-code` CLI in a secure, containerized sandbox.
-        *   **MCP Bridge**: Implemented `claude_harness.py` server to act as an asynchronous bridge between Neurex and the Claude CLI.
+        *   **Isolated Execution Environment**: Developed `neural_sandbox.Dockerfile` to host the `@anthropic-ai/claude-code` CLI in a secure, containerized sandbox.
+        *   **MCP Bridge**: Implemented `neural_harness.py` server to act as an asynchronous bridge between Neurex and the Neurex Neural Engine.
         *   **Secure Delegation**: Enabled the Orchestrator to delegate massive, cross-cutting tasks to Claude while preserving host system integrity.
 
 21. **Neural Model Fusion (Phase 29 Milestone)**:
@@ -183,7 +183,7 @@ While the architecture is incredibly sound, I have identified a few areas that r
 22. **Universal Neural Harness (Phase 30 Milestone)**:
     *   Status: **RESOLVED** (v0.2.1-stable).
     *   Implementation:
-        *   **Vendor Decoupling**: Extracted the core 'agentic harness' logic (Plan-Act-Review) from closed-source tools like Claude Code.
+        *   **Vendor Decoupling**: Extracted the core 'agentic harness' logic (Plan-Act-Review) from closed-source tools like Neurex Neural Harness.
         *   **Neural Harness Engine**: Developed a model-agnostic execution loop (`harness/engine.py`) that standardizes tool-calling and observation handling.
         *   **OS Model Prioritization**: Integrated Qwen-2.5-Coder as the default driver for the harness, enabling state-of-the-art autonomy without vendor lock-in.
 

@@ -27,9 +27,9 @@ class SwarmAgent(BaseAgent):
         plan_prompt = f"""
         You are a Swarm Leader. Decompose this massive task into a list of parallelizable sub-tasks.
         Intelligently assign a 'model' to each task:
-        - Use 'claude-3-5-sonnet' for complex logical changes or core architectural work.
-        - Use 'qwen2.5-coder:7b' for boilerplate, documentation, or simple renaming.
-        - Use 'qwen2.5-coder:14b' for standard coding tasks.
+        - Use 'Neurex Brain (Logic)' (qwen2.5-coder:32b) for complex logical changes.
+        - Use 'Neurex Brain (Fast)' (qwen2.5-coder:7b) for boilerplate or simple tasks.
+        - Use 'Neurex Brain (Standard)' (qwen2.5-coder:14b) for standard coding.
         
         Task: {task['title']}
         Description: {task['description']}
