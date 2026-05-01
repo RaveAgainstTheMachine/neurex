@@ -19,7 +19,9 @@ Bootstraps the substrate.
 - Mounts the current directory into an ephemeral Neural Sandbox.
 
 ### `neurex doctor`
-Validates system readiness for Phase 53 Transcendence (Hardware checks, Container checks).
+Validates system readiness for Phase 53 Transcendence.
+- **Hardware Introspection**: Uses `sysinfo` to query the host OS, Kernel version, CPU architecture, and available RAM.
+- **Container Validation**: Uses `bollard` to query the local Docker socket (`/var/run/docker.sock`) to ensure the neural sandbox engine is reachable.
 
 ### `neurex stop`
 Gracefully drains and kills all isolated agent containers and stops the host control plane.
