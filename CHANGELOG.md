@@ -21,6 +21,7 @@ All notable changes to the Neurex project will be documented in this file.
 - **Design System Auditing**: Implemented `check_design_compliance` to ensure self-evolved components adhere to glassmorphism and BEM standards defined in `DESIGN_SYSTEM.md`.
 - **Autonomous Sentinel**: Launched background self-healing service that monitors API/Web/Ollama ports and auto-restarts failed processes, ensuring high availability for autonomous agent loops.
 - **Sandbox Mutation Support**: Expanded the Docker execution engine with a `mutation_allowed` flag, enabling agents to perform build-related writes (RW) when authorized.
+- **Predictive Resource Elasticity**: Integrated `ResourcePredictor` into the `MeshRouter` to track telemetry trends and pre-emptively avoid nodes with rising load trajectories.
 
 ## [0.2.0] - 2026-04-30 (GRACEFUL RESIZING & LAYOUT PERSISTENCE)
 ### Added

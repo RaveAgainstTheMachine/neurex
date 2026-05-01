@@ -48,6 +48,12 @@ While the architecture is incredibly sound, I have identified a few areas that r
 
 ---
 
+14. **Predictive Resource Elasticity (Phase 20 Milestone)**:
+    *   Status: **RESOLVED** (v0.2.1-stable).
+    *   Implementation:
+        *   **Trend-Aware Routing**: Developed the `ResourcePredictor` to calculate weighted moving averages of peer telemetry (CPU, Queue Depth).
+        *   **Proactive Load Balancing**: Updated `MeshRouter` to penalize nodes with rising load trajectories, preventing "dogpiling" before it occurs.
+
 5.  **Zero-Trust Security & RBAC Hardening (Phase 12 Milestone)**:
     *   *Status*: **RESOLVED** (v0.8.5-beta).
     *   *Implementation*:
@@ -119,14 +125,20 @@ While the architecture is incredibly sound, I have identified a few areas that r
         *   **Mutation-Enabled Sandbox**: Expanded `run_command` with a `mutation_allowed` flag, allowing `:rw` volume mounts for authorized build tasks.
         *   **Security Governance**: Integrated mutation requests into the HITL (Human-in-the-loop) approval flow for limited/restricted autonomy levels.
 
+14. **Predictive Resource Elasticity (Phase 20 Milestone)**:
+    *   Status: **RESOLVED** (v0.2.1-stable).
+    *   Implementation:
+        *   **Trend-Aware Routing**: Developed the `ResourcePredictor` to calculate weighted moving averages of peer telemetry (CPU, Queue Depth).
+        *   **Proactive Load Balancing**: Updated `MeshRouter` to penalize nodes with rising load trajectories, preventing "dogpiling" before it occurs.
+
 ---
 
 ## 4. Strategic Recommendations for Next Deployment
 
-1.  **Phase 19: Sandbox Mutation Support**
-    *   Expand the `neurex-sandbox` Docker environment to support persistent volume mutation for long-running build tasks.
-2.  **Phase 20: Predictive Resource Elasticity**
-    *   Implement a predictive scaling algorithm in the `MeshRouter` to pre-emptively spin up peers based on historical usage spikes.
+1.  **Phase 21: Multi-Agent Swarm Coordination**
+    *   Implement a "Swarm Leader" protocol to synchronize complex refactoring tasks across multiple autonomous agents.
+2.  **Phase 22: Neural Context Compression**
+    *   Develop a dynamic KV-cache compression algorithm to allow agents to handle million-token codebases with minimal VRAM overhead.
 
 ---
 **Report Concluded.**
