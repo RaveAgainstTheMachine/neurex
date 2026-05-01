@@ -98,6 +98,8 @@ class ResourcePredictor:
 class MeshRouter:
     def __init__(self):
         self.peers: Dict[str, PeerNode] = {}
+        # Phase 44.10: Persistent Telemetry Client
+        self._client: httpx.AsyncClient = httpx.AsyncClient(timeout=5)
         self._load_peers()
 
     def _load_peers(self):
@@ -132,17 +134,16 @@ class MeshRouter:
             self._save_peers()
 
     async def check_health(self, url: str):
-        """Ping a peer to update its status and capabilities."""
+        """Ping a peer to update its status via persistent client."""
         peer = self.peers.get(url)
         if not peer: return
 
         import time
         start = time.time()
         try:
-            async with httpx.AsyncClient(timeout=5) as client:
-                resp = await client.get(f"{peer.url}/api/infra/status", headers={"Authorization": f"Bearer {peer.token}"})
-                resp.raise_for_status()
-                data = resp.json()
+            resp = await self._client.get(f"{peer.url}/api/infra/status", headers={"Authorization": f"Bearer {peer.token}"})
+            resp.raise_for_status()
+            data = resp.json()
                 
                 peer.status = "online"
                 metrics = data.get("metrics", {})
