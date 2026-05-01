@@ -218,9 +218,20 @@ While the architecture is incredibly sound, I have identified a few areas that r
 
 ## 4. Strategic Recommendations for Next Deployment
 
-1.  **Phase 35: Somnus Skill Harvesting**
-    *   Extend the Somnus daemon to scan the Mesh for new `skill_registry` entries and automatically "harvest" useful capabilities for local agent use.
-2.  **Phase 36: Neural Swarm Consensus (Consensus-Based Mutation)**
+27. **Somnus Skill Harvesting (Phase 35 Milestone)**:
+    *   Status: **RESOLVED** (v0.2.1-stable).
+    *   Implementation:
+        *   **Autonomous Evolution**: Developed the `SkillHarvester` (`skills/harvester.py`) to scan the Mesh for unique peer capabilities.
+        *   **Background Acquisition**: Integrated harvesting into the Somnus `autoDream` loop, enabling continuous node improvement.
+        *   **Security Gating**: Enforced mandatory security scanning before any autonomously harvested skill is registered locally.
+
+---
+
+## 4. Strategic Recommendations for Next Deployment
+
+1.  **Phase 36: Neural Swarm Consensus (Consensus-Based Mutation)**
     *   Implement a 'voting' system for swarms where multiple agents must approve a major architectural mutation before it is applied to the main branch.
+2.  **Phase 37: Mesh-Scale Distributed RAG (Global Intelligence)**
+    *   Develop a federated search loop that can query the AST-aware intelligence indices of all nodes in the Mesh, providing agents with 'global' architectural awareness.
 
 **Report Concluded.**
