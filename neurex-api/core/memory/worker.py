@@ -90,16 +90,23 @@ class MemoryWorker:
         log.info("memory_worker.stopped")
 
     async def _full_index(self):
+        """Phase 44.12: Sema-Throttled Parallel Indexing."""
         if not self._enabled:
             return
+        
         log.info("memory_worker.full_index.start")
-        count = 0
-        for path in WORKSPACE_PATH.rglob("*"):
-            if self._should_index(path):
+        # Throttle to avoid CPU/API exhaustion
+        semaphore = asyncio.Semaphore(10)
+        
+        async def indexed_task(path):
+            async with semaphore:
                 await self._index_file(path)
-                count += 1
-                await asyncio.sleep(0)
-        log.info("memory_worker.full_index.done", files=count)
+
+        all_paths = [p for p in WORKSPACE_PATH.rglob("*") if self._should_index(p)]
+        if all_paths:
+            await asyncio.gather(*[indexed_task(p) for p in all_paths])
+            
+        log.info("memory_worker.full_index.done", files=len(all_paths))
 
     async def _process_queue(self):
         while True:
