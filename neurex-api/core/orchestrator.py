@@ -28,6 +28,7 @@ from core.agents.researcher_agent import ResearcherAgent
 from core.agents.reviewer_agent import ReviewerAgent
 from core.agents.debater_agent import DebaterAgent
 from core.agents.commander_agent import CommanderAgent
+from core.agents.swarm_agent import SwarmAgent
 
 from core.context.manager import ContextManager
 from core.context.rules_parser import RulesParser
@@ -45,6 +46,7 @@ AGENT_MAP = {
     "reviewer":   ReviewerAgent,
     "debater":    DebaterAgent,
     "commander":  CommanderAgent,
+    "swarm":      SwarmAgent,
 }
 
 class Orchestrator:
