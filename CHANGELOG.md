@@ -23,6 +23,10 @@ All notable changes to the Neurex project will be documented in this file.
 - **Skeptical Memory (Phase 31)**: Implemented 'Zero-Trust' memory management that forces agents to verify filesystem state via grep/read before every mutation, preventing context entropy.
 - **YOLO Permission Classifier (Phase 32)**: Launched a low-latency auto-approval gate for 'safe' tools, dramatically accelerating agent exploration speed.
 - **Neurex Somnus (Phase 33)**: Implemented an 'always-on' monitor (autoDream) that asynchronously updates architectural intel and memory pointers upon filesystem changes.
+- **HYPERPLAN Deep Thinking (Phase 34)**: Launched a multi-pass architecture planning engine that enforces Decomposition, Symbolic Trace, and Optimization cycles for complex design tasks.
+- **Somnus Skill Harvesting (Phase 35)**: Extended the background daemon to autonomously discover, security-audit, and acquire new capabilities from Mesh peers.
+- **Neural Swarm Consensus (Phase 36)**: Implemented a 'voting' protocol where multiple agents must approve significant architectural mutations before application.
+- **Mesh-Scale Distributed RAG (Phase 37)**: Launched a federated search engine that queries the collective intelligence of all nodes in the Mesh, providing 'global' context awareness.
 - **Persistent Workspace Layouts**: integrated automatic storage for sidebar, terminal, and assistant panel dimensions using `react-resizable-panels` and `localStorage`.
 - **Advanced Panel Controls**: added Maximize, Collapse, and Clear actions to the Bottom Panel header for streamlined workspace management.
 - **VSCodium Parity**: achieved layout parity with professional editors by ensuring terminal reflow and panel state preservation across sessions.

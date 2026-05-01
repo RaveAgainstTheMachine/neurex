@@ -21,7 +21,7 @@ Welcome to the official Neurex roadmap. This document tracks the trajectory of t
 - [x] **Phase 26-28**: RAG 2.0 (NeuralExplorer), Multi-Peer Mesh, isolated Neural Sandbox.
 - [x] **Phase 29-30**: Neural Model Fusion (Swarm Intelligence), Universal Engine.
 - [x] **Phase 31-33**: Skeptical Memory (Zero-Trust), YOLO Permission Classifier, Neurex Somnus.
-- [x] **Phase 34-35**: ULTRAPLAN Deep Thinking, Somnus Skill Harvesting.
+- [x] **Phase 34-35**: HYPERPLAN Deep Thinking, Somnus Skill Harvesting.
 - [x] **Phase 36-37**: Neural Swarm Consensus, Mesh-Scale Distributed RAG (Global Intelligence).
 
 ---
@@ -31,13 +31,13 @@ Welcome to the official Neurex roadmap. This document tracks the trajectory of t
 ### Phase 38: Neural Architecture Evolution (Self-Optimization)
 > **Goal**: Enable the system to optimize its own source code for performance and intelligence.
 - [ ] **Genetic Agent**: Implementation of agents that clone, mutate, and benchmark project modules.
-- [ ] **A/B Performance Testing**: Autonomous benchmarking of mutated modules against ULTRAPLAN blueprints.
+- [ ] **A/B Performance Testing**: Autonomous benchmarking of mutated modules against HYPERPLAN blueprints.
 - [ ] **Consensus Promotion**: Using the Swarm Consensus engine to promote "superior" code versions to the main branch.
 
 ### Phase 39: Autonomous Mesh Load-Balancing (Compute Steering)
 > **Goal**: Optimize compute resource allocation across the decentralized network.
 - [ ] **Thermal Monitoring**: Tracking CPU/VRAM heat and availability across all Mesh nodes.
-- [ ] **Compute Steering**: Autonomously migrating heavy "UltraPlan" tasks to nodes with the highest intelligence-per-watt.
+- [ ] **Compute Steering**: Autonomously migrating heavy "HyperPlan" tasks to nodes with the highest intelligence-per-watt.
 - [ ] **Dynamic Sharding**: Distributing large-scale RAG indices across the Mesh based on node capacity.
 
 ---
@@ -60,7 +60,7 @@ Welcome to the official Neurex roadmap. This document tracks the trajectory of t
 
 ## 🛠️ Contribution & Development
 Neurex is an autonomous-first ecosystem. 
-- **Core Principle**: All changes must pass **ULTRAPLAN** verification and **Consensus** review.
+- **Core Principle**: All changes must pass **HYPERPLAN** verification and **Consensus** review.
 - **Protocol**: Refer to `CONTRIBUTING.md` for Skeptical Memory and Zero-Trust mutation guidelines.
 
 ---

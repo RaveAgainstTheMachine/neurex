@@ -207,12 +207,12 @@ While the architecture is incredibly sound, I have identified a few areas that r
         *   **autoDream Loop**: Implemented an asynchronous summarization task that updates `.neurex/intel.json` and `.neurex/MEMORY.md` following code changes.
         *   **Warm-Start Autonomy**: Ensured that agents always have access to a synchronized "sticky-note" memory, eliminating architectural cold-start latency.
 
-26. **ULTRAPLAN Deep Thinking Mode (Phase 34 Milestone)**:
+26. **HYPERPLAN Deep Thinking Mode (Phase 34 Milestone)**:
     *   Status: **RESOLVED** (v0.2.1-stable).
     *   Implementation:
-        *   **Multi-Pass Reasoning**: Developed the `UltraPlan` engine (`harness/ultraplan.py`) to execute structured design cycles (Decomposition -> Trace -> Optimization -> Synthesis).
+        *   **Multi-Pass Reasoning**: Developed the `HyperPlan` engine (`harness/hyperplan.py`) to execute structured design cycles (Decomposition -> Trace -> Optimization -> Synthesis).
         *   **Architectural Hardening**: Ensured that complex refactors are vetted for data flow integrity and side effects before the first line of code is written.
-        *   **MCP Integration**: Exposed the `ultraplan` tool for autonomous delegation during massive project migrations.
+        *   **MCP Integration**: Exposed the `hyperplan` tool for autonomous delegation during massive project migrations.
 
 ---
 
@@ -244,10 +244,10 @@ While the architecture is incredibly sound, I have identified a few areas that r
 ## 4. Strategic Recommendations for Next Deployment
 
 1.  **Phase 38: Neural Architecture Evolution (Self-Optimization)**
-    *   Implement a 'Genetic Agent' that periodically clones modules, mutates them for performance optimization, and uses ULTRAPLAN + Consensus to decide if the new version should replace the old.
+    *   Implement a 'Genetic Agent' that periodically clones modules, mutates them for performance optimization, and uses HYPERPLAN + Consensus to decide if the new version should replace the old.
 2.  **Phase 39: Autonomous Mesh Load-Balancing (Compute Steering)**
     *   Develop a service that monitors the VRAM/CPU heat across the Mesh and autonomously migrates long-running 'Harness' tasks to nodes with the highest available intelligence-per-watt.
 2.  **Phase 38: Neural Architecture Evolution (Self-Optimization)**
-    *   Implement a 'Genetic Agent' that periodically clones modules, mutates them for performance optimization, and uses ULTRAPLAN + Consensus to decide if the new version should replace the old.
+    *   Implement a 'Genetic Agent' that periodically clones modules, mutates them for performance optimization, and uses HYPERPLAN + Consensus to decide if the new version should replace the old.
 
 **Report Concluded.**

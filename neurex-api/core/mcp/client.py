@@ -24,16 +24,16 @@ from core.mcp.tools.mesh_intel import get_mesh_topology, check_peer_suitability
 from core.context.scratchpad import set_scratchpad_value, get_scratchpad, clear_scratchpad
 from core.observability.flight_recorder import record_decision, get_flight_log
 from core.mcp.servers.neural_harness import run_neural_harness
-from core.harness.ultraplan import UltraPlan
+from core.harness.hyperplan import HyperPlan
 
 log = structlog.get_logger()
 
-async def run_ultraplan(query: str) -> str:
-    """Invokes the multi-pass UltraPlan engine for complex architecture."""
+async def run_hyperplan(query: str) -> str:
+    """Invokes the multi-pass HyperPlan engine for complex architecture."""
     from core.context.manager import ContextManager
     from core.agents.base_agent import BaseAgent
     agent = BaseAgent(None, ContextManager()) # Placeholder rules
-    up = UltraPlan(agent)
+    up = HyperPlan(agent)
     blueprint = await up.generate_blueprint(query)
     import json
     return json.dumps(blueprint, indent=2)
@@ -68,7 +68,7 @@ TOOL_REGISTRY: dict[str, callable] = {
     "record_decision":           record_decision,
     "get_flight_log":            get_flight_log,
     "neural_harness":            run_neural_harness,
-    "ultraplan":                 run_ultraplan,
+    "hyperplan":                 run_hyperplan,
 }
 
 class MCPClient:
