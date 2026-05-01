@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState, useCallback, useMemo } from "react";
+import React, { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import { 
   DndContext, 
   closestCenter,
@@ -708,4 +708,4 @@ const TaskCard = React.memo(function TaskCard({
       )}
     </div>
   );
-}
+});
