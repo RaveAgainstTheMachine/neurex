@@ -45,9 +45,17 @@ class SwarmManager:
         swarm.status = "executing"
         dispatch_tasks = []
         
+        from core.infrastructure.compute_monitor import compute_monitor
+        
         for i, sub in enumerate(plan):
-            # Find a peer for this sub-task
-            peer_url = await mesh_router.get_best_inference_node()
+            # Phase 39: Autonomous Compute Steering
+            # Identify the best node based on thermal efficiency and VRAM availability
+            peer_url = await compute_monitor.get_best_node_for_task(required_vram_gb=4.0)
+            
+            if peer_url == "local":
+                # Use default local router if steering suggests local or fails
+                peer_url = await mesh_router.get_best_inference_node()
+                
             dispatch_tasks.append(self._run_sub_task(swarm, i, sub, peer_url))
             
         await asyncio.gather(*dispatch_tasks)
