@@ -3,7 +3,7 @@ core/infrastructure/kv_sync.py
 Phase 46: Deep Neural Integration (Mesh KV-Sync)
 Implements sub-ms neural state propagation and federated K/V cache synchronization.
 Enables real-time hidden state pooling across Mesh nodes during reasoning bursts.
-\"\"\"
+"""
 import asyncio
 import structlog
 from typing import Dict, List, Any, Optional
@@ -19,9 +19,9 @@ class KVSyncProtocol:
         self.propagation_delay_ms = 0.5 # Targeted sub-ms latency
 
     async def propagate_hidden_state(self, session_id: str, state_delta: Any, origin_node: str):
-        \"\"\"
+        """
         Propagates a hidden state delta to all peers involved in the attention pool.
-        \"\"\"
+        """
         peers = [p for p in mesh_router.peers.values() if p.status == "online" and p.url != origin_node]
         if not peers:
             return
@@ -35,7 +35,7 @@ class KVSyncProtocol:
         asyncio.create_task(self._process_propagation(tasks))
 
     async def _process_propagation(self, tasks):
-        \"\"\"Executes propagation tasks and logs throughput.\"\"\"
+        """Executes propagation tasks and logs throughput."""
         start_time = asyncio.get_event_loop().time()
         await asyncio.gather(*tasks, return_exceptions=True)
         end_time = asyncio.get_event_loop().time()
@@ -47,7 +47,7 @@ class KVSyncProtocol:
             log.debug("kv_sync.propagation_complete", duration_ms=duration_ms)
 
     async def _sync_node(self, node_url: str, session_id: str, delta: Any):
-        \"\"\"Sends a high-priority state sync packet to a peer.\"\"\"
+        """Sends a high-priority state sync packet to a peer."""
         try:
             # Phase 46: Specialized /api/inference/kv_sync endpoint
             # In a real mesh, this would use a raw socket or high-speed gRPC/UDP channel
@@ -57,7 +57,7 @@ class KVSyncProtocol:
             return False
 
     def get_pooled_state(self, session_id: str) -> Optional[Any]:
-        \"\"\"Retrieves the aggregated hidden state for a reasoning session.\"\"\"
+        """Retrieves the aggregated hidden state for a reasoning session."""
         return self.state_cache.get(session_id)
 
 kv_sync = KVSyncProtocol()
