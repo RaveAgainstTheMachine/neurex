@@ -3,7 +3,7 @@ core/infrastructure/live_reloader.py
 Phase 45: Sentient IDE (Runtime Evolution)
 Enables zero-restart logic reloading for core Neurex modules.
 Allows the Mesh to update its own soul without terminating the process.
-\"\"\"
+"""
 import sys
 import importlib
 import structlog
@@ -16,10 +16,10 @@ class LiveReloader:
         self.registry = {} # module_name -> module_object
 
     def reload_module(self, file_path: str) -> bool:
-        \"\"\"
+        """
         Converts a file path to a module name and reloads it in-place.
         Example: 'core/agents/coder_agent.py' -> 'core.agents.coder_agent'
-        \"\"\"
+        """
         try:
             if not file_path.endswith(".py"):
                 return False
@@ -47,10 +47,10 @@ class LiveReloader:
             return False
 
     def hot_swap_class(self, module_name: str, class_name: str):
-        \"\"\"
+        """
         EXPERIMENTAL: Swaps class definitions in memory.
         Best used for Stateless Logic or Agent Templates.
-        \"\"\"
+        """
         # TODO: Implement deep class swapping for long-lived agent instances
         pass
 
