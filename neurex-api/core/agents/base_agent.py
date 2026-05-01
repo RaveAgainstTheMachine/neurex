@@ -19,6 +19,7 @@ from core.context.rules_parser import RulesParser
 from core.mcp.client import MCPClient
 from core.skills.manager import SkillManager
 from core.collaboration.manager import collaboration_manager
+from core.context.compression import ContextCompressor
 
 log = structlog.get_logger()
 
@@ -43,6 +44,7 @@ class BaseAgent(ABC):
         self.skills = SkillManager()
         self.model = model
         self.autonomy_level = autonomy_level
+        self.compressor = ContextCompressor(ctx)
 
     # ── Subclasses implement these ────────────────────────────────────────
 
@@ -98,7 +100,9 @@ class BaseAgent(ABC):
             f"# {c['metadata'].get('file', 'unknown')} (line {c['metadata'].get('start_line', '?')})\n{c['document']}"
             for c in chunks
         )
-        return f"<codebase_context>\n{formatted}\n</codebase_context>"
+        # Apply Neural Compression
+        compressed = await self.compressor.compress_context(formatted)
+        return f"<codebase_context>\n{compressed}\n</codebase_context>"
 
     async def stream(
         self,
