@@ -1,6 +1,22 @@
 # Changelog
 
 All notable changes to the Neurex project will be documented in this file.
+
+## [0.2.1] - 2026-05-01 (UNIFIED MESH & PERSISTENT INTELLIGENCE)
+### Added
+- **Infrastructure Hub Overhaul**: Redesigned the `InfraPanel` with real-time VRAM/RAM/CPU metrics, professional model deployment with quantization support (4-bit/8-bit/FP16), and dynamic agent recommendations.
+- **Active Skills & MCP Management**: Integrated a toggleable interface for managing agent tools and Model Context Protocol (MCP) servers directly from the infrastructure hub.
+- **Persistent Multi-Terminal**: Refactored the terminal architecture to keep multiple sessions alive in the background; switching tabs or terminals no longer destroys state or closes PTY sessions.
+- **Unified WebSocket Store**: Migrated all WebSocket communication to a central Zustand-based `send` method, eliminating global window hacks and improving type safety.
+- **Mesh Logic Integration**: Added peer node discovery and status indicators to the infrastructure catalog for distributed inference monitoring.
+- **Wiki & Documentation Hub**: Created a comprehensive `README.md` and updated `PHILOSOPHY.md` and `DESIGN_SYSTEM.md` to reflect new architectural standards.
+
+### Fixed
+- **Chat Persistence Fix**: Resolved a critical race condition in the WebSocket handler by using isolated database sessions for user/assistant message recording.
+- **FileExplorer Root Expansion**: Fixed a bug where the workspace root directory could not be expanded due to falsy path validation.
+- **InfraMetrics Type Accuracy**: Corrected the `InfraMetrics` TypeScript interface to match the backend's resource reporting (RAM totals, CPU usage).
+- **Terminal Re-fitting**: Implemented a robust re-fit mechanism that fires when a hidden terminal becomes visible, ensuring jitter-free layout restoration.
+
 ## [0.2.0] - 2026-04-30 (GRACEFUL RESIZING & LAYOUT PERSISTENCE)
 ### Added
 - **Persistent Workspace Layouts**: integrated automatic storage for sidebar, terminal, and assistant panel dimensions using `react-resizable-panels` and `localStorage`.
