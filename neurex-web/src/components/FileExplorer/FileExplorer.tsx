@@ -178,7 +178,7 @@ export function FileExplorer() {
   const [confirmDelete, setConfirmDelete] = useState<{ path: string, name: string, root?: string } | null>(null);
   const [inputDialog, setInputDialog] = useState<{ type: 'file' | 'folder', dir: string, root?: string } | null>(null);
   const [folderBrowser, setFolderBrowser] = useState<{ open: boolean, mode: 'open' | 'add' }>({ open: false, mode: 'open' });
-  const [sections, setSections] = useState({ open: true, workspace: true, outline: true });
+  const [sections, setSections] = useState({ open: true, workspace: true, outline: false });
 
   const openEditorsRef = useRef<ImperativePanelHandle>(null);
   const explorerRef = useRef<ImperativePanelHandle>(null);
@@ -245,7 +245,7 @@ export function FileExplorer() {
         {/* ── Open Editors ──────────────────────────────────────────────── */}
         <Panel 
           ref={openEditorsRef}
-          defaultSize={15} 
+          defaultSize={6} 
           minSize={4} 
           className="sidebar-section"
         >
@@ -307,8 +307,9 @@ export function FileExplorer() {
         {/* ── Outline ───────────────────────────────────────────────────── */}
         <Panel 
           ref={outlineRef}
-          defaultSize={15} 
+          defaultSize={4} 
           minSize={4} 
+          collapsible={true}
           className="sidebar-section"
         >
           <div className="sidebar-section__header" onClick={() => toggleSection('outline')}>
