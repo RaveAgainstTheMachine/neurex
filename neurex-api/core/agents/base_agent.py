@@ -5,6 +5,7 @@ Abstract base for all Neurex agents. Handles:
   - Ollama streaming
   - Tool dispatch via MCP client
   - Token budget enforcement
+  - Skeptical Memory (Phase 31)
 """
 from __future__ import annotations
 import os
@@ -20,6 +21,7 @@ from core.mcp.client import MCPClient
 from core.skills.manager import SkillManager
 from core.collaboration.manager import collaboration_manager
 from core.context.compression import ContextCompressor
+from core.context.skeptical_memory import SkepticalMemory
 
 log = structlog.get_logger()
 
@@ -28,8 +30,6 @@ def get_ollama_base():
 
 def get_default_model():
     return os.getenv("DEFAULT_MODEL", "qwen2.5-coder:14b")
-
-
 
 class BaseAgent(ABC):
     """All agents inherit from this."""
@@ -45,8 +45,7 @@ class BaseAgent(ABC):
         self.model = model
         self.autonomy_level = autonomy_level
         self.compressor = ContextCompressor(ctx)
-
-    # ── Subclasses implement these ────────────────────────────────────────
+        self.skeptical_memory = SkepticalMemory(os.getenv("WORKSPACE_PATH", os.getcwd()))
 
     @abstractmethod
     async def execute(
@@ -55,11 +54,11 @@ class BaseAgent(ABC):
         """Execute a task step and yield structured chunks."""
         ...
 
-    # ── Shared helpers ────────────────────────────────────────────────────
-
     async def build_system_prompt(self, conversation_id: str, extra: str = "") -> str:
-        rules = self.rules.get_merged_rules()
         parts = [self.system_prompt]
+        
+        # Phase 31: Skeptical Memory Directive
+        parts.append(self.skeptical_memory.get_skeptical_instruction())
         
         # 1. Project Intelligence Injection
         ws = os.getenv("WORKSPACE_PATH", "/workspace")
@@ -85,15 +84,14 @@ class BaseAgent(ABC):
         except Exception:
             pass
             
-        parts.append("\n- SCRATCHPAD RULE: Use `set_scratchpad` to store critical findings (e.g. library bugs, architectural notes) for your sibling agents. Check the `<shared_scratchpad>` block for notes left by others.")
+        parts.append("\n- SCRATCHPAD RULE: Use `set_scratchpad` to store critical findings for sibling agents.")
 
         if extra:
             parts.append(f"\n\n{extra}")
         return "\n".join(parts)
 
     async def rag_context(self, query: str, n: int = 5) -> str:
-        """Retrieve relevant code chunks via Neural RAG 2.0 (Hybrid Search)."""
-        # Phase 25: Using NeuralExplorer for AST-aware hybrid retrieval
+        """Retrieve relevant code chunks via Neural RAG 2.0."""
         chunks = await self.ctx.explorer.hybrid_search(query, limit=n)
         if not chunks:
             return ""
@@ -101,7 +99,6 @@ class BaseAgent(ABC):
             f"# {c['metadata'].get('file', 'unknown')} (line {c['metadata'].get('start_line', '?')})\n{c['document']}"
             for c in chunks
         )
-        # Apply Neural Compression (Phase 22)
         compressed = await self.compressor.compress_context(formatted)
         return f"<codebase_context>\n{compressed}\n</codebase_context>"
 
@@ -111,35 +108,24 @@ class BaseAgent(ABC):
         model: str | None = None,
         tools: list[dict] | None = None,
     ) -> AsyncGenerator[dict, None]:
-        """
-        Stream from Ollama and yield:
-          {"type": "token",     "text": "..."}
-          {"type": "tool_call", "call": {...}}
-          {"type": "done",      "full_text": "..."}
-        """
+        """Stream from Mesh/Local and yield tokens/tool_calls."""
         payload: dict[str, Any] = {
             "model": model or self.model or get_default_model(),
             "messages": messages,
             "stream": True,
-            "options": {"temperature": 0.2, "num_gpu": 99},
-
+            "options": {"temperature": 0.2},
         }
 
-        # Merge dynamic skills
         skill_tools = self.skills.get_enabled_tools()
         final_tools = (tools or []) + skill_tools
-
         if final_tools:
             payload["tools"] = final_tools
 
         from core.infrastructure.mesh import mesh_router
-
-        # 2. Otherwise, route to local Mesh (Ollama)
         ollama_url = await mesh_router.get_best_inference_node(payload["model"])
         full_text = ""
-        # Increase timeout for complex mesh generation
+        
         async with httpx.AsyncClient(timeout=300) as client:
-            # We may be routing to a peer, so we need to add the peer's token if applicable
             headers = {}
             if "ollama_proxy" in ollama_url:
                 peer_url = ollama_url.split("/api/infra")[0]
@@ -148,62 +134,37 @@ class BaseAgent(ABC):
 
             target_url = f"{ollama_url}/api/chat" if "ollama_proxy" not in ollama_url else ollama_url.replace("ollama_proxy", "ollama_proxy/api/chat")
 
-            async with client.stream(
-                "POST",
-                target_url,
-                json=payload,
-                headers=headers
-            ) as resp:
+            async with client.stream("POST", target_url, json=payload, headers=headers) as resp:
                 resp.raise_for_status()
                 async for line in resp.aiter_lines():
-                    if not line:
-                        continue
-                    log.debug("ollama.stream_line", line=line[:100])
-
+                    if not line: continue
                     try:
                         import json
                         data = json.loads(line)
-                    except Exception:
-                        continue
-
+                    except: continue
                     msg = data.get("message", {})
-
-                    # Tool call
                     if msg.get("tool_calls"):
-                        for tc in msg["tool_calls"]:
-                            yield {"type": "tool_call", "call": tc}
-
-                    # Text token
+                        for tc in msg["tool_calls"]: yield {"type": "tool_call", "call": tc}
                     content = msg.get("content", "")
                     if content:
                         full_text += content
                         yield {"type": "token", "text": content}
-
                     if data.get("done"):
                         yield {"type": "done", "full_text": full_text}
 
-    async def record_decision(self, conversation_id: str, decision: str, rationale: str, task_id: str | None = None):
-        """Helper to log an agentic decision to the flight recorder."""
-        from core.observability.flight_recorder import record_decision
-        await record_decision(conversation_id, self.agent_type, decision, rationale, task_id=task_id)
-
     async def dispatch_tool(self, tool_call: dict, conversation_id: str) -> str:
-        """Route a tool_call from the model to the MCP client with Federated Governance."""
+        """Route a tool_call with Federated Governance."""
         name = tool_call.get("function", {}).get("name", "")
         args = tool_call.get("function", {}).get("arguments", {})
         
-        # 1. Federated Governance: Mutation Locking
         mutation_tools = ["write_file", "delete_file", "replace_file_content", "multi_replace_file_content"]
         if name in mutation_tools:
             path = args.get("path") or args.get("TargetFile")
             if path:
-                # Try to auto-acquire lock for the agent
                 requester = f"agent:{self.agent_type}"
                 locked = await collaboration_manager.acquire_lock(path, requester, conversation_id=conversation_id)
                 if not locked:
-                    msg = f"MUTATION_BLOCKED: The file '{path}' is currently locked by another entity. Wait or choose another task."
-                    log.warn("collaboration.dispatch_blocked", tool=name, path=path, requester=requester)
-                    return msg
+                    return f"MUTATION_BLOCKED: The file '{path}' is locked by another entity."
 
-        log.info("tool_dispatch", tool=name, args=args, autonomy=self.autonomy_level)
+        log.info("tool_dispatch", tool=name, args=args)
         return await self.mcp.call(name, args, autonomy_level=self.autonomy_level, conversation_id=conversation_id)

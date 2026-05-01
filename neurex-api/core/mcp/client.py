@@ -4,7 +4,9 @@ MCP tool dispatcher. Routes tool names to concrete tool implementations.
 Add new tools here and register them in TOOL_REGISTRY.
 """
 from __future__ import annotations
+import inspect
 import structlog
+from typing import Any
 from core.mcp.tools.filesystem import (
     read_file, write_file, list_directory, delete_file
 )
@@ -20,6 +22,7 @@ from core.mcp.tools.intel import synthesize_project_intel, query_project_intel, 
 from core.mcp.tools.skills_builder import create_skill, publish_skill
 from core.mcp.tools.mesh_intel import get_mesh_topology, check_peer_suitability
 from core.context.scratchpad import set_scratchpad_value, get_scratchpad, clear_scratchpad
+from core.observability.flight_recorder import record_decision, get_flight_log
 from core.mcp.servers.neural_harness import run_neural_harness
 
 
@@ -56,30 +59,41 @@ TOOL_REGISTRY: dict[str, callable] = {
     "get_flight_log":            get_flight_log,
     "neural_harness":            run_neural_harness,
 }
+
 class MCPClient:
     """
-    Thin dispatcher. In a full MCP implementation this would speak the
-    Model Context Protocol over stdio/HTTP. For now it directly calls
-    Python implementations that are security-scoped.
+    Thin dispatcher. Handles tool discovery, YOLO permission classification,
+    and parameter injection for context-aware tools.
     """
     def __init__(self):
         from core.skills.manager import SkillManager
         self.skills = SkillManager()
 
-    async def call(self, tool_name: str, arguments: dict, autonomy_level: str = "limited", conversation_id: str | None = None) -> str:
+    async def call(self, tool_name: str, arguments: dict, autonomy_level: str = "limited", conversation_id: str | None = None) -> Any:
+        """
+        Executes a tool call. If YOLO is enabled and tool is safe, bypasses authorization.
+        """
+        # Phase 32: YOLO Permission Classifier
+        safe_tools = ["read_file", "list_directory", "grep_search", "web_search", "query_project_intel", "get_flight_log"]
+        is_yolo = tool_name in safe_tools
+        
+        if is_yolo:
+            log.info("mcp.yolo_auto_approve", tool=tool_name)
+        else:
+            # Traditional RBAC/Auth logic would go here
+            pass
+            
         fn = TOOL_REGISTRY.get(tool_name)
-        if fn is None:
+        if not fn:
             # Check SkillManager for dynamic tools
             skill_name = self.skills.get_skill_for_tool(tool_name)
             if skill_name:
                 log.info("mcp.dispatch_to_skill", tool=tool_name, skill=skill_name)
                 return await self.skills.execute_skill_tool(skill_name, tool_name, arguments)
-                
-            log.warning("mcp.unknown_tool", tool=tool_name)
-            return f"Error: unknown tool '{tool_name}'"
+            return f"Error: Tool '{tool_name}' not found."
+            
         try:
             # Inject context-aware parameters
-            import inspect
             sig = inspect.signature(fn)
             if "autonomy_level" in sig.parameters:
                 arguments["autonomy_level"] = autonomy_level
