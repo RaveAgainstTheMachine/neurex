@@ -10,6 +10,17 @@ All notable changes to the Neurex project will be documented in this file.
 - **Unified WebSocket Store**: Migrated all WebSocket communication to a central Zustand-based `send` method, eliminating global window hacks and improving type safety.
 - **Mesh Logic Integration**: Added peer node discovery and status indicators to the infrastructure catalog for distributed inference monitoring.
 - **Wiki & Documentation Hub**: Created a comprehensive `README.md` and updated `PHILOSOPHY.md` and `DESIGN_SYSTEM.md` to reflect new architectural standards.
+- **Phase 44: Performance Hardening & Throughput Scaling**:
+    - **Accelerated API Serialization**: Integrated `orjson` (ORJSONResponse) as the global FastAPI response engine, significantly reducing JSON overhead for high-frequency telemetry.
+    - **High-Throughput Observability**: Implemented a buffered batch-writing system for the Flight Recorder, replacing immediate DB commits with a 2-second background flush worker.
+    - **Butter-Smooth Terminal**: Introduced throttled PTY buffering (20ms/10-line aggregation) to prevent WebSocket flooding and UI stutter during high-velocity terminal output.
+    - **Fail-Fast Federated RAG**: Reduced peer search timeout to 3s with `asyncio.gather` parallelization, ensuring snappy global intelligence even in large, decentralized networks.
+    - **Sema-Throttled Memory Indexing**: Implemented parallel workspace indexing (10 concurrent files) in the `MemoryWorker`, drastically reducing the time to reach architectural situational awareness.
+    - **Intent-Aware Context Compression**: Refactored the compressor to retain docstrings during structural summaries, preserving architectural intent while purging implementation tokens.
+    - **Token Chunking**: Buffered LLM streaming into blocks of 10 tokens, reducing WebSocket message frequency and network pressure by ~90%.
+    - **Quiet-Period FS Debouncing**: Optimized the file watcher with 500ms inactivity buffering and path-specific event batching for more efficient UI refreshes.
+    - **Persistent Mesh Clients**: Migrated all Mesh-wide communications (RAG, Memory, Agents) to long-lived HTTP client pools to eliminate connection churn.
+    - **O(1) Hive Sharding**: Optimized the HiveMind lock-manager with direct index lookups, replacing linear searches during massive parallel refactors.
 
 ### Fixed
 - **Chat Persistence Fix**: Resolved a critical race condition in the WebSocket handler by using isolated database sessions for user/assistant message recording.

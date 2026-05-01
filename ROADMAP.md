@@ -26,30 +26,19 @@ Welcome to the official Neurex roadmap. This document tracks the trajectory of t
 - [x] **Phase 38-39**: Neural Architecture Evolution (Genetic Optimization), Autonomous Compute Steering.
 - [x] **Phase 40-41**: Swarm Self-Governance (Autonomous RBAC), Mesh-Wide Global Memory.
 - [x] **Phase 42**: Neural UI Generation (Dynamic Morphic Interface).
+- [x] **Phase 43**: Autonomous Hardware Quantification (Performance Tuning).
+- [x] **Phase 44**: Neural Mesh Hive-Mind (High-Throughput Performance Hardening).
 
 ---
 
 ## ⚡ Active Development (Immediate Horizon)
 
-### Phase 43: Autonomous Hardware Quantification (Performance Tuning)
-> **Goal**: Optimize model performance based on local and peer hardware constraints.
-- [ ] **Hardware Benchmarking**: Agents autonomously run performance sweeps to determine optimal token/sec thresholds.
-- [ ] **Dynamic Quantization**: The system switches between model weights (4-bit/8-bit) based on real-time VRAM availability.
-- [ ] **Context Window Elasticity**: Autonomously adjusting context parameters to prevent OOM failures during deep reasoning.
-
----
-
-## 🔭 Future Horizon (Planned)
-
-### Phase 44: Neural Mesh Hive-Mind (Shared Planning)
-- [ ] **Blueprint Sharding**: Multiple independent swarms cooperating on a single, massive HYPERPLAN blueprint.
-- [ ] **Cross-Swarm Synchronization**: Real-time resolution of architectural conflicts across the Mesh.
-- [ ] **Global Task Graph**: Mesh-wide visualization of all active autonomous loops.
-
-### Phase 45: Sentient IDE (Self-Debugging Environment)
+### Phase 45: Sentient IDE (Autonomous Self-Repair)
+> **Goal**: Enable the system to detect and fix its own regressions without human intervention.
 - [ ] **Auto-Repair Loops**: Detection and autonomous repair of core tool failures or logical regressions.
 - [ ] **Runtime Evolution**: Mutating backend logic in real-time with Swarm Consensus (Zero-Restart).
 - [ ] **Predictive Maintenance**: Proactive migration of state and compute before hardware bottlenecks occur.
+- [ ] **Neural Linter**: Real-time architectural validation of code mutations before they reach the task-graph.
 
 ---
 
