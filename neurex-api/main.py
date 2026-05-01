@@ -75,6 +75,10 @@ async def lifespan(app: FastAPI):
     from core.observability.service_sentinel import sentinel as service_sentinel
     await service_sentinel.start()
 
+    # Start CI/CD Healer (External Self-Healing)
+    from core.observability.ci_healer import ci_healer
+    asyncio.create_task(ci_healer.check_pipeline_health())
+
     # Trigger initial hardware benchmark
     from core.infrastructure.benchmarker import benchmarker
     log.info("lsp.init_start")
