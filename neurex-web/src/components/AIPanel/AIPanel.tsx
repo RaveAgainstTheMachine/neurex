@@ -109,13 +109,23 @@ export function AIPanel({ send, conversationId, isActive = true }: AIPanelProps)
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const store = useStore();
-  const { 
-    messages, tasks, wsStatus, clearTasks, 
-    conversations, setConversations, setActiveConversation, newConversation,
-    preferredModel, setPreferredModel, speechLang, setSpeechLang, activeFile,
-    fileTree, infraRegistry
-  } = store;
+
+  // Phase 44.18: Strict State Selection (Prevent Chat churn)
+  const messages = useStore(s => s.messages);
+  const tasks = useStore(s => s.tasks);
+  const wsStatus = useStore(s => s.wsStatus);
+  const clearTasks = useStore(s => s.clearTasks);
+  const conversations = useStore(s => s.conversations);
+  const setConversations = useStore(s => s.setConversations);
+  const setActiveConversation = useStore(s => s.setActiveConversation);
+  const newConversation = useStore(s => s.newConversation);
+  const preferredModel = useStore(s => s.preferredModel);
+  const setPreferredModel = useStore(s => s.setPreferredModel);
+  const speechLang = useStore(s => s.speechLang);
+  const setSpeechLang = useStore(s => s.setSpeechLang);
+  const activeFile = useStore(s => s.activeFile);
+  const fileTree = useStore(s => s.fileTree);
+  const infraRegistry = useStore(s => s.infraRegistry);
 
   const [isListening, setIsListening] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -309,16 +319,16 @@ export function AIPanel({ send, conversationId, isActive = true }: AIPanelProps)
   };
 
   const MODEL_OPTIONS = useMemo(() => {
-    if (store.infraRegistry.length === 0) {
+    if (infraRegistry.length === 0) {
       // Fallback to currently preferred model if registry is not yet loaded
       return [{ value: preferredModel, label: preferredModel, group: "Active" }];
     }
-    return store.infraRegistry.map(m => ({
+    return infraRegistry.map(m => ({
       value: m.name,
       label: `${m.name} (${m.params || 'Local'})`,
       group: m.is_community ? "Community" : "Open Source"
     }));
-  }, [store.infraRegistry, preferredModel]);
+  }, [infraRegistry, preferredModel]);
 
   const headerElements: Record<string, React.ReactNode> = {
     tabs: (
@@ -650,7 +660,7 @@ export function AIPanel({ send, conversationId, isActive = true }: AIPanelProps)
   );
 }
 
-function TaskCard({
+const TaskCard = React.memo(function TaskCard({
   task,
   onApprove,
   onApproveShell,
