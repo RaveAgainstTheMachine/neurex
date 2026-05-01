@@ -170,18 +170,28 @@ class BaseAgent(ABC):
                     yield {"type": "done", "full_text": full_text}
 
     async def dispatch_tool(self, tool_call: dict, conversation_id: str) -> str:
-        """Route a tool_call with Federated Governance."""
+        \"\"\"Route a tool_call with Federated Governance and Neural Linting.\"\"\"
         name = tool_call.get("function", {}).get("name", "")
         args = tool_call.get("function", {}).get("arguments", {})
         
         mutation_tools = ["write_file", "delete_file", "replace_file_content", "multi_replace_file_content"]
         if name in mutation_tools:
             path = args.get("path") or args.get("TargetFile")
+            
+            # 1. Collaboration Lock (Phase 44)
             if path:
                 requester = f"agent:{self.agent_type}"
                 locked = await collaboration_manager.acquire_lock(path, requester, conversation_id=conversation_id)
                 if not locked:
                     return f"MUTATION_BLOCKED: The file '{path}' is locked by another entity."
+
+            # 2. Neural Linting (Phase 45: Sentient IDE)
+            from core.context.neural_linter import NeuralLinter
+            linter = NeuralLinter()
+            is_valid, reason = await linter.verify_mutation(name, args, conversation_id)
+            if not is_valid:
+                log.warning("mutation_lint_failure", file=path, reason=reason)
+                return f"MUTATION_REJECTED: Your proposed change violates project architectural standards. Reason: {reason}"
 
         log.info("tool_dispatch", tool=name, args=args)
         return await self.mcp.call(name, args, autonomy_level=self.autonomy_level, conversation_id=conversation_id)
