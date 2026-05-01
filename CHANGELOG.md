@@ -23,6 +23,7 @@ All notable changes to the Neurex project will be documented in this file.
 - **Sandbox Mutation Support**: Expanded the Docker execution engine with a `mutation_allowed` flag, enabling agents to perform build-related writes (RW) when authorized.
 - **Predictive Resource Elasticity**: Integrated `ResourcePredictor` into the `MeshRouter` to track telemetry trends and pre-emptively avoid nodes with rising load trajectories.
 - **Swarm Leader Protocol**: Launched `SwarmManager` and `SwarmAgent` for mesh-wide parallel execution of massive refactoring tasks (>10 files).
+- **Neural Context Compression**: Implemented `ContextCompressor` to structurally summarize stable modules, maximizing effective context window for complex reasoning.
 
 ## [0.2.0] - 2026-04-30 (GRACEFUL RESIZING & LAYOUT PERSISTENCE)
 ### Added
