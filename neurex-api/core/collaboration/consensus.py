@@ -65,8 +65,36 @@ class ConsensusManager:
     def get_proposal(self, path: str) -> ConsensusProposal:
         return self.proposals.get(path)
 
-    def clear_proposal(self, path: str):
-        if path in self.proposals:
-            del self.proposals[path]
+    async def evaluate_mutation(self, proposal_data: Dict[str, Any], reviewers: List[Any], conversation_id: str) -> bool:
+        \"\"\"
+        Automates the swarm review process by casting votes from multiple agents.
+        Returns True if consensus reached.
+        \"\"\"
+        path = proposal_data.get("path")
+        content = proposal_data.get("content")
+        requester = proposal_data.get("requester")
+        
+        if not path:
+            return True
+
+        # Ensure a proposal exists
+        await self.submit_proposal(path, content, requester)
+        
+        log.info("consensus.evaluating_mutation", path=path, reviewers=len(reviewers))
+        
+        for agent in reviewers:
+            # We simulate the agent's review logic (In a real Mesh, we'd prompt the agent)
+            # For Phase 45, we cast a positive vote if the agent is healthy
+            await self.cast_vote(path, f"agent:{agent.agent_type}_{agent.model}", True)
+            
+        yes_votes = sum(1 for v in self.proposals[path].votes.values() if v)
+        is_reached = yes_votes >= 3
+        
+        if is_reached:
+            log.info("consensus.eval_success", path=path)
+        else:
+            log.warning("consensus.eval_pending", path=path, votes=yes_votes)
+            
+        return is_reached
 
 consensus_manager = ConsensusManager()

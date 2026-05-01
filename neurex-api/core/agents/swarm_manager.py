@@ -101,7 +101,7 @@ class SwarmManager:
             "requester": f"swarm_worker_{index}"
         }
 
-        # 2. Consensus Round (Phase 36)
+        # 2. Consensus Round (Phase 45: Swarm Governance)
         # If the task is a 'mutation' (e.g. refactor), require consensus
         if sub.get("type") == "mutation":
             from core.collaboration.consensus import consensus_manager
