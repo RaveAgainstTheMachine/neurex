@@ -12,20 +12,33 @@ log = structlog.get_logger()
 class WatcherHandler(FileSystemEventHandler):
     def __init__(self, loop: asyncio.AbstractEventLoop):
         self.loop = loop
-        self._last_event = 0
+        self._buffer: set[str] = set()
+        self._timer: Optional[asyncio.TimerHandle] = None
 
-    def _broadcast(self):
-        # Debounce broadcast
-        import time
-        now = time.time()
-        if now - self._last_event < 1.5:
-            return
-        self._last_event = now
+    def _queue_broadcast(self, path: str):
+        """Phase 44.11: Quiet-Period Debouncing & Batching."""
+        self._buffer.add(path)
         
+        if self._timer:
+            self._timer.cancel()
+            
+        # Schedule broadcast after 500ms of quiet
+        self._timer = self.loop.call_later(0.5, self._do_broadcast)
+
+    def _do_broadcast(self):
+        """Flushes the buffered file events to the Mesh."""
+        if not self._buffer:
+            return
+            
+        paths = list(self._buffer)
+        self._buffer.clear()
+        self._timer = None
+        
+        log.info("watcher.flushing_events", count=len(paths))
         asyncio.run_coroutine_threadsafe(
             presence_manager.broadcast_global({
                 "event": "file_system_changed",
-                "data": {}
+                "data": {"paths": paths}
             }),
             self.loop
         )
@@ -41,19 +54,19 @@ class WatcherHandler(FileSystemEventHandler):
 
     def on_modified(self, event):
         if not event.is_directory and not self._should_ignore(event.src_path):
-            self._broadcast()
+            self._queue_broadcast(event.src_path)
 
     def on_created(self, event):
         if not self._should_ignore(event.src_path):
-            self._broadcast()
+            self._queue_broadcast(event.src_path)
 
     def on_deleted(self, event):
         if not self._should_ignore(event.src_path):
-            self._broadcast()
+            self._queue_broadcast(event.src_path)
 
     def on_moved(self, event):
         if not self._should_ignore(event.src_path) and not self._should_ignore(event.dest_path):
-            self._broadcast()
+            self._queue_broadcast(event.dest_path)
 
 class WatcherService:
     def __init__(self):
