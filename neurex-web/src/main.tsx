@@ -1,7 +1,6 @@
 // src/main.tsx
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { registerSW } from "virtual:pwa-register";
 import { enableMapSet } from "immer";
 import App from "./App";
 import "./index.css";
@@ -14,9 +13,6 @@ import TsWorker from 'monaco-editor/esm/vs/language/typescript/ts.worker?worker'
 import EditorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
 
 enableMapSet();
-
-// Register PWA Service Worker
-registerSW({ immediate: false });
 
 // Configure Monaco Environment for local workers
 (window as any).MonacoEnvironment = {
