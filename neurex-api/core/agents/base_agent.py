@@ -125,6 +125,16 @@ class BaseAgent(ABC):
             payload["tools"] = final_tools
 
         from core.infrastructure.mesh import mesh_router
+        from core.infrastructure.adapter_orchestrator import adapter_orchestrator
+
+        # Phase 48: Neural Evolution (Specialized Adapter Loading)
+        # We determine the domain from the current task context if possible
+        domain = "generic-coding" 
+        session_id = f"inf-{asyncio.get_event_loop().time()}"
+        adapter_id = await adapter_orchestrator.prepare_inference_session(session_id, domain)
+        if adapter_id:
+            payload["adapter"] = adapter_id
+
         ollama_url = await mesh_router.get_best_inference_node(payload["model"])
         full_text = ""
         token_buffer = []
@@ -137,9 +147,10 @@ class BaseAgent(ABC):
 
         target_url = f"{ollama_url}/api/chat" if "ollama_proxy" not in ollama_url else ollama_url.replace("ollama_proxy", "ollama_proxy/api/chat")
 
-        async with self._client.stream("POST", target_url, json=payload, headers=headers) as resp:
-            resp.raise_for_status()
-            async for line in resp.aiter_lines():
+        try:
+            async with self._client.stream("POST", target_url, json=payload, headers=headers) as resp:
+                resp.raise_for_status()
+                async for line in resp.aiter_lines():
                 if not line: continue
                 try:
                     import json
@@ -168,6 +179,8 @@ class BaseAgent(ABC):
                     if token_buffer:
                         yield {"type": "token", "text": "".join(token_buffer)}
                     yield {"type": "done", "full_text": full_text}
+        finally:
+            adapter_orchestrator.release_session(session_id)
 
     async def dispatch_tool(self, tool_call: dict, conversation_id: str) -> str:
         """Route a tool_call with Federated Governance and Neural Linting."""
