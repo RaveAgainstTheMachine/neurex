@@ -109,20 +109,27 @@ export default function App() {
 }
 
 function AppContent() {
-
-
   useNotifications();
-  const { 
-    wsStatus, isInitialized, setIsInitialized, onboardingRequired, 
-    token, activeConversationId, modalOpen, tasks, hiveStats, 
-    theme, cursorPosition, openFiles, activeFile, setFileLanguage, logout, saveFile,
-    refreshFileTree, activeTerminalId, addTerminalSession, clearActiveTerminal, 
-    runActiveFile, setModalOpen, closeTerminalSession, editorPanes, diagnostics,
-    gitBranch, gitChanges, refreshGitStatus,
-    sidebarTab, setSidebarTab, sidebarOrder, setSidebarOrder,
-    showAIPanel, setShowAIPanel, showSettings, setShowSettings, 
-    showHiveMind, setShowHiveMind, settings
-  } = useStore();
+
+  // Phase 44.21: Architectural State Decoupling (Stabilize Root Layout)
+  const wsStatus = useStore(s => s.wsStatus);
+  const isInitialized = useStore(s => s.isInitialized);
+  const setIsInitialized = useStore(s => s.setIsInitialized);
+  const onboardingRequired = useStore(s => s.onboardingRequired);
+  const token = useStore(s => s.token);
+  const activeConversationId = useStore(s => s.activeConversationId);
+  const theme = useStore(s => s.theme);
+  const refreshFileTree = useStore(s => s.refreshFileTree);
+  const refreshGitStatus = useStore(s => s.refreshGitStatus);
+  const sidebarTab = useStore(s => s.sidebarTab);
+  const setSidebarTab = useStore(s => s.setSidebarTab);
+  const showAIPanel = useStore(s => s.showAIPanel);
+  const setShowAIPanel = useStore(s => s.setShowAIPanel);
+  const showSettings = useStore(s => s.showSettings);
+  const setShowSettings = useStore(s => s.setShowSettings);
+  const showHiveMind = useStore(s => s.showHiveMind);
+  const setShowHiveMind = useStore(s => s.setShowHiveMind);
+  const settings = useStore(s => s.settings);
   
   // ── Poll Git Status ──
   useEffect(() => {
