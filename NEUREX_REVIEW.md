@@ -113,6 +113,12 @@ While the architecture is incredibly sound, I have identified a few areas that r
         *   **Diagnostic Audit Tooling**: Implemented `audit_codebase_health` for automated drift detection and `check_design_compliance` to enforce visual consistency.
         *   **Planner Evolution**: Updated `PlannerAgent` with proactive auditing directives, enabling Neurex to maintain its own architectural integrity.
 
+13. **Sandbox Mutation Support (Phase 19 Milestone)**:
+    *   Status: **RESOLVED** (v0.2.1-stable).
+    *   Implementation:
+        *   **Mutation-Enabled Sandbox**: Expanded `run_command` with a `mutation_allowed` flag, allowing `:rw` volume mounts for authorized build tasks.
+        *   **Security Governance**: Integrated mutation requests into the HITL (Human-in-the-loop) approval flow for limited/restricted autonomy levels.
+
 ---
 
 ## 4. Strategic Recommendations for Next Deployment
