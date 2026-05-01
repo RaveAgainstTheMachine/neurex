@@ -3,7 +3,7 @@ core/infrastructure/maintenance.py
 Phase 45: Sentient IDE (Predictive Maintenance)
 Monitors telemetry and filesystem churn to proactively trigger workspace re-indexing.
 Ensures that the Mesh intelligence (RAG/Memory) remains synchronized with the physical state of the codebase.
-\"\"\"
+"""
 import asyncio
 import structlog
 from datetime import datetime, timezone
@@ -21,10 +21,10 @@ class PredictiveMaintenance:
         self._indexing_active = False
 
     async def report_churn(self, paths: List[str]):
-        \"\"\"
+        """
         Adds paths to the churn buffer and evaluates if a proactive re-index is required.
         Called by the WatcherService.
-        \"\"\"
+        """
         async with self._lock:
             for p in paths:
                 self.churn_buffer.add(p)
@@ -36,7 +36,7 @@ class PredictiveMaintenance:
                 asyncio.create_task(self.trigger_maintenance_task())
 
     async def start_background_monitor(self):
-        \"\"\"Periodically checks for stale indices.\"\"\"
+        """Periodically checks for stale indices."""
         while True:
             await asyncio.sleep(300) # Check every 5 minutes
             now = datetime.now(timezone.utc)
@@ -47,10 +47,10 @@ class PredictiveMaintenance:
                 asyncio.create_task(self.trigger_maintenance_task())
 
     async def trigger_maintenance_task(self):
-        \"\"\"
+        """
         Executes a background re-indexing of the workspace.
         Phase 44.5: Sema-Throttled Memory Indexing integration.
-        \"\"\"
+        """
         if self._indexing_active:
             return
             

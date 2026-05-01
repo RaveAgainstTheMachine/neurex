@@ -1,6 +1,7 @@
 # neurex-api/core/infrastructure/watcher.py
 import asyncio
 import os
+from typing import Optional
 from pathlib import Path
 import structlog
 from watchdog.observers import Observer
