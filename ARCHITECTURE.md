@@ -210,3 +210,27 @@ The `FlightRecorder` and `SystemLogs` utilize a non-blocking, buffered I/O model
 ### 12.4 Accelerated Backend I/O
 - **Fast Serialization**: The API utilizes `orjson` as its primary serialization engine, significantly reducing the CPU cost of generating large JSON responses for telemetry and file tree operations.
 - **Connection Pooling**: All Mesh-wide service calls (RAG, Memory, Agents) are performed via persistent `httpx.AsyncClient` pools to eliminate the overhead of TCP/TLS connection churn.
+## 13. Sentient IDE: Autonomous Self-Regulation
+ 
+Phase 45 transforms Neurex from an assistive tool into a self-governing, self-healing agentic mesh capable of autonomous architectural oversight.
+ 
+### 13.1 Neural Linter (Architectural Middleware)
+The `NeuralLinter` serves as an intelligent gatekeeper within the `BaseAgent` tool dispatch pipeline.
+- **Validation Loop**: Every filesystem mutation is interrogated by a high-reasoning model against `ARCHITECTURE.md` and `DESIGN_SYSTEM.md` before execution.
+- **Feedback & Correction**: If a mutation is rejected, the linter returns a detailed architectural rationale, triggering an **Autonomous Self-Repair Loop** where the agent reflects on the failure and regenerates a compliant change.
+ 
+### 13.2 Swarm Consensus Protocol
+Critical architectural assets (core agent logic, infrastructure, task graphs) are protected by a democratic governance layer.
+- **Consensus Manager**: Tracks mutation proposals for protected paths.
+- **Voting Threshold**: Mutations to core assets require a minimum of 3 positive votes from distinct agent personas (e.g., Coder, Reviewer, Planner).
+- **Consensus Evaluation**: Specialized reviewer agents are autonomously spawned to evaluate and vote on proposals, preventing unilateral "Neural Drift."
+ 
+### 13.3 Runtime Evolution (Zero-Restart)
+The `LiveReloader` service enables the Mesh to update its own core logic without terminating the process.
+- **Module Hot-Swapping**: Utilizes in-place module reloading to inject new agent behaviors or infrastructure fixes directly into the running process.
+- **Instant Adoption**: Evolution is immediate; once a consensus-backed mutation is written, the system adopts the new logic for all subsequent tasks.
+ 
+### 13.4 Predictive Maintenance
+The IDE proactively manages its own intelligence state to ensure long-term stability and reliability.
+- **Churn Heuristics**: The `MaintenanceService` monitors filesystem events from the `Watcher`. When codebase churn exceeds a defined threshold, it triggers a background workspace re-indexing.
+- **Stale Index Detection**: Periodically refreshes RAG and Memory pointers to ensure the agentic context remains synchronized with the physical reality of the codebase.
