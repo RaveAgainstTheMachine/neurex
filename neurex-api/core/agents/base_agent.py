@@ -214,4 +214,15 @@ class BaseAgent(ABC):
                 log.info("mutation_approved_by_consensus", file=path)
 
         log.info("tool_dispatch", tool=name, args=args)
-        return await self.mcp.call(name, args, autonomy_level=self.autonomy_level, conversation_id=conversation_id)
+        result = await self.mcp.call(name, args, autonomy_level=self.autonomy_level, conversation_id=conversation_id)
+        
+        # Phase 45: Zero-Restart Runtime Evolution
+        if name in mutation_tools and ".py" in str(args.get("path") or args.get("TargetFile")):
+            from core.infrastructure.live_reloader import live_reloader
+            path = args.get("path") or args.get("TargetFile")
+            if path:
+                reloaded = live_reloader.reload_module(path)
+                if reloaded:
+                    log.info("runtime.module_evolved", file=path)
+        
+        return result
