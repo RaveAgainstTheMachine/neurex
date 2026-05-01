@@ -84,11 +84,34 @@ class InfrastructureManager:
         raise Exception(f"Pulling models for {engine} is not supported yet.")
 
     async def get_installed_models(self, engine: str) -> List[str]:
-        """List models currently downloaded and available on this node with FS fallback."""
+        """List models currently available on this node with Phase 44.15: Cached API discovery."""
         if engine == "ollama":
+            # Phase 44.15: High-Performance Model Caching (15s TTL)
+            if hasattr(self, "_model_cache"):
+                import time
+                cached_at, cached_models = self._model_cache
+                if time.time() - cached_at < 15:
+                    return cached_models
+
             models = []
+            ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
             
-            # 1. Try API/CLI first (preferred)
+            # 1. Try HTTP API (Faster than CLI)
+            try:
+                import httpx
+                async with httpx.AsyncClient(timeout=2) as client:
+                    resp = await client.get(f"{ollama_url}/api/tags")
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        models = [m["name"] for m in data.get("models", [])]
+                        # Cache success
+                        import time
+                        self._model_cache = (time.time(), models)
+                        return models
+            except Exception:
+                pass # Fallback to CLI
+            
+            # 2. Fallback to CLI if API is unavailable
             if shutil.which("ollama"):
                 try:
                     process = await asyncio.create_subprocess_exec(
