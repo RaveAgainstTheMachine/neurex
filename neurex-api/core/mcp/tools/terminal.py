@@ -54,7 +54,7 @@ def _check_safety(command: str) -> bool:
     # Very restrictive safe-list
     return binary in {"ls", "pwd", "git"} and "rm" not in command and "mv" not in command
 
-async def run_command(command: str, cwd: str = ".", approved: bool = False, autonomy_level: str = "limited") -> str:
+async def run_command(command: str, cwd: str = ".", approved: bool = False, autonomy_level: str = "limited", mutation_allowed: bool = False) -> str:
     """
     Execute `command` inside a Docker sandbox container.
     If the command is unsafe and not pre-approved, returns an approval request.
@@ -71,6 +71,8 @@ async def run_command(command: str, cwd: str = ".", approved: bool = False, auto
             reason = "Restricted mode: All shell commands require approval."
         elif level == "limited" and not _check_safety(command):
             reason = f"Limited mode: Command '{command}' is potentially unsafe."
+        elif mutation_allowed and level != "full":
+            reason = "Mutation mode: Command requires write access to the workspace. Approval required."
             
         if reason:
             return f"APPROVAL_REQUIRED: {reason}"
@@ -78,19 +80,20 @@ async def run_command(command: str, cwd: str = ".", approved: bool = False, auto
     _check_allowlist(command)
 
     network_mode = "bridge" if os.getenv("ENABLE_AGENT_INTERNET", "false").lower() == "true" else "none"
+    mount_mode = "rw" if mutation_allowed else "ro"
 
     docker_cmd = [
         "docker", "run", "--rm",
         "--network", network_mode,          # controlled internet access
         "--memory", "512m",
         "--cpus", "1",
-        "-v", f"{WORKSPACE_PATH}:/workspace:ro",
+        "-v", f"{WORKSPACE_PATH}:/workspace:{mount_mode}",
         "-w", f"/workspace/{cwd.lstrip('/')}",
         SANDBOX_IMAGE,
         "sh", "-c", command,
     ]
 
-    log.info("terminal.exec", command=command, cwd=cwd)
+    log.info("terminal.exec", command=command, cwd=cwd, mode=mount_mode)
 
     try:
         proc = await asyncio.create_subprocess_exec(
