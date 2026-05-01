@@ -63,13 +63,19 @@ const FileItem = React.memo(function FileItem({ node, depth, rootPath }: {
   depth: number;
   rootPath?: string;
 }) {
-  const { 
-    openFile, setActiveFile, openFiles, activeFile, 
-    fetchSubtree, expandedFolders, collapsedFolders, toggleFolder 
-  } = useStore();
+  // Phase 44.16: Strict State Selection (Bypass store-wide re-renders)
+  const openFile = useStore(s => s.openFile);
+  const setActiveFile = useStore(s => s.setActiveFile);
+  const activeFile = useStore(s => s.activeFile);
+  const fetchSubtree = useStore(s => s.fetchSubtree);
+  const expandedFolders = useStore(s => s.expandedFolders);
+  const collapsedFolders = useStore(s => s.collapsedFolders);
+  const toggleFolder = useStore(s => s.toggleFolder);
+  const openFiles = useStore(s => s.openFiles);
+  const workspaceDiagnostics = useStore(s => s.workspaceDiagnostics);
+  const collapseSignal = useStore(s => s.collapseSignal);
   
   const currentRoot = depth === 0 ? node.path : rootPath;
-  const collapseSignal = useStore(s => s.collapseSignal);
   
   const expanded = useMemo(() => {
     if (node.type !== "dir") return false;
@@ -91,17 +97,12 @@ const FileItem = React.memo(function FileItem({ node, depth, rootPath }: {
     }
   }, [expanded, isDir, node.path, node.children, fetchSubtree]);
 
-  const aggregate = useMemo(() => {
-    const status = { dirty: false, error: false };
-    const walk = (n: FileNode) => {
-      const isOpen = openFiles.find(f => f.path === n.path && f.root === currentRoot);
-      if (isOpen?.isDirty) status.dirty = true;
-      if ((n.errors || 0) > 0) status.error = true;
-      if (n.children) n.children.forEach(walk);
-    };
-    if (isDir && node.children) node.children.forEach(walk);
-    return status;
-  }, [node, openFiles, isDir, currentRoot]);
+  // Phase 44.16: Shallow Status Aggregation (Bypass recursive walks)
+  const status = useMemo(() => {
+    const hasDirty = openFiles.some(f => f.path.startsWith(node.path || "") && f.isDirty);
+    const hasErrors = Object.keys(workspaceDiagnostics).some(p => p.startsWith(node.path || "") && workspaceDiagnostics[p].length > 0);
+    return { dirty: hasDirty, error: hasErrors || (node.errors || 0) > 0 };
+  }, [node.path, openFiles, workspaceDiagnostics, node.errors]);
 
   const handleClick = async () => {
     if (isDir) {
@@ -148,7 +149,7 @@ const FileItem = React.memo(function FileItem({ node, depth, rootPath }: {
           <span className="file-item__name">{node.name}</span>
         </div>
         <div className="file-item__status">
-          {aggregate.dirty && <span className="indicator-dot indicator-dot--dirty" />}
+          {status.dirty && <span className="indicator-dot indicator-dot--dirty" />}
           {(node.errors ?? 0) > 0 && <span className="problem-badge">{node.errors}</span>}
           {!isDir && node.status === "M" && <span className="git-indicator git-indicator--modified">M</span>}
           {!isDir && node.status === "U" && <span className="git-indicator git-indicator--untracked">U</span>}
