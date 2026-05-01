@@ -58,11 +58,20 @@ function SortableActivityItem({ id, active, onClick, icon: Icon, label, badge }:
 }
 
 export function ActivityBar() {
-  const { 
-    sidebarTab, setSidebarTab, sidebarOrder, setSidebarOrder,
-    showSettings, setShowSettings, showHiveMind, setShowHiveMind,
-    showAIPanel, setShowAIPanel, theme, tasks
-  } = useStore();
+  // Phase 44.22: Strict State Selection (Prevent Navigation churn)
+  const sidebarTab = useStore(s => s.sidebarTab);
+  const setSidebarTab = useStore(s => s.setSidebarTab);
+  const sidebarOrder = useStore(s => s.sidebarOrder);
+  const setSidebarOrder = useStore(s => s.setSidebarOrder);
+  const showSettings = useStore(s => s.showSettings);
+  const setShowSettings = useStore(s => s.setShowSettings);
+  const showHiveMind = useStore(s => s.showHiveMind);
+  const setShowHiveMind = useStore(s => s.setShowHiveMind);
+  
+  // Phase 44.22: Derived Selector (Re-render only when count changes)
+  const activeTaskCount = useStore(s => 
+    Object.values(s.tasks).filter(t => ["THINKING", "WRITING", "TESTING"].includes(t.status)).length
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -79,7 +88,6 @@ export function ActivityBar() {
     }
   };
 
-  const activeTaskCount = Object.values(tasks).filter(t => t.status === "THINKING" || t.status === "WRITING" || t.status === "TESTING").length;
 
   return (
     <div className="activity-bar">
