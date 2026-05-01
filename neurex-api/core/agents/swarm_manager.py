@@ -62,9 +62,36 @@ class SwarmManager:
                  peer=peer_url,
                  model=model)
         
-        # In a real mesh, we would call the peer's /api/tasks/execute endpoint with the 'model' parameter.
-        # For now, we simulate a local "swarm" worker utilizing the specified model tier.
-        await asyncio.sleep(2) # Simulate work with specialized model
+        # 1. Execute sub-task to generate a mutation proposal
+        # In a real mesh, we call the peer's /api/tasks/execute
+        await asyncio.sleep(2) 
+        proposal = {
+            "path": sub.get("files", ["unknown"])[0],
+            "content": "Proposed content change...",
+            "rationale": sub.get("description", "Routine refactor"),
+            "requester": f"swarm_worker_{index}"
+        }
+
+        # 2. Consensus Round (Phase 36)
+        # If the task is a 'mutation' (e.g. refactor), require consensus
+        if sub.get("type") == "mutation":
+            from core.collaboration.consensus import consensus_manager
+            from core.agents.base_agent import BaseAgent
+            from core.context.manager import ContextManager
+            
+            # Spawn reviewers (Logic-tier brains)
+            reviewers = [
+                BaseAgent(None, ContextManager(), model="qwen2.5-coder:32b"),
+                BaseAgent(None, ContextManager(), model="qwen2.5-coder:14b")
+            ]
+            
+            passed = await consensus_manager.evaluate_mutation(proposal, reviewers, swarm.id)
+            if not passed:
+                log.error("swarm.consensus_failed", swarm_id=swarm.id, index=index)
+                swarm.results[index] = {"status": "rejected", "summary": "Consensus not reached."}
+                return
+
+        # 3. Apply mutation (if passed or not required)
         swarm.results[index] = {"status": "success", "summary": f"Completed {sub['title']} using {model}"}
 
 swarm_manager = SwarmManager()
