@@ -222,3 +222,25 @@ async def get_system_logs():
 async def search_registry(query: str):
     """Search Hugging Face for GGUF models."""
     return await search_huggingface(query)
+
+# ── Kairos (autoDream) ──
+from core.harness.kairos import kairos_daemon
+import os
+
+@router.post("/kairos/start", dependencies=[Depends(require_role(UserRole.ADMIN))])
+async def start_kairos():
+    """Start the Kairos background architectural monitor."""
+    ws = os.getenv("WORKSPACE_PATH", os.getcwd())
+    kairos_daemon.start(ws)
+    return {"status": "started", "workspace": ws}
+
+@router.post("/kairos/stop", dependencies=[Depends(require_role(UserRole.ADMIN))])
+async def stop_kairos():
+    """Stop the Kairos background architectural monitor."""
+    kairos_daemon.stop()
+    return {"status": "stopped"}
+
+@router.get("/kairos/status")
+async def get_kairos_status():
+    """Check if the Kairos daemon is active."""
+    return {"is_running": kairos_daemon.is_running}
