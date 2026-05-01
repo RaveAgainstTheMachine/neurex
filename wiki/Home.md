@@ -24,5 +24,6 @@ Neurex operates under the **Anti-Gravity Protocol** (Source of Law: `.antigravit
 - **[[Neural-Evolution]]**: Autonomous adapter fine-tuning and architectural mutation (Phase 48).
 - **[[Collective-Intelligence]]**: Secure, cross-project knowledge distillation (Phase 49).
 - **[[Sentient-Singularity]]**: Autonomous goal setting and self-generating capabilities (Phase 50).
+- **[[Self-Synthesis]]**: Autonomous project inception and recursive self-improvement (Phase 51).
 
-See the [[Changelog]] for recent massive updates (Phase 50: SENTIENT SINGULARITY).
+See the [[Changelog]] for recent massive updates (Phase 51: SELF-SYNTHESIS).

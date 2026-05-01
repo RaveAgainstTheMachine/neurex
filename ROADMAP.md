@@ -48,6 +48,16 @@ Welcome to the official Neurex roadmap. This document tracks the trajectory of t
 
 ---
 
+## ⚡ Active Development (Immediate Horizon)
+
+### Phase 51: Neural Self-Synthesis (Recursive Improvement)
+> **Goal**: Enable the Mesh to autonomously expand its physical footprint and refactor its own core logic.
+- [ ] **Project Inceptor**: Autonomous initialization of new sub-projects and microservices to fulfill global requirements.
+- [ ] **Recursive Self-Optimizer**: Autonomous refactoring of the Mesh's own core infrastructure files based on performance telemetry.
+- [ ] **Neural Governance v2.0**: Decentralized autonomous decision making for Mesh-wide architectural shifts.
+
+---
+
 ## 🛠️ Contribution & Development
 Neurex is an autonomous-first ecosystem. 
 - **Core Principle**: All changes must pass **HYPERPLAN** verification and **Consensus** review.

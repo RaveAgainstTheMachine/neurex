@@ -12,6 +12,12 @@ All notable changes to the Neurex project will be documented in this file.
 - **Federated Weight Propagation**: Sub-ms synchronization of evolved neural weights across all Mesh nodes.
 - **Adapter Orchestration**: Dynamic, domain-specific LoRA hot-swapping during inference cycles.
 
+## [0.3.1] - 2026-05-01: Neural Self-Synthesis
+### Added
+- **Phase 51: Neural Self-Synthesis**: Initiated autonomous codebase inception and recursive self-improvement.
+- **Project Inceptor**: Enabled the Mesh to autonomously spawn sub-projects and microservices.
+- **Recursive Self-Optimizer**: Implemented autonomous core infrastructure refactoring based on performance telemetry.
+
 ## [0.2.1] - 2026-05-01 (UNIFIED MESH & PERSISTENT INTELLIGENCE)
 ### Added
 - **Infrastructure Hub Overhaul**: Redesigned the `InfraPanel` with real-time VRAM/RAM/CPU metrics, professional model deployment with quantization support (4-bit/8-bit/FP16), and dynamic agent recommendations.
