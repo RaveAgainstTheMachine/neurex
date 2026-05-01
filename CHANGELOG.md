@@ -30,6 +30,7 @@ All notable changes to the Neurex project will be documented in this file.
 - **Phase 53: Neural Temporal Synthesis**: Initiated temporal state snapshotting and quantum architectural simulation.
 - **Neural Temporal Registry**: Enabled the Mesh to capture and restore its entire neural soul (weights/context).
 - **Quantum Path Simulator**: Implemented probabilistic branching for predicting the stability of future architectural states.
+- **1.0 Installation Architecture (Neurex CLI)**: Scaffolded a native Rust daemon (`neurex-cli`) to govern the Dual-Layer architecture. It features real hardware diagnostics (`sysinfo`), dynamic Docker sandboxing (`bollard`), and asynchronous Host Control Plane bootstrapping (`tokio`).
 
 ### Performance & Stability
 - **O(1) Self-Optimization Lookups**: Upgraded the `SelfOptimizer` to use Dictionary-based tracking, eliminating O(N) list-scan overhead when managing thousands of proposed core refactors.
