@@ -33,6 +33,10 @@ export function EditorPane({ paneId = "pane-main" }: { paneId?: string }) {
   const closePane = useStore(s => s.closePane);
   const updateDiagnostics = useStore(s => s.updateDiagnostics);
   const togglePin = useStore(s => s.togglePin);
+  const upsertTask = useStore(s => s.upsertTask);
+  const setPaneFile = useStore(s => s.setPaneFile);
+  const acceptDiff = useStore(s => s.acceptDiff);
+  const discardDiff = useStore(s => s.discardDiff);
 
   const [supportedLangs, setSupportedLangs] = useState<string[]>([]);
 

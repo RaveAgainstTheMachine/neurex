@@ -130,6 +130,19 @@ function AppContent() {
   const showHiveMind = useStore(s => s.showHiveMind);
   const setShowHiveMind = useStore(s => s.setShowHiveMind);
   const settings = useStore(s => s.settings);
+  const tasks = useStore(s => s.tasks);
+  const activeFile = useStore(s => s.activeFile);
+  const setFileLanguage = useStore(s => s.setFileLanguage);
+  const saveFile = useStore(s => s.saveFile);
+  const modalOpen = useStore(s => s.modalOpen);
+  const setModalOpen = useStore(s => s.setModalOpen);
+  const addTerminalSession = useStore(s => s.addTerminalSession);
+  const clearActiveTerminal = useStore(s => s.clearActiveTerminal);
+  const closeTerminalSession = useStore(s => s.closeTerminalSession);
+  const activeTerminalId = useStore(s => s.activeTerminalId);
+  const runActiveFile = useStore(s => s.runActiveFile);
+  const logout = useStore(s => s.logout);
+  const editorPanes = useStore(s => s.editorPanes);
   
   // ── Poll Git Status ──
   useEffect(() => {
@@ -247,8 +260,8 @@ function AppContent() {
   }, [sidebarTab]);
 
 
-  const activeTaskCount = Object.values(tasks).filter(t => t.status === "THINKING" || t.status === "WRITING" || t.status === "TESTING").length;
-  const isAIActive = Object.values(tasks).some(t => t.status === "THINKING" || t.status === "WRITING");
+  const activeTaskCount = Object.values(tasks).filter((t: any) => t.status === "THINKING" || t.status === "WRITING" || t.status === "TESTING").length;
+  const isAIActive = Object.values(tasks).some((t: any) => t.status === "THINKING" || t.status === "WRITING");
 
   const languageItems = useMemo(() => [
     "typescript", "javascript", "python", "css", "json", "markdown", "yaml", "html", "rust", "go"
@@ -323,7 +336,7 @@ function AppContent() {
                         <PresenceBar />
                         {showSettings ? <SettingsPanel /> : showHiveMind ? <HiveMindPanel /> : (
                           <PanelGroup direction="horizontal" storage={localStorage} autoSaveId="neurex-h-layout">
-                            {editorPanes.map((pane, idx) => (
+                            {editorPanes.map((pane: any, idx: number) => (
                               <React.Fragment key={pane.id}>
                                 {idx > 0 && <ResizeHandle />}
                                 <Panel minSize={20}>
