@@ -26,12 +26,13 @@ class FederatedRAG:
         # 1. Local Search (AST-aware)
         local_task = self.local_ctx.explorer.hybrid_search(query, limit=limit)
         
-        # 2. Mesh Peer Search
+        # 2. Mesh Peer Search (Optimized with a single client pool)
         peers = list(mesh_router.peers.values())
-        peer_tasks = [self._search_peer(peer, query, limit) for peer in peers]
-        
-        # 3. Aggregate all results
-        all_results = await asyncio.gather(local_task, *peer_tasks)
+        async with httpx.AsyncClient(timeout=10) as client:
+            peer_tasks = [self._search_peer(client, peer, query, limit) for peer in peers]
+            
+            # 3. Aggregate all results
+            all_results = await asyncio.gather(local_task, *peer_tasks)
         
         # Flatten and format
         flat_results = []
@@ -49,21 +50,20 @@ class FederatedRAG:
         log.info("rag.global_search_complete", results=len(flat_results))
         return f"<global_mesh_context>\n{formatted}\n</global_mesh_context>"
 
-    async def _search_peer(self, peer, query: str, limit: int) -> List[Dict[str, Any]]:
-        """Queries a peer's RAG endpoint."""
+    async def _search_peer(self, client: httpx.AsyncClient, peer, query: str, limit: int) -> List[Dict[str, Any]]:
+        """Queries a peer's RAG endpoint using the shared client."""
         try:
-            async with httpx.AsyncClient(timeout=10) as client:
-                resp = await client.get(
-                    f"{peer.url}/api/rag/search",
-                    params={"query": query, "limit": limit},
-                    headers={"Authorization": f"Bearer {peer.token}"}
-                )
-                if resp.status_code == 200:
-                    results = resp.json()
-                    # Tag results with peer name
-                    for r in results:
-                        r["metadata"]["node"] = peer.name
-                    return results
+            resp = await client.get(
+                f"{peer.url}/api/rag/search",
+                params={"query": query, "limit": limit},
+                headers={"Authorization": f"Bearer {peer.token}"}
+            )
+            if resp.status_code == 200:
+                results = resp.json()
+                # Tag results with peer name
+                for r in results:
+                    r["metadata"]["node"] = peer.name
+                return results
         except Exception as e:
             log.warning("rag.peer_search_failed", peer=peer.name, error=str(e))
         return []
