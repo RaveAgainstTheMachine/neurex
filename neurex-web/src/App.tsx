@@ -21,6 +21,7 @@ import { GitTimeline } from "./components/GitTimeline/GitTimeline";
 import { SettingsPanel } from "./components/SettingsPanel/SettingsPanel";
 import { HiveMindPanel } from "./components/HiveMindPanel/HiveMindPanel";
 import { EvolutionPanel } from "./components/EvolutionPanel/EvolutionPanel";
+import { SingularityDashboard } from "./components/SingularityDashboard/SingularityDashboard";
 import { PresenceBar } from "./components/PresenceBar/PresenceBar";
 import { AuthOverlay } from "./components/AuthOverlay/AuthOverlay";
 import { TitleBar } from "./components/TitleBar/TitleBar";
@@ -330,6 +331,7 @@ function AppContent() {
                     {sidebarTab === "skills"   && <SkillsPanel />}
                     {sidebarTab === "agent"    && <AgentPanel />}
                     {sidebarTab === "evolution" && <EvolutionPanel />}
+                    {sidebarTab === "singularity" && <SingularityDashboard />}
                   </Panel>
                   <ResizeHandle />
                   <Panel minSize={30} className="app__main-content">

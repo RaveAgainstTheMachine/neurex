@@ -35,6 +35,7 @@ const SIDEBAR_ITEMS: { id: string; icon: React.FC<any>; label: string }[] = [
   { id: "skills",   icon: Puzzle,         label: "Skills & Extensions" },
   { id: "agent",    icon: Bot,            label: "Agents" },
   { id: "evolution", icon: BrainCircuit, label: "Neural Evolution" },
+  { id: "singularity", icon: Sparkles,    label: "Sentient Singularity" },
 ];
 
 function SortableActivityItem({ id, active, onClick, icon: Icon, label, badge }: { id: string; active: boolean; onClick: () => void; icon: React.FC<any>; label: string; badge?: number | string }) {
