@@ -26,13 +26,17 @@ class FederatedRAG:
         # 1. Local Search (AST-aware)
         local_task = self.local_ctx.explorer.hybrid_search(query, limit=limit)
         
-        # 2. Mesh Peer Search (Optimized with a single client pool)
+        # 2. Mesh Peer Search (Phase 44.6: Fail-Fast Concurrency)
         peers = list(mesh_router.peers.values())
-        async with httpx.AsyncClient(timeout=10) as client:
+        # Strict 3s timeout for peer context retrieval
+        async with httpx.AsyncClient(timeout=3.0) as client:
             peer_tasks = [self._search_peer(client, peer, query, limit) for peer in peers]
             
-            # 3. Aggregate all results
-            all_results = await asyncio.gather(local_task, *peer_tasks)
+            # Aggregate all results, ensuring one peer failure doesn't block the Mesh
+            results = await asyncio.gather(local_task, *peer_tasks, return_exceptions=True)
+            
+            # Filter out exceptions from peer tasks
+            all_results = [r for r in results if isinstance(r, list)]
         
         # Flatten and format
         flat_results = []
