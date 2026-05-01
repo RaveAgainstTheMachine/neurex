@@ -48,3 +48,9 @@ Aesthetics are meaningless without responsiveness. The Neurex Design System mand
 - **O(1) Interaction Design**: Navigation and status indicators must rely on shallow aggregation. Recursive tree walks are forbidden for real-time UI updates.
 - **Throttled Feedback**: High-frequency data (LLM tokens, PTY output) must be buffered at the interface layer (25-30fps) to ensure the UI remains interactive during peak throughput.
 - **Motion over Reconciliation**: Use CSS animations and transitions for continuous states (progress bars, pulses) rather than React state updates where possible to offload work from the main thread.
+### 6. Sentient IDE UI States
+As Neurex evolves into a self-regulating Mesh, the UI must provide visual clarity for autonomous reasoning cycles.
+- **Neural Repair Pulse**: When an agent enters the `REPAIRING` state (Self-Repair Loop), the task card should exhibit a slow, rhythmic "Breathing" glow (frequency: 0.5Hz) in **Warning Gold**.
+- **Consensus Glow**: Files or tasks waiting for Swarm Consensus must be decorated with a pulsing **Mesh Purple** border. Interactive tooltips should display the current vote count (e.g., `2/3 VOTES`) with real-time updates.
+- **Evolution Bloom**: Upon a successful logic hot-swap (Runtime Evolution), a brief (300ms) bloom/shimmer effect should sweep across the relevant code block to signal that the "soul" of the logic has evolved.
+- **Maintenance Indicators**: Background re-indexing triggered by Predictive Maintenance should be represented by a minimal, rotating "Neural Spinner" in the status bar, avoiding intrusive UI blockages.
