@@ -173,14 +173,21 @@ While the architecture is incredibly sound, I have identified a few areas that r
         *   **MCP Bridge**: Implemented `claude_harness.py` server to act as an asynchronous bridge between Neurex and the Claude CLI.
         *   **Secure Delegation**: Enabled the Orchestrator to delegate massive, cross-cutting tasks to Claude while preserving host system integrity.
 
+21. **Neural Model Fusion (Phase 29 Milestone)**:
+    *   Status: **RESOLVED** (v0.2.1-stable).
+    *   Implementation:
+        *   **Heterogenous Swarm Execution**: Updated `SwarmAgent` to perform model tier assignment during task decomposition.
+        *   **Dynamic Resource Allocation**: Modified `SwarmManager` to respect and dispatch sub-tasks to nodes hosting the requested model specialized for the task (e.g. logic-heavy vs boilerplate-heavy).
+        *   **Intelligence Optimization**: Established a "tier-aware" swarm logic that maximizes reasoning quality while minimizing compute overhead.
+
 ---
 
 ## 4. Strategic Recommendations for Next Deployment
 
-1.  **Phase 29: Neural Model Fusion (Swarms 2.0)**
-    *   Enable Swarm sub-agents to use different models (e.g. Claude for logic, Qwen for boilerplate) based on task complexity.
-2.  **Phase 30: Autonomous Project "Brain" Synchronization**
+1.  **Phase 30: Autonomous Project "Brain" Synchronization**
     *   Implement a background service that continuously updates the `.neurex/intel.json` based on git commits and new file additions.
+2.  **Phase 31: Multi-Agent Symbolic Debugging**
+    *   Develop a "Symbolic Replay" agent that can step through code execution in a virtual environment to identify root causes of logical regressions.
 
 ---
 **Report Concluded.**
