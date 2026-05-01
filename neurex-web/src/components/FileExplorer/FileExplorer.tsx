@@ -227,7 +227,16 @@ export function FileExplorer() {
   const handleAddFolder = () => setFolderBrowser({ open: true, mode: 'add' });
 
   const toggleSection = (key: keyof typeof sections) => {
-    setSections(s => ({ ...s, [key]: !sections[key] }));
+    const newVal = !sections[key];
+    setSections(s => ({ ...s, [key]: newVal }));
+    
+    if (key === 'open' && openEditorsRef.current) {
+      newVal ? openEditorsRef.current.expand() : openEditorsRef.current.collapse();
+    } else if (key === 'workspace' && explorerRef.current) {
+      newVal ? explorerRef.current.expand() : explorerRef.current.collapse();
+    } else if (key === 'outline' && outlineRef.current) {
+      newVal ? outlineRef.current.expand() : outlineRef.current.collapse();
+    }
   };
 
   return (
@@ -235,8 +244,12 @@ export function FileExplorer() {
       <PanelGroup direction="vertical">
         {/* ── Open Editors ──────────────────────────────────────────────── */}
         <Panel 
-          defaultSize={20} 
-          minSize={3} 
+          ref={openEditorsRef}
+          defaultSize={15} 
+          minSize={4} 
+          collapsible={true}
+          onCollapse={() => setSections(s => ({ ...s, open: false }))}
+          onExpand={() => setSections(s => ({ ...s, open: true }))}
           className="sidebar-section"
         >
           <div className="sidebar-section__header" onClick={() => toggleSection('open')}>
@@ -260,8 +273,9 @@ export function FileExplorer() {
 
         {/* ── Explorer ──────────────────────────────────────────────────── */}
         <Panel 
-          defaultSize={60} 
-          minSize={3} 
+          ref={explorerRef}
+          defaultSize={70} 
+          minSize={10} 
           className="sidebar-section"
         >
           <div className="sidebar-section__header explorer-header" onClick={() => toggleSection('workspace')}>
@@ -295,8 +309,12 @@ export function FileExplorer() {
 
         {/* ── Outline ───────────────────────────────────────────────────── */}
         <Panel 
-          defaultSize={20} 
-          minSize={3} 
+          ref={outlineRef}
+          defaultSize={15} 
+          minSize={4} 
+          collapsible={true}
+          onCollapse={() => setSections(s => ({ ...s, outline: false }))}
+          onExpand={() => setSections(s => ({ ...s, outline: true }))}
           className="sidebar-section"
         >
           <div className="sidebar-section__header" onClick={() => toggleSection('outline')}>
