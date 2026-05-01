@@ -1,7 +1,7 @@
 // neurex-web/src/components/FlightRecorder/FlightRecorder.tsx
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { 
   Brain, ChevronRight, Activity, Terminal, FileText, 
   Search, Shield, Cpu, Clock, Zap, AlertCircle
@@ -67,25 +67,31 @@ export function FlightRecorder({ conversationId }: { conversationId: string }) {
         )}
 
         {traces.map((trace) => (
-          <div key={trace.id} className={`trace-item trace-item--${trace.status}`}>
-            <div className="trace-item__line" />
-            <div className="trace-item__icon">
-              {getIcon(trace.tool_used || trace.agent_type)}
-            </div>
-            <div className="trace-item__content">
-              <div className="trace-item__header">
-                <span className="trace-agent">{trace.agent_type.toUpperCase()}</span>
-                <span className="trace-time">{new Date(trace.timestamp).toLocaleTimeString()}</span>
-              </div>
-              <div className="trace-action">{trace.action}</div>
-              <div className="trace-detail">{trace.detail}</div>
-            </div>
-          </div>
+          <MemoizedTraceItem key={trace.id} trace={trace} />
         ))}
       </div>
     </div>
   );
 }
+
+const MemoizedTraceItem = React.memo(function TraceItem({ trace }: { trace: TraceEntry }) {
+  return (
+    <div className={`trace-item trace-item--${trace.status}`}>
+      <div className="trace-item__line" />
+      <div className="trace-item__icon">
+        {getIcon(trace.tool_used || trace.agent_type)}
+      </div>
+      <div className="trace-item__content">
+        <div className="trace-item__header">
+          <span className="trace-agent">{trace.agent_type.toUpperCase()}</span>
+          <span className="trace-time">{new Date(trace.timestamp).toLocaleTimeString()}</span>
+        </div>
+        <div className="trace-action">{trace.action}</div>
+        <div className="trace-detail">{trace.detail}</div>
+      </div>
+    </div>
+  );
+});
 
 function getIcon(type: string) {
   const t = type.toLowerCase();
