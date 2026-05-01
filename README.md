@@ -1,91 +1,152 @@
-# ⬡ Neurex: The Agentic IDE & Unified Mesh Hub
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](https://opensource.org/licenses/MIT)
-[![Version: v0.2.1-stable](https://img.shields.io/badge/Version-v0.2.1--stable-blueviolet.svg)](#)
-[![Depth: High](https://img.shields.io/badge/Design-Glassmorphism-9c6fff.svg)](#)
-
-**Neurex** is a high-performance, sentient-inspired IDE designed for the age of agentic software development. It transforms the developer workspace into a collaborative substrate where humans and AI agents work with **Human-Agent Parity**.
-
+<div align="center">
+  <img src="https://raw.githubusercontent.com/matiassingers/awesome-readme/master/readme.png" width="200" height="200">
+  <h1>⬡ Neurex</h1>
+  <p><b>The Sentient-Class Agentic IDE & Unified Neural Mesh Hub</b></p>
+ 
+  [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](https://opensource.org/licenses/MIT)
+  [![Version: v0.3.0-sentient](https://img.shields.io/badge/Version-v0.3.0--sentient-blueviolet.svg)](#)
+  [![Status: Phase 46 Complete](https://img.shields.io/badge/Status-Phase%2046%20Complete-success.svg)](#)
+  [![Design: Glassmorphism](https://img.shields.io/badge/Design-Glassmorphism-9c6fff.svg)](#)
+ 
+  <p><i>"The IDE that doesn't just execute; it evolves."</i></p>
+ 
+  [Explore Wiki](file:///games/CodeProjects/AntiGravity/Neurex/neurex/wiki/Home.md) • [View Roadmap](./ROADMAP.md) • [Report Bug](https://github.com/antigravity/neurex/issues)
+</div>
+ 
 ---
-
-## 🌓 Core Pillars
-
-*   **State Persistence**: Terminal sessions, file buffers, and agent thinking states survive disconnections and refreshes.
-*   **Neural Linter**: Real-time architectural validation layer that interrogates the Internal Reasoning Engine to verify code mutations against project standards in `DESIGN_SYSTEM.md` and `ARCHITECTURE.md`.
-*   **Autonomous Self-Repair**: Advanced 'Reflection and Repair' loops enable agents to detect, analyze, and autonomously fix architectural rejections or tool failures.
-*   **Deep Neural Integration**: Federated attention pooling and context sharding across the Mesh.
-*   **HyperPlan Reasoning**: Multi-pass architectural planning (Decomposition, Symbolic Trace, Optimization) ensures stable, high-fidelity codebase mutations.
-*   **Mesh-Scale Distributed RAG**: Federated search across all Mesh nodes provides agents with 'Global Intelligence' and cross-node architectural awareness.
-*   **Aesthetic Integrity**: A deep-obsidian, glassmorphic UI designed for focus and kinetic flow.
-
+ 
+## 📖 Table of Contents
+- [Vision](#-vision)
+- [Key Features](#-key-features)
+- [Architecture](#-architecture)
+- [Tech Stack](#-tech-stack)
+- [Getting Started](#-getting-started)
+- [Core Services](#-core-services)
+- [Roadmap](#-roadmap)
+- [Contributing](#-contributing)
+- [License](#-license)
+ 
 ---
-
-## 🚀 Quick Start
-
+ 
+## 👁️ Vision
+**Neurex** is a high-performance, autonomous development substrate designed for **Human-Agent Parity**. In the Neurex ecosystem, the IDE is not a passive tool, but a sentient collaborator—capable of real-time architectural oversight, autonomous self-repair, and federated neural reasoning across a decentralized mesh.
+ 
+---
+ 
+## ✨ Key Features
+ 
+### 🧠 Sentient Autonomy
+- **Neural Linter**: Real-time architectural validation of every code mutation against `ARCHITECTURE.md`.
+- **Autonomous Self-Repair**: Agents detect, analyze, and fix their own logical regressions and tool failures.
+- **Swarm Consensus**: Democratic governance for critical assets, requiring a 3-agent quorum for mutations.
+ 
+### 🛰️ Federated Intelligence
+- **Deep Neural Integration**: Federated attention pooling and context sharding across Mesh nodes.
+- **Mesh-Scale RAG**: Global semantic retrieval across all project nodes in the federation.
+- **Predictive Prefetching**: Eliminates cold-start latency by warming model weights based on agent trajectory.
+ 
+### ⚡ Kinetic Excellence
+- **Zero-Restart Evolution**: Hot-swapping core logic and Python modules in-place at runtime.
+- **Skeptical Memory**: Zero-trust context management that verifies filesystem reality before every mutation.
+- **Glassmorphic UI**: A high-fidelity, performance-driven interface designed for deep focus.
+ 
+---
+ 
+## 🏛️ Architecture
+ 
+```mermaid
+graph TD
+    User((Developer)) --> UI[Glassmorphic Frontend]
+    UI --> WS[WebSocket / API Hub]
+    WS --> ORCH[Orchestrator / Supervisor]
+    
+    subgraph "Sentient Core"
+        ORCH --> TG[Task Graph Ledger]
+        ORCH --> LINT[Neural Linter]
+        LINT --> REPAIR[Self-Repair Loop]
+        ORCH --> CONS[Swarm Consensus]
+    </insomnia>
+    
+    subgraph "Neural Mesh Hub"
+        ORCH --> POOL[Attention Coordinator]
+        POOL --> SHARD[Context Sharder]
+        SHARD --> PEERS[Federated Peer Nodes]
+        ORCH --> PREFETCH[Predictive Prefetcher]
+    end
+    
+    ORCH --> RAG[Distributed RAG / Hive Mind]
+```
+ 
+---
+ 
+## 🛠️ Tech Stack
+ 
+- **Frontend**: `React 18`, `Vite`, `Zustand`, `Monaco Editor`, `Framer Motion`.
+- **Backend**: `FastAPI`, `Python 3.11+`, `Asyncio`, `Pydantic v2`.
+- **Inference**: `NeuralHarness v2.0`, `llama-cpp-python`, `structlog`.
+- **Persistence**: `SQLite` (Tasks), `ChromaDB` (Vector Memory), `SkepticalMemory`.
+ 
+---
+ 
+## 🚀 Getting Started
+ 
 ### 1. Prerequisites
-- **Python 3.10+** (Backend)
-- **Node.js 20+** (Frontend)
-- **Git** (Version control)
-- **NVIDIA GPU** (Optional, recommended for Blackwell/Ada acceleration)
-
+- **OS**: Linux (Ubuntu 22.04+ / Arch Linux) or macOS (M1/M2/M3).
+- **Compute**: NVIDIA GPU (RTX 3090+) or Apple Silicon (16GB+ RAM).
+- **Software**: Python 3.10+, Node.js 20+, Git.
+ 
 ### 2. Installation
 ```bash
 # Clone the repository
 git clone https://github.com/antigravity/neurex.git
 cd neurex
-
-# Run the automated installer
+ 
+# Execute the Universal Installer (Autodetects hardware acceleration)
 ./install.sh
 ```
-
+ 
 ### 3. Launch
 ```bash
+# Start the Mesh Hub and Agentic Backend
 ./launch_neurex.sh
 ```
-*The IDE will be available at `http://localhost:3000`.*
-
+*The IDE will be accessible at `http://localhost:3000`.*
+ 
 ---
-
-## 🏛️ Architecture
-
-Neurex is built on a distributed, asynchronous backbone:
-
-- **Frontend**: Vite + React + Zustand + Monaco Editor.
-- **Backend**: FastAPI + Python 3.11 with an asynchronous Orchestrator.
-- **Inference**: Model-agnostic Neural Harness supporting Qwen-2.5-Coder and other state-of-the-art OS models.
-- **Persistence**: Skeptical Memory (Zero-Trust) + SQLite task graphs.
-
-For a deep dive into the system logic, see [ROADMAP.md](./ROADMAP.md).
-
+ 
+## 🛰️ Core Services
+ 
+- **LiveReloader**: Enables zero-restart evolution of agent logic.
+- **PredictiveMaintenance**: Autonomous background re-indexing and state synchronization.
+- **NeuralExplorer**: Hybrid semantic/relational retrieval for deep codebase awareness.
+ 
 ---
-
-## 🛠️ Infrastructure Hub
-
-Neurex includes a built-in **Infrastructure Hub** (InfraPanel) that allows you to:
-- **Monitor**: Real-time system resource usage (VRAM, RAM, CPU).
-- **Somnus**: Manage the background 'autoDream' architectural synchronization service.
-- **Skills**: Toggle agent toolsets (MCP) and harvest community skills from the Mesh.
-- **Mesh**: Connect to peer nodes to pool intelligence and compute.
-
+ 
+## 🗺️ Roadmap
+We are currently in **Phase 47: Neural Hardware Virtualization**.
+- [x] Phase 45: Sentient IDE (Self-Repair & Governance)
+- [x] Phase 46: Deep Neural Integration (Sharding & Pooling)
+- [ ] Phase 47: Neural Hardware Virtualization (VRAM Over-Provisioning)
+ 
+See [ROADMAP.md](./ROADMAP.md) for the full strategic trajectory.
+ 
 ---
-
-## 🎨 Design System
-
-Our UI/UX standards are documented in [DESIGN_SYSTEM.md](./DESIGN_SYSTEM.md). We prioritize:
-- **Depth**: Translucency and backdrop-blur.
-- **Motion**: Cubic-bezier kinetic transitions.
-- **Clarity**: Zero-ambiguity status indicators.
-
+ 
+## 🤝 Contributing
+Neurex is built on **Anti-Gravity Principles**. All contributions must pass:
+1. **Neural Linter** validation.
+2. **Consensus Review** by the Agent Council.
+3. **HyperPlan** architectural verification.
+ 
+Refer to [CONTRIBUTING.md](./CONTRIBUTING.md) for the full protocol.
+ 
 ---
-
-## 🗺️ Roadmap & Wiki
-
-- **Development Roadmap**: [ROADMAP.md](./ROADMAP.md)
-- **Architectural Review**: [NEUREX_REVIEW.md](./NEUREX_REVIEW.md)
-- **Contribution Guide**: [CONTRIBUTING.md](./CONTRIBUTING.md)
-- **Changelog**: [CHANGELOG.md](./CHANGELOG.md)
-
+ 
+## 📄 License
+This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+ 
 ---
-
-## ⬡ Credits & Acknowledgements
-Developed by **Steven Frost** with architectural assistance and agentic core development by **Antigravity**.
+<div align="center">
+  <p>Developed by <b>Steven Frost</b> and the <b>Antigravity</b> Agentic Core.</p>
+  <p><i>Mesh synchronized by Neurex Somnus.</i></p>
+</div>
