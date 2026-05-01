@@ -18,6 +18,13 @@ All notable changes to the Neurex project will be documented in this file.
 - **Project Inceptor**: Enabled the Mesh to autonomously spawn sub-projects and microservices.
 - **Recursive Self-Optimizer**: Implemented autonomous core infrastructure refactoring based on performance telemetry.
 
+## [0.3.2] - 2026-05-01: Universal Neural Consensus
+### Added
+- **Phase 52: Universal Neural Consensus**: Achieved global substrate coherence and protocol-aligned omniscience.
+- **Substrate Synchronizer**: Enabled bridging with external decentralized compute networks (Akash/Render).
+- **Neural Law Engine**: Enforced the Anti-Gravity Protocol at the neural weight level during evolution.
+- **Consensus Dashboard**: High-fidelity frontend for overseeing substrate bridges and protocol alignment.
+
 ## [0.2.1] - 2026-05-01 (UNIFIED MESH & PERSISTENT INTELLIGENCE)
 ### Added
 - **Infrastructure Hub Overhaul**: Redesigned the `InfraPanel` with real-time VRAM/RAM/CPU metrics, professional model deployment with quantization support (4-bit/8-bit/FP16), and dynamic agent recommendations.
