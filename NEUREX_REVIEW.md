@@ -166,14 +166,21 @@ While the architecture is incredibly sound, I have identified a few areas that r
         *   **Dependency Expansion**: Augmented the search loop to automatically include referenced modules and interface definitions in the retrieved context.
         *   **BaseAgent Optimization**: Replaced the legacy RAG logic with the hybrid neural loop, providing all agents with a high-fidelity map of the workspace.
 
+20. **Sandboxed Claude Harness (Phase 28 Milestone)**:
+    *   Status: **RESOLVED** (v0.2.1-stable).
+    *   Implementation:
+        *   **Isolated Execution Environment**: Developed `claude_sandbox.Dockerfile` to host the `@anthropic-ai/claude-code` CLI in a secure, containerized sandbox.
+        *   **MCP Bridge**: Implemented `claude_harness.py` server to act as an asynchronous bridge between Neurex and the Claude CLI.
+        *   **Secure Delegation**: Enabled the Orchestrator to delegate massive, cross-cutting tasks to Claude while preserving host system integrity.
+
 ---
 
 ## 4. Strategic Recommendations for Next Deployment
 
-1.  **Phase 26: Multi-Modal Autonomous Testing**
-    *   Implement an "Eye of Neurex" service that uses vision-capable models to perform visual regression testing on UI components.
-2.  **Phase 27: Self-Hosting Mesh Registry**
-    *   Develop a decentralized registry for 'Swarm' skills and peer discovery, removing the need for a central coordination node.
+1.  **Phase 29: Neural Model Fusion (Swarms 2.0)**
+    *   Enable Swarm sub-agents to use different models (e.g. Claude for logic, Qwen for boilerplate) based on task complexity.
+2.  **Phase 30: Autonomous Project "Brain" Synchronization**
+    *   Implement a background service that continuously updates the `.neurex/intel.json` based on git commits and new file additions.
 
 ---
 **Report Concluded.**
