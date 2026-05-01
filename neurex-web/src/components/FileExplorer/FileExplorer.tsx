@@ -231,11 +231,11 @@ export function FileExplorer() {
     setSections(s => ({ ...s, [key]: newVal }));
     
     if (key === 'open' && openEditorsRef.current) {
-      newVal ? openEditorsRef.current.expand() : openEditorsRef.current.collapse();
+      newVal ? openEditorsRef.current.resize(15) : openEditorsRef.current.resize(4);
     } else if (key === 'workspace' && explorerRef.current) {
-      newVal ? explorerRef.current.expand() : explorerRef.current.collapse();
+      newVal ? explorerRef.current.resize(70) : explorerRef.current.resize(10);
     } else if (key === 'outline' && outlineRef.current) {
-      newVal ? outlineRef.current.expand() : outlineRef.current.collapse();
+      newVal ? outlineRef.current.resize(15) : outlineRef.current.resize(4);
     }
   };
 
@@ -247,9 +247,6 @@ export function FileExplorer() {
           ref={openEditorsRef}
           defaultSize={15} 
           minSize={4} 
-          collapsible={true}
-          onCollapse={() => setSections(s => ({ ...s, open: false }))}
-          onExpand={() => setSections(s => ({ ...s, open: true }))}
           className="sidebar-section"
         >
           <div className="sidebar-section__header" onClick={() => toggleSection('open')}>
@@ -312,9 +309,6 @@ export function FileExplorer() {
           ref={outlineRef}
           defaultSize={15} 
           minSize={4} 
-          collapsible={true}
-          onCollapse={() => setSections(s => ({ ...s, outline: false }))}
-          onExpand={() => setSections(s => ({ ...s, outline: true }))}
           className="sidebar-section"
         >
           <div className="sidebar-section__header" onClick={() => toggleSection('outline')}>
