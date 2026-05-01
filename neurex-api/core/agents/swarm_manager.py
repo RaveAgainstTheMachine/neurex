@@ -42,6 +42,10 @@ class SwarmManager:
         blueprint = {"steps": plan}
         shards = await hive_manager.shard_blueprint(swarm.id, blueprint)
         
+        # Phase 46: Predictive Neural Prefetching
+        from core.infrastructure.prefetcher import neural_prefetcher
+        asyncio.create_task(neural_prefetcher.prefetch_swarm_assets(plan))
+        
         # Dispatch shards to peers
         dispatch_plan = []
         for shard in shards:
