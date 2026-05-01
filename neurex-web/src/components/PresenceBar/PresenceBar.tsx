@@ -6,7 +6,10 @@ import { User, Bot, Eye, Users } from "lucide-react";
 import "./PresenceBar.css";
 
 export function PresenceBar() {
-  const { presence, activeFile, setPendingJump } = useStore();
+  // Phase 44.19: Strict State Selection (Prevent Collaboration churn)
+  const presence = useStore(s => s.presence);
+  const activeFile = useStore(s => s.activeFile);
+  const setPendingJump = useStore(s => s.setPendingJump);
 
   const handleFollow = (p: any) => {
     if (p.active_file && p.cursor) {
