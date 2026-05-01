@@ -20,6 +20,8 @@ class GlobalMemory:
         self.pointers: Dict[str, Dict[str, Any]] = {}
         # Historical success patterns
         self.patterns: List[Dict[str, Any]] = []
+        # Phase 44.7: Persistent Sync Client
+        self._client: httpx.AsyncClient = httpx.AsyncClient(timeout=5)
 
     async def add_pointer(self, key: str, content: str, node_id: str = "local"):
         """Adds a local memory pointer and broadcasts the delta."""
@@ -42,10 +44,9 @@ class GlobalMemory:
             return
 
         payload = {"key": key, "pointer": pointer}
-        async with httpx.AsyncClient(timeout=5) as client:
-            tasks = [client.post(f"{peer.url}/api/memory/sync_delta", json=payload) for peer in peers]
-            await asyncio.gather(*tasks, return_exceptions=True)
-            log.info("memory.delta_broadcast_complete", peers=len(peers))
+        tasks = [self._client.post(f"{peer.url}/api/memory/sync_delta", json=payload) for peer in peers]
+        await asyncio.gather(*tasks, return_exceptions=True)
+        log.info("memory.delta_broadcast_complete", peers=len(peers))
 
     async def query_memory(self, query: str) -> str:
         """Searches global memory for relevant context."""
@@ -64,13 +65,10 @@ class GlobalMemory:
             return
 
         payload = {"pointers": self.pointers}
-        async with httpx.AsyncClient(timeout=5) as client:
-            tasks = []
-            for peer in peers:
-                tasks.append(client.post(f"{peer.url}/api/memory/sync", json=payload))
-            
-            await asyncio.gather(*tasks, return_exceptions=True)
-            log.info("memory.broadcast_complete", peers=len(peers))
+        tasks = [self._client.post(f"{peer.url}/api/memory/sync", json=payload) for peer in peers]
+        
+        await asyncio.gather(*tasks, return_exceptions=True)
+        log.info("memory.broadcast_complete", peers=len(peers))
 
     def sync_from_peer(self, peer_id: str, remote_pointers: Dict[str, Dict[str, Any]]):
         """Merges remote pointers into local memory."""
