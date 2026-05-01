@@ -131,14 +131,21 @@ While the architecture is incredibly sound, I have identified a few areas that r
         *   **Trend-Aware Routing**: Developed the `ResourcePredictor` to calculate weighted moving averages of peer telemetry (CPU, Queue Depth).
         *   **Proactive Load Balancing**: Updated `MeshRouter` to penalize nodes with rising load trajectories, preventing "dogpiling" before it occurs.
 
+15. **Swarm Leader Protocol (Phase 21 Milestone)**:
+    *   Status: **RESOLVED** (v0.2.1-stable).
+    *   Implementation:
+        *   **Distributed Task Decomposition**: Implemented `SwarmAgent` which uses recursive LLM logic to break massive tasks into sub-tasks.
+        *   **Mesh Orchestration**: Developed `SwarmManager` to dispatch sub-tasks to available Mesh peers for parallel execution.
+        *   **Planner Awareness**: Updated `PlannerAgent` with a "Swarm Rule" to automatically trigger swarm mode for cross-cutting changes involving >10 files.
+
 ---
 
 ## 4. Strategic Recommendations for Next Deployment
 
-1.  **Phase 21: Multi-Agent Swarm Coordination**
-    *   Implement a "Swarm Leader" protocol to synchronize complex refactoring tasks across multiple autonomous agents.
-2.  **Phase 22: Neural Context Compression**
+1.  **Phase 22: Neural Context Compression**
     *   Develop a dynamic KV-cache compression algorithm to allow agents to handle million-token codebases with minimal VRAM overhead.
+2.  **Phase 23: Autonomous CI/CD Self-Healing**
+    *   Integrate the Sentinel with GitHub/GitLab APIs to automatically propose fixes for failing CI pipelines in the background.
 
 ---
 **Report Concluded.**
