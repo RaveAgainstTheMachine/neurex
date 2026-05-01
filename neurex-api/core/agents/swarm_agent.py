@@ -26,12 +26,17 @@ class SwarmAgent(BaseAgent):
         # into sub-tasks that the SwarmManager can dispatch.
         plan_prompt = f"""
         You are a Swarm Leader. Decompose this massive task into a list of parallelizable sub-tasks.
+        Intelligently assign a 'model' to each task:
+        - Use 'claude-3-5-sonnet' for complex logical changes or core architectural work.
+        - Use 'qwen2.5-coder:7b' for boilerplate, documentation, or simple renaming.
+        - Use 'qwen2.5-coder:14b' for standard coding tasks.
+        
         Task: {task['title']}
         Description: {task['description']}
         
         Return a JSON array of sub-tasks:
         [
-          {{"title": "...", "description": "...", "files": ["path/to/file1", ...]}}
+          {{"title": "...", "description": "...", "files": ["path/to/file1", ...], "model": "..."}}
         ]
         """
         

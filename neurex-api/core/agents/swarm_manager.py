@@ -55,14 +55,16 @@ class SwarmManager:
         log.info("swarm.completed", swarm_id=swarm.id)
 
     async def _run_sub_task(self, swarm: SwarmTask, index: int, sub: Dict[str, Any], peer_url: str):
+        model = sub.get("model", "qwen2.5-coder:14b")
         log.info("swarm.sub_task_dispatched", 
                  swarm_id=swarm.id, 
                  index=index, 
-                 peer=peer_url)
+                 peer=peer_url,
+                 model=model)
         
-        # In a real mesh, we would call the peer's /api/tasks/execute endpoint.
-        # For now, we simulate a local "swarm" worker.
-        await asyncio.sleep(2) # Simulate work
-        swarm.results[index] = {"status": "success", "summary": f"Completed {sub['title']}"}
+        # In a real mesh, we would call the peer's /api/tasks/execute endpoint with the 'model' parameter.
+        # For now, we simulate a local "swarm" worker utilizing the specified model tier.
+        await asyncio.sleep(2) # Simulate work with specialized model
+        swarm.results[index] = {"status": "success", "summary": f"Completed {sub['title']} using {model}"}
 
 swarm_manager = SwarmManager()
