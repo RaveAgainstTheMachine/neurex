@@ -13,7 +13,7 @@ log = structlog.get_logger()
 class SelfOptimizer:
     def __init__(self):
         self.optimization_lock = asyncio.Lock()
-        self.pending_optimizations: List[Dict[str, Any]] = []
+        self.pending_optimizations: Dict[str, Dict[str, Any]] = {}
 
     async def analyze_core_efficiency(self, component: str, performance_data: Dict[str, Any]):
         """
@@ -35,7 +35,7 @@ class SelfOptimizer:
                     "reason": f"High latency detected ({latency}ms). Proposing logic distillation.",
                     "status": "proposed"
                 }
-                self.pending_optimizations.append(proposal)
+                self.pending_optimizations[proposal["id"]] = proposal
                 return proposal
             
             return None
@@ -45,8 +45,7 @@ class SelfOptimizer:
         Applies a self-optimization refactor to the core infrastructure via CoderAgent.
         """
         async with self.optimization_lock:
-            opt = next((o for o in self.pending_optimizations if o["id"] == optimization_id), None)
-            if not opt: return
+            opt = self.pending_optimizations.get(optimization_id)
 
             log.info("self_optimizer.applying_mutation", id=optimization_id, target=opt["target_file"])
             

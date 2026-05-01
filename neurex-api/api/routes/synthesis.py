@@ -19,7 +19,7 @@ async def get_synthesis_status():
         inceptions.append({"name": name, "path": path})
 
     optimizations = []
-    for opt in self_optimizer.pending_optimizations:
+    for opt in self_optimizer.pending_optimizations.values():
         optimizations.append({
             "id": opt["id"],
             "target": opt["target_file"],

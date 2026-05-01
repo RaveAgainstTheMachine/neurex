@@ -31,8 +31,11 @@ class QuantumPathSim:
                 {"type": "balanced", "stability": 0.88, "perf_gain": 0.40}
             ]
             
-            # Find the path with highest joint fitness
-            best_path = max(paths, key=lambda p: p["stability"] * p["perf_gain"] + (0.5 if p["type"] == "balanced" else 0))
+            # Find the path with highest joint fitness without blocking event loop
+            def calculate_best(p_list):
+                return max(p_list, key=lambda p: p["stability"] * p["perf_gain"] + (0.5 if p["type"] == "balanced" else 0))
+                
+            best_path = await asyncio.to_thread(calculate_best, paths)
             
             await asyncio.sleep(1.5) # Simulated quantum simulation
             

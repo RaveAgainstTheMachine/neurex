@@ -6,6 +6,7 @@ Ensures evolved adapters are aligned with core architectural principles.
 """
 import asyncio
 import structlog
+import re
 from typing import Dict, Any, List, Optional
 
 log = structlog.get_logger()
@@ -20,6 +21,10 @@ class NeuralLawEngine:
             "ASYNC_FIRST",
             "STRICT_TYPE_SAFETY"
         ]
+        
+        # Pre-compile regex for performance
+        self.re_print = re.compile(r'\bprint\s*\(')
+        self.re_func_def = re.compile(r'^\s*def\s+\w+\s*\(.*\)\s*(?!->).*:', re.MULTILINE)
 
     async def verify_weight_alignment(self, adapter_id: str, sample_outputs: List[str]) -> bool:
         """
@@ -35,9 +40,9 @@ class NeuralLawEngine:
             
             violations = []
             for sample in sample_outputs:
-                if "print(" in sample:
+                if self.re_print.search(sample):
                     violations.append("STRUCT_LOGGING_VIOLATION")
-                if "def " in sample and " -> " not in sample and ":" in sample:
+                if self.re_func_def.search(sample):
                     violations.append("TYPE_SAFETY_VIOLATION")
             
             if violations:
