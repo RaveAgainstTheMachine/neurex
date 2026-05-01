@@ -71,6 +71,10 @@ async def lifespan(app: FastAPI):
     from core.infrastructure.mesh import mesh_router
     asyncio.create_task(mesh_router.start_monitoring())
 
+    # Start Service Sentinel (Self-Healing)
+    from core.observability.service_sentinel import sentinel as service_sentinel
+    await service_sentinel.start()
+
     # Trigger initial hardware benchmark
     from core.infrastructure.benchmarker import benchmarker
     log.info("lsp.init_start")
