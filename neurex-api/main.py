@@ -80,7 +80,12 @@ async def lifespan(app: FastAPI):
     asyncio.create_task(ci_healer.check_pipeline_health())
 
     # Trigger initial hardware benchmark
-    from core.infrastructure.benchmarker import benchmarker
+    from core.infrastructure.benchmarker import hardware_benchmarker
+    
+    # Phase 44.9: Start Flight Recorder Batch Worker
+    from core.observability.flight_recorder import flush_decisions
+    asyncio.create_task(flush_decisions())
+    
     log.info("lsp.init_start")
     # Initialise LSP Manager
     from core.languages.lsp_manager import lsp_manager
