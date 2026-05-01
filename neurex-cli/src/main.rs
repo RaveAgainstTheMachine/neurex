@@ -3,6 +3,7 @@ use clap::{Parser, Subcommand};
 use colored::*;
 use std::time::Duration;
 use sysinfo::System;
+use tokio::process::Command;
 use tokio::time::sleep;
 
 /// Neurex CLI - The Universal Sentient IDE Substrate Manager
@@ -47,14 +48,34 @@ async fn main() {
             }
             println!("  {} Docker Daemon detected", "✓".green());
 
-            // Mock Control Plane spin-up
+            // Real Control Plane spin-up
             println!(
                 "{} Spinning up Control Plane on port {}...",
                 "[2/3]".dimmed(),
                 port
             );
-            sleep(Duration::from_millis(800)).await;
+            
+            // Spawn FastAPI (Backend)
+            let mut api_process = Command::new("uvicorn")
+                .arg("main:app")
+                .arg("--host")
+                .arg("0.0.0.0")
+                .arg("--port")
+                .arg(port.to_string())
+                .current_dir("../neurex-api")
+                .spawn()
+                .expect("Failed to spawn neurex-api (is uvicorn installed?)");
+
+            // Spawn Vite (Frontend)
+            let mut web_process = Command::new("npm")
+                .arg("run")
+                .arg("dev")
+                .current_dir("../neurex-web")
+                .spawn()
+                .expect("Failed to spawn neurex-web (is npm installed?)");
+
             println!("  {} FastAPI Proxy initialized", "✓".green());
+            println!("  {} Vite Frontend initialized", "✓".green());
 
             println!("{} Booting Neural Execution Sandbox...", "[3/3]".dimmed());
             sleep(Duration::from_millis(1200)).await;
@@ -62,18 +83,23 @@ async fn main() {
                 "  {} Workspace mounted securely (RO/RW restricted)",
                 "✓".green()
             );
-            println!("  {} CoderAgent container started", "✓".green());
+            println!("  {} CoderAgent container started (Mock)", "✓".green());
 
             println!(
                 "\n{} Neurex is active. Access the IDE at: {}",
                 "★".yellow(),
-                format!("http://localhost:{}", port).bold().underline()
+                format!("http://localhost:5173").bold().underline() // Default vite port
             );
             println!("   Press Ctrl+C to stop.");
 
-            // Keep the daemon alive
-            loop {
-                sleep(Duration::from_secs(60)).await;
+            // Keep the daemon alive and handle graceful shutdown
+            tokio::select! {
+                _ = tokio::signal::ctrl_c() => {
+                    println!("\n{} Received interrupt signal. Halting Substrate...", "■".red());
+                    let _ = api_process.kill().await;
+                    let _ = web_process.kill().await;
+                    println!("{} Control Plane terminated.", "✓".green());
+                }
             }
         }
         Commands::Stop => {
