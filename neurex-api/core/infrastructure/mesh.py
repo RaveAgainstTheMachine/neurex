@@ -30,6 +30,23 @@ class PeerNode:
         self.tps = 0.0
         self.rpc_endpoint = None
         self.distributed_status = {}
+        # Predictive State
+        self.history: List[Dict[str, Any]] = []
+        self.predicted_load = 0.0
+
+    def record_telemetry(self, metrics: Dict[str, Any]):
+        """Append a metric snapshot and prune history."""
+        import time
+        snapshot = {
+            "timestamp": time.time(),
+            "cpu": metrics.get("cpu_percent", 0.0),
+            "vram": metrics.get("vram_gb", 0.0),
+            "queue": metrics.get("queue_depth", 0)
+        }
+        self.history.append(snapshot)
+        # Keep last 1 hour of history (assuming 60s checks)
+        if len(self.history) > 60:
+            self.history.pop(0)
 
     def to_dict(self):
         return {
@@ -45,8 +62,38 @@ class PeerNode:
             "queue_depth": self.queue_depth,
             "tps": self.tps,
             "rpc_endpoint": self.rpc_endpoint,
-            "distributed": self.distributed_status
+            "distributed": self.distributed_status,
+            "predicted_load": self.predicted_load
         }
+
+class ResourcePredictor:
+    """Analyzes historical telemetry to predict upcoming resource bottlenecks."""
+    
+    @staticmethod
+    def predict_future_load(history: List[Dict[str, Any]]) -> float:
+        """
+        Calculates a trend-aware load prediction score.
+        Uses a weighted moving average of the last 5 snapshots.
+        """
+        if len(history) < 3:
+            return 0.0
+            
+        recent = history[-5:]
+        # Weights: more recent = more important
+        weights = [0.1, 0.15, 0.2, 0.25, 0.3]
+        weights = weights[-len(recent):] # adjust if < 5
+        
+        # Normalize weights
+        total_w = sum(weights)
+        norm_weights = [w/total_w for w in weights]
+        
+        prediction = 0.0
+        for i, snap in enumerate(recent):
+            # Combined load metric: CPU + (Queue * 10)
+            load = snap["cpu"] + (snap["queue"] * 10)
+            prediction += load * norm_weights[i]
+            
+        return round(prediction, 2)
 
 class MeshRouter:
     def __init__(self):
@@ -111,8 +158,13 @@ class MeshRouter:
                 dist = data.get("distributed", {})
                 peer.rpc_endpoint = dist.get("rpc_endpoint")
                 peer.distributed_status = dist
+
+                # Update Predictive Analytics
+                peer.record_telemetry(metrics)
+                peer.predicted_load = ResourcePredictor.predict_future_load(peer.history)
+
                 self._save_peers()
-                log.debug("mesh.peer_healthy", url=url, latency=peer.latency_ms)
+                log.debug("mesh.peer_healthy", url=url, latency=peer.latency_ms, predicted_load=peer.predicted_load)
         except Exception as e:
             peer.status = "offline"
             self._save_peers()
@@ -161,9 +213,9 @@ class MeshRouter:
             peer_multiplier = 2.0 if has_model_on_peer else 0.1
             tps_boost = 1 + (peer.tps / 10.0)
             
-            # Penalize by latency, CPU load, and current task queue
-            # queue_depth weight is high (25) to prevent dogpiling
-            load_factor = (peer.cpu_percent / 2) + (peer.latency_ms / 20) + (peer.queue_depth * 25)
+            # Penalize by latency, CPU load, current task queue, and PREDICTED load
+            # queue_depth weight is high (25), predicted_load adds trend-awareness
+            load_factor = (peer.cpu_percent / 2) + (peer.latency_ms / 20) + (peer.queue_depth * 25) + (peer.predicted_load * 0.5)
             score = (peer.vram_gb * peer_multiplier * tps_boost) / (max(0.1, load_factor))
             
             candidates.append({
