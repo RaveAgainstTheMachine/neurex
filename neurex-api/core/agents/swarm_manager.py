@@ -29,15 +29,31 @@ class SwarmManager:
     async def initiate_swarm(self, parent_task: TaskNode, plan: List[Dict[str, Any]]) -> str:
         """
         Creates a swarm for a multi-file refactor.
-        'plan' is a list of sub-tasks: [{"title": "...", "description": "...", "files": [...]}]
+        Phase 44: Hive-Mind Sharding integration.
         """
+        from core.collaboration.hive_manager import hive_manager
+        
         swarm = SwarmTask(parent_task.title, parent_task.description)
         self.active_swarms[swarm.id] = swarm
         
         log.info("swarm.initiated", swarm_id=swarm.id, sub_tasks=len(plan))
         
-        # Dispatch sub-tasks to peers
-        await self._dispatch_swarm(swarm, plan)
+        # Phase 44: Hive-Mind Sharding
+        blueprint = {"steps": plan}
+        shards = await hive_manager.shard_blueprint(swarm.id, blueprint)
+        
+        # Dispatch shards to peers
+        dispatch_plan = []
+        for shard in shards:
+            if await hive_manager.claim_shard(swarm.id, shard["shard_id"]):
+                dispatch_plan.append(shard["step"])
+        
+        if dispatch_plan:
+            await self._dispatch_swarm(swarm, dispatch_plan)
+            
+            # Release shards after dispatch (simplified for Phase 44 logic)
+            for shard in shards:
+                hive_manager.release_shard(swarm.id, shard["shard_id"])
         
         return swarm.id
 
