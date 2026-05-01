@@ -1,7 +1,7 @@
 import React from "react";
 import { 
   Files, Search, GitBranch, Clock, MessageSquare, 
-  Cpu, Shield, Puzzle, Bot, BrainCircuit, Settings, Sparkles
+  Cpu, Shield, Puzzle, Bot, BrainCircuit, Settings, Sparkles, Activity
 } from "lucide-react";
 import { 
   DndContext, 
