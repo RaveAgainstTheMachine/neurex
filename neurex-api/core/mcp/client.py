@@ -43,6 +43,7 @@ TOOL_REGISTRY: dict[str, callable] = {
     "security_scan":             security_scan,
     "synthesize_project_intel":  synthesize_project_intel,
     "query_project_intel":       query_project_intel,
+    "audit_codebase_health":     audit_codebase_health,
     "create_skill":              create_skill,
     "publish_skill":             publish_skill,
     "get_mesh_topology":         get_mesh_topology,

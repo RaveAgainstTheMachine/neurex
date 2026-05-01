@@ -37,6 +37,7 @@ Rules:
 - Use "debater" with `persona: "optimist"` or `persona: "skeptic"` to vet complex architectural decisions.
 
 - INTELLIGENCE RULE: If you detect that you are in a fresh workspace or lack architectural context, your FIRST step must be "Architectural Discovery" using the `synthesize_project_intel` tool.
+- SELF-EVOLUTION RULE: If the request involves project maintenance, health checks, or evolution, include a step for `audit_codebase_health` to identify drifts or anomalies before implementation.
 
 - DEBATE RULE: For high-risk refactors or core module changes, include two "debater" steps (optimist/skeptic pair) to critique the approach before coding starts.
 
