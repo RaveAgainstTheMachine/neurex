@@ -11,6 +11,8 @@
 ## 🌓 Core Pillars
 
 *   **State Persistence**: Terminal sessions, file buffers, and agent thinking states survive disconnections and refreshes.
+*   **Neural Linter**: Real-time architectural validation layer that interrogates the Internal Reasoning Engine to verify code mutations against project standards in `DESIGN_SYSTEM.md` and `ARCHITECTURE.md`.
+*   **Autonomous Self-Repair**: Advanced 'Reflection and Repair' loops enable agents to detect, analyze, and autonomously fix architectural rejections or tool failures.
 *   **HyperPlan Reasoning**: Multi-pass architectural planning (Decomposition, Symbolic Trace, Optimization) ensures stable, high-fidelity codebase mutations.
 *   **Mesh-Scale Distributed RAG**: Federated search across all Mesh nodes provides agents with 'Global Intelligence' and cross-node architectural awareness.
 *   **Aesthetic Integrity**: A deep-obsidian, glassmorphic UI designed for focus and kinetic flow.
