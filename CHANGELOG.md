@@ -17,12 +17,14 @@ All notable changes to the Neurex project will be documented in this file.
     - **Fail-Fast Federated RAG**: Reduced peer search timeout to 3s with `asyncio.gather` parallelization, ensuring snappy global intelligence even in large, decentralized networks.
     - **Sema-Throttled Memory Indexing**: Implemented parallel workspace indexing (10 concurrent files) in the `MemoryWorker`, drastically reducing the time to reach architectural situational awareness.
     - **Intent-Aware Context Compression**: Refactored the compressor to retain docstrings during structural summaries, preserving architectural intent while purging implementation tokens.
-    - **Token Chunking**: Buffered LLM streaming into blocks of 10 tokens, reducing WebSocket message frequency and network pressure by ~90%.
+    - **Token Chunking (Backend)**: Buffered LLM streaming into blocks of 10 tokens, reducing WebSocket message frequency and network pressure by ~90%.
     - **Quiet-Period FS Debouncing**: Optimized the file watcher with 500ms inactivity buffering and path-specific event batching for more efficient UI refreshes.
     - **Persistent Mesh Clients**: Migrated all Mesh-wide communications (RAG, Memory, Agents) to long-lived HTTP client pools to eliminate connection churn.
     - **O(1) Hive Sharding**: Optimized the HiveMind lock-manager with direct index lookups, replacing linear searches during massive parallel refactors.
-    - **UI Fluidity (Strict Selectors)**: Refactored `FileExplorer` and `EditorPane` to use individual Zustand selectors, eliminating store-wide re-render churn and improving typing responsiveness by ~95%.
-    - **Shallow Explorer Aggregation**: Replaced recursive tree traversals in the `FileExplorer` with shallow status lookups, ensuring O(1) performance for directory state indicators in large workspaces.
+    - **Architectural State Decoupling (Frontend)**: Refactored the `App.tsx` root and major UI panels to use strict Zustand selectors, preventing global layout re-renders for character-level or metric-level state changes.
+    - **Token-Streaming Buffering (Frontend)**: Implemented 40ms buffering in the WebSocket hook to aggregate incoming LLM tokens, reducing store update frequency and relieving main-thread pressure during high-speed reasoning bursts.
+    - **Memoized Component Rendering**: Integrated `React.memo` for high-frequency list items in the `FlightRecorder` (Traces) and `AIPanel` (TaskCards), ensuring DOM updates are isolated and efficient.
+    - **O(1) Explorer Aggregation**: Replaced recursive tree-walks in the `FileExplorer` with shallow status lookups, ensuring consistent performance even in massive workspaces with thousands of files.
 
 ### Fixed
 - **Chat Persistence Fix**: Resolved a critical race condition in the WebSocket handler by using isolated database sessions for user/assistant message recording.
