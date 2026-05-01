@@ -45,26 +45,39 @@ class ContextCompressor:
         return "\n".join(filtered)
 
     def _structural_summary(self, text: str) -> str:
-        """Replaces function bodies with '...' to preserve architectural shape."""
-        import re
-        # This is a naive regex-based compressor for Python/JS
-        # Matches 'def function_name(...):' or 'function name(...) {'
-        # and removes the inner block.
+        """
+        Replaces function bodies with '...' but RETAINS docstrings.
+        This provides intent without the token cost of implementation.
+        """
         lines = text.split("\n")
         summary_lines = []
+        in_docstring = False
         in_skip = False
         
         for line in lines:
-            if re.match(r"^\s*(def|function|class)\s+", line):
+            stripped = line.strip()
+            # Docstring detection
+            if '"""' in stripped or "'''" in stripped:
+                in_docstring = not in_docstring
                 summary_lines.append(line)
-                summary_lines.append("    # ... [compressed implementation] ...")
+                continue
+            
+            if in_docstring:
+                summary_lines.append(line)
+                continue
+
+            # Structural markers
+            if stripped.startswith(("def ", "class ", "async def ")):
+                summary_lines.append(line)
                 in_skip = True
-            elif line.strip() == "":
+            elif stripped == "" or not stripped.startswith(" "):
                 in_skip = False
                 summary_lines.append(line)
             elif not in_skip:
                 summary_lines.append(line)
-                
+            elif in_skip and not summary_lines[-1].endswith("..."):
+                 summary_lines.append(f"{line[:line.find(stripped)]}# ... [body compressed] ...")
+                 
         return "\n".join(summary_lines)
 
 # Singleton instance placeholder
