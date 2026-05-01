@@ -22,3 +22,9 @@ The **Infrastructure Hub** provides real-time telemetry:
 
 ## 4. Configuration
 Backends can be toggled in the `SettingsPanel`. Ensure you have the appropriate drivers installed (e.g., `mesa-vulkan-radeon` on Linux for AMD).
+## 5. Deep Neural Integration (Phase 46/47)
+Phase 46/47 evolves hardware acceleration from local optimization to mesh-wide virtualization.
+- **Attention Pooling**: Distributes model attention heads across multiple Mesh nodes to parallelize reasoning.
+- **Global Context Sharding**: Slices massive context windows (128k+) across the federated Mesh, pooling VRAM from all nodes.
+- **Predictive Prefetching**: Proactively warms up model weights and context into VRAM based on agent trajectory to eliminate cold-start latency.
+- **Mesh KV-Sync**: Sub-ms state propagation ensures neural coherence across the federated substrate.

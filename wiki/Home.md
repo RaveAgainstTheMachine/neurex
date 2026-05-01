@@ -4,13 +4,13 @@ Neurex is a high-performance, agentic IDE built for absolute technical precision
 
 ## 核心 (Core Modules)
 
-- **[[Architecture]]**: Deep dive into the Orchestrator, TaskGraph, and Mesh Hub.
-- **[[Language-Intelligence]]**: Universal LSP Hub, Neural Lens, and Autopilot.
-- **[[Security-and-Auth]]**: Detailed guide on RBAC, Invite Codes, and JWT Hardening.
-- **[[Skill-System]]**: How to build and install MCP-compatible toolsets via Git.
-- **[[Hardware-Acceleration]]**: Configuring Metal (Apple), ROCm (AMD), and SYCL (Intel).
-- **Multi-Root Workspaces**: Parallel management of project folders with contextual terminals.
-- **[[API-Reference]]**: Documentation for the REST and WebSocket protocols.
+- **[[Architecture]]**: Deep dive into the Orchestrator, TaskGraph, and **Sentient Mesh**.
+- **[[Language-Intelligence]]**: Universal LSP Hub, Neural Lens, and **Neural Linter**.
+- **[[Security-and-Auth]]**: RBAC, **Swarm Consensus**, and Invite Codes.
+- **[[Skill-System]]**: Building MCP toolsets and **Autonomous Self-Repair**.
+- **[[Hardware-Acceleration]]**: Metal/ROCm/SYCL and **Deep Neural Integration** (Pooling/Sharding).
+- **Multi-Root Workspaces**: Parallel project management with contextual terminals.
+- **[[API-Reference]]**: REST and WebSocket protocols.
 
 ## 协议 (Protocols)
 

@@ -35,3 +35,9 @@ Provides native, plugin-free code intelligence for the IDE.
 36. - **Contextual PTY**: Integrated terminals are anchored to specific project roots. When spawning a shell, the system automatically detects the current file's root and sets the `cwd` (working directory) accordingly.
 37. - **Dynamic Breadcrumbs**: Provides instant orientation by prefixing file paths with their workspace root name.
 38. 
+## 7. Sentient Mesh (Phase 45/46)
+Phase 45/46 evolves the Hub into a self-regulating, architecture-aware substrate.
+- **Neural Linter**: Every mutation is intercepted and verified against architectural standards before execution.
+- **Swarm Consensus**: Critical architectural assets require a democratic quorum (3+ votes) from distinct agent personas.
+- **Runtime Evolution**: The Mesh can hot-swap its own Python modules in-place via `LiveReloader`, enabling zero-restart logic updates.
+- **Predictive Maintenance**: Proactively monitors codebase churn and triggers re-indexing to prevent context entropy.
