@@ -128,9 +128,9 @@ class CoderAgent(BaseAgent):
 
         yield {"type": "status", "status": TaskStatus.THINKING}
 
-        # Agentic tool loop
-        max_rounds = 8
-        for _ in range(max_rounds):
+        # Phase 45: Autonomous Self-Repair Loop
+        max_rounds = 10
+        for i in range(max_rounds):
             async for chunk in self.stream(messages, tools=CODER_TOOLS):
                 if chunk["type"] == "token":
                     yield {"type": "token", "text": chunk["text"]}
@@ -140,6 +140,12 @@ class CoderAgent(BaseAgent):
                     yield {"type": "status", "status": TaskStatus.WRITING}
 
                     tool_result = await self.dispatch_tool(chunk["call"], conversation_id)
+
+                    # Phase 45: Mutation Reflection & Repair
+                    if "MUTATION_REJECTED" in tool_result:
+                        yield {"type": "status", "status": "REPAIRING"}
+                        log.warning("self_repair_triggered", iteration=i, reason=tool_result)
+                        # The tool_result contains the architectural reason; the agent will read it in the next loop
 
                     # Append tool exchange to history
                     messages.append({
@@ -156,11 +162,10 @@ class CoderAgent(BaseAgent):
                         yield {"type": "result", "result": tool_result}
                         return
 
-
                 elif chunk["type"] == "done":
                     # If no tool calls in last round, we're done
                     if not any(m.get("role") == "tool" for m in messages[-2:]):
                         yield {"type": "result", "result": chunk["full_text"]}
                         return
 
-        yield {"type": "result", "result": "Max tool rounds reached."}
+        yield {"type": "result", "result": "Max tool rounds reached. Autonomous repair failed to reach consensus."}
