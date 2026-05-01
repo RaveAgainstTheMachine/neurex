@@ -102,11 +102,31 @@ class PTYSession:
             self._broadcast(f"\r\n❌ Failed to start terminal: {e}\r\n")
 
     async def _read_loop(self):
+        """
+        Reads from PTY and broadcasts with a small throttle to aggregate writes.
+        Phase 44.5: High-Velocity Terminal Optimization.
+        """
+        buffer = []
+        last_broadcast = asyncio.get_event_loop().time()
+        
         try:
             while self.proc and self.proc.isalive():
+                # Non-blocking read (short timeout representation via to_thread)
                 data = await asyncio.to_thread(self.proc.read, 4096)
                 if data:
-                    self._broadcast(data)
+                    buffer.append(data)
+                
+                now = asyncio.get_event_loop().time()
+                # Broadcast if buffer is large or 20ms have passed
+                if buffer and (now - last_broadcast > 0.02 or len(buffer) > 10):
+                    aggregated = "".join(buffer)
+                    self._broadcast(aggregated)
+                    buffer = []
+                    last_broadcast = now
+                
+                # Tiny yield to allow event loop to breathe during floods
+                await asyncio.sleep(0.005)
+                
         except EOFError:
             log.info("pty.eof", session=self.session_id)
         except Exception as e:
