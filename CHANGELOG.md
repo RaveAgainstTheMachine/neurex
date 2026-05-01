@@ -15,6 +15,9 @@ All notable changes to the Neurex project will be documented in this file.
 - **Chat Persistence Fix**: Resolved a critical race condition in the WebSocket handler by using isolated database sessions for user/assistant message recording.
 - **Neural Context Compression**: Implemented `ContextCompressor` to structurally summarize stable modules, maximizing effective context window for complex reasoning.
 - **Autonomous CI/CD Self-Healing**: Launched `CIHealer` to monitor pipeline health and autonomously trigger background repair tasks for regression failures.
+- **Secure Multi-User RBAC**: Implemented `RBACManager` with granular, path-aware permissions to secure 'Swarm' and mutation tasks in federated environments.
+- **Neural Code Search (RAG 2.0)**: Launched `NeuralExplorer` to perform hybrid semantic/relational retrieval, ensuring agents understand the full architectural call graph.
+- **Sandboxed Claude Harness**: Implemented the `claude_harness` MCP tool to securely delegate massive refactoring tasks to an isolated Claude Code Docker container.
 - **Persistent Workspace Layouts**: integrated automatic storage for sidebar, terminal, and assistant panel dimensions using `react-resizable-panels` and `localStorage`.
 - **Advanced Panel Controls**: added Maximize, Collapse, and Clear actions to the Bottom Panel header for streamlined workspace management.
 - **VSCodium Parity**: achieved layout parity with professional editors by ensuring terminal reflow and panel state preservation across sessions.
@@ -107,6 +110,27 @@ All notable changes to the Neurex project will be documented in this file.
         *   **Pipeline Health Monitoring**: Launched `CIHealer` service that polls external CI status (GitHub/GitLab) and identifies build failures.
         *   **Log-Driven Recovery**: Developed infrastructure to analyze CI error logs and autonomously queue repair tasks in the Orchestrator.
         *   **Lifespan Integration**: Integrated the healing loop into the core API lifespan, ensuring persistent background self-correction.
+
+18. **Secure Multi-User RBAC Expansion (Phase 24 Milestone)**:
+    *   Status: **RESOLVED** (v0.2.1-stable).
+    *   Implementation:
+        *   **Granular Permission System**: Developed `RBACManager` to define clear roles (Owner, Contributor, Guest, Peer) and associated permission sets.
+        *   **Path-Aware Authorization**: Implemented glob-patterned filesystem rules to restrict 'Swarm' and mutation tasks to authorized directories.
+        *   **Federated Security**: Established the zero-trust framework required for secure cross-node collaboration in the Mesh.
+
+19. **Neural Code Search & RAG 2.0 (Phase 25 Milestone)**:
+    *   Status: **RESOLVED** (v0.2.1-stable).
+    *   Implementation:
+        *   **Hybrid Retrieval Engine**: Implemented `NeuralExplorer` to combine vector similarity (semantic) with AST-aware graph traversal (relational).
+        *   **Dependency Expansion**: Augmented the search loop to automatically include referenced modules and interface definitions in the retrieved context.
+        *   **BaseAgent Optimization**: Replaced the legacy RAG logic with the hybrid neural loop, providing all agents with a high-fidelity map of the workspace.
+
+20. **Sandboxed Claude Harness (Phase 28 Milestone)**:
+    *   Status: **RESOLVED** (v0.2.1-stable).
+    *   Implementation:
+        *   **Isolated Execution Environment**: Developed `claude_sandbox.Dockerfile` to host the `@anthropic-ai/claude-code` CLI in a secure, containerized sandbox.
+        *   **MCP Bridge**: Implemented `claude_harness.py` server to act as an asynchronous bridge between Neurex and the Claude CLI.
+        *   **Secure Delegation**: Enabled the Orchestrator to delegate massive, cross-cutting tasks to Claude while preserving host system integrity.
 - **Neural GitLens Suite**:
   - **Commit Blame Ghost Text**: renders authorship metadata (author, summary, date) for the active line directly in the editor.
   - **File Timeline Sidebar**: a dedicated, visual history tracker with commit nodes and glassmorphic cards.
