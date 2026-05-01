@@ -85,7 +85,7 @@
 .open-editors-list {
   display: flex;
   flex-direction: column;
-  padding: 4px 0;
+  padding: 0;
 }
 
 .open-editor-item {
@@ -211,7 +211,7 @@
 .outline-list {
   display: flex;
   flex-direction: column;
-  padding: 4px 0;
+  padding: 0;
 }
 
 .outline-item {
