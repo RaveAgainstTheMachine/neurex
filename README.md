@@ -109,6 +109,8 @@ cd neurex
 ./install.sh
 ```
  
+### 3. Launch
+```bash
 # Start the Universal Substrate (Autodetects and provisions runtime)
 cd neurex-cli
 cargo run -- start
