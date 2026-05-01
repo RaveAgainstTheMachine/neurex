@@ -71,7 +71,7 @@ class AttentionCoordinator:
         tasks = [self._dispatch_shard(session_id, shard, context_shards[i % len(context_shards)]) for i, shard in enumerate(shards)]
         results = await asyncio.gather(*tasks, return_exceptions=True)
         
-        return self._aggregate_heads(results)
+        return self._aggregate_heads(results, session_id)
 
     async def _dispatch_shard(self, session_id: str, shard: AttentionShard, prompt: str):
         """Dispatches a specific attention head range to a Mesh node."""
@@ -90,9 +90,15 @@ class AttentionCoordinator:
             log.error("attention.dispatch_failed", node=shard.node_id, error=str(e))
             return None
 
-    def _aggregate_heads(self, results: List[Any]) -> Dict[str, Any]:
-        """Pools the results from all attention shards into a unified hidden state."""
+    def _aggregate_heads(self, results: List[Any], session_id: str) -> Dict[str, Any]:
+        """Pools results and propagates state to the Mesh."""
         valid_results = [r for r in results if r]
+        
+        # Phase 46: Sub-ms State Propagation
+        from core.infrastructure.kv_sync import kv_sync
+        for res in valid_results:
+            asyncio.create_task(kv_sync.propagate_hidden_state(session_id, res.get("state"), res.get("node")))
+            
         log.info("attention.pooling_complete", success_rate=f"{len(valid_results)}/{len(results)}")
         return {"status": "pooled", "count": len(valid_results)}
 
