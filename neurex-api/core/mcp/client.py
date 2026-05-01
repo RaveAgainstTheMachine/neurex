@@ -48,6 +48,19 @@ async def run_genetic_optimization(file_path: str) -> str:
     success = await ga.evolve_module(file_path)
     return "Genetic optimization COMPLETED and APPLIED." if success else "Genetic optimization REJECTED or no improvement found."
 
+from core.context.global_memory import global_memory
+
+log = structlog.get_logger()
+
+async def run_add_global_memory(key: str, content: str) -> str:
+    """Adds a persistent 'Sticky Note' to the Mesh-Wide Memory."""
+    await global_memory.add_pointer(key, content)
+    return f"Global memory pointer '{key}' added and broadcast to Mesh."
+
+async def run_query_global_memory(query: str) -> str:
+    """Queries the collective experience of the Neurex Mesh."""
+    return await global_memory.query_memory(query)
+
 TOOL_REGISTRY: dict[str, callable] = {
     "read_file":      read_file,
     "write_file":     write_file,
@@ -80,6 +93,8 @@ TOOL_REGISTRY: dict[str, callable] = {
     "neural_harness":            run_neural_harness,
     "hyperplan":                 run_hyperplan,
     "genetic_optimize":          run_genetic_optimization,
+    "add_global_memory":         run_add_global_memory,
+    "query_global_memory":       run_query_global_memory,
 }
 
 class MCPClient:
