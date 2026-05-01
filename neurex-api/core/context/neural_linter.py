@@ -5,6 +5,7 @@ Architectural validation layer that verifies proposed mutations against DESIGN_S
 """
 import os
 import json
+import httpx
 import structlog
 from typing import Tuple
 
@@ -17,10 +18,10 @@ class NeuralLinter:
         self.architecture_path = os.path.join(self.workspace_path, "ARCHITECTURE.md")
 
     async def verify_mutation(self, name: str, args: dict, conversation_id: str) -> Tuple[bool, str]:
-        \"\"\"
+        """
         Validates a file mutation against architectural standards.
         Returns: (is_valid, reason)
-        \"\"\"
+        """
         # 1. Extraction of the proposed change
         target_file = args.get("path") or args.get("TargetFile") or args.get("target_file")
         content = args.get("content") or args.get("ReplacementContent") or args.get("CodeContent")
@@ -42,20 +43,15 @@ class NeuralLinter:
             return True, "No standards defined."
 
         # 3. Neural Validation
-        # We use the Internal Reasoning Engine to verify the change
-        from core.agents.summarizer_agent import SummarizerAgent
-        from core.context.manager import ContextManager
-        from core.context.rules_parser import RulesParser
-
-        # Note: We use a lightweight check first or delegate to a specialized "Neural Linter" prompt
-        prompt = f\"\"\"
+        # We use a specialized "Neural Linter" prompt
+        prompt = f"""
 You are the Neurex Neural Linter. Your task is to verify if a proposed code mutation follows the project's ARCHITECTURE and DESIGN SYSTEM.
 
 PROPOSED MUTATION:
 Tool: {name}
 File: {target_file}
 New Content Fragment:
-{content[:2000]}  # Limit context for speed
+{content[:2000]}
 
 PROJECT STANDARDS:
 {standards}
@@ -71,7 +67,7 @@ You must respond with a JSON object:
   "verdict": "PASS" | "FAIL",
   "reason": "Clear explanation of why it failed or empty if passed"
 }}
-\"\"\"
+"""
         try:
             from core.infrastructure.mesh import mesh_router
             # Use a fast but smart model for linting
@@ -92,7 +88,8 @@ You must respond with a JSON object:
                 resp = await client.post(target_url, json=payload)
                 if resp.status_code == 200:
                     data = resp.json()
-                    result = json.loads(data["message"]["content"])
+                    result_text = data.get("message", {}).get("content", "{}")
+                    result = json.loads(result_text)
                     if result.get("verdict") == "FAIL":
                         log.warning("neural_linter_rejection", file=target_file, reason=result.get("reason"))
                         return False, result.get("reason")
@@ -102,5 +99,3 @@ You must respond with a JSON object:
             return True, "Linter internal error."
 
         return True, ""
-
-import httpx

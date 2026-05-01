@@ -170,7 +170,7 @@ class BaseAgent(ABC):
                     yield {"type": "done", "full_text": full_text}
 
     async def dispatch_tool(self, tool_call: dict, conversation_id: str) -> str:
-        \"\"\"Route a tool_call with Federated Governance and Neural Linting.\"\"\"
+        """Route a tool_call with Federated Governance and Neural Linting."""
         name = tool_call.get("function", {}).get("name", "")
         args = tool_call.get("function", {}).get("arguments", {})
         
