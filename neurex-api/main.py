@@ -15,7 +15,7 @@ load_dotenv()
 
 from core.memory.worker import MemoryWorker
 from core.context.rules_parser import RulesParser
-from api.routes import chat, tasks, files, infra, notifications, skills, settings, auth, memory, update, observability, git, languages, evolution, singularity, synthesis, consensus
+from api.routes import chat, tasks, files, infra, notifications, skills, settings, auth, memory, update, observability, git, languages, evolution, singularity, synthesis, consensus, temporal
 from api.websocket import router as ws_router
 from core.task_graph import init_db
 from core.logger import setup_logging
@@ -151,6 +151,7 @@ app.include_router(evolution.router)
 app.include_router(singularity.router)
 app.include_router(synthesis.router)
 app.include_router(consensus.router)
+app.include_router(temporal.router)
 app.include_router(ws_router, tags=["websocket"])
 
 

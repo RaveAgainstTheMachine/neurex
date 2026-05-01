@@ -24,6 +24,7 @@ import { EvolutionPanel } from "./components/EvolutionPanel/EvolutionPanel";
 import { SingularityDashboard } from "./components/SingularityDashboard/SingularityDashboard";
 import { SynthesisDashboard } from "./components/SynthesisDashboard/SynthesisDashboard";
 import { ConsensusDashboard } from "./components/ConsensusDashboard/ConsensusDashboard";
+import { TemporalDashboard } from "./components/TemporalDashboard/TemporalDashboard";
 import { PresenceBar } from "./components/PresenceBar/PresenceBar";
 import { AuthOverlay } from "./components/AuthOverlay/AuthOverlay";
 import { TitleBar } from "./components/TitleBar/TitleBar";
@@ -336,6 +337,7 @@ function AppContent() {
                     {sidebarTab === "singularity" && <SingularityDashboard />}
                     {sidebarTab === "synthesis" && <SynthesisDashboard />}
                     {sidebarTab === "consensus" && <ConsensusDashboard />}
+                    {sidebarTab === "temporal" && <TemporalDashboard />}
                   </Panel>
                   <ResizeHandle />
                   <Panel minSize={30} className="app__main-content">

@@ -38,6 +38,7 @@ const SIDEBAR_ITEMS: { id: string; icon: React.FC<any>; label: string }[] = [
   { id: "singularity", icon: Sparkles,    label: "Sentient Singularity" },
   { id: "synthesis",   icon: Activity,    label: "Neural Self-Synthesis" },
   { id: "consensus",   icon: Globe,       label: "Universal Consensus" },
+  { id: "temporal",    icon: Timer,       label: "Neural Temporal Synthesis" },
 ];
 
 function SortableActivityItem({ id, active, onClick, icon: Icon, label, badge }: { id: string; active: boolean; onClick: () => void; icon: React.FC<any>; label: string; badge?: number | string }) {
