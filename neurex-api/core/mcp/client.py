@@ -25,6 +25,7 @@ from core.context.scratchpad import set_scratchpad_value, get_scratchpad, clear_
 from core.observability.flight_recorder import record_decision, get_flight_log
 from core.mcp.servers.neural_harness import run_neural_harness
 from core.harness.hyperplan import HyperPlan
+from core.agents.genetic_agent import GeneticAgent
 
 log = structlog.get_logger()
 
@@ -37,6 +38,15 @@ async def run_hyperplan(query: str) -> str:
     blueprint = await up.generate_blueprint(query)
     import json
     return json.dumps(blueprint, indent=2)
+
+async def run_genetic_optimization(file_path: str) -> str:
+    """Invokes the Genetic Evolution cycle to optimize a module."""
+    from core.context.manager import ContextManager
+    from core.agents.base_agent import BaseAgent
+    agent = BaseAgent(None, ContextManager())
+    ga = GeneticAgent(agent)
+    success = await ga.evolve_module(file_path)
+    return "Genetic optimization COMPLETED and APPLIED." if success else "Genetic optimization REJECTED or no improvement found."
 
 TOOL_REGISTRY: dict[str, callable] = {
     "read_file":      read_file,
@@ -69,6 +79,7 @@ TOOL_REGISTRY: dict[str, callable] = {
     "get_flight_log":            get_flight_log,
     "neural_harness":            run_neural_harness,
     "hyperplan":                 run_hyperplan,
+    "genetic_optimize":          run_genetic_optimization,
 }
 
 class MCPClient:
