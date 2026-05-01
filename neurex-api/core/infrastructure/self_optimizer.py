@@ -42,13 +42,26 @@ class SelfOptimizer:
 
     async def apply_self_optimization(self, optimization_id: str):
         """
-        Applies a self-optimization refactor to the core infrastructure.
-        Requires high-reasoning swarm consensus.
+        Applies a self-optimization refactor to the core infrastructure via CoderAgent.
         """
         async with self.optimization_lock:
-            # Phase 51: Hot-Swapping Optimized Core Logic
-            log.info("self_optimizer.applying_mutation", id=optimization_id)
-            await asyncio.sleep(1.0) # Simulated code mutation
+            opt = next((o for o in self.pending_optimizations if o["id"] == optimization_id), None)
+            if not opt: return
+
+            log.info("self_optimizer.applying_mutation", id=optimization_id, target=opt["target_file"])
+            
+            # Phase 51: Recursive Self-Improvement via CoderAgent
+            # We autonomously spawn a CoderAgent to perform the refactor
+            from core.agents.coder_agent import CoderAgent
+            agent = CoderAgent(name="Neurex-Self-Optimizer")
+            
+            mission = f"Refactor {opt['target_file']} to resolve: {opt['reason']}. Optimize for performance and low latency."
+            log.info("self_optimizer.dispatching_agent", mission=mission)
+            
+            # Simulated agent execution (In production, this runs agent.run_mission)
+            await asyncio.sleep(2.0) 
+            
+            opt["status"] = "executed"
             log.info("self_optimizer.optimization_complete", id=optimization_id)
 
 self_optimizer = SelfOptimizer()
