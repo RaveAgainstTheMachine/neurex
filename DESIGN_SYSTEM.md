@@ -42,3 +42,9 @@ The splash screen is the "Boot Sequence". It must feel like the AI is initializi
 - **Origin Badges**: Use distinct, desaturated color capsules for model origins (LOCAL: Gray, HF: Blue, MESH: Purple).
 - **Metric Gauges**: Resource usage (RAM/VRAM) should be displayed as percentage bars with a "pulsing" glow that intensifies as usage approaches 90%.
 - **Skill Toggles**: Use custom-styled checkboxes that transform into glowing indicators when active.
+### 5. Performance-Driven Design
+Aesthetics are meaningless without responsiveness. The Neurex Design System mandates "Structural Fluidity":
+- **State Decoupling**: Components MUST be architected using strict state selectors. The UI must never re-render globally due to localized activity (e.g., cursor movement or log append).
+- **O(1) Interaction Design**: Navigation and status indicators must rely on shallow aggregation. Recursive tree walks are forbidden for real-time UI updates.
+- **Throttled Feedback**: High-frequency data (LLM tokens, PTY output) must be buffered at the interface layer (25-30fps) to ensure the UI remains interactive during peak throughput.
+- **Motion over Reconciliation**: Use CSS animations and transitions for continuous states (progress bars, pulses) rather than React state updates where possible to offload work from the main thread.

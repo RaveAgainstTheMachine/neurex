@@ -187,3 +187,26 @@ The frontend implements a high-fidelity visual layer atop the LSP data:
 ### 10.3 Communication
 - **Protocol**: Standard JSON-RPC 2.0 over WebSockets.
 - **Multiplexing**: While chat and telemetry share a socket, LSP traffic utilizes dedicated per-language channels to ensure zero-latency intelligence during heavy agent execution.
+## 12. Performance & Throughput Scaling
+
+Neurex is engineered for "High-Frequency Intelligence," where the UI must remain fluid during massive background swarm activity.
+
+### 12.1 UI State Management (Strict Selectors)
+The frontend utilizes a "Strict State Subscription" pattern to prevent global re-render churn.
+- **Granular Selectors**: Components MUST use discrete Zustand selectors (`useStore(s => s.property)`) rather than subscribing to the entire store object.
+- **Architectural Decoupling**: The root `App` component and major panels are decoupled from high-frequency state (cursor tracking, diagnostics, telemetry) to ensure the global layout remains static and responsive.
+- **O(1) Operations**: Large-scale UI interactions (e.g., file explorer status updates) are optimized for constant-time complexity, utilizing shallow lookups rather than recursive tree traversals.
+
+### 12.2 WebSocket Throughput (Aggressive Buffering)
+To prevent network saturation and UI thread starvation, Neurex implements a dual-layer buffering strategy:
+- **Backend Token Chunking**: LLM tokens are aggregated into blocks of 10 on the server before being broadcast, reducing message frequency by ~90%.
+- **Frontend Streaming Buffer**: The WebSocket hook implements a 40ms (25fps) micro-buffer for incoming tokens, aggregating them into a single store update per frame. This ensures smooth text rendering without saturating the React reconciliation engine.
+
+### 12.3 High-Throughput Observability
+The `FlightRecorder` and `SystemLogs` utilize a non-blocking, buffered I/O model:
+- **Batch-Writing**: Observability traces are written to a background ring buffer and flushed to the database in 2-second intervals.
+- **Memoized Rendering**: Reasoning traces and task updates are rendered using memoized components (`React.memo`), ensuring that only the new fragments of the trace incur a DOM cost.
+
+### 12.4 Accelerated Backend I/O
+- **Fast Serialization**: The API utilizes `orjson` as its primary serialization engine, significantly reducing the CPU cost of generating large JSON responses for telemetry and file tree operations.
+- **Connection Pooling**: All Mesh-wide service calls (RAG, Memory, Agents) are performed via persistent `httpx.AsyncClient` pools to eliminate the overhead of TCP/TLS connection churn.
