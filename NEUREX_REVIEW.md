@@ -98,10 +98,29 @@ While the architecture is incredibly sound, I have identified a few areas that r
 
 ## 4. Strategic Recommendations for Next Deployment
 
-1.  **Phase 13: Distributed RPC Pooling**
-    *   Finalize the `Llama.cpp` RPC master/worker handshake to enable true distributed tensor pooling across the Mesh.
-2.  **Phase 14: Autonomous Self-Healing**
-    *   Implement an autonomous "Sentinel" agent that can detect and repair service drifts or port conflicts (e.g., ghost Ollama processes) without human intervention.
+11. **Infrastructure Hub & Persistent Intelligence (Phase 17 Milestone)**:
+    *   Status: **RESOLVED** (v0.2.1-stable).
+    *   Implementation:
+        *   **Infrastructure Hub Overhaul**: Re-architected `InfraPanel` with real-time VRAM/RAM/CPU metrics and professional quantization-aware model deployment.
+        *   **Multi-Terminal Persistence**: Implemented "Hidden Instance" pattern for terminals, preventing PTY buffer loss during tab switches.
+        *   **Unified State Bus**: Centralized WebSocket communication in Zustand store, eliminating global window race conditions.
+        *   **Deterministic Chat History**: Hardened WS loop with isolated DB sessions for 100% reliability.
+
+12. **Autonomous Sentinel & Self-Evolution (Phase 18 Milestone)**:
+    *   Status: **RESOLVED** (v0.2.1-stable).
+    *   Implementation:
+        *   **Autonomous Sentinel**: Launched background self-healing service (`service_sentinel.py`) that monitors API/Web/Ollama ports and auto-restarts failed processes.
+        *   **Diagnostic Audit Tooling**: Implemented `audit_codebase_health` for automated drift detection and `check_design_compliance` to enforce visual consistency.
+        *   **Planner Evolution**: Updated `PlannerAgent` with proactive auditing directives, enabling Neurex to maintain its own architectural integrity.
+
+---
+
+## 4. Strategic Recommendations for Next Deployment
+
+1.  **Phase 19: Sandbox Mutation Support**
+    *   Expand the `neurex-sandbox` Docker environment to support persistent volume mutation for long-running build tasks.
+2.  **Phase 20: Predictive Resource Elasticity**
+    *   Implement a predictive scaling algorithm in the `MeshRouter` to pre-emptively spin up peers based on historical usage spikes.
 
 ---
 **Report Concluded.**

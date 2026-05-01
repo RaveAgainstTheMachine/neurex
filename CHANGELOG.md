@@ -19,6 +19,7 @@ All notable changes to the Neurex project will be documented in this file.
 - **Imperative Sidebar Accordion**: Refactored the `FileExplorer` to prioritize the workspace tree; implemented programmatic collapse/expand for Open Editors and Outline sections, allowing them to shrink to headers while preserving global layout integrity.
 - **Autonomous Self-Evolution**: Integrated `audit_codebase_health` tool for automated drift detection; updated `PlannerAgent` with proactive auditing directives to ensure long-term architectural stability.
 - **Design System Auditing**: Implemented `check_design_compliance` to ensure self-evolved components adhere to glassmorphism and BEM standards defined in `DESIGN_SYSTEM.md`.
+- **Autonomous Sentinel**: Launched background self-healing service that monitors API/Web/Ollama ports and auto-restarts failed processes, ensuring high availability for autonomous agent loops.
 
 ## [0.2.0] - 2026-04-30 (GRACEFUL RESIZING & LAYOUT PERSISTENCE)
 ### Added
