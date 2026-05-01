@@ -35,6 +35,14 @@ class WatcherHandler(FileSystemEventHandler):
         self._timer = None
         
         log.info("watcher.flushing_events", count=len(paths))
+        
+        # Phase 45: Predictive Maintenance Trigger
+        from core.infrastructure.maintenance import maintenance_service
+        asyncio.run_coroutine_threadsafe(
+            maintenance_service.report_churn(paths),
+            self.loop
+        )
+
         asyncio.run_coroutine_threadsafe(
             presence_manager.broadcast_global({
                 "event": "file_system_changed",
