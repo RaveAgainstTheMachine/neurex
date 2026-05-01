@@ -339,3 +339,22 @@ The `NeuralTemporalRegistry` enables the Mesh to snapshot and restore its entire
 ### 21.2 Quantum Path Simulator
 The `QuantumPathSim` simulates multiple architectural paths simultaneously via probabilistic branching.
 - **Quantum Reasoning**: Predicts the stability and performance of future architectural states before they are manifested.
+
+## 22. Hermetic Substrate (Phase 54)
+
+Phase 54 transitions Neurex into a self-contained, zero-dependency "Hermetic Substrate" suitable for frictionless deployment on vanilla Windows, macOS, and Linux systems.
+
+### 22.1 Dual-Plane Isolation Model
+To ensure maximum host performance and agentic security, the architecture is split into two distinct planes:
+- **Control Plane (Host Layer)**: A native Rust-based daemon (`neurex-cli`). This layer serves the embedded React frontend natively via an internal `axum` web server. It handles system-level tasks: hardware diagnostics, port governance, and the life-cycle management of the neural backend.
+- **Execution Plane (Sandbox Layer)**: An isolated containerized (Docker/WASI) runtime where agents operate. This prevents any neural mutation from impacting the host OS without explicit authorization.
+
+### 22.2 Autonomous Runtime Synthesis (The "uv" Bootstrapper)
+Neurex no longer relies on pre-installed host dependencies like Node.js or Python. The daemon implements a **Self-Provisioning Lifecycle**:
+1. **Dynamic Fetching**: The Rust daemon identifies the host's OS/Architecture and dynamically fetches the standalone `uv` binary.
+2. **Hermetic Environment Creation**: Using `uv`, the daemon downloads a portable Python interpreter (3.11) and creates an isolated virtual environment (`~/.neurex/env`).
+3. **Automated Neural Sync**: The system autonomously fetches its own neural weights and backend API dependencies (PyTorch, FastAPI) into the hermetic environment.
+4. **Environment Injection**: The Rust daemon injects dynamic environment variables (like `__API_BASE__`) into the embedded UI's DOM at runtime, enabling the static frontend to orchestrate the asynchronous backend without a complex reverse proxy.
+
+### 22.3 Path to Universal Mesh & Mobile NPUs
+By centralizing the host-layer control logic into a native Rust core, Neurex becomes portable to mobile platforms. This architecture paves the way for mobile devices to participate as full mesh nodes, utilizing on-device Neural Processing Units (NPUs) like Apple Silicon A-series or Snapdragon X Elite for localized inference and RAG indexing.

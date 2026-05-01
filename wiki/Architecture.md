@@ -47,4 +47,20 @@ Phase 47 virtualizes the Mesh's physical substrate into a single, unified neural
 - **Virtual VRAM Pool**: Aggregates distributed VRAM across the Mesh for massive parallel reasoning.
 - **Neural Swap-Space**: High-speed RAM/VRAM state swapping to bypass physical hardware limits.
 - **Autonomous Re-Quantization**: Dynamic model precision shifting (e.g. Q8 -> IQ2) to maintain reasoning throughput under pressure.
-- **Hardware Orchestrator**: Central intelligence that coordinates pooling, swapping, and quantization fallbacks.
+## 9. Hermetic Substrate (Phase 53/54)
+Phase 53/54 transitions the IDE from a manual development setup to a frictionless, zero-dependency native substrate.
+
+### Dual-Layer Architecture
+The system is logically split into two isolated planes to balance host performance with agent security:
+- **Control Plane (Host Layer)**: A native Rust daemon (`neurex-cli`) that governs the substrate. It embeds the entire React frontend and serves it via an internal `axum` web server. It manages hardware diagnostics and life-cycle orchestration.
+- **Execution Plane (Sandbox Layer)**: An isolated containerized environment (Docker/WASM) where Neural Agents operate. This ensures that agentic mutations and tool calls are physically contained and cannot impact the host system without explicit permission.
+
+### Autonomous Provisioning (The "uv" Bootstrapper)
+To eliminate external dependencies (Python, Node, Pip), the daemon possesses a self-synthesizing runtime:
+- **Dynamic Fetcher**: The daemon detects host OS/Arch and dynamically downloads a standalone `uv` binary.
+- **Hermetic Runtime**: Using `uv`, the daemon provisions its own portable Python 3.11 interpreter and virtual environment in `~/.neurex/env`.
+- **Dependency Sync**: It automatically synchronizes its own neural weights and backend API dependencies (PyTorch/FastAPI) on the first boot, ensuring a "one-click" experience on vanilla Windows, macOS, and Linux systems.
+
+### Universal Mesh & Mobile Node Path
+The Rust-first core enables the daemon to be cross-compiled for mobile platforms, allowing mobile NPUs (Snapdragon X, Apple A-Series) to participate as first-class compute nodes in the federated Neurex Mesh.
+
