@@ -14,10 +14,14 @@ interface StatusBarProps {
 }
 
 export function StatusBar({ wsStatus, setPaletteMode, setSidebarTab, isAIActive }: StatusBarProps) {
-  const { 
-    hiveStats, diagnostics, gitBranch, gitChanges, 
-    cursorPosition, activeFileLanguage, settings 
-  } = useStore();
+  // Phase 44.20: Strict State Selection (Prevent Status churn)
+  const hiveStats = useStore(s => s.hiveStats);
+  const diagnostics = useStore(s => s.diagnostics);
+  const gitBranch = useStore(s => s.gitBranch);
+  const gitChanges = useStore(s => s.gitChanges);
+  const cursorPosition = useStore(s => s.cursorPosition);
+  const activeFileLanguage = useStore(s => s.activeFileLanguage);
+  const settings = useStore(s => s.settings);
 
   const [showNotifications, setShowNotifications] = useState(false);
   const notificationCount = 0; // Mocked for now
