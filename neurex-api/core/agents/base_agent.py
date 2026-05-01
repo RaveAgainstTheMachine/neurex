@@ -91,16 +91,17 @@ class BaseAgent(ABC):
         return "\n".join(parts)
 
     async def rag_context(self, query: str, n: int = 5) -> str:
-        """Retrieve relevant code chunks via Neural RAG 2.0."""
-        chunks = await self.ctx.explorer.hybrid_search(query, limit=n)
-        if not chunks:
-            return ""
-        formatted = "\n\n".join(
-            f"# {c['metadata'].get('file', 'unknown')} (line {c['metadata'].get('start_line', '?')})\n{c['document']}"
-            for c in chunks
-        )
-        compressed = await self.compressor.compress_context(formatted)
-        return f"<codebase_context>\n{compressed}\n</codebase_context>"
+        """Retrieve relevant code chunks via Mesh-Scale Distributed RAG (Global Intelligence)."""
+        # Phase 37: Federated RAG across the Mesh
+        from core.context.federated_rag import FederatedRAG
+        frag = FederatedRAG(self.ctx)
+        
+        # Perform global search (Local + Peer Nodes)
+        context = await frag.global_search(query, limit=n)
+        
+        # Apply Neural Compression (Phase 22)
+        compressed = await self.compressor.compress_context(context)
+        return compressed
 
     async def stream(
         self,
