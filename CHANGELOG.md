@@ -13,6 +13,14 @@ All notable changes to the Neurex project will be documented in this file.
 
 ### Fixed
 - **Chat Persistence Fix**: Resolved a critical race condition in the WebSocket handler by using isolated database sessions for user/assistant message recording.
+- **Neural Context Compression**: Implemented `ContextCompressor` to structurally summarize stable modules, maximizing effective context window for complex reasoning.
+- **Autonomous CI/CD Self-Healing**: Launched `CIHealer` to monitor pipeline health and autonomously trigger background repair tasks for regression failures.
+- **Persistent Workspace Layouts**: integrated automatic storage for sidebar, terminal, and assistant panel dimensions using `react-resizable-panels` and `localStorage`.
+- **Advanced Panel Controls**: added Maximize, Collapse, and Clear actions to the Bottom Panel header for streamlined workspace management.
+- **VSCodium Parity**: achieved layout parity with professional editors by ensuring terminal reflow and panel state preservation across sessions.
+- **Title Bar Restoration**: fixed a layout regression where the `TitleBar` was omitted during panel refactoring; restored reactive visibility based on `menu_mode`.
+- **Title Bar Alignment & UX**: refined the `TitleBar` with absolute centering for project/file names and fluid `MenuBar` integration for VSCodium parity; fixed a layout bug where the title was detached from the header.
+- **Window Title Synchronization**: implemented automatic syncing between the IDE's active context and the browser's `document.title`.
 - **FileExplorer Root Expansion**: Fixed a bug where the workspace root directory could not be expanded due to falsy path validation.
 - **InfraMetrics Type Accuracy**: Corrected the `InfraMetrics` TypeScript interface to match the backend's resource reporting (RAM totals, CPU usage).
 - **Terminal Re-fitting**: Implemented a robust re-fit mechanism that fires when a hidden terminal becomes visible, ensuring jitter-free layout restoration.
@@ -23,7 +31,6 @@ All notable changes to the Neurex project will be documented in this file.
 - **Sandbox Mutation Support**: Expanded the Docker execution engine with a `mutation_allowed` flag, enabling agents to perform build-related writes (RW) when authorized.
 - **Predictive Resource Elasticity**: Integrated `ResourcePredictor` into the `MeshRouter` to track telemetry trends and pre-emptively avoid nodes with rising load trajectories.
 - **Swarm Leader Protocol**: Launched `SwarmManager` and `SwarmAgent` for mesh-wide parallel execution of massive refactoring tasks (>10 files).
-- **Neural Context Compression**: Implemented `ContextCompressor` to structurally summarize stable modules, maximizing effective context window for complex reasoning.
 
 ## [0.2.0] - 2026-04-30 (GRACEFUL RESIZING & LAYOUT PERSISTENCE)
 ### Added
@@ -87,6 +94,19 @@ All notable changes to the Neurex project will be documented in this file.
 - **Neural Error Lens**: implemented a native, high-fidelity inline diagnostic system:
   - **Inline Error Messages**: groups and renders diagnostics (Errors/Warnings) directly after code lines with thematic neon accents.
   - **Real-time Synchronization**: updates decorations instantly as the LSP reports markers.
+- 16. **Neural Context Compression (Phase 22 Milestone)**:
+    *   Status: **RESOLVED** (v0.2.1-stable).
+    *   Implementation:
+        *   **Structural Summarization**: Developed `ContextCompressor` to replace stable function bodies with architectural summaries, preserving shape while saving tokens.
+        *   **Boilerplate Pruning**: Implemented semantic filters to strip redundant imports and license headers from RAG-retrieved context.
+        *   **Agent Integration**: Integrated compression directly into `BaseAgent.rag_context`, enabling all agents to handle large context windows without overflow.
+
+17. **Autonomous CI/CD Self-Healing (Phase 23 Milestone)**:
+    *   Status: **RESOLVED** (v0.2.1-stable).
+    *   Implementation:
+        *   **Pipeline Health Monitoring**: Launched `CIHealer` service that polls external CI status (GitHub/GitLab) and identifies build failures.
+        *   **Log-Driven Recovery**: Developed infrastructure to analyze CI error logs and autonomously queue repair tasks in the Orchestrator.
+        *   **Lifespan Integration**: Integrated the healing loop into the core API lifespan, ensuring persistent background self-correction.
 - **Neural GitLens Suite**:
   - **Commit Blame Ghost Text**: renders authorship metadata (author, summary, date) for the active line directly in the editor.
   - **File Timeline Sidebar**: a dedicated, visual history tracker with commit nodes and glassmorphic cards.
