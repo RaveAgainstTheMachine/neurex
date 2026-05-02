@@ -9,3 +9,4 @@
 | 005 | Disk labels (NEUREX, MODELS) missing from NOC | FIXED | HIGH | Normalized path matching in manager.py (v12) |
 | 006 | GPU/VRAM separated in Node Cards | FIXED | LOW | Unified into high-density columns (v12) |
 | 007 | CPU model missing/tooltip-only | FIXED | LOW | Unified with core count label (v12) |
+| 008 | Proper Gitea Issue Integration | OPEN | MEDIUM | Verified connectivity to 10.10.10.147. Awaiting API Token for sync. |
