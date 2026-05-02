@@ -57,8 +57,17 @@
 - **Proactive Auditing**: If you see "messy" code (e.g., redundant venvs, unused imports, or missing `appearance` properties), clean it up immediately.
 - **Context Awareness**: Read `PHILOSOPHY.md` and `DESIGN_SYSTEM.md` before making UI changes. Consistency is king.
 - **Audit Log**: Every significant architectural change must be logged in `neurex/NEUREX_REVIEW.md`.
-- **Issue Tracking**: Every user-reported issue must be logged to the Gitea Issue section immediately upon detection. If Gitea is unreachable, use `ISSUES.md` as a persistent fallback until synchronization is restored.
+- **Native Issue Tracking**: Gitea is the absolute Source of Truth for all project anomalies. Every user-reported issue MUST be logged to the Gitea native tracker immediately. Use `ISSUES.md` only as a secondary local cache for offline persistence.
+- **Traceable Mutations**: All commits targeting a specific issue MUST reference the Gitea Issue ID (e.g., `fix: #12 [core] ...`) to maintain a high-fidelity architectural audit trail.
 - **Caveman Ultra**: Always use the `caveman` ultra skill for communication to optimize token usage while maintaining absolute technical precision.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 8. GITEA NATIVE PROTOCOL
+# ─────────────────────────────────────────────────────────────────────────────
+- **Origin Authority**: The Gitea server at `10.10.10.147:3000` is the definitive repository for the Neurex substrate.
+- **Automated Sync**: The `tea` CLI (located at `/scratch/tea`) or direct API calls MUST be used to synchronize the local state with the origin.
+- **Issue Lifecycle**: Issues must progress through clear states (Open -> In Progress -> Resolved) on Gitea to ensure mesh-wide development visibility.
+- **Authentication**: Use the established API token for all programmatic issue mutations. NEVER hardcode credentials into the primary logic; utilize secure environment injection or local scratch substrates.
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 7. SELF-HEALING & INFRA
