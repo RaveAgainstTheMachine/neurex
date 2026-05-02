@@ -13,6 +13,12 @@
     <a href="#"><img src="https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Win-white.svg?style=for-the-badge" alt="Platform"></a>
   </p>
 
+  <p>
+    <img src="https://img.shields.io/badge/TypeScript-9.8k%20LOC-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
+    <img src="https://img.shields.io/badge/Python-13.8k%20LOC-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
+    <img src="https://img.shields.io/badge/Rust-1.1k%20LOC-DEA584?style=for-the-badge&logo=rust&logoColor=white" alt="Rust">
+  </p>
+
   <p align="center">
     <i>"An IDE that doesn't just execute; it evolves with you."</i>
     <br />
