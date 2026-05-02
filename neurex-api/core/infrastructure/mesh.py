@@ -13,7 +13,7 @@ from typing import List, Dict, Any
 
 log = structlog.get_logger()
 
-PEERS_FILE = Path(os.getenv("WORKSPACE_PATH", "/workspace")) / ".neurex" / "mesh_peers.json"
+PEERS_FILE = Path.home() / ".neurex" / "mesh_peers.json"
 
 class PeerNode:
     def __init__(self, url: str, token: str, name: str = "Unknown"):

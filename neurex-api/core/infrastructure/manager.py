@@ -128,7 +128,6 @@ class InfrastructureManager:
 
             # 2. Filesystem Fallback (if API failed or returned nothing)
             if not models:
-                import os
                 from pathlib import Path
                 # Standard Linux path for Ollama manifests
                 manifest_path = Path.home() / ".ollama" / "models" / "manifests"

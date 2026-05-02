@@ -70,8 +70,7 @@ class SettingsManager:
         self._load()
 
     def _get_settings_path(self) -> Path:
-        from api.routes.files import get_workspace
-        return get_workspace() / ".neurex" / "settings.json"
+        return Path.home() / ".neurex_settings.json"
 
     def _load(self):
         path = self._get_settings_path()

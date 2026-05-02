@@ -9,8 +9,7 @@ import structlog
 log = structlog.get_logger()
 router = APIRouter()
 
-WORKSPACE = Path(os.getenv("WORKSPACE_PATH", "/workspace"))
-SUBS_FILE = WORKSPACE / ".neurex" / "push_subscriptions.json"
+SUBS_FILE = Path.home() / ".neurex" / "push_subscriptions.json"
 VAPID_PRIVATE = "private_key.pem"
 VAPID_CLAIMS = {"sub": "mailto:admin@neurex.local"}
 

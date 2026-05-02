@@ -43,7 +43,7 @@ def get_workspace(requested_root: str = None) -> Path:
         if p.exists() and p.is_dir():
             return p
     if not workspace_state.path:
-        return Path(os.getcwd()).resolve()
+        return None
     return workspace_state.path
 
 IGNORED = {".git", "node_modules", "__pycache__", ".neurex_trash"}
@@ -92,6 +92,8 @@ collab_manager = CollaborationManager()
 async def file_tree(path: str = ".", depth: int = 2, root_path: str = None):
     from core.logger import log
     WORKSPACE = get_workspace(root_path)
+    if not WORKSPACE:
+        return {"name": "No Workspace", "type": "dir", "children": []}
     log.info("files.tree_request", path=path, depth=depth, workspace=str(WORKSPACE))
     target_path = (WORKSPACE / path).resolve()
     if not str(target_path).startswith(str(WORKSPACE)):
@@ -189,6 +191,8 @@ async def file_tree(path: str = ".", depth: int = 2, root_path: str = None):
 async def read_file(path: str, root_path: str = None):
     """Read a workspace file by relative path."""
     WORKSPACE = get_workspace(root_path)
+    if not WORKSPACE:
+        raise HTTPException(status_code=400, detail="No workspace open")
     resolved = (WORKSPACE / path).resolve()
     if not str(resolved).startswith(str(WORKSPACE)):
         raise HTTPException(status_code=403, detail="Path traversal blocked")
@@ -206,6 +210,8 @@ class SaveRequest(BaseModel):
 async def save_file(req: SaveRequest):
     """Write content to a workspace file."""
     WORKSPACE = get_workspace(req.root_path)
+    if not WORKSPACE:
+        raise HTTPException(status_code=400, detail="No workspace open")
     resolved = (WORKSPACE / req.path).resolve()
     if not str(resolved).startswith(str(WORKSPACE)):
         raise HTTPException(status_code=403, detail="Path traversal blocked")
@@ -484,10 +490,11 @@ async def browse_directories(path: str = "."):
     WORKSPACE = get_workspace()
     
     try:
-        # If path is absolute, use it, otherwise relative to workspace
+        # If path is absolute, use it. If no workspace, default to home.
         target = Path(path)
         if not target.is_absolute():
-            target = (WORKSPACE / path).resolve()
+            base = WORKSPACE if WORKSPACE else Path.home()
+            target = (base / path).resolve()
         else:
             target = target.resolve()
             
