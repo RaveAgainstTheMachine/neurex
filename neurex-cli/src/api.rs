@@ -1,4 +1,4 @@
-use anyhow::Result;
+// use anyhow::Result;
 use axum::{
     Router,
     body::Body,
@@ -198,10 +198,51 @@ pub async fn static_handler(State(state): State<Arc<AppState>>, uri: Uri) -> imp
     }
 }
 
+pub async fn proxy_handler(
+    State(state): State<Arc<AppState>>,
+    method: axum::http::Method,
+    uri: Uri,
+    body: Body,
+) -> impl IntoResponse {
+    let api_url = format!("http://127.0.0.1:{}{}", state.api_port, uri.path());
+    let client = reqwest::Client::new();
+    
+    // Convert Axum body to bytes to send via reqwest
+    let body_bytes = match axum::body::to_bytes(body, 10 * 1024 * 1024).await {
+        Ok(b) => b,
+        Err(e) => return (StatusCode::BAD_REQUEST, format!("Body too large: {}", e)).into_response(),
+    };
+
+    let resp = client.request(method, &api_url)
+        .body(body_bytes)
+        .send()
+        .await;
+    
+    match resp {
+        Ok(r) => {
+            let status = r.status();
+            let bytes = r.bytes().await.unwrap_or_default();
+            Response::builder()
+                .status(StatusCode::from_u16(status.as_u16()).unwrap())
+                .header(header::CONTENT_TYPE, "application/json")
+                .body(Body::from(bytes))
+                .unwrap()
+                .into_response()
+        }
+        Err(e) => {
+            error!("Proxy Error: {}", e);
+            (StatusCode::BAD_GATEWAY, "Gateway Error").into_response()
+        }
+    }
+}
+
+use axum::routing::any;
+
 pub fn create_router(state: Arc<AppState>) -> Router {
     Router::new()
         .route("/api/sandbox/exec", post(sandbox_exec_handler))
         .route("/api/substrate/status", get(substrate_status_handler))
+        .route("/api/{*path}", any(proxy_handler))
         .fallback(get(static_handler))
         .with_state(state)
 }

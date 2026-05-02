@@ -6,14 +6,16 @@ Implements autonomous Plan-Act-Review cycles for any supported LLM.
 from __future__ import annotations
 import asyncio
 import structlog
-from typing import List, Dict, Any, AsyncGenerator
-from core.agents.base_agent import BaseAgent
-from core.mcp.client import MCPClient
+from typing import List, Dict, Any, AsyncGenerator, TYPE_CHECKING
+if TYPE_CHECKING:
+    from core.agents.base_agent import BaseAgent
+    from core.mcp.client import MCPClient
 
 log = structlog.get_logger()
 
 class NeuralHarness:
     def __init__(self, agent: BaseAgent):
+        from core.mcp.client import MCPClient
         self.agent = agent
         self.mcp = MCPClient()
         self.max_steps = 15

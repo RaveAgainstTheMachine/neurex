@@ -79,12 +79,14 @@ async fn main() -> Result<()> {
                 env_dir.join("bin").join("uvicorn")
             };
 
+            let current_dir = std::env::current_dir()?;
             let mut api_process = Command::new(&uvicorn_exe)
                 .arg("main:app")
                 .arg("--host")
                 .arg("0.0.0.0")
                 .arg("--port")
                 .arg(api_port.to_string())
+                .env("WORKSPACE_PATH", &current_dir)
                 .current_dir("../neurex-api")
                 .spawn()
                 .context("Failed to spawn neurex-api (is uvicorn installed?)")?;

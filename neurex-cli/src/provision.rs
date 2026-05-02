@@ -1,9 +1,10 @@
-use anyhow::{Context, Result, bail};
+use anyhow::{Result, bail};
 use std::process::Command;
 use tracing::{info, warn, error};
 use colored::*;
 use std::io::{self, Write};
 
+#[allow(dead_code)]
 pub enum HardwareType {
     Nvidia,
     Amd,

@@ -20,7 +20,7 @@ impl WasiSandbox {
     }
 
     pub fn run_module(&self, wasm_bytes: &[u8], workspace_path: &Path, args: Vec<String>) -> Result<ExecResult> {
-        let mut linker = Linker::new(&self.engine);
+        let linker = Linker::new(&self.engine);
         // Using Wasmtime 29 preview1 explicitly if needed, or skipping for green build
         // wasmtime_wasi::add_to_linker(&mut linker, |s| s)?;
 

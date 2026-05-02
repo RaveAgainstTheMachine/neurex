@@ -14,17 +14,20 @@ log = structlog.get_logger()
 
 class HardwareBenchmarker:
     def __init__(self):
-        self.last_benchmark: Dict[str, Any] = {}
+        self.last_results: Dict[str, Any] = {}
 
-    async def run_throughput_test(self, model_name: str = "default") -> Dict[str, Any]:
+    @property
+    def last_benchmark(self):
+        return self.last_results
+
+    async def run_benchmark(self, model_name: str = "default") -> Dict[str, Any]:
         """Runs a simulated token throughput test to quantify performance."""
         log.info("benchmarker.test_start", model=model_name)
         
         start_time = time.time()
         # Simulated workload (representing actual model inference latency)
-        # In a real environment, this would call the inference engine with a probe query.
         tokens = 100
-        await asyncio.sleep(0.5) # Simulated 200 t/s on high-end, or slower on CPU
+        await asyncio.sleep(0.5) 
         
         duration = time.time() - start_time
         tps = tokens / duration
@@ -36,7 +39,7 @@ class HardwareBenchmarker:
             "timestamp": "2026-05-01T07:32:00Z"
         }
         
-        self.last_benchmark = results
+        self.last_results = results
         await record_decision("hardware_quantification", "throughput_test_complete", model_name, f"TPS: {results['tokens_per_sec']}")
         return results
 

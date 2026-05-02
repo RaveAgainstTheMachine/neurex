@@ -157,34 +157,34 @@ class BaseAgent(ABC):
             async with self._client.stream("POST", target_url, json=payload, headers=headers) as resp:
                 resp.raise_for_status()
                 async for line in resp.aiter_lines():
-                if not line: continue
-                try:
-                    import json
-                    data = json.loads(line)
-                except: continue
-                
-                msg = data.get("message", {})
-                if msg.get("tool_calls"):
-                    # Flush token buffer before tool call
-                    if token_buffer:
-                        yield {"type": "token", "text": "".join(token_buffer)}
-                        token_buffer = []
-                    for tc in msg["tool_calls"]: yield {"type": "tool_call", "call": tc}
-                
-                content = msg.get("content", "")
-                if content:
-                    full_text += content
-                    token_buffer.append(content)
-                    # Yield in chunks of 10 tokens to reduce WS pressure
-                    if len(token_buffer) >= 10:
-                        yield {"type": "token", "text": "".join(token_buffer)}
-                        token_buffer = []
-                
-                if data.get("done"):
-                    # Flush remaining tokens
-                    if token_buffer:
-                        yield {"type": "token", "text": "".join(token_buffer)}
-                    yield {"type": "done", "full_text": full_text}
+                    if not line: continue
+                    try:
+                        import json
+                        data = json.loads(line)
+                    except: continue
+                    
+                    msg = data.get("message", {})
+                    if msg.get("tool_calls"):
+                        # Flush token buffer before tool call
+                        if token_buffer:
+                            yield {"type": "token", "text": "".join(token_buffer)}
+                            token_buffer = []
+                        for tc in msg["tool_calls"]: yield {"type": "tool_call", "call": tc}
+                    
+                    content = msg.get("content", "")
+                    if content:
+                        full_text += content
+                        token_buffer.append(content)
+                        # Yield in chunks of 10 tokens to reduce WS pressure
+                        if len(token_buffer) >= 10:
+                            yield {"type": "token", "text": "".join(token_buffer)}
+                            token_buffer = []
+                    
+                    if data.get("done"):
+                        # Flush remaining tokens
+                        if token_buffer:
+                            yield {"type": "token", "text": "".join(token_buffer)}
+                        yield {"type": "done", "full_text": full_text}
         finally:
             adapter_orchestrator.release_session(session_id)
 

@@ -6,13 +6,12 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Dict, Any
 from core.infrastructure.manager import InfrastructureManager
 from core.infrastructure.registry import LLMRecommender, search_huggingface
-from core.infrastructure.benchmarker import Benchmarker
+from core.infrastructure.benchmarker import hardware_benchmarker as benchmarker
 from core.skills.manager import SkillManager
 from api.routes.auth import require_role, UserRole
 
 router = APIRouter()
 infra_manager = InfrastructureManager()
-benchmarker = Benchmarker()
 skill_manager = SkillManager()
 
 @router.get("/skills")

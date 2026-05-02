@@ -145,27 +145,27 @@ class MeshRouter:
             resp.raise_for_status()
             data = resp.json()
                 
-                peer.status = "online"
-                metrics = data.get("metrics", {})
-                peer.vram_gb = metrics.get("vram_gb", 0.0)
-                peer.ram_total_gb = metrics.get("ram_total_gb", 0.0)
-                peer.cpu_percent = metrics.get("cpu_percent", 0.0)
-                peer.models = data.get("local_models", [])
-                peer.queue_depth = data.get("queue_depth", 0)
-                peer.tps = metrics.get("benchmarks", {}).get("tps", 0.0)
-                peer.latency_ms = int((time.time() - start) * 1000)
-                
-                # RPC Info
-                dist = data.get("distributed", {})
-                peer.rpc_endpoint = dist.get("rpc_endpoint")
-                peer.distributed_status = dist
+            peer.status = "online"
+            metrics = data.get("metrics", {})
+            peer.vram_gb = metrics.get("vram_gb", 0.0)
+            peer.ram_total_gb = metrics.get("ram_total_gb", 0.0)
+            peer.cpu_percent = metrics.get("cpu_percent", 0.0)
+            peer.models = data.get("local_models", [])
+            peer.queue_depth = data.get("queue_depth", 0)
+            peer.tps = metrics.get("benchmarks", {}).get("tps", 0.0)
+            peer.latency_ms = int((time.time() - start) * 1000)
+            
+            # RPC Info
+            dist = data.get("distributed", {})
+            peer.rpc_endpoint = dist.get("rpc_endpoint")
+            peer.distributed_status = dist
 
-                # Update Predictive Analytics
-                peer.record_telemetry(metrics)
-                peer.predicted_load = ResourcePredictor.predict_future_load(peer.history)
+            # Update Predictive Analytics
+            peer.record_telemetry(metrics)
+            peer.predicted_load = ResourcePredictor.predict_future_load(peer.history)
 
-                self._save_peers()
-                log.debug("mesh.peer_healthy", url=url, latency=peer.latency_ms, predicted_load=peer.predicted_load)
+            self._save_peers()
+            log.debug("mesh.peer_healthy", url=url, latency=peer.latency_ms, predicted_load=peer.predicted_load)
         except Exception as e:
             peer.status = "offline"
             self._save_peers()

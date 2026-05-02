@@ -7,8 +7,6 @@ from __future__ import annotations
 import asyncio
 import os
 import structlog
-from core.context.neural_explorer import NeuralExplorer
-
 log = structlog.get_logger()
 
 CHROMA_DB_DIR  = os.getenv("CHROMA_DB_DIR", "/games/AI/chroma_db")
@@ -29,6 +27,7 @@ class ContextManager:
         self._reranker = None
         self._enc = None
         self._available = False
+        from core.context.neural_explorer import NeuralExplorer
         self.explorer = NeuralExplorer(self)
 
         try:

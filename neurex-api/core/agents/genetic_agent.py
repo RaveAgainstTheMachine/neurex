@@ -8,8 +8,9 @@ import os
 import shutil
 import asyncio
 import structlog
-from typing import List, Dict, Any
-from core.agents.base_agent import BaseAgent
+from typing import List, Dict, Any, TYPE_CHECKING
+if TYPE_CHECKING:
+    from core.agents.base_agent import BaseAgent
 from core.context.manager import ContextManager
 from core.harness.hyperplan import HyperPlan
 from core.collaboration.consensus import consensus_manager

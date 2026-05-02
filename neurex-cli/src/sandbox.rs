@@ -2,7 +2,7 @@ use anyhow::{Context, Result, bail};
 use bollard::Docker;
 use bollard::container::{Config, CreateContainerOptions, RemoveContainerOptions, StartContainerOptions};
 use bollard::models::HostConfig;
-use tracing::{info, error};
+use tracing::info;
 
 pub async fn connect_docker() -> Result<Docker> {
     Docker::connect_with_local_defaults().context("Failed to connect to Docker daemon")

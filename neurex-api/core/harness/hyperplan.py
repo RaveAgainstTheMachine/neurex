@@ -6,8 +6,9 @@ Offloads complex design tasks to a high-compute reasoning loop.
 from __future__ import annotations
 import asyncio
 import structlog
-from typing import List, Dict, Any
-from core.agents.base_agent import BaseAgent
+from typing import List, Dict, Any, TYPE_CHECKING
+if TYPE_CHECKING:
+    from core.agents.base_agent import BaseAgent
 from core.context.manager import ContextManager
 
 log = structlog.get_logger()

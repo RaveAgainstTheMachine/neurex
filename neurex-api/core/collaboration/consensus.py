@@ -2,10 +2,10 @@
 core/collaboration/consensus.py
 Phase 45: Sentient IDE (Swarm Consensus)
 Manages voting and agreement protocols for critical architectural mutations.
-\"\"\"
+"""
 import os
 import structlog
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Any
 from datetime import datetime, timezone
 
 log = structlog.get_logger()
@@ -31,11 +31,11 @@ class ConsensusManager:
         ]
 
     def is_protected(self, path: str) -> bool:
-        \"\"\"Checks if a file requires swarm consensus for mutation.\"\"\"
+        """Checks if a file requires swarm consensus for mutation."""
         return any(path.endswith(p) or p in path for p in self.protected_paths)
 
     async def submit_proposal(self, path: str, content: str, requester: str) -> str:
-        \"\"\"Submits a mutation proposal for consensus voting.\"\"\"
+        """Submits a mutation proposal for consensus voting."""
         proposal = ConsensusProposal(path, content, requester)
         # The requester (Coder) automatically votes YES
         proposal.votes[requester] = True
@@ -45,7 +45,7 @@ class ConsensusManager:
         return f"CONSENSUS_REQUIRED: Mutation submitted for Swarm Review. Current votes: {len(proposal.votes)}/3"
 
     async def cast_vote(self, path: str, voter_id: str, approved: bool) -> bool:
-        \"\"\"Casts a vote for a proposal. Returns True if consensus reached.\"\"\"
+        """Casts a vote for a proposal. Returns True if consensus reached."""
         if path not in self.proposals:
             return False
             
@@ -66,10 +66,10 @@ class ConsensusManager:
         return self.proposals.get(path)
 
     async def evaluate_mutation(self, proposal_data: Dict[str, Any], reviewers: List[Any], conversation_id: str) -> bool:
-        \"\"\"
+        """
         Automates the swarm review process by casting votes from multiple agents.
         Returns True if consensus reached.
-        \"\"\"
+        """
         path = proposal_data.get("path")
         content = proposal_data.get("content")
         requester = proposal_data.get("requester")

@@ -371,3 +371,5 @@ class SkillManager:
         except Exception as e:
             log.error("skill.execution_failed", skill=skill_name, tool=tool_name, error=str(e))
             return f"Skill execution error: {str(e)}"
+
+skill_manager = SkillManager()
