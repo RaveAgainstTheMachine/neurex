@@ -5,13 +5,16 @@ use axum::{
     extract::State,
     http::{StatusCode, Uri, header},
     response::{IntoResponse, Response},
-    routing::{get, post},
+    routing::{get, post, any},
+    extract::ws::{WebSocketUpgrade, WebSocket, Message},
 };
 use rust_embed::RustEmbed;
 use std::sync::Arc;
 use std::path::Path;
 use tracing::{info, error};
 use serde::{Deserialize, Serialize};
+use futures_util::{StreamExt, SinkExt};
+use tokio_tungstenite::connect_async;
 
 use crate::wasi_sandbox;
 use crate::sandbox;
@@ -201,6 +204,7 @@ pub async fn static_handler(State(state): State<Arc<AppState>>, uri: Uri) -> imp
 pub async fn proxy_handler(
     State(state): State<Arc<AppState>>,
     method: axum::http::Method,
+    headers: axum::http::HeaderMap,
     uri: Uri,
     body: Body,
 ) -> impl IntoResponse {
@@ -213,7 +217,19 @@ pub async fn proxy_handler(
         Err(e) => return (StatusCode::BAD_REQUEST, format!("Body too large: {}", e)).into_response(),
     };
 
+    // Convert Axum headers to Reqwest headers
+    let mut req_headers = reqwest::header::HeaderMap::new();
+    for (name, value) in headers.iter() {
+        if name != "host" { // Skip host to avoid conflicts
+            req_headers.insert(
+                reqwest::header::HeaderName::from_bytes(name.as_str().as_bytes()).unwrap(),
+                reqwest::header::HeaderValue::from_bytes(value.as_bytes()).unwrap()
+            );
+        }
+    }
+
     let resp = client.request(method, &api_url)
+        .headers(req_headers)
         .body(body_bytes)
         .send()
         .await;
@@ -221,13 +237,16 @@ pub async fn proxy_handler(
     match resp {
         Ok(r) => {
             let status = r.status();
+            // Forward back the response headers (especially Content-Type)
+            let mut res_builder = Response::builder()
+                .status(StatusCode::from_u16(status.as_u16()).unwrap());
+            
+            for (name, value) in r.headers().iter() {
+                res_builder = res_builder.header(name.as_str(), value.as_bytes());
+            }
+
             let bytes = r.bytes().await.unwrap_or_default();
-            Response::builder()
-                .status(StatusCode::from_u16(status.as_u16()).unwrap())
-                .header(header::CONTENT_TYPE, "application/json")
-                .body(Body::from(bytes))
-                .unwrap()
-                .into_response()
+            res_builder.body(Body::from(bytes)).unwrap().into_response()
         }
         Err(e) => {
             error!("Proxy Error: {}", e);
@@ -236,13 +255,83 @@ pub async fn proxy_handler(
     }
 }
 
-use axum::routing::any;
+pub async fn ws_proxy_handler(
+    State(state): State<Arc<AppState>>,
+    uri: Uri,
+    ws: WebSocketUpgrade,
+) -> impl IntoResponse {
+    let query = uri.query().unwrap_or("");
+    let ws_url = format!("ws://127.0.0.1:8000{}?{}", uri.path(), query);
+    
+    ws.on_upgrade(move |socket| handle_ws_socket(socket, ws_url))
+}
+
+async fn handle_ws_socket(mut client_ws: WebSocket, target_url: String) {
+    let (server_ws, _) = match connect_async(&target_url).await {
+        Ok(res) => res,
+        Err(e) => {
+            error!("WS Proxy Connection Error: {}", e);
+            return;
+        }
+    };
+
+    let (mut server_tx, mut server_rx) = server_ws.split();
+    let (mut client_tx, mut client_rx) = client_ws.split();
+
+    let client_to_server = async {
+        while let Some(msg) = client_rx.next().await {
+            match msg {
+                Ok(Message::Text(t)) => {
+                    if let Err(_) = server_tx.send(tungstenite::Message::Text(t.to_string().into())).await { break; }
+                }
+                Ok(Message::Binary(b)) => {
+                    if let Err(_) = server_tx.send(tungstenite::Message::Binary(b.to_vec().into())).await { break; }
+                }
+                Ok(Message::Ping(p)) => {
+                    if let Err(_) = server_tx.send(tungstenite::Message::Ping(p.to_vec().into())).await { break; }
+                }
+                Ok(Message::Pong(p)) => {
+                    if let Err(_) = server_tx.send(tungstenite::Message::Pong(p.to_vec().into())).await { break; }
+                }
+                Ok(Message::Close(_)) => break,
+                Err(_) => break,
+            }
+        }
+    };
+
+    let server_to_client = async {
+        while let Some(msg) = server_rx.next().await {
+            match msg {
+                Ok(tungstenite::Message::Text(t)) => {
+                    if let Err(_) = client_tx.send(Message::Text(t.to_string().into())).await { break; }
+                }
+                Ok(tungstenite::Message::Binary(b)) => {
+                    if let Err(_) = client_tx.send(Message::Binary(b.to_vec().into())).await { break; }
+                }
+                Ok(tungstenite::Message::Ping(p)) => {
+                    if let Err(_) = client_tx.send(Message::Ping(p.to_vec().into())).await { break; }
+                }
+                Ok(tungstenite::Message::Pong(p)) => {
+                    if let Err(_) = client_tx.send(Message::Pong(p.to_vec().into())).await { break; }
+                }
+                Ok(tungstenite::Message::Close(_)) => break,
+                _ => {}
+            }
+        }
+    };
+
+    tokio::select! {
+        _ = client_to_server => {},
+        _ = server_to_client => {},
+    }
+}
 
 pub fn create_router(state: Arc<AppState>) -> Router {
     Router::new()
         .route("/api/sandbox/exec", post(sandbox_exec_handler))
         .route("/api/substrate/status", get(substrate_status_handler))
         .route("/api/{*path}", any(proxy_handler))
+        .route("/ws/{*path}", get(ws_proxy_handler))
         .fallback(get(static_handler))
         .with_state(state)
 }
