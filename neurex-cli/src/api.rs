@@ -39,13 +39,77 @@ pub struct SandboxExecResponse {
     pub error: Option<String>,
 }
 
+#[derive(Serialize)]
+pub struct SubstrateStatus {
+    pub docker: DockerStatus,
+    pub wasm: WasmStatus,
+    pub hardware: HardwareStatus,
+}
+
+#[derive(Serialize)]
+pub struct DockerStatus {
+    pub active: bool,
+    pub version: Option<String>,
+    pub gpu_acceleration: bool,
+}
+
+#[derive(Serialize)]
+pub struct WasmStatus {
+    pub active: bool,
+    pub coreutils_present: bool,
+}
+
+#[derive(Serialize)]
+pub struct HardwareStatus {
+    pub os: String,
+    pub arch: String,
+    pub cpu: String,
+    pub ram_gb: u64,
+}
+
+pub async fn substrate_status_handler(
+    State(_state): State<Arc<AppState>>,
+) -> impl IntoResponse {
+    use sysinfo::System;
+    let mut sys = System::new_all();
+    sys.refresh_all();
+
+    let docker_info = match sandbox::connect_docker().await {
+        Ok(d) => {
+            let ver = d.version().await.ok().and_then(|v| v.version);
+            let has_nvidia = std::path::Path::new("/dev/nvidia0").exists();
+            DockerStatus { active: true, version: ver, gpu_acceleration: has_nvidia }
+        }
+        Err(_) => DockerStatus { active: false, version: None, gpu_acceleration: false }
+    };
+
+    let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
+    let wasm_path = Path::new(&home).join(".neurex").join("bin").join("coreutils.wasm");
+    let wasm_info = WasmStatus {
+        active: true, // Wasmtime is embedded
+        coreutils_present: wasm_path.exists(),
+    };
+
+    let hw_info = HardwareStatus {
+        os: std::env::consts::OS.to_string(),
+        arch: std::env::consts::ARCH.to_string(),
+        cpu: sys.cpus().first().map(|c| c.brand()).unwrap_or("Unknown").to_string(),
+        ram_gb: sys.total_memory() / (1024 * 1024 * 1024), // Convert to GB
+    };
+
+    axum::Json(SubstrateStatus {
+        docker: docker_info,
+        wasm: wasm_info,
+        hardware: hw_info,
+    })
+}
+
 pub async fn sandbox_exec_handler(
     State(state): State<Arc<AppState>>,
     axum::Json(payload): axum::Json<SandboxExecRequest>,
 ) -> impl IntoResponse {
     let current_dir = std::env::current_dir().unwrap();
 
-    // 1. WASM Execution Path
     if let Some(path) = payload.wasm_path {
         let wasm_path = Path::new(&path);
         if !wasm_path.exists() {
@@ -82,7 +146,6 @@ pub async fn sandbox_exec_handler(
             })),
         }
     } else {
-        // 2. Native Fallback Path
         let executor = sandbox::NativeExecutor::new(&current_dir.to_string_lossy());
         let command = payload.args.join(" "); 
         match executor.execute(&command) {
@@ -108,37 +171,29 @@ pub async fn static_handler(State(state): State<Arc<AppState>>, uri: Uri) -> imp
         path = "index.html".to_string();
     }
 
-    let serve_asset = |p: &str| -> Option<Response<Body>> {
-        match Asset::get(p) {
-            Some(content) => {
-                let mime = mime_guess::from_path(p).first_or_octet_stream();
-                let body = Body::from(content.data.into_owned());
-                
-                // Inject runtime API variables if serving index.html
-                if p == "index.html" {
-                    let html = String::from_utf8_lossy(&content.data);
-                    let injected = html.replace(
-                        "window.__NEUREX_CONFIG__ = {}",
-                        &format!("window.__NEUREX_CONFIG__ = {{ apiPort: {} }}", state.api_port)
-                    );
-                    let body = Body::from(injected);
-                    return Some(Response::builder()
-                        .header(header::CONTENT_TYPE, "text/html")
-                        .body(body)
-                        .unwrap());
-                }
-
-                Some(Response::builder()
-                    .header(header::CONTENT_TYPE, mime.as_ref())
-                    .body(body)
-                    .unwrap())
+    match Asset::get(&path) {
+        Some(content) => {
+            let mime = mime_guess::from_path(&path).first_or_octet_stream();
+            
+            if path == "index.html" {
+                let html = String::from_utf8_lossy(&content.data);
+                let injected = html.replace(
+                    "window.__NEUREX_CONFIG__ = {}",
+                    &format!("window.__NEUREX_CONFIG__ = {{ apiPort: {} }}", state.api_port)
+                );
+                return Response::builder()
+                    .header(header::CONTENT_TYPE, "text/html")
+                    .body(Body::from(injected))
+                    .unwrap()
+                    .into_response();
             }
-            None => None,
-        }
-    };
 
-    match serve_asset(&path) {
-        Some(response) => response,
+            Response::builder()
+                .header(header::CONTENT_TYPE, mime.as_ref())
+                .body(Body::from(content.data.to_vec()))
+                .unwrap()
+                .into_response()
+        }
         None => (StatusCode::NOT_FOUND, Body::from("Not Found")).into_response(),
     }
 }
@@ -146,6 +201,7 @@ pub async fn static_handler(State(state): State<Arc<AppState>>, uri: Uri) -> imp
 pub fn create_router(state: Arc<AppState>) -> Router {
     Router::new()
         .route("/api/sandbox/exec", post(sandbox_exec_handler))
+        .route("/api/substrate/status", get(substrate_status_handler))
         .fallback(get(static_handler))
         .with_state(state)
 }

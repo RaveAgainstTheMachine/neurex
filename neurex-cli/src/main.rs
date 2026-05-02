@@ -1,17 +1,7 @@
 use anyhow::{Context, Result};
-use axum::{
-    Router,
-    body::Body,
-    extract::State,
-    http::{StatusCode, Uri, header},
-    response::{IntoResponse, Response},
-    routing::{get, post},
-};
 use clap::{Parser, Subcommand};
 use colored::*;
-use rust_embed::RustEmbed;
 use std::net::SocketAddr;
-use std::path::Path;
 use std::sync::Arc;
 use sysinfo::System;
 use tokio::process::Command;
@@ -48,47 +38,6 @@ enum Commands {
     Provision,
 }
 
-async fn static_handler(State(state): State<Arc<AppState>>, uri: Uri) -> impl IntoResponse {
-    let mut path = uri.path().trim_start_matches('/').to_string();
-    if path.is_empty() {
-        path = "index.html".to_string();
-    }
-
-    let serve_asset = |p: &str| -> Option<Response<Body>> {
-        Asset::get(p).map(|content| {
-            if p == "index.html" {
-                let html = String::from_utf8_lossy(&content.data);
-                let injected = html.replace(
-                    "<head>",
-                    &format!(
-                        "<head><script>window.__API_BASE__ = 'http://localhost:{}/api'; window.__WS_BASE__ = 'ws://localhost:{}/ws';</script>",
-                        state.api_port, state.api_port
-                    ),
-                );
-                Response::builder()
-                    .header(header::CONTENT_TYPE, "text/html")
-                    .body(Body::from(injected))
-                    .unwrap()
-            } else {
-                let mime = mime_guess::from_path(p).first_or_octet_stream();
-                Response::builder()
-                    .header(header::CONTENT_TYPE, mime.as_ref())
-                    .body(Body::from(content.data.into_owned()))
-                    .unwrap()
-            }
-        })
-    };
-
-    serve_asset(&path)
-        .or_else(|| serve_asset("index.html"))
-        .unwrap_or_else(|| {
-            Response::builder()
-                .status(StatusCode::NOT_FOUND)
-                .body(Body::from("404 Not Found"))
-                .unwrap()
-        })
-}
-
 #[tokio::main]
 async fn main() -> Result<()> {
     // Initialize Tracing
@@ -101,7 +50,7 @@ async fn main() -> Result<()> {
 
     match &cli.command {
         Commands::Start { port } => {
-            let api_port = port + 5000; // e.g. 8000
+            let api_port = port + 5000; 
 
             info!("{}", "⬡ Neurex CLI - Initializing Hermetic Substrate".bold().cyan());
 
@@ -118,7 +67,6 @@ async fn main() -> Result<()> {
             // 2. Control Plane Boot
             info!("Booting Control Plane (Frontend: {}, Backend: {})...", port, api_port);
 
-            // Hermetic Bootstrap Sequence
             let uv_path = bootstrap::ensure_uv().await?;
             let env_dir = bootstrap::ensure_env(&uv_path).await?;
             
@@ -131,7 +79,6 @@ async fn main() -> Result<()> {
                 env_dir.join("bin").join("uvicorn")
             };
 
-            // Spawn FastAPI (Backend) using hermetic env
             let mut api_process = Command::new(&uvicorn_exe)
                 .arg("main:app")
                 .arg("--host")
@@ -144,10 +91,8 @@ async fn main() -> Result<()> {
 
             info!("FastAPI Proxy initialized successfully");
 
-            // 3. WASM Sandbox Initialization
             let wasi_sandbox = Arc::new(wasi_sandbox::WasiSandbox::new()?);
 
-            // Start Embedded Web Server
             let state = Arc::new(api::AppState { 
                 api_port,
                 wasi_sandbox: wasi_sandbox.clone(),
@@ -161,7 +106,6 @@ async fn main() -> Result<()> {
                 axum::serve(listener, app).await.unwrap();
             });
 
-            // 3. Execution Plane Boot
             if let Some(ref d) = docker {
                 let current_dir = std::env::current_dir()?.to_string_lossy().to_string();
                 if let Err(e) = sandbox::ensure_sandbox(d, &current_dir).await {
@@ -200,7 +144,7 @@ async fn main() -> Result<()> {
             sys.refresh_all();
 
             println!("{:<20} {}", "OS:".bold(), format!("{} {} ({})", System::name().unwrap_or_default(), System::os_version().unwrap_or_default(), System::kernel_version().unwrap_or_default()).green());
-            println!("{:<20} {}", "Hardware:".bold(), format!("{} / {}MB RAM", sys.cpus().first().map(|c| c.brand()).unwrap_or("Unknown"), sys.total_memory() / 1_048_576).green());
+            println!("{:<20} {}", "Hardware:".bold(), format!("{} / {}GB RAM", sys.cpus().first().map(|c| c.brand()).unwrap_or("Unknown"), sys.total_memory() / (1024 * 1024 * 1024)).green());
 
             match sandbox::connect_docker().await {
                 Ok(docker) => {
@@ -210,59 +154,12 @@ async fn main() -> Result<()> {
                 }
                 Err(_) => {
                     println!("{:<20} {}", "Sandbox Engine:".bold(), "NOT INSTALLED".red());
-                    println!("\n{} To unlock the Performance Tier, install Docker:", "💡 Tip:".yellow());
-                    
-                    match std::env::consts::OS {
-                        "linux" => {
-                            println!("   {} sudo pacman -S docker (Arch) or sudo apt install docker.io (Ubuntu)", "Linux:".bold());
-                            println!("   {} sudo systemctl enable --now docker", "Enable:".bold());
-                        }
-                        "windows" => {
-                            println!("   {} Install Docker Desktop: https://www.docker.com/products/docker-desktop", "Windows:".bold());
-                            println!("   {} Ensure WSL2 is enabled.", "Note:".bold());
-                        }
-                        "macos" => {
-                            println!("   {} Install Docker Desktop: https://www.docker.com/products/docker-desktop", "macOS:".bold());
-                            println!("   {} Use Apple Silicon version for M1/M2/M3 chips.", "Note:".bold());
-                        }
-                        _ => {}
-                    }
                 }
-            }
-
-            // Check for GPU acceleration
-            match std::env::consts::OS {
-                "linux" => {
-                    let has_nvidia = std::path::Path::new("/dev/nvidia0").exists();
-                    if has_nvidia {
-                        let has_toolkit = std::process::Command::new("nvidia-container-toolkit").arg("--version").output().is_ok();
-                        if has_toolkit {
-                            println!("{:<20} {}", "GPU Acceleration:".bold(), "Ready (NVIDIA RTX Detected)".green());
-                        } else {
-                            println!("{:<20} {}", "GPU Acceleration:".bold(), "UNAVAILABLE (Missing Toolkit)".yellow());
-                            println!("   {} sudo pacman -S nvidia-container-toolkit", "Install:".bold());
-                        }
-                    }
-                }
-                "windows" => {
-                    // On Windows, NVIDIA support is usually handled by Docker Desktop + WSL2 NVIDIA drivers
-                    println!("{:<20} {}", "GPU Acceleration:".bold(), "Managed by Docker Desktop (WSL2 Backend)".cyan());
-                }
-                "macos" => {
-                    println!("{:<20} {}", "GPU Acceleration:".bold(), "Metal (Native) / Restricted in Docker".cyan());
-                }
-                _ => {}
             }
 
             match wasi_sandbox::WasiSandbox::new() {
                 Ok(_) => {
                     println!("{:<20} {}", "WASM Engine:".bold(), "Wasmtime 29.0 (Ready)".green());
-                    let wasm_path = std::env::home_dir().unwrap().join(".neurex").join("bin").join("coreutils.wasm");
-                    if wasm_path.exists() {
-                        println!("{:<20} {}", "WASM Bridge:".bold(), "Active (coreutils.wasm detected)".green());
-                    } else {
-                        println!("{:<20} {}", "WASM Bridge:".bold(), "Inactive (Fallback to Native)".yellow());
-                    }
                     println!("{:<20} {}", "Native Substrate:".bold(), "Ready (Jailed Filesystem)".green());
                 }
                 Err(e) => {
@@ -270,7 +167,7 @@ async fn main() -> Result<()> {
                 }
             }
 
-            println!("\nSystem is {} for Phase 54 Hermetic Substrate.", "Ready".bold().green());
+            println!("\nSystem is {} for Phase 55 Sentient UI.", "Ready".bold().green());
         }
         Commands::Provision => {
             provision::run_provisioning().await?;

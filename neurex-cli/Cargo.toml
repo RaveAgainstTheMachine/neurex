@@ -18,7 +18,7 @@ tar = "0.4.45"
 tokio = { version = "1.52.1", features = ["full"] }
 zip = "8.6.0"
 tracing = "0.1"
-tracing-subscriber = { version = "0.4", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 anyhow = "1.0"
 tower-http = { version = "0.6", features = ["fs", "trace"] }
 wasmtime = "29.0.1"
