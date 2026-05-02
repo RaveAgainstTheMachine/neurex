@@ -5,13 +5,16 @@ import { useState, useEffect, useMemo } from "react";
 import { 
   Play, Square, RefreshCcw, Cpu, Zap, Search, 
   Brain, Braces, Video, AudioLines, 
-  Thermometer, Gauge, Eye, X, Image as ImageIcon
+  Thermometer, Gauge, Eye, X, Image as ImageIcon,
+  Monitor, HardDrive, Activity, Info
 } from "lucide-react";
 import "./InfraPanel.css";
 import { useStore } from "../../lib/store";
 import { ModelProfile } from "../../lib/types";
 import toast from "react-hot-toast";
 import { API_BASE } from "../../lib/config";
+import { InfraDashboard } from "../InfraDashboard/InfraDashboard";
+import { AnimatePresence } from "framer-motion";
 
 export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) => void, currentSize: number }) {
   const engines = useStore(s => s.infraEngines);
@@ -26,6 +29,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
   const [loading, setLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState<ModelProfile | null>(null);
   const [quantization, setQuantization] = useState("4-bit (Fastest)");
+  const [showDashboard, setShowDashboard] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -61,12 +65,12 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
   }, [searchQuery]);
 
   const recommendations = [
-    { id: 'thinking', role: 'THINKING', model: 'deepseek-r1', specs: '32B • 20G VRAM', icon: Brain },
-    { id: 'coding', role: 'CODING', model: 'qwen2.5-coder', specs: '32B • 20G VRAM', icon: Braces },
-    { id: 'vision', role: 'VISION', model: 'llama3.2-vision', specs: '11B • 8.5G VRAM', icon: Eye },
-    { id: 'media', role: 'MEDIA', model: 'llama3.2-vision', specs: '11B • 8.5G VRAM', icon: ImageIcon },
-    { id: 'video', role: 'VIDEO', model: 'ltx-video', specs: 'Multi-Modal • 24G VRAM', icon: Video },
-    { id: 'audio', role: 'AUDIO', model: 'whisper-large-v3-turbo', specs: '1.5B • 4G VRAM', icon: AudioLines },
+    { id: 'thinking', role: 'THINKING', model: 'deepseek-r1', specs: '32B • 20G VRAM • 22G DISK', vram: 20, disk: 22, icon: Brain },
+    { id: 'coding', role: 'CODING', model: 'qwen2.5-coder', specs: '32B • 20G VRAM • 18G DISK', vram: 20, disk: 18, icon: Braces },
+    { id: 'vision', role: 'VISION', model: 'llama3.2-vision', specs: '11B • 8.5G VRAM • 9G DISK', vram: 8.5, disk: 9, icon: Eye },
+    { id: 'media', role: 'MEDIA', model: 'llama3.2-vision', specs: '11B • 8.5G VRAM • 9G DISK', vram: 8.5, disk: 9, icon: ImageIcon },
+    { id: 'video', role: 'VIDEO', model: 'ltx-video', specs: 'Multi-Modal • 24G VRAM • 45G DISK', vram: 24, disk: 45, icon: Video },
+    { id: 'audio', role: 'AUDIO', model: 'whisper-large-v3-turbo', specs: '1.5B • 4G VRAM • 3G DISK', vram: 4, disk: 3, icon: AudioLines },
   ];
 
   const handlePullModel = async (engine: string, model: string) => {
@@ -126,70 +130,97 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
   };
 
   const filteredRegistry = useMemo(() => {
-    const results: (ModelProfile & { origin: 'LOCAL' | 'HF' | 'RPC' | 'NODE', nodeName?: string })[] = [];
+    const resultsMap: Map<string, any> = new Map();
 
-    // 1. Local Models (Strictly from disk)
+    // 1. Local Models
     registry.forEach(m => {
-      results.push({ ...m, origin: 'LOCAL' });
+      resultsMap.set(m.name, { ...m, origin: 'LOCAL', is_downloaded: true });
     });
 
     // 2. Peer Models
     peers.forEach(peer => {
       if (peer.status === 'online' && peer.models) {
         peer.models.forEach(modelName => {
-          results.push({
-            name: modelName,
-            engine: 'ollama',
-            params: '?',
-            context_window: 32768,
-            vram_required_gb: 0,
-            recommended_tasks: [],
-            origin: peer.rpc_endpoint ? 'RPC' : 'NODE',
-            nodeName: peer.name
-          });
+          if (!resultsMap.has(modelName)) {
+            resultsMap.set(modelName, {
+              name: modelName,
+              engine: 'ollama',
+              params: 'Mesh',
+              context_window: 32768,
+              vram_required_gb: 0,
+              recommended_tasks: [],
+              origin: peer.rpc_endpoint ? 'RPC' : 'NODE',
+              nodeName: peer.name,
+              is_downloaded: true
+            });
+          }
         });
       }
     });
 
-    // 3. HF Results (Discovery layer)
+    // 3. HF Results
     if (searchQuery.trim().length >= 3) {
       hfResults.forEach(m => {
-        results.push({ ...m, origin: 'HF' } as any);
+        if (!resultsMap.has(m.name)) {
+          resultsMap.set(m.name, { ...m, origin: 'HF', is_downloaded: false });
+        }
       });
     }
 
-    const query = searchQuery.toLowerCase().trim();
-    if (!query) {
-      // Show all real-world available models
-      return results.slice(0, 20);
+    let results = Array.from(resultsMap.values());
+
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      results = results.filter(m => 
+        m.name.toLowerCase().includes(q) || 
+        (m.description || '').toLowerCase().includes(q)
+      );
     }
-    
-    const searchWords = query.split(/\s+/);
-    return results.filter(m => {
-      const name = m.name.toLowerCase();
-      return searchWords.every(word => name.includes(word));
-    });
-  }, [registry, searchQuery, hfResults, peers]);
+
+    return results;
+  }, [registry, peers, hfResults, searchQuery]);
 
   return (
-    <div className="infra-panel">
-      <div className="infra-panel__header">
-        <Gauge size={16} className="text-purple" />
-        <span>INFRASTRUCTURE HUB</span>
-        <div className="mesh-indicator" title="Mesh Status">
-          <span>{metrics?.vram_gb || 0}GB VRAM</span>
-          <div className="mesh-divider" />
-          <span>{metrics?.ram_used_gb || 0}G / {metrics?.ram_total_gb || 0}G RAM</span>
-          <RefreshCcw size={12} className="ml-2 hover-rotate cursor-pointer" onClick={() => fetchData()} />
+    <>
+      <AnimatePresence>
+        {showDashboard && (
+          <InfraDashboard onClose={() => setShowDashboard(false)} />
+        )}
+      </AnimatePresence>
+
+      <div className="infra-panel">
+        <div className="infra-panel__header">
+          <Gauge size={16} className="text-purple" />
+          <span>INFRASTRUCTURE HUB</span>
+          <div className="mesh-indicator" title="Mesh Status">
+            <span>{metrics?.vram_gb || 0}GB VRAM</span>
+            <div className="mesh-divider" />
+            <span>{metrics?.ram_used_gb || 0}G / {metrics?.ram_total_gb || 0}G RAM</span>
+            <div className="mesh-divider" />
+            <span>{metrics?.disk_used_gb?.toFixed(1) || 0}G / {metrics?.disk_total_gb?.toFixed(1) || 0}G DISK</span>
+            <RefreshCcw size={12} className="ml-2 hover-rotate cursor-pointer" onClick={() => fetchData()} />
+            <button 
+              className="dashboard-launch-btn" 
+              onClick={() => setShowDashboard(true)}
+              title="Open Infrastructure Dashboard"
+            >
+              <Monitor size={12} />
+            </button>
+          </div>
         </div>
-      </div>
 
       <div className="infra-content">
         {/* AGENT RECOMMENDATIONS */}
         <div className="infra-section">
           <div className="infra-section__title">AGENT RECOMMENDATIONS</div>
           <div className="recommendation-grid">
-            {recommendations.map((rec) => (
+            {recommendations
+              .filter(rec => {
+                const totalVram = (metrics?.vram_gb || 0) + (peers?.reduce((acc, p) => acc + (p.vram_gb || 0), 0) || 0);
+                const freeDisk = metrics?.disk_free_gb || 0;
+                return rec.vram <= totalVram && rec.disk <= freeDisk;
+              })
+              .map((rec) => (
               <div 
                 key={rec.id} 
                 className="rec-card"
@@ -307,19 +338,24 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
                     <div className="catalog-header">
                       <Cpu size={14} className="text-muted" />
                       <span className="catalog-name">{m.name.split(':')[0]}</span>
-                      <span className="catalog-tag">{m.params}</span>
+                      {m.params !== 'Local' && m.params !== 'Mesh' && <span className="catalog-tag">{m.params}</span>}
                       <span className={`catalog-badge origin-${(m as any).origin.toLowerCase()}`}>
                         {(m as any).origin === 'HF' ? 'HF' : 
                          (m as any).origin === 'RPC' ? 'MESH(RPC)' :
                          (m as any).origin === 'NODE' ? `NODE: ${(m as any).nodeName}` : 
                          'LOCAL'}
                       </span>
+                      {(m as any).is_active && (
+                        <span className="catalog-badge status-active">
+                          <Activity size={8} /> ACTIVE
+                        </span>
+                      )}
                     </div>
                     <div className="catalog-meta">
-                      <span>{m.vram_required_gb > 0 ? `${m.vram_required_gb}GB VRAM` : 'Local Asset'}</span>
+                      <span>{m.size_gb ? `${m.size_gb}GB` : (m.vram_required_gb > 0 ? `${m.vram_required_gb}GB VRAM` : 'Local Asset')}</span>
                       <RefreshCcw size={10} />
                       <span>{m.context_window / 1000}k ctx</span>
-                      {((m as any).origin === 'HF' || (m as any).origin === 'NODE') && (
+                      {!m.is_downloaded && ((m as any).origin === 'HF' || (m as any).origin === 'NODE') && (
                         <button 
                           className="catalog-deploy-btn"
                           onClick={(e) => { e.stopPropagation(); setSelectedModel(m); }}
@@ -364,8 +400,8 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
                   <span className="stat-value">{selectedModel.context_window / 1024}k</span>
                 </div>
                 <div className="stat-box">
-                  <span className="stat-label">ENGINE</span>
-                  <span className="stat-value">{selectedModel.engine.toUpperCase()}</span>
+                  <span className="stat-label">DISK SPACE</span>
+                  <span className="stat-value">{selectedModel.size_gb || '?'}GB</span>
                 </div>
               </div>
 
@@ -425,6 +461,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }

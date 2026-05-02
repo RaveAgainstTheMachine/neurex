@@ -178,7 +178,7 @@ class MeshRouter:
         If model_name is provided, filters for nodes that already have the model.
         """
         from core.infrastructure.manager import infrastructure_manager
-        from core.infrastructure.benchmarker import benchmarker
+        from core.infrastructure.benchmarker import hardware_benchmarker as benchmarker
         import random
 
         candidates = []

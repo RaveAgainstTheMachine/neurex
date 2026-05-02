@@ -67,7 +67,7 @@ log = structlog.get_logger()
 
 async def run_hardware_benchmark(model: str = "default") -> str:
     """Benchmarks local hardware and recommends performance tuning."""
-    results = await hardware_benchmarker.run_throughput_test(model)
+    results = await hardware_benchmarker.run_benchmark(model)
     import json
     return json.dumps(results, indent=2)
 

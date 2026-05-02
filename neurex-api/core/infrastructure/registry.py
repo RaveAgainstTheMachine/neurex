@@ -28,6 +28,7 @@ class ModelProfile(BaseModel):
     name: str
     engine: str  # "ollama", "vllm", "llamacpp"
     params: str  # e.g. "8B", "70B"
+    size_gb: float = 0.0
     context_window: int
     capabilities: List[ModelCapability]
     recommended_tasks: List[str]
@@ -42,7 +43,12 @@ MODEL_REGISTRY: List[ModelProfile] = []
 
 class LLMRecommender:
     @staticmethod
-    def recommend(task_type: str, available_vram_gb: float = 24.0) -> Optional[ModelProfile]:
+    def recommend(task_type: str, available_vram_gb: float = 0.0) -> Optional[ModelProfile]:
+        # If available_vram_gb is not provided, use the global mesh pool
+        if available_vram_gb <= 0:
+            from core.infrastructure.vram_pool import vram_pool
+            available_vram_gb = vram_pool.total_capacity_gb
+
         candidates = [m for m in MODEL_REGISTRY if m.vram_required_gb <= available_vram_gb]
         
         # Priority mapping
@@ -70,8 +76,8 @@ async def search_huggingface(query: str) -> List[Dict[str, Any]]:
     Search Hugging Face for models compatible with the Neurex ecosystem.
     """
     import aiohttp
-    # Search for GGUF models primarily as they are most portable
-    api_url = f"https://huggingface.co/api/models?search={query}&filter=gguf&sort=downloads&direction=-1&limit=15"
+    # Search for GGUF models primarily as they are most portable. Include siblings for size info.
+    api_url = f"https://huggingface.co/api/models?search={query}&filter=gguf&sort=downloads&direction=-1&limit=15&full=true"
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(api_url, timeout=5) as resp:
@@ -79,14 +85,21 @@ async def search_huggingface(query: str) -> List[Dict[str, Any]]:
                     data = await resp.json()
                     results = []
                     for m in data:
-                        # Estimate VRAM and context from tags if available, else defaults
                         tags = m.get("tags", [])
                         size_tag = next((t for t in tags if "B" in t and any(c.isdigit() for c in t)), "Unknown")
+                        
+                        # Find the main GGUF file size
+                        size_gb = 0.0
+                        siblings = m.get("siblings", [])
+                        gguf_file = next((s for s in siblings if s.get("rfilename", "").endswith(".gguf")), None)
+                        if gguf_file and "size" in gguf_file:
+                            size_gb = round(gguf_file["size"] / (1024 ** 3), 2)
                         
                         results.append({
                             "name": m["id"],
                             "engine": "llamacpp",
                             "params": size_tag,
+                            "size_gb": size_gb,
                             "context_window": 32768,
                             "vram_required_gb": 8.0 if "7B" in size_tag else 20.0 if "30B" in size_tag else 12.0,
                             "recommended_tasks": ["community_model"],

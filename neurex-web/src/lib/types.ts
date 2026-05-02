@@ -63,6 +63,7 @@ export interface ModelProfile {
   name: string;
   engine: string;
   params: string;
+  size_gb?: number;
   context_window: number;
   vram_required_gb: number;
   recommended_tasks: string[];
@@ -89,6 +90,15 @@ export interface InfraMetrics {
   ram_available_gb: number;
   ram_percent: number;
   cpu_percent: number;
+  disk_total_gb?: number;
+  disk_used_gb?: number;
+  disk_free_gb?: number;
+  disk_percent?: number;
+  storage_health?: Record<string, {
+    exists: boolean;
+    writable: boolean;
+    status: "ok" | "error";
+  }>;
 }
 
 export interface MeshPeer {
@@ -96,9 +106,12 @@ export interface MeshPeer {
   url: string;
   status: "online" | "offline";
   vram_gb: number;
+  ram_total_gb?: number;
+  cpu_percent?: number;
   latency_ms: number;
   models?: string[];
   rpc_endpoint?: string;
+  predicted_load?: number;
 }
 
 export interface Presence {

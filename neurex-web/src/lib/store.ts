@@ -66,22 +66,21 @@ export const useStore = create<NeurexStore>()(
     infraSkills: [],
     infraPeers: [],
     refreshInfra: async () => {
-      try {
-        const [engines, metrics, registry, skills, peers] = await Promise.all([
-          api.get<any>("/api/infra/engines"),
-          api.get<any>("/api/infra/metrics"),
-          api.get<any>("/api/infra/registry"),
-          api.get<any>("/api/skills/"),
-          api.get<any>("/api/infra/peers")
-        ]);
-        set((s) => {
-          s.infraEngines = engines;
-          s.infraMetrics = metrics;
-          s.infraRegistry = registry;
-          s.infraSkills = skills;
-          s.infraPeers = peers;
-        });
-      } catch (err) {}
+      const results = await Promise.allSettled([
+        api.get<any>("/api/infra/engines"),
+        api.get<any>("/api/infra/metrics"),
+        api.get<any>("/api/infra/registry"),
+        api.get<any>("/api/skills/"),
+        api.get<any>("/api/infra/peers")
+      ]);
+      
+      set((s) => {
+        if (results[0].status === "fulfilled") s.infraEngines = results[0].value;
+        if (results[1].status === "fulfilled") s.infraMetrics = results[1].value;
+        if (results[2].status === "fulfilled") s.infraRegistry = results[2].value;
+        if (results[3].status === "fulfilled") s.infraSkills = results[3].value;
+        if (results[4].status === "fulfilled") s.infraPeers = results[4].value;
+      });
     },
 
     // ── Speech ────────────────────────────────────────────────────────
@@ -141,22 +140,21 @@ export const useStore = create<NeurexStore>()(
       const { workspaceFolders } = get();
       try {
         if (workspaceFolders.length === 0) {
-          const data = await api.get<any>("/api/files/tree?depth=2");
-          set((s) => { s.fileTree = Array.isArray(data) ? data : [data]; });
-        } else {
-          const trees = await Promise.all(workspaceFolders.map(path => 
-            api.get<any>(`/api/files/tree?depth=2&root_path=${encodeURIComponent(path)}`)
-          ));
-          set((s) => {
-            s.fileTree = trees.map((t, i) => ({
-              name: workspaceFolders[i].split("/").pop() || workspaceFolders[i],
-              type: "dir",
-              path: workspaceFolders[i],
-              children: Array.isArray(t) ? t : t.children || [],
-              isRoot: true
-            })) as FileNode[];
-          });
+          set((s) => { s.fileTree = []; });
+          return;
         }
+        const trees = await Promise.all(workspaceFolders.map(path => 
+          api.get<any>(`/api/files/tree?depth=2&root_path=${encodeURIComponent(path)}`)
+        ));
+        set((s) => {
+          s.fileTree = trees.map((t, i) => ({
+            name: workspaceFolders[i].split("/").pop() || workspaceFolders[i],
+            type: "dir",
+            path: workspaceFolders[i],
+            children: Array.isArray(t) ? t : t.children || [],
+            isRoot: true
+          })) as FileNode[];
+        });
       } catch (err) {
         console.error("Failed to sync file tree:", err);
       }
@@ -340,6 +338,11 @@ export const useStore = create<NeurexStore>()(
           s.activeFile = path;
         }
         s.activeFileLanguage = language || "plaintext";
+        
+        // Phase 50.1: Sync with active pane
+        const mainPane = s.editorPanes.find(p => p.id === "pane-main");
+        if (mainPane) mainPane.path = path;
+        
         localStorage.setItem("neurex_open_files", JSON.stringify(s.openFiles));
         localStorage.setItem("neurex_active_file", path);
       });

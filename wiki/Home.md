@@ -5,6 +5,7 @@ Neurex is a high-performance, agentic IDE built for absolute technical precision
 ## 核心 (Core Modules)
 
 - **[[Architecture]]**: Deep dive into the Orchestrator, TaskGraph, and **Sentient Mesh**.
+- **[[Infrastructure-Hub]]**: NOC-style telemetry and model operational states.
 - **[[Language-Intelligence]]**: Universal LSP Hub, Neural Lens, and **Neural Linter**.
 - **[[Security-and-Auth]]**: RBAC, **Swarm Consensus**, and Invite Codes.
 - **[[Skill-System]]**: Building MCP toolsets and **Autonomous Self-Repair**.

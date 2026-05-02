@@ -149,10 +149,73 @@ pub async fn run_provisioning() -> Result<()> {
                 bail!("Provisioning failed during execution.");
             }
         }
+        
+        // Setup Storage Paths
+        setup_storage_paths().await?;
+        
         info!("Provisioning successful! Please log out and back in to apply group changes.");
     } else {
         warn!("Provisioning aborted by user.");
     }
+
+    Ok(())
+}
+
+async fn setup_storage_paths() -> Result<()> {
+    println!("\n{}", "📂 Neurex Storage Configuration".bold().purple());
+    println!("Please configure your primary storage paths. Press Enter to use defaults.");
+
+    let default_install = format!("{}/.neurex", dirs::home_dir().unwrap().to_string_lossy());
+    let default_models = format!("{}/.ollama/models", dirs::home_dir().unwrap().to_string_lossy());
+    let default_scan = dirs::home_dir().unwrap().to_string_lossy().to_string();
+
+    print!("Installation Directory [{}]: ", default_install.cyan());
+    io::stdout().flush()?;
+    let mut install_dir = String::new();
+    io::stdin().read_line(&mut install_dir)?;
+    let install_dir = if install_dir.trim().is_empty() { default_install } else { install_dir.trim().to_string() };
+
+    print!("Model Storage Directory [{}]: ", default_models.cyan());
+    io::stdout().flush()?;
+    let mut models_dir = String::new();
+    io::stdin().read_line(&mut models_dir)?;
+    let models_dir = if models_dir.trim().is_empty() { default_models } else { models_dir.trim().to_string() };
+
+    print!("Telemetry Scan Paths (comma separated) [{}]: ", default_scan.cyan());
+    io::stdout().flush()?;
+    let mut scan_paths_raw = String::new();
+    io::stdin().read_line(&mut scan_paths_raw)?;
+    let scan_paths: Vec<String> = if scan_paths_raw.trim().is_empty() { 
+        vec![default_scan] 
+    } else { 
+        scan_paths_raw.split(',').map(|s| s.trim().to_string()).collect() 
+    };
+
+    // Prepare settings JSON
+    let mut settings = serde_json::json!({
+        "neurex_install_dir": install_dir,
+        "models_dir": models_dir,
+        "storage_paths": scan_paths,
+        "validate_path_permissions": true
+    });
+
+    // Merge with existing if present
+    let settings_path = dirs::home_dir().unwrap().join(".neurex_settings.json");
+    if settings_path.exists() {
+        if let Ok(content) = std::fs::read_to_string(&settings_path) {
+            if let Ok(mut existing) = serde_json::from_str::<serde_json::Value>(&content) {
+                if let Some(obj) = existing.as_object_mut() {
+                    obj.insert("neurex_install_dir".to_string(), serde_json::Value::String(install_dir));
+                    obj.insert("models_dir".to_string(), serde_json::Value::String(models_dir));
+                    obj.insert("storage_paths".to_string(), serde_json::to_value(scan_paths)?);
+                    settings = existing;
+                }
+            }
+        }
+    }
+
+    std::fs::write(&settings_path, serde_json::to_string_pretty(&settings)?)?;
+    info!("Storage configuration saved to {}", settings_path.display());
 
     Ok(())
 }

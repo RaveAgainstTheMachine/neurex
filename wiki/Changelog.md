@@ -2,6 +2,17 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
+## [0.3.5] - 2026-05-02: NEURAL INFRASTRUCTURE NOC
+### Added
+- **Phase 55: Infrastructure Hub Stabilization**: Launched the "NOC-style" Infrastructure Dashboard for deep hardware and model observability.
+- **Active Model Tracking (Hot/Cold States)**: Implemented real-time process monitoring to distinguish between "Hot" (active in VRAM) and "Cold" (installed on disk) models.
+- **Node-Specific Model Inventory**: Each node in the Mesh now reports its specific model inventory and operational health.
+- **Granular Storage Telemetry**: Implemented path-aware disk monitoring that aggregates usage only from user-defined storage volumes.
+- **Interactive Storage Configuration**: Added dedicated settings for `Install Path`, `Models Path`, and `Telemetry Paths` in the UI Settings panel.
+- **Storage Health Diagnostics**: Real-time permission (Read/Write) and existence validation for all configured storage volumes.
+- **Sentient Vision Integration**: Integrated the Neurex mission ("Human-Agent Parity") into the system loading sequence and branding.
+- **High-Fidelity Model Deduplication**: Refactored the model catalog to reconcile Local, Peer, and Hugging Face results into a unified, state-aware inventory.
+
 ## [0.3.0] - 2026-05-01: THE SENTIENT SINGULARITY
 ### Added
 - **Phase 50: The Sentient Singularity**: Implemented autonomous goal setting and self-generating plugins, enabling the Mesh to direct its own evolution.

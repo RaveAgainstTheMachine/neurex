@@ -10,6 +10,13 @@ from typing import Dict, Any
 
 
 DEFAULT_SETTINGS = {
+    # Agent Models (Default assignments)
+    "planner_model":   "qwen2.5-coder:14b",
+    "coder_model":     "qwen2.5-coder:14b",
+    "researcher_model": "qwen2.5-coder:14b",
+    "reviewer_model":   "qwen2.5-coder:14b",
+    "tester_model":     "qwen2.5-coder:14b",
+
     # Agent Behavior
     "autonomy_level": "limited",
     "enable_agent_internet": False,
@@ -20,7 +27,7 @@ DEFAULT_SETTINGS = {
     "enable_distributed_pooling": False,
     "ollama_base_url": "http://localhost:11434",
 
-    # Network Ports (changing these re-applies firewall rules automatically)
+    # Network Ports
     "api_port":        8000,
     "web_port":        3000,
     "chromadb_port":   8001,
@@ -31,7 +38,7 @@ DEFAULT_SETTINGS = {
 
     # Firewall
     "firewall_enabled": True,
-    "firewall_lan_only": True,   # Restrict Neurex ports to LAN subnet only
+    "firewall_lan_only": True,
 
     # Security & Filesystem
     "neurex_trash_path": ".neurex/trash",
@@ -55,6 +62,12 @@ DEFAULT_SETTINGS = {
 
     # System Lifecycle
     "enable_insomnia": True,
+    
+    # Storage & Paths
+    "neurex_install_dir": str(Path.home() / ".neurex"),
+    "models_dir": str(Path.home() / ".ollama" / "models"),
+    "storage_paths": [str(Path.home())], # Primary storage paths for disk telemetry
+    "validate_path_permissions": True,
 
     # UI Layout
     "menu_mode": "horizontal",
@@ -66,51 +79,90 @@ DEFAULT_SETTINGS = {
 
 class SettingsManager:
     def __init__(self):
-        self.settings = DEFAULT_SETTINGS.copy()
-        self._load()
+        self.global_settings: Dict[str, Any] = {}
+        self.workspace_settings: Dict[str, Any] = {}
+        self._load_global()
+        self._load_workspace()
 
-    def _get_settings_path(self) -> Path:
+    def _get_global_path(self) -> Path:
         return Path.home() / ".neurex_settings.json"
 
-    def _load(self):
-        path = self._get_settings_path()
-        path.parent.mkdir(parents=True, exist_ok=True)
-        # Reset to defaults before loading new file
-        self.settings = DEFAULT_SETTINGS.copy()
+    def _get_workspace_path(self) -> Path | None:
+        ws = os.getenv("WORKSPACE_PATH")
+        if ws:
+            return Path(ws) / ".neurex" / "settings.json"
+        return None
+
+    def _load_global(self):
+        path = self._get_global_path()
         if path.exists():
             try:
                 with open(path, "r") as f:
-                    data = json.load(f)
-                    for k, v in data.items():
-                        if k in self.settings:
-                            self.settings[k] = v
+                    self.global_settings = json.load(f)
             except Exception:
-                pass
-        self._save()
+                self.global_settings = {}
+        else:
+            self.global_settings = {}
+            # Initialize with empty dict to save
+            self._save_global()
 
-    def _save(self):
-        path = self._get_settings_path()
+    def _load_workspace(self):
+        path = self._get_workspace_path()
+        if path and path.exists():
+            try:
+                with open(path, "r") as f:
+                    self.workspace_settings = json.load(f)
+            except Exception:
+                self.workspace_settings = {}
+        else:
+            self.workspace_settings = {}
+
+    def _save_global(self):
+        path = self._get_global_path()
+        path.parent.mkdir(parents=True, exist_ok=True)
         with open(path, "w") as f:
-            json.dump(self.settings, f, indent=2)
+            json.dump(self.global_settings, f, indent=2)
+
+    def _save_workspace(self):
+        path = self._get_workspace_path()
+        if path:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with open(path, "w") as f:
+                json.dump(self.workspace_settings, f, indent=2)
 
     def reload(self):
-        self._load()
+        self._load_global()
+        self._load_workspace()
 
     def get_all(self) -> Dict[str, Any]:
-        return self.settings
+        # Merge hierarchy: Default -> Global -> Workspace
+        merged = DEFAULT_SETTINGS.copy()
+        merged.update(self.global_settings)
+        merged.update(self.workspace_settings)
+        return merged
 
     def get(self, key: str) -> Any:
-        # Fallback to env var if needed, but prefer JSON
+        # Check env first for high-priority overrides
         env_val = os.getenv(key.upper())
-        if env_val is not None and key not in self.settings:
+        if env_val is not None:
             return env_val
-        return self.settings.get(key, DEFAULT_SETTINGS.get(key))
+        
+        # Then Workspace -> Global -> Default
+        if key in self.workspace_settings:
+            return self.workspace_settings[key]
+        if key in self.global_settings:
+            return self.global_settings[key]
+        return DEFAULT_SETTINGS.get(key)
 
-    def update(self, key: str, value: Any) -> bool:
-        if key in self.settings:
-            self.settings[key] = value
-            self._save()
+    def update(self, key: str, value: Any, scope: str = "global") -> bool:
+        """Update a setting in the specified scope ('global' or 'workspace')."""
+        if scope == "workspace":
+            self.workspace_settings[key] = value
+            self._save_workspace()
             return True
-        return False
+        else:
+            self.global_settings[key] = value
+            self._save_global()
+            return True
 
 settings_manager = SettingsManager()

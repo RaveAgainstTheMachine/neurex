@@ -25,37 +25,52 @@ class InfrastructureManager:
         """Check status of all supported engines with detailed diagnostics."""
         statuses = []
         for engine in self.supported_engines:
-            binary_name = engine
             if engine == "llama.cpp":
-                binary_name = "llama-server"
-            
-            path = shutil.which(binary_name)
-            is_running = await self._is_process_running(binary_name)
-            version = await self._get_version(binary_name)
-            
-            status_text = "running" if is_running else ("stopped" if path else "missing")
-            
-            details = ""
-            if not path:
-                if engine == "ollama":
-                    details = "Install via 'curl -fsSL https://ollama.com/install.sh | sh'"
-                elif engine == "vllm":
-                    details = "Install via 'pip install vllm'"
-                elif engine == "llama.cpp":
-                    details = "Ensure 'llama-server' is in PATH"
-            
-            status_data = {
-                "name": engine,
-                "status": status_text,
-                "version": version if version != "unknown" else ("Installed" if path else "n/a"),
-                "installed": path is not None,
-                "details": details,
-                "path": path or "Not found"
-            }
+                # Detect if llama-cpp-python is installed
+                import importlib.util
+                spec = importlib.util.find_spec("llama_cpp")
+                path = spec.origin if spec else None
+                is_running = await self._is_process_running("llama_cpp.server") or await self._is_process_running("llama-server")
+                version = await self._get_version("llama.cpp")
+                
+                status_text = "running" if is_running else ("stopped" if path else "missing")
+                
+                status_data = {
+                    "name": engine,
+                    "status": status_text,
+                    "version": version if version != "unknown" else ("Installed" if path else "n/a"),
+                    "installed": path is not None,
+                    "details": "Install via 'llama-cpp-python[server]'" if not path else "",
+                    "path": path or "Not found"
+                }
 
-            if engine == "llama.cpp" and is_running:
-                from core.infrastructure.distributed import distributed_manager
-                status_data["rpc_endpoint"] = distributed_manager.get_rpc_address() if distributed_manager.rpc_process else None
+                if is_running:
+                    from core.infrastructure.distributed import distributed_manager
+                    status_data["rpc_endpoint"] = distributed_manager.get_rpc_address() if distributed_manager.rpc_process else None
+                
+            else:
+                binary_name = engine
+                path = shutil.which(binary_name)
+                is_running = await self._is_process_running(binary_name)
+                version = await self._get_version(binary_name)
+                
+                status_text = "running" if is_running else ("stopped" if path else "missing")
+                
+                details = ""
+                if not path:
+                    if engine == "ollama":
+                        details = "Install via 'curl -fsSL https://ollama.com/install.sh | sh'"
+                    elif engine == "vllm":
+                        details = "Install via 'pip install vllm'"
+                
+                status_data = {
+                    "name": engine,
+                    "status": status_text,
+                    "version": version if version != "unknown" else ("Installed" if path else "n/a"),
+                    "installed": path is not None,
+                    "details": details,
+                    "path": path or "Not found"
+                }
             
             statuses.append(status_data)
         return statuses
@@ -83,8 +98,8 @@ class InfrastructureManager:
         
         raise Exception(f"Pulling models for {engine} is not supported yet.")
 
-    async def get_installed_models(self, engine: str) -> List[str]:
-        """List models currently available on this node with Phase 44.15: Cached API discovery."""
+    async def get_installed_models(self, engine: str) -> List[Dict[str, Any]]:
+        """List models currently available and track which are currently loaded/active."""
         if engine == "ollama":
             # Phase 44.15: High-Performance Model Caching (15s TTL)
             if hasattr(self, "_model_cache"):
@@ -96,41 +111,50 @@ class InfrastructureManager:
             models = []
             ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
             
-            # 1. Try HTTP API (Faster than CLI)
+            # 1. Get running models first
+            running_models = []
+            try:
+                import httpx
+                async with httpx.AsyncClient(timeout=2) as client:
+                    resp = await client.get(f"{ollama_url}/api/ps")
+                    if resp.status_code == 200:
+                        ps_data = resp.json()
+                        running_models = [m["name"] for m in ps_data.get("models", [])]
+            except Exception:
+                pass
+
+            # 2. Get all tags
             try:
                 import httpx
                 async with httpx.AsyncClient(timeout=2) as client:
                     resp = await client.get(f"{ollama_url}/api/tags")
                     if resp.status_code == 200:
                         data = resp.json()
-                        models = [m["name"] for m in data.get("models", [])]
-                        # Cache success
+                        for m in data.get("models", []):
+                            size_bytes = m.get("size", 0)
+                            name = m["name"]
+                            models.append({
+                                "name": name,
+                                "size_gb": round(size_bytes / (1024 ** 3), 2),
+                                "modified_at": m.get("modified_at"),
+                                "is_active": any(name == rm or name.split(':')[0] == rm.split(':')[0] for rm in running_models)
+                            })
+                        
                         import time
                         self._model_cache = (time.time(), models)
                         return models
             except Exception:
-                pass # Fallback to CLI
-            
-            # 2. Fallback to CLI if API is unavailable
-            if shutil.which("ollama"):
-                try:
-                    process = await asyncio.create_subprocess_exec(
-                        "ollama", "list",
-                        stdout=asyncio.subprocess.PIPE,
-                        stderr=asyncio.subprocess.PIPE
-                    )
-                    stdout, _ = await process.communicate()
-                    lines = stdout.decode().strip().split("\n")
-                    if len(lines) > 1:
-                        models = [line.split()[0] for line in lines[1:] if line.strip()]
-                except Exception as e:
-                    log.warning("infra.model_list_api_failed", engine=engine, error=str(e))
+                pass
 
-            # 2. Filesystem Fallback (if API failed or returned nothing)
+            # 3. Filesystem Fallback (if API failed or returned nothing)
             if not models:
+                from core.settings.manager import settings_manager
                 from pathlib import Path
-                # Standard Linux path for Ollama manifests
-                manifest_path = Path.home() / ".ollama" / "models" / "manifests"
+                
+                # Use configured models directory
+                models_base = settings_manager.get("models_dir")
+                manifest_path = Path(os.path.expanduser(models_base)) / "manifests"
+                
                 if not manifest_path.exists():
                     # Check system-wide path
                     manifest_path = Path("/usr/share/ollama/.ollama/models/manifests")
@@ -141,16 +165,21 @@ class InfrastructureManager:
                         for file in files:
                             # manifest path is usually manifests/registry.ollama.ai/library/model/tag
                             rel_path = Path(root).relative_to(manifest_path)
-                            # We want 'library/model:tag' or just 'model:tag'
                             parts = list(rel_path.parts)
                             if len(parts) >= 2:
-                                # registry.ollama.ai / library / model
                                 if parts[0] == "registry.ollama.ai":
                                     parts = parts[1:]
                                 model_name = "/".join(parts)
-                                models.append(f"{model_name}:{file}")
+                                models.append({
+                                    "name": f"{model_name}:{file}",
+                                    "size_gb": 0,
+                                    "modified_at": "filesystem_fallback"
+                                })
             
-            return sorted(list(set(models)))
+            # Deduplicate and return
+            unique_models = {m["name"]: m for m in models}.values()
+            return sorted(list(unique_models), key=lambda x: x["name"])
+        
         return []
 
     async def start_engine(self, name: str):
@@ -175,12 +204,12 @@ class InfrastructureManager:
             return True
 
         elif name == "vllm":
-            if not shutil.which("python"):
-                raise Exception("Python not found")
+            venv_python = os.path.expanduser("~/.neurex/env/bin/python")
+            python_exe = venv_python if os.path.exists(venv_python) else sys.executable
             
             port = settings_manager.get("vllm_port")
             # Example vLLM start: python -m vllm.entrypoints.openai.api_server --port 8002
-            cmd = ["python", "-m", "vllm.entrypoints.openai.api_server", "--port", str(port)]
+            cmd = [python_exe, "-m", "vllm.entrypoints.openai.api_server", "--port", str(port)]
             
             process = await asyncio.create_subprocess_exec(
                 *cmd,
@@ -191,10 +220,13 @@ class InfrastructureManager:
             return True
         
         elif name == "llama.cpp":
-            from core.collaboration.presence import presence_manager
+            venv_python = os.path.expanduser("~/.neurex/env/bin/python")
+            python_exe = venv_python if os.path.exists(venv_python) else sys.executable
+            
             port = settings_manager.get("llama_cpp_port")
             
             # 1. Discover all RPC workers in the mesh
+            from core.collaboration.presence import presence_manager
             rpc_hosts = []
             for conv_state in presence_manager.presence_state.values():
                 for user_state in conv_state.values():
@@ -209,20 +241,16 @@ class InfrastructureManager:
                     rpc_hosts.append(peer.rpc_endpoint)
             
             rpc_hosts = list(set(rpc_hosts))
-            rpc_flag = ",".join(rpc_hosts)
             
-            # 2. Start llama-server
-            cmd = ["llama-server", "--model", "models/default.gguf", "--port", str(port)]
-            if rpc_flag:
-                log.info("infra.distributed_inference_active", hosts=rpc_hosts)
-                cmd.extend(["--rpc", rpc_flag])
+            # 2. Start llama-cpp-python server
+            cmd = [python_exe, "-m", "llama_cpp.server", "--port", str(port), "--model", "models/default.gguf"]
             
             process = await asyncio.create_subprocess_exec(
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
-            log.info("infra.engine_started", engine=name, port=port, distributed=bool(rpc_flag))
+            log.info("infra.engine_started", engine=name, port=port, mesh_peers=len(rpc_hosts))
             return True
 
         raise Exception(f"Start logic for {name} not implemented yet")
@@ -238,32 +266,57 @@ class InfrastructureManager:
         return count > 0
 
     async def install_engine(self, name: str):
-        """Execute installation commands for an engine."""
+        """Execute installation commands for an engine with Phase 48 dependency validation."""
         log.info("infra.engine_install_start", engine=name)
-        cmd = []
-        if name == "ollama":
-            cmd = ["curl", "-fsSL", "https://ollama.com/install.sh", "|", "sh"]
-        elif name == "vllm":
-            cmd = ["pip", "install", "vllm"]
-        elif name == "llama.cpp":
-            cmd = ["pip", "install", "llama-cpp-python"]
         
-        if not cmd:
+        venv_python = os.path.expanduser("~/.neurex/env/bin/python")
+        python_exe = venv_python if os.path.exists(venv_python) else sys.executable
+        
+        # 1. Ensure PIP is available in the environment
+        try:
+            check_pip = await asyncio.create_subprocess_exec(
+                python_exe, "-m", "pip", "--version",
+                stdout=asyncio.subprocess.DEVNULL,
+                stderr=asyncio.subprocess.DEVNULL
+            )
+            await check_pip.wait()
+            if check_pip.returncode != 0:
+                log.warning("infra.pip_missing", engine=name, msg="Attempting ensurepip...")
+                fix_pip = await asyncio.create_subprocess_exec(
+                    python_exe, "-m", "ensurepip", "--default-pip"
+                )
+                await fix_pip.wait()
+        except Exception as e:
+            log.error("infra.pip_check_failed", error=str(e))
+
+        cmd_str = ""
+        if name == "ollama":
+            cmd_str = "curl -fsSL https://ollama.com/install.sh | sh"
+        elif name == "vllm":
+            cmd_str = f"{python_exe} -m pip install vllm"
+        elif name == "llama.cpp":
+            cmd_str = f"{python_exe} -m pip install llama-cpp-python[server]"
+        else:
             raise Exception(f"No installation script defined for {name}")
 
-        process = await asyncio.create_subprocess_shell(
-            " ".join(cmd),
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        )
-        stdout, stderr = await process.communicate()
-        if process.returncode != 0:
-            error = stderr.decode()
-            log.error("infra.engine_install_failed", engine=name, error=error)
-            raise Exception(f"Installation failed: {error}")
-        
-        log.info("infra.engine_install_success", engine=name)
-        return True
+        try:
+            process = await asyncio.create_subprocess_shell(
+                cmd_str,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE
+            )
+            stdout, stderr = await process.communicate()
+            
+            if process.returncode == 0:
+                log.info("infra.engine_install_success", engine=name)
+                return True
+            else:
+                error_msg = stderr.decode().strip()
+                log.error("infra.engine_install_failed", engine=name, error=error_msg)
+                raise Exception(f"Installation failed: {error_msg}")
+        except Exception as e:
+            log.error("infra.engine_install_error", engine=name, error=str(e))
+            raise e
 
     def get_system_vram(self) -> float:
         """
@@ -283,16 +336,67 @@ class InfrastructureManager:
             return 0.0 # Unknown
 
     def get_system_metrics(self) -> Dict[str, Any]:
-        """Gather real-time CPU and RAM metrics."""
+        """Gather real-time CPU, RAM, and Disk metrics across configured storage paths."""
+        from core.settings.manager import settings_manager
         ram = psutil.virtual_memory()
+        
+        # Aggregate disk usage across configured storage paths, deduplicated by mount point
+        storage_paths = settings_manager.get("storage_paths")
+        seen_mounts = set()
+        total_gb = 0.0
+        used_gb = 0.0
+        
+        for path in storage_paths:
+            try:
+                # Resolve to absolute path and find mount point
+                abs_path = os.path.abspath(os.path.expanduser(path))
+                if not os.path.exists(abs_path):
+                    continue
+                
+                # Get usage for the specific path
+                usage = psutil.disk_usage(abs_path)
+                
+                # To prevent double-counting if multiple paths are on the same disk,
+                # we ideally want to track mount points. 
+                # But for Neurex, we want to know how much space is in the *configured* areas.
+                # If they are on different disks, we sum them.
+                total_gb += usage.total / (1024 ** 3)
+                used_gb += usage.used / (1024 ** 3)
+            except Exception as e:
+                log.warning("infra.disk_check_failed", path=path, error=str(e))
+
+        free_gb = max(0.0, total_gb - used_gb)
+        disk_percent = (used_gb / total_gb * 100) if total_gb > 0 else 0
+        
         return {
             "vram_gb": self.get_system_vram(),
             "ram_total_gb": round(ram.total / (1024 ** 3), 1),
             "ram_used_gb": round(ram.used / (1024 ** 3), 1),
             "ram_available_gb": round(ram.available / (1024 ** 3), 1),
             "ram_percent": ram.percent,
-            "cpu_percent": psutil.cpu_percent(interval=0.1)
+            "cpu_percent": psutil.cpu_percent(interval=0.1),
+            "disk_total_gb": round(total_gb, 1),
+            "disk_used_gb": round(used_gb, 1),
+            "disk_free_gb": round(free_gb, 1),
+            "disk_percent": round(disk_percent, 1),
+            "storage_health": self.validate_storage_permissions()
         }
+
+    def validate_storage_permissions(self) -> Dict[str, Any]:
+        """Checks if configured storage paths are writable and exists."""
+        from core.settings.manager import settings_manager
+        paths = settings_manager.get("storage_paths")
+        results = {}
+        for p in paths:
+            abs_p = os.path.abspath(os.path.expanduser(p))
+            exists = os.path.exists(abs_p)
+            writable = os.access(abs_p, os.W_OK) if exists else False
+            results[p] = {
+                "exists": exists,
+                "writable": writable,
+                "status": "ok" if (exists and writable) else "error"
+            }
+        return results
 
     async def _is_process_running(self, name: str) -> bool:
         """Check if any process matching the name is active and responding."""
@@ -332,7 +436,7 @@ class InfrastructureManager:
                             if resp.status == 200:
                                 data = await resp.json()
                                 return f"Ollama {data.get('version', 'unknown')}"
-                except:
+                except Exception:
                     pass
                 
                 # Fallback to CLI

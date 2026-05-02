@@ -26,15 +26,21 @@ class VirtualVRAMPool:
 
     async def synchronize_mesh_resources(self):
         """Discovers peer nodes and aggregates their VRAM into the virtual pool."""
+        from core.infrastructure.manager import InfrastructureManager
+        infra = InfrastructureManager()
+        local_vram = infra.get_system_vram()
+        
         async with self.pool_lock:
             active_peers = [p for p in mesh_router.peers.values() if p.status == "online"]
             
             new_shards = {}
-            total = 0.0
+            total = local_vram
+            
+            # Add Local Node
+            new_shards["local"] = VRAMShard(node_id="local", capacity_gb=local_vram)
+            
             for peer in active_peers:
-                # We assume the peer reports its VRAM via mesh telemetry
-                # For Phase 47, we simulate the capacity if not explicitly provided
-                capacity = getattr(peer, "vram_gb", 24.0) # Default to 24GB (3090/4090 class)
+                capacity = getattr(peer, "vram_gb", 24.0)
                 new_shards[peer.url] = VRAMShard(node_id=peer.url, capacity_gb=capacity)
                 total += capacity
             

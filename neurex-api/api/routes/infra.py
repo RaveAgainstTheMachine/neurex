@@ -120,15 +120,22 @@ async def get_model_registry():
     enriched_registry = []
     
     for lm in local_models:
+        # Defense in depth: skip if somehow we still have a string (legacy cache/stale process)
+        if not isinstance(lm, dict):
+            continue
+            
         enriched_registry.append({
-            "name": lm,
+            "name": lm["name"],
             "engine": "ollama",
             "params": "Local",
+            "size_gb": lm.get("size_gb", 0),
             "context_window": 32768,
             "vram_required_gb": 0,
             "recommended_tasks": [],
             "is_downloaded": True,
-            "is_community": False
+            "is_community": False,
+            "is_active": lm.get("is_active", False),
+            "origin": "LOCAL"
         })
             
     return enriched_registry

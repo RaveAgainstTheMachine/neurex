@@ -86,7 +86,6 @@ async fn main() -> Result<()> {
                 .arg("0.0.0.0")
                 .arg("--port")
                 .arg(api_port.to_string())
-                .env("WORKSPACE_PATH", &current_dir)
                 .current_dir("../neurex-api")
                 .spawn()
                 .context("Failed to spawn neurex-api (is uvicorn installed?)")?;

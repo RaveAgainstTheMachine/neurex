@@ -29,12 +29,34 @@
   font-size: 10px;
   font-weight: 700;
   color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .mesh-divider {
   width: 1px;
   height: 12px;
   background: var(--border);
+}
+
+.dashboard-launch-btn {
+  margin-left: 4px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(139, 92, 246, 0.1);
+  color: var(--accent-purple);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.dashboard-launch-btn:hover {
+  background: var(--accent-purple);
+  color: white;
+  transform: scale(1.1);
 }
 
 /* ── Content ── */
@@ -349,10 +371,13 @@
   box-shadow: 0 0 10px rgba(34, 211, 238, 0.1);
 }
 
-.catalog-badge.origin-node {
-  background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.2);
+.catalog-badge.status-active {
+  background: rgba(139, 92, 246, 0.15);
+  color: var(--accent-purple);
+  border-color: rgba(139, 92, 246, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .catalog-deploy-btn {

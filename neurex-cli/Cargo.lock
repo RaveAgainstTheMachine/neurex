@@ -2000,6 +2000,7 @@ dependencies = [
  "reqwest",
  "rust-embed",
  "serde",
+ "serde_json",
  "sysinfo",
  "tar",
  "tokio",

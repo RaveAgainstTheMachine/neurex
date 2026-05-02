@@ -39,6 +39,9 @@ interface SettingsState {
   firewall_enabled: boolean;
   firewall_lan_only: boolean;
   enable_insomnia: boolean;
+  neurex_install_dir: string;
+  models_dir: string;
+  storage_paths: string | string[];
   [key: string]: any;
 }
 
@@ -297,6 +300,11 @@ export function SettingsPanel() {
               <>
                 {renderSetting("show_hidden_files", "Hidden Files", "Display dotfiles in explorer.", "toggle")}
                 {renderSetting("enable_insomnia", "Insomnia Mode", "Prevent system sleep.", "toggle")}
+                
+                <div className="settings-section-title">Storage & Paths</div>
+                {renderSetting("neurex_install_dir", "Install Path", "Root directory for Neurex substrate.", "input")}
+                {renderSetting("models_dir", "Models Path", "Default directory for LLM weights.", "input")}
+                {renderSetting("storage_paths", "Telemetry Paths", "Comma-separated list of directories to monitor for disk telemetry.", "input")}
               </>
             )}
           </div>

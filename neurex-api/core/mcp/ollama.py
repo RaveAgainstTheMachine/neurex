@@ -3,20 +3,19 @@ import asyncio
 import json
 import structlog
 from typing import List, Dict, Any, Optional, AsyncGenerator
-from .vram import VRAMManager
-from ..settings.config import settings
+from ..settings.manager import settings_manager
 
 log = structlog.get_logger()
 
 class OllamaManager:
     def __init__(self):
-        self.base_url = settings.ollama_url or "http://localhost:11434"
+        self.base_url = settings_manager.get("ollama_base_url") or "http://localhost:11434"
         self.client = httpx.AsyncClient(
             base_url=self.base_url, 
             timeout=httpx.Timeout(60.0, connect=5.0),
             limits=httpx.Limits(max_keepalive_connections=5, max_connections=10)
         )
-        self.vram = VRAMManager()
+        self.vram = None # Infrastructure metrics handled globally
 
     async def get_running_models(self) -> List[Dict[str, Any]]:
         try:
@@ -160,14 +159,8 @@ class OllamaManager:
 
     async def get_metrics(self) -> Dict[str, Any]:
         try:
-            vram_info = self.vram.get_vram_info()
-            return {
-                "vram_gb": vram_info.total_gb,
-                "vram_used_gb": vram_info.used_gb,
-                "vram_free_gb": vram_info.free_gb,
-                "cpu_usage": 0.0,
-                "ram_used_gb": 0.0
-            }
+            from core.infrastructure.manager import infrastructure_manager
+            return infrastructure_manager.get_system_metrics()
         except Exception as e:
             log.error("ollama.metrics_failed", error=str(e))
             return {}

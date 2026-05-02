@@ -208,7 +208,8 @@ pub async fn proxy_handler(
     uri: Uri,
     body: Body,
 ) -> impl IntoResponse {
-    let api_url = format!("http://127.0.0.1:{}{}", state.api_port, uri.path());
+    let query = uri.query().map(|q| format!("?{}", q)).unwrap_or_default();
+    let api_url = format!("http://127.0.0.1:{}{}{}", state.api_port, uri.path(), query);
     let client = reqwest::Client::new();
     
     // Convert Axum body to bytes to send via reqwest

@@ -17,6 +17,10 @@ export function LoadingOverlay({ progress = 0, message = "Initializing Neurex...
         </div>
         <div className="loading-percentage text-accent">{Math.round(progress)}%</div>
         
+        <div className="loading-vision">
+          <p>Autonomous development substrate designed for <strong>Human-Agent Parity</strong>.</p>
+        </div>
+
         <BypassButton progress={progress} />
       </div>
     </div>

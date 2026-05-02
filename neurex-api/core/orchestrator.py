@@ -138,11 +138,10 @@ class Orchestrator:
             yield {"event": "task_created", "data": jsonable_encoder(planner_node)}
 
 
-            vram = self.infra.get_system_vram()
-            rec = LLMRecommender.recommend("planning", vram)
-            model_name = model or (rec.name if rec else None)
+            from core.settings.manager import settings_manager
+            model_name = model or settings_manager.get("planner_model")
             
-            log.info("orchestrator.using_model", agent="planner", model=model_name, source="user" if model else "rec")
+            log.info("orchestrator.using_model", agent="planner", model=model_name, source="user" if model else "settings")
             
             # Consult Hive Mind for context
             memories = hive_mind.recall(user_message, limit=3)
@@ -247,9 +246,9 @@ class Orchestrator:
                     yield {"event": "task_updated", "data": {"id": node.id, "status": TaskStatus.RUNNING}}
 
                     try:
-                        vram = self.infra.get_system_vram()
-                        rec = LLMRecommender.recommend(node.agent_type, vram)
-                        model_name = rec.name if rec else None
+                        from core.settings.manager import settings_manager
+                        settings_key = f"{node.agent_type}_model"
+                        model_name = settings_manager.get(settings_key)
                         
                         log.info("orchestrator.using_model", agent=node.agent_type, model=model_name, task=node.title)
                         
@@ -347,9 +346,9 @@ class Orchestrator:
             self.session.add(node)
             await self.session.commit()
 
-            vram = self.infra.get_system_vram()
-            rec = LLMRecommender.recommend(node.agent_type, vram)
-            model_name = rec.name if rec else None
+            from core.settings.manager import settings_manager
+            settings_key = f"{node.agent_type}_model"
+            model_name = settings_manager.get(settings_key)
             
             AgentClass = AGENT_MAP.get(node.agent_type, CoderAgent)
             agent = AgentClass(self.rules, self.ctx, model=model_name)
