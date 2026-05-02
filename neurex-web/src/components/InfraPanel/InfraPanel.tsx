@@ -70,7 +70,8 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
     { id: 'vision', role: 'VISION', model: 'llama3.2-vision', specs: '11B • 8.5G VRAM • 9G DISK', vram: 8.5, disk: 9, icon: Eye },
     { id: 'media', role: 'MEDIA', model: 'llama3.2-vision', specs: '11B • 8.5G VRAM • 9G DISK', vram: 8.5, disk: 9, icon: ImageIcon },
     { id: 'video', role: 'VIDEO', model: 'ltx-video', specs: 'Multi-Modal • 24G VRAM • 45G DISK', vram: 24, disk: 45, icon: Video },
-    { id: 'audio', role: 'AUDIO', model: 'whisper-large-v3-turbo', specs: '1.5B • 4G VRAM • 3G DISK', vram: 4, disk: 3, icon: AudioLines },
+    { id: 'audio-turbo', role: 'AUDIO (FAST)', model: 'whisper-large-v3-turbo', specs: '1.5B • 4G VRAM • 3G DISK', vram: 4, disk: 3, icon: AudioLines },
+    { id: 'audio-large', role: 'AUDIO (PRO)', model: 'whisper-large-v3', specs: '1.5B • 12G VRAM • 5G DISK', vram: 12, disk: 5, icon: Brain },
   ];
 
   const handlePullModel = async (engine: string, model: string) => {
@@ -226,10 +227,12 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
                 className="rec-card"
                 onClick={() => {
                   const [mName] = rec.model.split(':');
+                  const diskSize = parseInt(rec.specs.match(/(\d+)G DISK/)?.[1] || "0");
                   setSelectedModel({ 
                     name: mName, 
                     engine: 'ollama', 
                     params: rec.specs.split(' ')[0], 
+                    size_gb: diskSize,
                     context_window: 32768, 
                     vram_required_gb: parseInt(rec.specs.match(/(\d+)G VRAM/)?.[1] || "0"),
                     recommended_tasks: [rec.role],
@@ -337,7 +340,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
                   <div className="catalog-main">
                     <div className="catalog-header">
                       <Cpu size={14} className="text-muted" />
-                      <span className="catalog-name">{m.name.split(':')[0]}</span>
+                      <span className="catalog-name">{m.name.replace('registry.ollama.ai/library/', '').replace('library/', '').split(':')[0]}</span>
                       {m.params !== 'Local' && m.params !== 'Mesh' && <span className="catalog-tag">{m.params}</span>}
                       <span className={`catalog-badge origin-${(m as any).origin.toLowerCase()}`}>
                         {(m as any).origin === 'HF' ? 'HF' : 
@@ -352,7 +355,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
                       )}
                     </div>
                     <div className="catalog-meta">
-                      <span>{m.size_gb ? `${m.size_gb}GB` : (m.vram_required_gb > 0 ? `${m.vram_required_gb}GB VRAM` : 'Local Asset')}</span>
+                      <span>{m.size_gb ? `${m.size_gb.toFixed(1)}GB` : (m.vram_required_gb > 0 ? `${m.vram_required_gb}GB VRAM` : '0.0GB')}</span>
                       <RefreshCcw size={10} />
                       <span>{m.context_window / 1000}k ctx</span>
                       {!m.is_downloaded && ((m as any).origin === 'HF' || (m as any).origin === 'NODE') && (
@@ -380,8 +383,8 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
               <div className="infra-modal__title-group">
                 <Cpu size={18} className="text-purple" />
                 <div>
-                  <h3>Deploy Model</h3>
-                  <p>{selectedModel.name}</p>
+                  <h3>{selectedModel.is_downloaded ? 'Model Diagnostics' : 'Deploy Model'}</h3>
+                  <p>{selectedModel.name.replace('registry.ollama.ai/library/', '').replace('library/', '')}</p>
                 </div>
               </div>
               <button className="infra-modal__close" onClick={() => setSelectedModel(null)}>
@@ -401,7 +404,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
                 </div>
                 <div className="stat-box">
                   <span className="stat-label">DISK SPACE</span>
-                  <span className="stat-value">{selectedModel.size_gb || '?'}GB</span>
+                  <span className="stat-value">{(selectedModel.size_gb || 0) > 0 ? `${selectedModel.size_gb?.toFixed(1)}GB` : '...'}</span>
                 </div>
               </div>
 
@@ -455,7 +458,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
                   setSelectedModel(null);
                 }}
               >
-                {loading ? "Initializing..." : "Start Deployment"}
+                {loading ? "Initializing..." : (selectedModel.is_downloaded ? "Redeploy (Update)" : "Start Deployment")}
               </button>
             </div>
           </div>

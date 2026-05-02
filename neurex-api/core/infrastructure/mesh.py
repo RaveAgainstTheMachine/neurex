@@ -30,6 +30,8 @@ class PeerNode:
         self.tps = 0.0
         self.rpc_endpoint = None
         self.distributed_status = {}
+        self.storage_health = {}
+        self.specs = {}
         # Predictive State
         self.history: List[Dict[str, Any]] = []
         self.predicted_load = 0.0
@@ -63,7 +65,9 @@ class PeerNode:
             "tps": self.tps,
             "rpc_endpoint": self.rpc_endpoint,
             "distributed": self.distributed_status,
-            "predicted_load": self.predicted_load
+            "predicted_load": self.predicted_load,
+            "storage_health": self.storage_health,
+            "specs": self.specs
         }
 
 class ResourcePredictor:
@@ -154,6 +158,8 @@ class MeshRouter:
             peer.queue_depth = data.get("queue_depth", 0)
             peer.tps = metrics.get("benchmarks", {}).get("tps", 0.0)
             peer.latency_ms = int((time.time() - start) * 1000)
+            peer.storage_health = metrics.get("storage_health", {})
+            peer.specs = metrics.get("specs", {})
             
             # RPC Info
             dist = data.get("distributed", {})
@@ -188,7 +194,7 @@ class MeshRouter:
         local_vram = local_metrics.get("vram_gb", 8.0)
         local_cpu = local_metrics.get("cpu_percent", 0.0)
         local_models = await infrastructure_manager.get_installed_models("ollama")
-        has_model_locally = not model_name or any(model_name in m for m in local_models)
+        has_model_locally = not model_name or any(model_name in (m["name"] if isinstance(m, dict) else m) for m in local_models)
         
         local_tps = benchmarker.last_results.get("tps", 0.0)
         local_tps_boost = 1 + (local_tps / 10.0)
@@ -210,7 +216,7 @@ class MeshRouter:
             if peer.status != "online":
                 continue
             
-            has_model_on_peer = not model_name or any(model_name in m for m in peer.models)
+            has_model_on_peer = not model_name or any(model_name in (m["name"] if isinstance(m, dict) else m) for m in peer.models)
             peer_multiplier = 2.0 if has_model_on_peer else 0.1
             tps_boost = 1 + (peer.tps / 10.0)
             

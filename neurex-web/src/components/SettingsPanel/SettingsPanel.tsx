@@ -97,10 +97,15 @@ export function SettingsPanel() {
     if (!localSettings || isViewer) return;
     setSaving(true);
     try {
+      const settingsToSave = { ...localSettings };
+      if (typeof settingsToSave.storage_paths === 'string') {
+        settingsToSave.storage_paths = settingsToSave.storage_paths.split(',').map(p => p.trim()).filter(p => p);
+      }
+
       const res = await fetch(`${API_BASE}/api/settings/`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${store.token}` },
-        body: JSON.stringify({ settings: localSettings })
+        body: JSON.stringify({ settings: settingsToSave })
       });
       if (res.ok) {
         toast.success("Settings committed");
@@ -150,7 +155,13 @@ export function SettingsPanel() {
             </select>
           )}
           {type === 'input' && (
-            <input type="text" value={value} onChange={e => handleChange(key, e.target.value)} className="settings-input" disabled={restricted} />
+            <input 
+              type="text" 
+              value={Array.isArray(value) ? value.join(", ") : (value || "")} 
+              onChange={e => handleChange(key, e.target.value)} 
+              className="settings-input" 
+              disabled={restricted} 
+            />
           )}
           {type === 'range' && (
             <div className="slider-group">

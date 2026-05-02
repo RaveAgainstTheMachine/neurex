@@ -2,7 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, Gauge, Cpu, Database, HardDrive, 
-  Activity, Server, Zap, Globe, 
+  Activity, Server, Zap, Globe, Monitor,
   ArrowUpRight, ArrowDownRight, RefreshCcw
 } from 'lucide-react';
 import { useStore } from '../../lib/store';
@@ -201,13 +201,25 @@ const NodeCard = ({ name, status, isLocal, metrics, engines, peerData, localMode
     </div>
 
     <div className="node-specs">
-      <div className="spec-item">
-        <Zap size={12} />
-        <span>{isLocal ? `${metrics?.vram_gb || 0}GB` : `${peerData?.vram_gb || 0}GB`} VRAM</span>
+      <div className="spec-item cpu-unified">
+        <Cpu size={12} />
+        <div className="spec-column">
+          <span className="spec-main">{isLocal ? (metrics?.specs?.cpu_cores || '...') : (peerData?.specs?.cpu_cores || '...')} CORES</span>
+          <span className="spec-sub">{isLocal ? metrics?.specs?.cpu_model : peerData?.specs?.cpu_model}</span>
+        </div>
       </div>
       <div className="spec-item">
-        <Cpu size={12} />
+        <Monitor size={12} />
         <span>{isLocal ? `${metrics?.ram_total_gb || 0}GB` : `${peerData?.ram_total_gb || 0}GB`} RAM</span>
+      </div>
+      <div className="spec-item gpu-unified">
+        <Zap size={12} className={(isLocal ? metrics?.specs?.gpu_model : peerData?.specs?.gpu_model) && (isLocal ? metrics?.specs?.gpu_model : peerData?.specs?.gpu_model) !== 'N/A' ? 'text-amber' : ''} />
+        <div className="spec-column">
+          <span className="spec-main">{isLocal ? `${metrics?.vram_gb || 0}GB` : `${peerData?.vram_gb || 0}GB`} VRAM</span>
+          {(isLocal ? metrics?.specs?.gpu_model : peerData?.specs?.gpu_model) && (isLocal ? metrics?.specs?.gpu_model : peerData?.specs?.gpu_model) !== 'N/A' && (
+            <span className="spec-sub text-amber">{isLocal ? metrics?.specs?.gpu_model : peerData?.specs?.gpu_model}</span>
+          )}
+        </div>
       </div>
       {isLocal && metrics?.disk_total_gb && (
         <div className="spec-item">
@@ -223,12 +235,24 @@ const NodeCard = ({ name, status, isLocal, metrics, engines, peerData, localMode
       )}
     </div>
 
-    {isLocal && metrics?.storage_health && (
+    {(isLocal ? metrics?.storage_health : peerData?.storage_health) && (
       <div className="node-storage-health">
-        {Object.entries(metrics.storage_health).map(([path, health]: any) => (
+        {Object.entries(isLocal ? metrics.storage_health : peerData.storage_health).map(([path, health]: any) => (
           <div key={path} className={`storage-path-tag ${health.status}`} title={`${path}: ${health.writable ? 'Writable' : 'Read-Only'}`}>
             <Database size={10} />
-            <span>{path.length > 20 ? '...' + path.slice(-17) : path}</span>
+            <div className="storage-path-info">
+              {health.labels && health.labels.length > 0 && (
+                <div className="storage-labels">
+                  {health.labels.map((l: string) => <span key={l} className="path-label">{l}</span>)}
+                </div>
+              )}
+              <span>{path.length > 25 ? '...' + path.slice(-22) : path}</span>
+              {health.usage && (
+                <span className="path-usage-mini">
+                  {health.usage.used_gb}G / {health.usage.total_gb}G ({health.usage.percent}%)
+                </span>
+              )}
+            </div>
             {health.writable ? <ArrowUpRight size={10} className="text-success" /> : <ArrowDownRight size={10} className="text-error" />}
           </div>
         ))}
@@ -247,9 +271,9 @@ const NodeCard = ({ name, status, isLocal, metrics, engines, peerData, localMode
 
     {((isLocal && localModels) || (!isLocal && peerData?.models)) && (
       <div className="node-models">
-        {(isLocal ? localModels : peerData.models).slice(0, 8).map((m: any) => {
-          const name = isLocal ? m.name : m;
-          const isActive = isLocal ? m.is_active : false; // Peers don't report active models yet
+        {(isLocal ? localModels : (peerData?.models || [])).slice(0, 8).map((m: any) => {
+          const name = typeof m === 'string' ? m : m.name;
+          const isActive = typeof m === 'string' ? false : !!m.is_active;
           return (
             <div 
               key={name} 
@@ -257,12 +281,12 @@ const NodeCard = ({ name, status, isLocal, metrics, engines, peerData, localMode
               title={isActive ? 'Currently Loaded in Engine' : 'Installed (Cold)'}
             >
               {isActive && <div className="active-dot" />}
-              {name.split(':')[0]}
+              {name.replace('registry.ollama.ai/library/', '').replace('library/', '').split(':')[0]}
             </div>
           );
         })}
-        {(isLocal ? localModels : peerData.models).length > 8 && (
-          <div className="model-mini-tag">+{(isLocal ? localModels : peerData.models).length - 8} more</div>
+        {(isLocal ? localModels : (peerData?.models || [])).length > 8 && (
+          <div className="model-mini-tag">+{(isLocal ? localModels : (peerData?.models || [])).length - 8} more</div>
         )}
       </div>
     )}

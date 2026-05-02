@@ -9,7 +9,14 @@ Access the dashboard via the **Activity Bar** (Infrastructure tab) or the **Subs
 Each card in the dashboard represents a compute node (Local or Peer):
 - **Resource Pools**: Real-time aggregation of CPU, RAM, VRAM, and Disk usage.
 - **Storage Health**: Visual indicators of the health and accessibility of configured storage paths (e.g., `models_dir`, `neurex_install_dir`).
+- **Hardware Telemetry**: Real-time discovery and display of CPU (model/cores) and GPU (model/VRAM) specifications.
 - **Model Inventory**: A per-node list of installed and active models.
+
+### Hardware High-Density View
+Node cards use a **Spec Column** architecture that merges hardware identifiers with their corresponding metrics:
+- **CPU Column**: Unified display of CPU Model and Core Count.
+- **GPU Column**: Unified display of GPU Model and VRAM Capacity.
+This architecture eliminates the need for tooltips and provides instant compute capacity assessment.
 
 ## 2. Model Operational States
 Neurex distinguishes between the static presence of a model and its runtime readiness:

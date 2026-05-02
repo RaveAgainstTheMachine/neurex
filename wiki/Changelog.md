@@ -2,6 +2,24 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
+## [0.4.0] - 2026-05-02: INFRASTRUCTURE NOC & GITEA INTEGRATION
+### Added
+- **Deep Hardware Telemetry Integration**: Implemented real-time discovery for CPU (model/cores) and GPU (model/VRAM) to provide high-fidelity infrastructure observability.
+- **Mesh-Wide Hardware Propagation**: Hardware specifications are now correctly serialized and broadcast across the federated mesh, ensuring global compute capacity visibility.
+- **Unified NOC Dashboard (v2)**: Refactored node cards with a high-density "Spec Column" architecture, merging model identifiers directly with core/VRAM metrics to eliminate tooltip dependency.
+- **Skills & Extensions Marketplace (v2)**: Re-architected the search engine to provide a unified, global search experience across both installed assets and the remote curated marketplace.
+- **Proactive Registry Diagnostics**: Implemented a contextual empty-state for the Skills & Extensions panel that directs users to the marketplace when no local assets are detected.
+- **Expanded Audio Substrate**: Added support for *Whisper Large V3* (High-Accuracy) alongside *Whisper Large V3 Turbo* (High-Speed) to meet diverse audio reasoning requirements.
+
+### Fixed
+- **Storage Path Alignment**: Resolved persistent path-matching issues in the `InfrastructureManager` by implementing robust normalization for `NEUREX` and `MODELS` labels.
+- **Registry Desynchronization**: Fixed a regression where the search bar only targeted the "Discover" tab, restoring full search capabilities for installed skills.
+- **Telemetry UI Blockers**: Resolved "0.00GB" disk usage display issues caused by path mismatches in the backend validation engine.
+
+### Changed
+- **Gitea-Native Issue Tracking**: Formalized a new development protocol in `.antigravityrules` that prioritizes Gitea's native Issue substrate over local markdown trackers.
+- **Substrate nomenclature**: Standardized the term "Skills & Extensions" across the entire UI for mental model alignment.
+
 ## [0.3.5] - 2026-05-02: NEURAL INFRASTRUCTURE NOC
 ### Added
 - **Phase 55: Infrastructure Hub Stabilization**: Launched the "NOC-style" Infrastructure Dashboard for deep hardware and model observability.

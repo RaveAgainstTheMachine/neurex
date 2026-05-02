@@ -11,6 +11,8 @@ interface Skill {
   description: string;
   tools_count: number;
   url: string;
+  author?: string;
+  version?: string;
 }
 
 import { AlertTriangle, ChevronDown, ChevronRight } from "lucide-react";
@@ -128,7 +130,8 @@ export function SkillsPanel() {
   const [selectedSkill, setSelectedSkill] = useState<any>(null);
   
   // Marketplace states
-  const [marketSearch, setMarketSearch] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  
   const [marketCategory, setMarketCategory] = useState("All");
 
   const fetchSkills = async () => {
@@ -180,14 +183,21 @@ export function SkillsPanel() {
     else fetchCurated();
   }, [tab]);
 
+  const filteredInstalled = useMemo(() => {
+    return skills.filter(s => 
+      s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      s.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [skills, searchQuery]);
+
   const filteredMarketplace = useMemo(() => {
     return curated.filter(item => {
-      const matchesSearch = item.name.toLowerCase().includes(marketSearch.toLowerCase()) || 
-                            item.description.toLowerCase().includes(marketSearch.toLowerCase());
+      const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                            item.description.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = marketCategory === "All" || item.category === marketCategory;
       return matchesSearch && matchesCategory;
     });
-  }, [curated, marketSearch, marketCategory]);
+  }, [curated, searchQuery, marketCategory]);
 
   const handleInstall = async (url: string) => {
     setInstalling(true);
@@ -205,7 +215,7 @@ export function SkillsPanel() {
         throw new Error(error.detail || "Installation failed");
       }
       toast.success("Skill installed successfully");
-      setNewSkillUrl("");
+      setSearchQuery("");
       setTab("installed");
       fetchSkills();
     } catch (err: any) {
@@ -255,10 +265,10 @@ export function SkillsPanel() {
         <div className="extensions-search-container">
           <input 
             type="text" 
-            placeholder="Search Skills in Marketplace" 
+            placeholder="Search Skills & Extensions" 
             className="extensions-search-input"
-            value={tab === "installed" ? "" : marketSearch}
-            onChange={(e) => tab === "installed" ? setTab("discover") : setMarketSearch(e.target.value)}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
           <div className="extensions-search-icon"><Search size={14} /></div>
         </div>
@@ -271,31 +281,41 @@ export function SkillsPanel() {
             <span>INSTALLED</span>
           </div>
           <div className="extensions-list">
-            {skills.map(skill => (
-              <div key={skill.id} className="extension-item" onClick={() => fetchSkillDetails(skill.id)}>
-                <div className="extension-icon">
-                  <Puzzle size={24} className="text-purple" />
-                </div>
-                <div className="extension-details">
-                  <div className="extension-name-row">
-                    <span className="extension-name">{skill.name}</span>
-                    <button 
-                      className="extension-manage"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setConfirmState({ show: true, skillId: skill.id });
-                      }}
-                    >
-                      <Trash2 size={12} />
-                    </button>
+            {filteredInstalled.length > 0 ? (
+              filteredInstalled.map(skill => (
+                <div key={skill.id} className="extension-item" onClick={() => fetchSkillDetails(skill.id)}>
+                  <div className="extension-icon">
+                    <Puzzle size={24} className="text-purple" />
                   </div>
-                  <span className="extension-description">{skill.description}</span>
-                  <div className="extension-footer">
-                    <span className="extension-author">Neurex Core</span>
+                  <div className="extension-details">
+                    <div className="extension-name-row">
+                      <span className="extension-name">{skill.name}</span>
+                      <button 
+                        className="extension-manage"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setConfirmState({ show: true, skillId: skill.id });
+                        }}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                    <span className="extension-description">{skill.description}</span>
+                    <div className="extension-footer">
+                      <span className="extension-author">{skill.author || 'Local Agent'}</span>
+                    </div>
                   </div>
                 </div>
+              ))
+            ) : (
+              <div className="empty-state">
+                <Puzzle size={32} className="text-muted" />
+                <p>No skills or extensions installed.</p>
+                <button className="btn btn--purple btn--xs" onClick={() => setTab("discover")}>
+                  Discover in Marketplace
+                </button>
               </div>
-            ))}
+            )}
           </div>
         </div>
 

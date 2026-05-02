@@ -3,9 +3,11 @@ core/infrastructure/manager.py
 Manages LLM engines (Ollama, vLLM, etc.) and system resources.
 """
 import os
+import sys
 import asyncio
 import shutil
 import psutil
+import platform
 import structlog
 from typing import Dict, List, Any
 
@@ -169,10 +171,25 @@ class InfrastructureManager:
                             if len(parts) >= 2:
                                 if parts[0] == "registry.ollama.ai":
                                     parts = parts[1:]
+                                if len(parts) > 0 and parts[0] == "library":
+                                    parts = parts[1:]
                                 model_name = "/".join(parts)
+                                # Try to parse manifest for size
+                                size_gb = 0.0
+                                try:
+                                    manifest_file = Path(root) / file
+                                    with open(manifest_file, "r") as f:
+                                        m_data = json.load(f)
+                                        total_bytes = sum(layer.get("size", 0) for layer in m_data.get("layers", []))
+                                        # Also add the config layer size if it exists
+                                        total_bytes += m_data.get("config", {}).get("size", 0)
+                                        size_gb = round(total_bytes / (1024 ** 3), 2)
+                                except Exception:
+                                    pass
+
                                 models.append({
                                     "name": f"{model_name}:{file}",
-                                    "size_gb": 0,
+                                    "size_gb": size_gb,
                                     "modified_at": "filesystem_fallback"
                                 })
             
@@ -379,22 +396,86 @@ class InfrastructureManager:
             "disk_used_gb": round(used_gb, 1),
             "disk_free_gb": round(free_gb, 1),
             "disk_percent": round(disk_percent, 1),
-            "storage_health": self.validate_storage_permissions()
+            "storage_health": self.validate_storage_permissions(),
+            "specs": self.get_hardware_specs()
         }
+
+    def get_hardware_specs(self) -> Dict[str, Any]:
+        """Discovery of hardware identifiers (CPU model, GPU model, core count)."""
+        specs = {
+            "cpu_cores": psutil.cpu_count(logical=True),
+            "cpu_physical_cores": psutil.cpu_count(logical=False),
+            "cpu_model": "Unknown CPU",
+            "gpu_model": "N/A"
+        }
+        
+        # 1. Try to get CPU Model Name
+        try:
+            if platform.system() == "Linux":
+                with open("/proc/cpuinfo", "r") as f:
+                    for line in f:
+                        if "model name" in line:
+                            specs["cpu_model"] = line.split(":")[1].strip()
+                            break
+            elif platform.system() == "Darwin":
+                import subprocess
+                specs["cpu_model"] = subprocess.check_output(["sysctl", "-n", "machdep.cpu.brand_string"]).decode().strip()
+        except Exception:
+            pass
+
+        # 2. Try to get GPU Model (NVIDIA)
+        try:
+            import subprocess
+            res = subprocess.run(
+                ["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"], 
+                capture_output=True, text=True, timeout=1
+            )
+            if res.returncode == 0:
+                specs["gpu_model"] = res.stdout.strip()
+        except Exception:
+            pass
+            
+        return specs
 
     def validate_storage_permissions(self) -> Dict[str, Any]:
         """Checks if configured storage paths are writable and exists."""
         from core.settings.manager import settings_manager
         paths = settings_manager.get("storage_paths")
+        neurex_dir = os.path.normpath(os.path.expanduser(settings_manager.get("neurex_install_dir")))
+        models_dir = os.path.normpath(os.path.expanduser(settings_manager.get("models_dir")))
+        
         results = {}
         for p in paths:
-            abs_p = os.path.abspath(os.path.expanduser(p))
+            abs_p = os.path.normpath(os.path.abspath(os.path.expanduser(p)))
             exists = os.path.exists(abs_p)
             writable = os.access(abs_p, os.W_OK) if exists else False
+            
+            # Dynamic labeling with normalized paths
+            labels = []
+            if abs_p == neurex_dir:
+                labels.append("NEUREX")
+            if abs_p == models_dir:
+                labels.append("MODELS")
+            
+            usage_data = None
+            if exists:
+                try:
+                    usage = psutil.disk_usage(abs_p)
+                    usage_data = {
+                        "total_gb": round(usage.total / (1024 ** 3), 1),
+                        "used_gb": round(usage.used / (1024 ** 3), 1),
+                        "free_gb": round(usage.free / (1024 ** 3), 1),
+                        "percent": usage.percent
+                    }
+                except Exception:
+                    pass
+
             results[p] = {
                 "exists": exists,
                 "writable": writable,
-                "status": "ok" if (exists and writable) else "error"
+                "status": "ok" if (exists and writable) else "error",
+                "labels": labels,
+                "usage": usage_data
             }
         return results
 

@@ -7,6 +7,12 @@ Skills can be discovered via the **SkillsMP Marketplace** integrated directly in
 - **Curated List**: A set of verified, high-performance skills (Web Search, Git Manager, Terminal).
 - **Marketplace**: Third-party skills shared via GitHub repositories.
 
+## 2. Unified Search & Discovery
+The `SkillsPanel` features a global, real-time search substrate:
+- **Global Filter**: Simultaneously searches both the local **Installed** registry and the remote **Marketplace**.
+- **Proactive Empty States**: If no local skills are detected, the system provides a contextual call-to-action (CTA) directing the user to the discovery marketplace.
+- **Nomenclature**: Unified as "Skills & Extensions" to align with industry-standard extensibility models.
+
 ## 2. Installation (Git-Based)
 Skills are installed by cloning a Git repository into the `neurex-api/skills/` directory.
 - **Support for Subdirectories**: Neurex can extract specific sub-paths from a repository (e.g., `git+https://github.com/user/repo.git#path/to/skill`).
