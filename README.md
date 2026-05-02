@@ -56,51 +56,63 @@
 
 ## 🏛️ Architecture
 
-<div align="center">
-  <a href="./assets/neurex_arch.png" target="_blank">
-    <img src="./assets/neurex_arch.png" width="100%" alt="Neurex Isometric Architecture (Click to Zoom)">
-  </a>
-  <p><i>Click the diagram above to explore the high-fidelity isometric substrate.</i></p>
-</div>
-
-<details>
-<summary><b>View Stylized Logic Flowchart</b></summary>
-
 ```mermaid
 flowchart TD
-    subgraph "Neural Mesh Hub"
-        POOL[Attention Coordinator] --- SHARD[Context Sharder]
-        SHARD --- PEERS[Federated Peer Nodes]
-        PREFETCH[Predictive Prefetcher] -.-> POOL
-    end
-
+    %% Zones
     subgraph "Sentient Core"
-        ORCH[Orchestrator / Supervisor] --- TG[Task Graph Ledger]
-        ORCH --- LINT[Neural Linter]
-        LINT --- REPAIR[Self-Repair Loop]
-        ORCH --- CONS[Swarm Consensus]
+        ORCH[Orchestrator / Supervisor]
+        TG[(Task Graph Ledger)]
+        LINT[Neural Linter]
+        CONS[Swarm Consensus]
+        REPAIR[Self-Repair Loop]
     end
 
+    subgraph "Neural Mesh Hub"
+        POOL[Attention Coordinator]
+        SHARD[Context Sharder]
+        PEERS[Federated Peer Nodes]
+        PREFETCH[Predictive Prefetcher]
+    end
+
+    subgraph "Infrastructure NOC"
+        TELEMETRY[Real-time Metrics]
+        HEALTH[Storage Health]
+        MODELS[Model Lifecycle]
+    end
+
+    %% IO Layer
     User((Developer)) == Request ==> UI[Glassmorphic Frontend]
     UI == Bridge ==> WS[WebSocket / API Hub]
     WS == Control ==> ORCH
-    
-    ORCH == Federated Search ==> RAG[Distributed RAG / Hive Mind]
-    ORCH == Telemetry ==> NOC[Infrastructure NOC]
+
+    %% Internal Connections
+    ORCH --- TG
+    ORCH --- LINT
+    ORCH --- CONS
+    LINT --- REPAIR
     
     ORCH <== Neural Link ==> POOL
+    POOL --- SHARD
+    SHARD --- PEERS
+    PREFETCH -.-> POOL
 
-    %% Styling
-    classDef core fill:#9c6fff33,stroke:#9c6fff,stroke-width:2px,color:#fff
-    classDef mesh fill:#00d2ff33,stroke:#00d2ff,stroke-width:2px,color:#fff
-    classDef io fill:#050507,stroke:#333,stroke-width:1px,color:#888
-    
-    class ORCH,TG,LINT,REPAIR,CONS core
+    ORCH == Monitoring ==> TELEMETRY
+    TELEMETRY --- HEALTH
+    TELEMETRY --- MODELS
+
+    ORCH == Intelligence ==> RAG[Distributed RAG / Hive Mind]
+
+    %% Professional Styling
+    classDef core fill:#9c6fff15,stroke:#9c6fff,stroke-width:2px,color:#fff
+    classDef mesh fill:#00d2ff15,stroke:#00d2ff,stroke-width:2px,color:#fff
+    classDef infra fill:#22c55e15,stroke:#22c55e,stroke-width:2px,color:#fff
+    classDef io fill:#0f172a,stroke:#334155,stroke-width:1px,color:#94a3b8
+
+    class ORCH,TG,LINT,CONS,REPAIR core
     class POOL,SHARD,PEERS,PREFETCH mesh
-    class UI,WS,RAG,NOC io
+    class TELEMETRY,HEALTH,MODELS infra
+    class UI,WS,RAG io
 ```
-
-</details>
 
 ---
 
