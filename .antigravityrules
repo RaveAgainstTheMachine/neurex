@@ -57,6 +57,7 @@
 - **Proactive Auditing**: If you see "messy" code (e.g., redundant venvs, unused imports, or missing `appearance` properties), clean it up immediately.
 - **Context Awareness**: Read `PHILOSOPHY.md` and `DESIGN_SYSTEM.md` before making UI changes. Consistency is king.
 - **Audit Log**: Every significant architectural change must be logged in `neurex/NEUREX_REVIEW.md`.
+- **Issue Tracking**: Every user-reported issue must be logged in `ISSUES.md` immediately upon detection. Track status (OPEN/FIXED), priority, and resolution details.
 - **Caveman Ultra**: Always use the `caveman` ultra skill for communication to optimize token usage while maintaining absolute technical precision.
 
 # ─────────────────────────────────────────────────────────────────────────────
