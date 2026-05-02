@@ -1,5 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
-import { Puzzle, Download, Trash2, Globe, Loader2, Plus, Search, Star, X, Zap } from "lucide-react";
+import { 
+  Puzzle, Download, Trash2, Globe, Loader2, Plus, 
+  Search, Star, X, Zap, AlertTriangle, ChevronDown, 
+  ChevronRight, Filter
+} from "lucide-react";
 import "./SkillsPanel.css";
 import toast from "react-hot-toast";
 
@@ -14,8 +18,6 @@ interface Skill {
   author?: string;
   version?: string;
 }
-
-import { AlertTriangle, ChevronDown, ChevronRight } from "lucide-react";
 
 function ConfirmModal({ 
   show, 
@@ -272,6 +274,20 @@ export function SkillsPanel() {
           />
           <div className="extensions-search-icon"><Search size={14} /></div>
         </div>
+        <div className="extensions-filter-container">
+          <Filter size={12} className="text-muted" />
+          <select 
+            className="extensions-category-select"
+            value={marketCategory}
+            onChange={(e) => setMarketCategory(e.target.value)}
+          >
+            <option value="All">All Categories</option>
+            <option value="Logic">Logic</option>
+            <option value="Tools">Tools</option>
+            <option value="OS">Operating System</option>
+            <option value="Web">Web Intelligence</option>
+          </select>
+        </div>
       </div>
 
       <div className="extensions-content">
@@ -310,10 +326,16 @@ export function SkillsPanel() {
             ) : (
               <div className="empty-state">
                 <Puzzle size={32} className="text-muted" />
-                <p>No skills or extensions installed.</p>
-                <button className="btn btn--purple btn--xs" onClick={() => setTab("discover")}>
-                  Discover in Marketplace
-                </button>
+                {searchQuery ? (
+                  <p>No matching installed skills found for "{searchQuery}"</p>
+                ) : (
+                  <>
+                    <p>No skills or extensions installed.</p>
+                    <button className="btn btn--purple btn--xs" onClick={() => setTab("discover")}>
+                      Discover in Marketplace
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -325,30 +347,37 @@ export function SkillsPanel() {
             <span>DISCOVER</span>
           </div>
           <div className="extensions-list">
-            {filteredMarketplace.map(item => (
-              <div key={item.id} className="extension-item extension-item--discover">
-                <div className="extension-icon">
-                  <Globe size={24} className="text-cyan" />
-                </div>
-                <div className="extension-details">
-                  <div className="extension-name-row">
-                    <span className="extension-name">{item.name}</span>
-                    <button 
-                      className="btn btn--purple btn--xs"
-                      onClick={() => handleInstall(item.url)}
-                      disabled={installing}
-                    >
-                      Install
-                    </button>
+            {filteredMarketplace.length > 0 ? (
+              filteredMarketplace.map(item => (
+                <div key={item.id} className="extension-item extension-item--discover">
+                  <div className="extension-icon">
+                    <Globe size={24} className="text-cyan" />
                   </div>
-                  <span className="extension-description">{item.description}</span>
-                  <div className="extension-footer">
-                    <span className="extension-author">{item.author}</span>
-                    <span className="extension-rating"><Star size={8} fill="currentColor" /> {item.stars}</span>
+                  <div className="extension-details">
+                    <div className="extension-name-row">
+                      <span className="extension-name">{item.name}</span>
+                      <button 
+                        className="btn btn--purple btn--xs"
+                        onClick={() => handleInstall(item.url)}
+                        disabled={installing}
+                      >
+                        Install
+                      </button>
+                    </div>
+                    <span className="extension-description">{item.description}</span>
+                    <div className="extension-footer">
+                      <span className="extension-author">{item.author}</span>
+                      <span className="extension-rating"><Star size={8} fill="currentColor" /> {item.stars}</span>
+                    </div>
                   </div>
                 </div>
+              ))
+            ) : (
+              <div className="empty-state">
+                <Globe size={32} className="text-muted" />
+                <p>No extensions found in the marketplace matching your criteria.</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>
