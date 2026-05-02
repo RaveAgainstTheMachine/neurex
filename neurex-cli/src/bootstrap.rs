@@ -1,40 +1,41 @@
-use colored::*;
+use anyhow::{Context, Result, bail};
 use std::env::consts::{ARCH, OS};
 use std::fs;
 use std::io::Cursor;
 use std::path::{Path, PathBuf};
 use tokio::process::Command;
+use tracing::{info, warn};
 
-fn get_uv_target() -> &'static str {
+fn get_uv_target() -> Result<&'static str> {
     match (OS, ARCH) {
-        ("linux", "x86_64") => "x86_64-unknown-linux-gnu",
-        ("linux", "aarch64") => "aarch64-unknown-linux-gnu",
-        ("macos", "x86_64") => "x86_64-apple-darwin",
-        ("macos", "aarch64") => "aarch64-apple-darwin",
-        ("windows", "x86_64") => "x86_64-pc-windows-msvc",
-        _ => panic!(
+        ("linux", "x86_64") => Ok("x86_64-unknown-linux-gnu"),
+        ("linux", "aarch64") => Ok("aarch64-unknown-linux-gnu"),
+        ("macos", "x86_64") => Ok("x86_64-apple-darwin"),
+        ("macos", "aarch64") => Ok("aarch64-apple-darwin"),
+        ("windows", "x86_64") => Ok("x86_64-pc-windows-msvc"),
+        _ => bail!(
             "Unsupported OS/Architecture combination for Neurex Bootstrapper: {}-{}",
             OS, ARCH
         ),
     }
 }
 
-pub async fn ensure_uv() -> PathBuf {
-    let home = dirs::home_dir().expect("Failed to locate home directory");
+pub async fn ensure_uv() -> Result<PathBuf> {
+    let home = dirs::home_dir().context("Failed to locate home directory")?;
     let neurex_dir = home.join(".neurex");
     let bin_dir = neurex_dir.join("bin");
-    fs::create_dir_all(&bin_dir).expect("Failed to create ~/.neurex/bin directory");
+    fs::create_dir_all(&bin_dir).context("Failed to create ~/.neurex/bin directory")?;
 
     let exe_ext = if OS == "windows" { ".exe" } else { "" };
     let uv_path = bin_dir.join(format!("uv{}", exe_ext));
 
     if uv_path.exists() {
-        return uv_path;
+        return Ok(uv_path);
     }
 
-    println!("{} Bootstrapping Hermetic Runtime (uv)...", "[*]".cyan());
+    info!("Bootstrapping Hermetic Runtime (uv)...");
 
-    let target = get_uv_target();
+    let target = get_uv_target()?;
     let ext = if OS == "windows" { "zip" } else { "tar.gz" };
     let url = format!(
         "https://github.com/astral-sh/uv/releases/latest/download/uv-{}.{}",
@@ -46,23 +47,24 @@ pub async fn ensure_uv() -> PathBuf {
         .get(&url)
         .send()
         .await
-        .expect("Failed to download uv runtime");
-    let bytes = response.bytes().await.expect("Failed to read uv bytes");
+        .context("Failed to download uv runtime")?;
+    
+    let bytes = response.bytes().await.context("Failed to read uv bytes")?;
 
-    println!("{} Extracting Runtime Engine...", "[*]".cyan());
+    info!("Extracting Runtime Engine...");
 
     if OS == "windows" {
         let reader = Cursor::new(bytes);
-        let mut archive = zip::ZipArchive::new(reader).expect("Failed to read zip");
+        let mut archive = zip::ZipArchive::new(reader).context("Failed to read zip")?;
         for i in 0..archive.len() {
-            let mut file = archive.by_index(i).unwrap();
+            let mut file = archive.by_index(i).context("Failed to access zip entry")?;
             let outpath = match file.enclosed_name() {
                 Some(path) => path.to_owned(),
                 None => continue,
             };
-            if outpath.file_name().unwrap() == "uv.exe" {
-                let mut outfile = fs::File::create(&uv_path).unwrap();
-                std::io::copy(&mut file, &mut outfile).unwrap();
+            if outpath.file_name().and_then(|n| n.to_str()) == Some("uv.exe") {
+                let mut outfile = fs::File::create(&uv_path).context("Failed to create uv.exe")?;
+                std::io::copy(&mut file, &mut outfile).context("Failed to copy uv.exe bytes")?;
                 break;
             }
         }
@@ -72,35 +74,31 @@ pub async fn ensure_uv() -> PathBuf {
 
         let tar = GzDecoder::new(Cursor::new(bytes));
         let mut archive = Archive::new(tar);
-        for file in archive.entries().unwrap() {
-            let mut file = file.unwrap();
-            let path = file.path().unwrap().into_owned();
-            if path.file_name().unwrap() == "uv" {
-                let mut outfile = fs::File::create(&uv_path).unwrap();
-                std::io::copy(&mut file, &mut outfile).unwrap();
+        for file in archive.entries().context("Failed to read tar entries")? {
+            let mut file = file.context("Failed to access tar entry")?;
+            let path = file.path().context("Failed to get tar entry path")?.into_owned();
+            if path.file_name().and_then(|n| n.to_str()) == Some("uv") {
+                let mut outfile = fs::File::create(&uv_path).context("Failed to create uv binary")?;
+                std::io::copy(&mut file, &mut outfile).context("Failed to copy uv binary bytes")?;
 
                 #[cfg(unix)]
                 {
                     use std::os::unix::fs::PermissionsExt;
-                    let mut perms = fs::metadata(&uv_path).unwrap().permissions();
+                    let mut perms = fs::metadata(&uv_path).context("Failed to get uv binary metadata")?.permissions();
                     perms.set_mode(0o755);
-                    fs::set_permissions(&uv_path, perms).unwrap();
+                    fs::set_permissions(&uv_path, perms).context("Failed to set uv binary permissions")?;
                 }
                 break;
             }
         }
     }
 
-    println!(
-        "  {} Hermetic Engine provisioned at {:?}",
-        "✓".green(),
-        uv_path
-    );
-    uv_path
+    info!("Hermetic Engine provisioned at {:?}", uv_path);
+    Ok(uv_path)
 }
 
-pub async fn ensure_env(uv_path: &Path) -> PathBuf {
-    let home = dirs::home_dir().unwrap();
+pub async fn ensure_env(uv_path: &Path) -> Result<PathBuf> {
+    let home = dirs::home_dir().context("Failed to locate home directory")?;
     let env_dir = home.join(".neurex").join("env");
 
     let python_exe = if OS == "windows" {
@@ -110,13 +108,10 @@ pub async fn ensure_env(uv_path: &Path) -> PathBuf {
     };
 
     if python_exe.exists() {
-        return env_dir;
+        return Ok(env_dir);
     }
 
-    println!(
-        "{} Provisioning Neural Python Environment (3.11)...",
-        "[*]".cyan()
-    );
+    info!("Provisioning Neural Python Environment (3.11)...");
 
     let status = Command::new(uv_path)
         .arg("venv")
@@ -125,18 +120,23 @@ pub async fn ensure_env(uv_path: &Path) -> PathBuf {
         .arg("3.11")
         .status()
         .await
-        .expect("Failed to run uv venv");
+        .context("Failed to run uv venv")?;
 
     if !status.success() {
-        panic!("Failed to create Python virtual environment");
+        bail!("Failed to create Python virtual environment");
     }
 
-    println!("  {} Environment created", "✓".green());
-    env_dir
+    info!("Environment created at {:?}", env_dir);
+    Ok(env_dir)
 }
 
-pub async fn install_dependencies(uv_path: &Path, env_dir: &Path, req_path: &Path) {
-    println!("{} Syncing Neural Weights & API Logic...", "[*]".cyan());
+pub async fn install_dependencies(uv_path: &Path, env_dir: &Path, req_path: &Path) -> Result<()> {
+    info!("Syncing Neural Weights & API Logic...");
+
+    if !req_path.exists() {
+        warn!("Requirements file NOT FOUND at {:?}. Skipping dependency sync.", req_path);
+        return Ok(());
+    }
 
     let status = Command::new(uv_path)
         .arg("pip")
@@ -146,11 +146,12 @@ pub async fn install_dependencies(uv_path: &Path, env_dir: &Path, req_path: &Pat
         .env("VIRTUAL_ENV", env_dir)
         .status()
         .await
-        .expect("Failed to run uv pip install");
+        .context("Failed to run uv pip install")?;
 
     if !status.success() {
-        panic!("Failed to install dependencies");
+        bail!("Failed to install dependencies from {:?}", req_path);
     }
 
-    println!("  {} Dependencies synchronized", "✓".green());
+    info!("Dependencies synchronized successfully");
+    Ok(())
 }

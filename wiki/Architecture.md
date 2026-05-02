@@ -53,14 +53,17 @@ Phase 53/54 transitions the IDE from a manual development setup to a frictionles
 ### Dual-Layer Architecture
 The system is logically split into two isolated planes to balance host performance with agent security:
 - **Control Plane (Host Layer)**: A native Rust daemon (`neurex-cli`) that governs the substrate. It embeds the entire React frontend and serves it via an internal `axum` web server. It manages hardware diagnostics and life-cycle orchestration.
-- **Execution Plane (Sandbox Layer)**: An isolated containerized environment (Docker/WASM) where Neural Agents operate. This ensures that agentic mutations and tool calls are physically contained and cannot impact the host system without explicit permission.
+### Execution Plane (Triple-Tier Sandbox)
+The system uses a resilient, multi-stage execution model to ensure agentic security and functional continuity across all platforms:
+- **Tier 1: Performance (Docker)**: High-speed, native Linux containerization with full tool-chain support and hardware (NVIDIA/AMD) acceleration.
+- **Tier 2: Portability (WASM/WASI)**: An architecture-agnostic sandbox powered by `wasmtime`. Ideal for zero-dependency execution and instant-on micro-tasks.
+- **Tier 3: Reliability (Native Substrate)**: A jailed, pure-Rust filesystem executor built directly into the CLI. Acts as the ultimate safety net for basic operations when Docker/WASM are unavailable.
 
-### Autonomous Provisioning (The "uv" Bootstrapper)
-To eliminate external dependencies (Python, Node, Pip), the daemon possesses a self-synthesizing runtime:
-- **Dynamic Fetcher**: The daemon detects host OS/Arch and dynamically downloads a standalone `uv` binary.
-- **Hermetic Runtime**: Using `uv`, the daemon provisions its own portable Python 3.11 interpreter and virtual environment in `~/.neurex/env`.
-- **Dependency Sync**: It automatically synchronizes its own neural weights and backend API dependencies (PyTorch/FastAPI) on the first boot, ensuring a "one-click" experience on vanilla Windows, macOS, and Linux systems.
+### Proactive Provisioning (Autonomous Onboarding)
+Beyond hermetic runtimes, the daemon possesses a sentient environment setup engine (`neurex provision`):
+- **Hardware-Aware Synthesis**: Detects specific GPU (Nvidia/AMD/Intel) and CPU (Apple Silicon/x86) architectures.
+- **Interactive Authorization**: Suggests and executes platform-specific installation commands (apt, dnf, pacman, brew) to install Docker and hardware runtimes.
+- **Cross-Platform Diagnostic**: Provides actionable diagnostic reports through `neurex doctor`, bridging the gap between a vanilla host and a high-performance neural compute node.
 
 ### Universal Mesh & Mobile Node Path
 The Rust-first core enables the daemon to be cross-compiled for mobile platforms, allowing mobile NPUs (Snapdragon X, Apple A-Series) to participate as first-class compute nodes in the federated Neurex Mesh.
-

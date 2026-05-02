@@ -7,8 +7,8 @@ Welcome to the official Neurex roadmap. This document tracks the trajectory of t
 ---
 
 ## 🛰️ Current Operational Status
-- **Current Version**: `v0.3.4-hermetic`
-- **Core Engine**: NeuralHarness v2.0 (Hermetic Substrate)
+- **Current Version**: `v0.3.5-substrate`
+- **Core Engine**: NeuralHarness v2.0 (Triple-Tier Substrate)
 - **Active Infrastructure**: Neurex CLI (Native Rust Control Plane)
 - **Network State**: 54 Phases of Core Hardening Complete.
 
@@ -30,6 +30,8 @@ Welcome to the official Neurex roadmap. This document tracks the trajectory of t
 ### Phase 54: Universal Hermetic Substrate (Zero-Dependency) [COMPLETE]
 - [x] **Hermetic Frontend Embedding**: Serving the React UI natively via Rust/Axum.
 - [x] **Autonomous Backend Bootstrapper**: Self-provisioning of Python/UV runtimes on fresh host systems.
+- [x] **Triple-Tier Execution Plane**: Docker, WASM, and Native fallback sandboxing.
+- [x] **Proactive Environment Provisioner**: Autonomous OS/Hardware setup engine.
 - [x] **Mobile-Ready Mesh Core**: Portability to NPU-ready mobile nodes.
 
 ---

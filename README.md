@@ -1,10 +1,10 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/matiassingers/awesome-readme/master/readme.png" width="200" height="200">
+  <img src="./assets/neurex_screenshot.png" width="800">
   <h1>⬡ Neurex</h1>
   <p><b>The Sentient-Class Agentic IDE & Unified Neural Mesh Hub</b></p>
  
   [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](https://opensource.org/licenses/MIT)
-  [![Version: v0.3.4-hermetic](https://img.shields.io/badge/Version-v0.3.4--hermetic-blueviolet.svg)](#)
+  [![Version: v0.3.5-substrate](https://img.shields.io/badge/Version-v0.3.5--substrate-blueviolet.svg)](#)
   [![Status: Phase 54 Complete](https://img.shields.io/badge/Status-Phase%2054%20Complete-success.svg)](#)
   [![Design: Glassmorphism](https://img.shields.io/badge/Design-Glassmorphism-9c6fff.svg)](#)
  

@@ -118,13 +118,54 @@ async def run_command(command: str, cwd: str = ".", approved: bool = False, auto
         return f"{status}\n{output}"
 
     except FileNotFoundError:
-        # Docker not available
-        log.error("terminal.docker_not_found", error="Docker is required for sandboxed execution.")
-        if os.getenv("NEUREX_ALLOW_HOST_FALLBACK", "false").lower() == "true":
-             log.warning("terminal.host_fallback_active", warning="UNSAFE: Running on host!")
-             return await _host_exec_fallback(command, cwd)
+        # Docker not available, try WASM fallback
+        log.warning("terminal.docker_not_found", error="Docker not detected. Attempting WASM/WASI fallback...")
+        try:
+            return await _wasm_exec_fallback(command, cwd)
+        except Exception as e:
+            log.error("terminal.wasm_fallback_failed", error=str(e))
+            if os.getenv("NEUREX_ALLOW_HOST_FALLBACK", "false").lower() == "true":
+                log.warning("terminal.host_fallback_active", warning="UNSAFE: Running on host!")
+                return await _host_exec_fallback(command, cwd)
+            
+            return f"Error: Docker not found and WASM fallback failed ({e}). Sandboxed execution is mandatory. Please start Docker or ensure neurex-cli is running."
+
+async def _wasm_exec_fallback(command: str, cwd: str) -> str:
+    """Securely execute via the Rust CLI's Sandbox Engine (WASM or Native Fallback)."""
+    import httpx
+    
+    cli_url = os.getenv("NEUREX_CLI_URL", "http://localhost:3000")
+    wasm_path = os.path.expanduser("~/.neurex/bin/coreutils.wasm")
+    
+    # Payload always includes args, wasm_path is optional
+    payload = {
+        "args": ["sh", "-c", command] if os.path.exists(wasm_path) else command.split()
+    }
+    
+    if os.path.exists(wasm_path):
+        payload["wasm_path"] = wasm_path
+        log.info("terminal.wasm_exec", command=command)
+    else:
+        log.info("terminal.native_fallback_exec", command=command, reason="wasm_tooling_missing")
+
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        resp = await client.post(f"{cli_url}/api/sandbox/exec", json=payload)
+        if resp.status_code != 200:
+            raise Exception(f"Sandbox Host error: {resp.text}")
         
-        return "Error: Docker not found. Sandboxed execution is mandatory for security. Please start the Docker daemon."
+        data = resp.json()
+        stdout = data.get("stdout", "")
+        stderr = data.get("stderr", "")
+        rc = data.get("exit_code", -1)
+        error = data.get("error")
+
+        if error:
+            return f"❌ Sandbox Engine Error: {error}"
+
+        output = stdout + stderr
+        status = "✅ exit 0" if rc == 0 else f"❌ exit {rc}"
+        prefix = "[WASM]" if "wasm_path" in payload else "[NATIVE]"
+        return f"{prefix} {status}\n{output}"
 
 async def _host_exec_fallback(command: str, cwd: str) -> str:
     """UNSAFE: Directly execute on host. Requires NEUREX_ALLOW_HOST_FALLBACK=true"""

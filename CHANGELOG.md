@@ -25,14 +25,17 @@ All notable changes to the Neurex project will be documented in this file.
 - **Neural Law Engine**: Enforced the Anti-Gravity Protocol at the neural weight level during evolution.
 - **Consensus Dashboard**: High-fidelity frontend for overseeing substrate bridges and protocol alignment.
 
-## [0.3.4] - 2026-05-01: UNIVERSAL HERMETIC SUBSTRATE
+## [0.3.5] - 2026-05-01: THE TRIPLE-TIER SUBSTRATE
 ### Added
-- **Phase 54: Universal Hermetic Substrate**: Initiated the transition to a zero-dependency distribution model for Windows, macOS, and Linux.
-- **Hermetic Frontend Embedding (Pillar 1)**: Successfully bundled the entire React/Vite UI into the native Rust binary using `rust-embed`. The frontend is now served via an internal `axum` web server, eliminating the Node.js requirement.
-- **Dynamic Backend Fetcher (Pillar 2)**: Implemented the `bootstrap` module in Rust to dynamically provision a hermetic Python 3.11 environment on first run using the `uv` engine.
-- **Zero-Dependency One-Click Deployment**: Eliminated host-level requirements for Node.js, Python, NPM, and Pip. Neurex now synthesizes its own neural substrate on vanilla OS installs.
-- **Sub-ms UI Cold Starts**: Optimized GUI boot times through native binary asset delivery.
-- **Dynamic API Injection**: Implemented runtime environment variable injection into the static UI's DOM, enabling seamless frontend-backend coordination.
+- **Phase 54 Extended: The Proactive Provisioner**: Launched an autonomous environment setup engine (`neurex provision`) that detects hardware (NVIDIA, AMD, Intel, Apple Silicon) and OS (Arch, Fedora, Debian, Ubuntu, macOS, Windows) to automate substrate readiness.
+- **Triple-Tier Execution Plane**: Implemented a resilient, multi-stage sandboxing architecture:
+    - **Performance Tier**: Docker-based containers with GPU acceleration support via `nvidia-container-toolkit`.
+    - **Portability Tier**: WASM/WASI execution via `wasmtime` for zero-dependency, architecture-agnostic tasks.
+    - **Reliability Tier**: Native Rust jailed filesystem fallback for guaranteed functionality on vanilla OS installs.
+- **Cross-Platform Diagnostic Intelligence**: Upgraded `neurex doctor` to provide sentient, platform-specific installation advice and hardware readiness reports across all major operating systems.
+- **Sentient API Bridge**: Hardened the internal communication layer between the Rust Control Plane and Python Logic Plane, enabling seamless, sandboxed task delegation.
+
+## [0.3.4] - 2026-05-01: UNIVERSAL HERMETIC SUBSTRATE
 
 ## [0.3.3] - 2026-05-01: Neural Temporal Synthesis & Transcendence Performance
 ### Added
