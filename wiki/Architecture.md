@@ -67,3 +67,11 @@ Beyond hermetic runtimes, the daemon possesses a sentient environment setup engi
 
 ### Universal Mesh & Mobile Node Path
 The Rust-first core enables the daemon to be cross-compiled for mobile platforms, allowing mobile NPUs (Snapdragon X, Apple A-Series) to participate as first-class compute nodes in the federated Neurex Mesh.
+
+## 10. The Sentient UI (Phase 55)
+Phase 55 bridges the gap between complex substrate logic and user-facing transparency through the **Substrate Dashboard**.
+
+- **Real-Time Telemetry Bridge**: The Rust Control Plane exposes a persistent status API (`/api/substrate/status`) that streams hardware health and execution tier readiness to the frontend.
+- **Visual Health Gating**: The dashboard uses animated, color-coded state transitions (Framer Motion) to confirm when the Performance (Docker) or Portability (WASM) tiers are active.
+- **Hardware-Aware Visualization**: Detects and displays specific hardware traits (e.g., NVIDIA GPU Acceleration) directly in the UI, providing immediate confirmation of provisioning success.
+- **Sentient Diagnostics**: Integrates the "Doctor" intelligence directly into the IDE sidebar, suggesting platform-specific fixes without requiring the user to return to the terminal.

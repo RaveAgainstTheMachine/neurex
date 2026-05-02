@@ -1,7 +1,7 @@
 import React from "react";
 import { 
   Files, Search, GitBranch, Clock, MessageSquare, 
-  Cpu, Shield, Puzzle, Bot, BrainCircuit, Settings, Sparkles, Activity, Globe, Timer
+  Cpu, Shield, ShieldCheck, Puzzle, Bot, BrainCircuit, Settings, Sparkles, Activity, Globe, Timer
 } from "lucide-react";
 import { 
   DndContext, 
@@ -31,6 +31,7 @@ const SIDEBAR_ITEMS: { id: string; icon: React.FC<any>; label: string }[] = [
   { id: "timeline", icon: Clock,          label: "File Timeline" },
   { id: "history",  icon: MessageSquare,  label: "Chat History" },
   { id: "infra",    icon: Cpu,            label: "AI Infrastructure" },
+  { id: "substrate", icon: ShieldCheck,    label: "Hermetic Substrate" },
   { id: "system",   icon: Shield,         label: "System Logs" },
   { id: "skills",   icon: Puzzle,         label: "Skills & Extensions" },
   { id: "agent",    icon: Bot,            label: "Agents" },

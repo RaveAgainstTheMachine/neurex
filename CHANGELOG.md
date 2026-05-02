@@ -25,8 +25,9 @@ All notable changes to the Neurex project will be documented in this file.
 - **Neural Law Engine**: Enforced the Anti-Gravity Protocol at the neural weight level during evolution.
 - **Consensus Dashboard**: High-fidelity frontend for overseeing substrate bridges and protocol alignment.
 
-## [0.3.5] - 2026-05-01: THE TRIPLE-TIER SUBSTRATE
+## [0.3.5] - 2026-05-01: THE SENTIENT SUBSTRATE
 ### Added
+- **Phase 55: The Sentient UI**: Launched the real-time **Substrate Dashboard**, a premium glassmorphic visualizer that monitors execution tier health (Docker/WASM/Native) and hardware telemetry.
 - **Phase 54 Extended: The Proactive Provisioner**: Launched an autonomous environment setup engine (`neurex provision`) that detects hardware (NVIDIA, AMD, Intel, Apple Silicon) and OS (Arch, Fedora, Debian, Ubuntu, macOS, Windows) to automate substrate readiness.
 - **Triple-Tier Execution Plane**: Implemented a resilient, multi-stage sandboxing architecture:
     - **Performance Tier**: Docker-based containers with GPU acceleration support via `nvidia-container-toolkit`.

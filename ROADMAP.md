@@ -34,6 +34,18 @@ Welcome to the official Neurex roadmap. This document tracks the trajectory of t
 - [x] **Proactive Environment Provisioner**: Autonomous OS/Hardware setup engine.
 - [x] **Mobile-Ready Mesh Core**: Portability to NPU-ready mobile nodes.
 
+### Phase 55: The Sentient UI (Substrate Transparency) [COMPLETE]
+- [x] **Substrate Dashboard**: Premium glassmorphic interface for real-time tier health.
+- [x] **Live Hardware Telemetry**: Integrated monitoring of CPU, RAM, and GPU readiness.
+- [x] **Tier Hot-Switching Visualization**: Visual confirmation of Docker vs WASM vs Native execution paths.
+
+---
+
+## 🗺️ Future Horizons (The Singularity Continues)
+### Phase 56: Autonomous Coreutils WASM Bundler [PENDING]
+- [ ] Automated build pipeline for self-generating `.wasm` tools during provision.
+- [ ] Neural-optimized WASI runtime enhancements.
+
 ---
 
 ## 🛠️ Contribution & Development

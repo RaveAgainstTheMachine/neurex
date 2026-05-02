@@ -30,6 +30,7 @@ import { AuthOverlay } from "./components/AuthOverlay/AuthOverlay";
 import { TitleBar } from "./components/TitleBar/TitleBar";
 import { MenuBar } from "./components/MenuBar/MenuBar";
 import { CommandPalette } from "./components/CommandPalette/CommandPalette";
+import { SubstrateDashboard } from "./components/SubstrateDashboard/SubstrateDashboard";
 import { API_BASE } from "./lib/config";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useNotifications } from "./hooks/useNotifications";
@@ -71,7 +72,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
-type SidebarTab = "explorer" | "search" | "git" | "agent" | "skills" | "history" | "timeline" | "infra" | "system";
+type SidebarTab = "explorer" | "search" | "git" | "agent" | "skills" | "history" | "timeline" | "infra" | "system" | "substrate";
 
 export default function App() {
   const [blueprint, setBlueprint] = useState<UIBlueprint | null>(null);
@@ -338,6 +339,7 @@ function AppContent() {
                     {sidebarTab === "synthesis" && <SynthesisDashboard />}
                     {sidebarTab === "consensus" && <ConsensusDashboard />}
                     {sidebarTab === "temporal" && <TemporalDashboard />}
+                    {sidebarTab === "substrate" && <SubstrateDashboard />}
                   </Panel>
                   <ResizeHandle />
                   <Panel minSize={30} className="app__main-content">
