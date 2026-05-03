@@ -182,19 +182,33 @@ class InfrastructureManager:
             except Exception:
                 pass
 
-            # 2. Get all tags
+            # 2. Get all tags and enriched metadata
             try:
                 import httpx
-                async with httpx.AsyncClient(timeout=2) as client:
+                async with httpx.AsyncClient(timeout=5) as client:
                     resp = await client.get(f"{ollama_url}/api/tags")
                     if resp.status_code == 200:
                         data = resp.json()
                         for m in data.get("models", []):
-                            size_bytes = m.get("size", 0)
                             name = m["name"]
-                            import re
-                            param_match = re.search(r'[:\-]([0-9.]+[bB])', name)
-                            params = param_match.group(1).upper() if param_match else "Unknown"
+                            size_bytes = m.get("size", 0)
+                            
+                            # Fetch precise metadata via /api/show
+                            params = "Unknown"
+                            try:
+                                show_resp = await client.post(f"{ollama_url}/api/show", json={"name": name})
+                                if show_resp.status_code == 200:
+                                    show_data = show_resp.json()
+                                    details = show_data.get("details", {})
+                                    params = details.get("parameter_size", "Unknown").upper()
+                            except Exception:
+                                pass
+
+                            # Regex fallback if /api/show failed or returned Unknown
+                            if params == "Unknown":
+                                import re
+                                param_match = re.search(r'[:\-]([0-9.]+[bB])', name)
+                                params = param_match.group(1).upper() if param_match else "Unknown"
 
                             models.append({
                                 "name": name,
