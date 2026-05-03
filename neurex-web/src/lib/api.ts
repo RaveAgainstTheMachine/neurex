@@ -17,8 +17,11 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   });
 
   if (response.status === 401) {
-    state.logout();
-    throw new Error("Session expired");
+    if (token) {
+      state.logout();
+      throw new Error("Session expired");
+    }
+    throw new Error("Unauthorized access");
   }
 
   if (!response.ok) {

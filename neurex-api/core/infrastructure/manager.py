@@ -97,6 +97,56 @@ class InfrastructureManager:
             
             log.info("infra.model_pull_success", engine=engine, model=model_name)
             return True
+
+        if engine in ["llama.cpp", "llamacpp"]:
+            engine = "llama.cpp" # Normalize
+            log.info("infra.model_pull_start", engine=engine, model=model_name)
+            try:
+                from huggingface_hub import hf_hub_download
+                from core.settings.manager import settings_manager
+                from pathlib import Path
+                
+                # Check if model_name is in format 'repo/name:filename' or just 'repo/name'
+                if ":" in model_name:
+                    repo_id, filename = model_name.split(":", 1)
+                else:
+                    repo_id = model_name
+                    # Default to finding the first .gguf in the repo
+                    from huggingface_hub import HfApi
+                    api = HfApi()
+                    files = api.list_repo_files(repo_id)
+                    filename = next((f for f in files if f.endswith(".gguf")), None)
+                    if not filename:
+                        raise Exception(f"No .gguf file found in repository {repo_id}")
+
+                models_dir = Path(os.path.expanduser(settings_manager.get("models_dir"))) / "llama.cpp"
+                models_dir.mkdir(parents=True, exist_ok=True)
+                
+                log.info("infra.hf_download_start", repo=repo_id, file=filename, dest=str(models_dir))
+                
+                path = hf_hub_download(
+                    repo_id=repo_id,
+                    filename=filename,
+                    local_dir=str(models_dir),
+                    local_dir_use_symlinks=False
+                )
+                
+                log.info("infra.model_pull_success", engine=engine, model=model_name, path=path)
+                return True
+            except ImportError:
+                # Attempt to install huggingface_hub if missing
+                log.warning("infra.hf_hub_missing", msg="Attempting to install huggingface_hub...")
+                venv_python = os.path.expanduser("~/.neurex/env/bin/python")
+                python_exe = venv_python if os.path.exists(venv_python) else sys.executable
+                install_proc = await asyncio.create_subprocess_exec(
+                    python_exe, "-m", "pip", "install", "huggingface_hub"
+                )
+                await install_proc.wait()
+                # Retry download once (recursive call)
+                return await self.pull_model(engine, model_name)
+            except Exception as e:
+                log.error("infra.model_pull_failed", engine=engine, model=model_name, error=str(e))
+                raise Exception(f"Failed to pull llama.cpp model: {str(e)}")
         
         raise Exception(f"Pulling models for {engine} is not supported yet.")
 

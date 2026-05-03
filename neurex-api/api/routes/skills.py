@@ -9,12 +9,12 @@ manager = SkillManager()
 class SkillInstallRequest(BaseModel):
     url: str = Field(..., description="The Git repository URL or subpath URL")
 
-@router.get("/", dependencies=[Depends(require_role(UserRole.DEVELOPER))])
+@router.get("/")
 async def list_skills():
     """List all installed skills."""
     return manager.list_available()
 
-@router.get("/curated", dependencies=[Depends(require_role(UserRole.DEVELOPER))])
+@router.get("/curated")
 async def list_curated():
     """Fetch the 'Awesome Skills' library from remote."""
     return manager.fetch_curated_list()
