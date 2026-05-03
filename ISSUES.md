@@ -10,3 +10,5 @@
 | 006 | GPU/VRAM separated in Node Cards | FIXED | LOW | Unified into high-density columns (v12) |
 | 007 | CPU model missing/tooltip-only | FIXED | LOW | Unified with core count label (v12) |
 | 008 | Proper Gitea Issue Integration | FIXED | MEDIUM | Migrated to native Gitea Issues substrate via API sync. |
+| 013 | Critical planning failure: All connection attempts failed | FIXED | CRITICAL | Upgraded Sentinel to host-aware mode + proactive lifespan start. |
+| 014 | Critical planning failure: greenlet_spawn error | FIXED | HIGH | Disabled expire_on_commit to protect async history access. |
