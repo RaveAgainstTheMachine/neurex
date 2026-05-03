@@ -89,35 +89,52 @@ async def search_huggingface(query: str) -> List[Dict[str, Any]]:
                         tags = m.get("tags", [])
                         size_tag = next((t for t in tags if "B" in t and any(c.isdigit() for c in t)), "Unknown")
                         
-                        # Extract all GGUF variants
-                        variants = []
-                        siblings = m.get("siblings", [])
-                        for s in siblings:
-                            fname = s.get("rfilename", "")
-                            if fname.endswith(".gguf"):
-                                variants.append({
-                                    "name": fname,
-                                    "size_gb": round(s.get("size", 0) / (1024 ** 3), 2),
-                                    "params": size_tag # Default to repo tag
-                                })
-                        
-                        # Default size from first variant
-                        size_gb = variants[0]["size_gb"] if variants else 0.0
-                        
+                        # Primary repository record
                         results.append({
+                            "id": m["id"],
                             "name": m["id"],
                             "engine": "llamacpp",
                             "params": size_tag,
-                            "size_gb": size_gb,
-                            "variants": variants,
+                            "size_gb": 0,  # Will populate below
                             "context_window": 32768,
-                            "vram_required_gb": 8.0 if "7B" in size_tag else 20.0 if "30B" in size_tag else 12.0,
-                            "recommended_tasks": ["community_model"],
+                            "vram_required_gb": 0,
+                            "recommended_tasks": tags[:5],
+                            "is_downloaded": False,
+                            "is_community": True,
+                            "origin": "HF",
                             "downloads": m.get("downloads", 0),
                             "likes": m.get("likes", 0),
-                            "is_community": True,
-                            "repo_url": f"https://huggingface.co/{m['id']}"
+                            "repo_url": f"https://huggingface.co/{m['id']}",
+                            "variants": [] # Will populate below
                         })
+
+                    # Parallel fetch tree info for top results to get actual LFS sizes
+                    async def fetch_sizes(model_idx):
+                        m_obj = data[model_idx]
+                        repo_id = m_obj["id"]
+                        tree_url = f"https://huggingface.co/api/models/{repo_id}/tree/main?lfs=true"
+                        try:
+                            async with session.get(tree_url, timeout=3) as t_resp:
+                                if t_resp.status == 200:
+                                    tree_data = await t_resp.json()
+                                    variants = []
+                                    for item in tree_data:
+                                        if isinstance(item, dict) and item.get("path", "").endswith(".gguf"):
+                                            variants.append({
+                                                "name": item["path"],
+                                                "size_gb": round(item.get("size", 0) / (1024 ** 3), 2),
+                                                "params": results[model_idx]["params"]
+                                            })
+                                    results[model_idx]["variants"] = variants
+                                    if variants:
+                                        results[model_idx]["size_gb"] = variants[0]["size_gb"]
+                        except Exception:
+                            pass
+
+                    import asyncio
+                    tasks = [fetch_sizes(i) for i in range(min(len(results), 8))]
+                    await asyncio.gather(*tasks)
+
                     return results
     except Exception as e:
         log.error("hf_search_error", error=str(e))
