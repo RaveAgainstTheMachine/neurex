@@ -39,7 +39,7 @@ export function AgentPanel() {
             >
               <div className="task-item__header">
                 <span className="task-item__status">{getStatusIcon(task.status)}</span>
-                <span className="task-item__agent">[{task.agent_type.toUpperCase()}]</span>
+                <span className="task-item__agent">[{ (task.agent_type || "UNKNOWN").toUpperCase() }]</span>
                 <span className="task-item__title">{task.title}</span>
               </div>
               

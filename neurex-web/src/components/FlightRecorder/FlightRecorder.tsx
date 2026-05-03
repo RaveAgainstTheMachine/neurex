@@ -83,7 +83,7 @@ const MemoizedTraceItem = React.memo(function TraceItem({ trace }: { trace: Trac
       </div>
       <div className="trace-item__content">
         <div className="trace-item__header">
-          <span className="trace-agent">{trace.agent_type.toUpperCase()}</span>
+          <span className="trace-agent">{(trace.agent_type || "UNKNOWN").toUpperCase()}</span>
           <span className="trace-time">{new Date(trace.timestamp).toLocaleTimeString()}</span>
         </div>
         <div className="trace-action">{trace.action}</div>
