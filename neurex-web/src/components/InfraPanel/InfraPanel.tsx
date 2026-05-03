@@ -311,13 +311,30 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
 
                     {/* Derived params display (non-editable) */}
                     {(() => {
-                      const modelData = registry.find(m => m.name.startsWith(modelStr));
-                      const derived = modelData?.params || "";
-                      return derived && derived !== "Unknown" ? (
-                        <div className="routing-card__params-badge">
-                          {derived}
-                        </div>
-                      ) : null;
+                      if (!modelStr) return null;
+                      const baseName = modelStr.split(':')[0];
+                      
+                      // Find best matching group in registry
+                      const group = registry.find(m => m.name === baseName) || 
+                                    registry.find(m => m.name.split(':')[0] === baseName);
+                      
+                      if (!group) return null;
+
+                      // Find specific variant or fallback to group defaults
+                      const variant = group.variants?.find(v => v.name === modelStr) || 
+                                      group.variants?.find(v => v.name.split(':')[0] === baseName) ||
+                                      group.variants?.[0];
+                      
+                      const derived = variant?.params || group.params || "";
+                      
+                      if (derived && derived !== "Unknown") {
+                        return (
+                          <div className="routing-card__params-badge">
+                            {derived}
+                          </div>
+                        );
+                      }
+                      return null;
                     })()}
                   </div>
 
