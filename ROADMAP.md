@@ -33,7 +33,8 @@ Welcome to the official Neurex roadmap. This document tracks the trajectory of t
 ### Phase 61: Dynamic Model Routing [COMPLETE]
 - [x] **Decoupled Cognitive Roles**: Orchestrator abstraction of Planning/Coding/Reviewing targets.
 - [x] **Dynamic Resolution Registry**: Runtime binding of roles to optimal models.
-- [x] **High-Density Routing Grid**: Premium UI for functional topology management.
+- [x] **Granular Parameterization**: Support for model-specific quantization and parameter tags (e.g. 14B, q4_K_M).
+- [x] **High-Density Routing Grid**: Premium UI for functional topology management with parameter inputs.
 
 ### Phase 62: Autonomous Coreutils WASM Bundler [PENDING]
 - [ ] Automated build pipeline for self-generating `.wasm` tools during provision.

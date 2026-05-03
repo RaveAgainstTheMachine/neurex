@@ -79,9 +79,11 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
     "Chat":        MessageSquare
   };
 
-  const handleUpdateRoute = async (role: string, model: string) => {
+  const handleUpdateRoute = async (role: string, model: string, params?: string) => {
     if (!settings) return;
-    const newRoutes = { ...settings.model_routes, [role]: model };
+    const newRoutes = { ...settings.model_routes };
+    newRoutes[role] = params ? { model, params } : model;
+    
     try {
       const res = await fetch(`${API_BASE}/api/settings/`, {
         method: "POST",
@@ -93,7 +95,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
       });
       if (!res.ok) throw new Error(await res.text());
       refreshSettings();
-      toast.success(`Route ${role} updated to ${model}`);
+      toast.success(`Route ${role} updated`);
     } catch (err: any) {
       toast.error(err.message);
     }
@@ -273,10 +275,14 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
         <div className="infra-section">
           <div className="infra-section__title">MODEL ROUTING</div>
           <div className="routing-grid">
-            {settings?.model_routes && Object.entries(settings.model_routes).map(([role, model]) => {
+            {settings?.model_routes && Object.entries(settings.model_routes).map(([role, routeValue]) => {
               const Icon = routeIcons[role] || Info;
               const isDefault = ["Planning", "Coding", "Testing", "Researching", "Reviewing", "Vision", "Media", "Audio", "Chat"].includes(role);
-              const isActive = engines.some(e => e.status === 'running' && model.includes(e.name));
+              
+              const modelStr = typeof routeValue === 'string' ? routeValue : routeValue.model;
+              const paramsStr = typeof routeValue === 'string' ? "" : routeValue.params || "";
+              
+              const isActive = engines.some(e => e.status === 'running' && modelStr.includes(e.name));
 
               return (
                 <div key={role} className="routing-card">
@@ -292,16 +298,31 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
                     <span className="routing-card__role">{role}</span>
                   </div>
                   
-                  <select 
-                    className="routing-card__selector"
-                    value={model.split(':')[0]}
-                    onChange={(e) => handleUpdateRoute(role, e.target.value)}
-                  >
-                    <option value="" disabled>Select model...</option>
-                    {modelOptions.map(opt => (
-                      <option key={opt} value={opt}>{opt}</option>
-                    ))}
-                  </select>
+                  <div className="routing-card__controls">
+                    <select 
+                      className="routing-card__selector"
+                      value={modelStr.split(':')[0]}
+                      onChange={(e) => handleUpdateRoute(role, e.target.value, paramsStr)}
+                    >
+                      <option value="" disabled>Select model...</option>
+                      {modelOptions.map(opt => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+
+                    <input 
+                      type="text"
+                      className="routing-card__params"
+                      placeholder="Params (e.g. 14B)"
+                      value={paramsStr}
+                      onBlur={(e) => handleUpdateRoute(role, modelStr, e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleUpdateRoute(role, modelStr, (e.target as HTMLInputElement).value);
+                        }
+                      }}
+                    />
+                  </div>
 
                   <div className={`routing-card__status ${isActive ? 'active' : ''}`}>
                     <div className="routing-card__status-dot" />

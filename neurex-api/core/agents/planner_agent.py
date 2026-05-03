@@ -56,7 +56,7 @@ class PlannerAgent(BaseAgent):
     agent_type = "planner"
 
     async def plan(
-        self, user_message: str, conversation_id: str
+        self, user_message: str, conversation_id: str, params: str | None = None
     ) -> AsyncGenerator[dict, None]:
         rag = await self.rag_context(user_message, n=3)
         system = await self.build_system_prompt(conversation_id, rag)
@@ -67,7 +67,7 @@ class PlannerAgent(BaseAgent):
         ]
 
         full_text = ""
-        async for chunk in self.stream(messages):
+        async for chunk in self.stream(messages, params=params):
             if chunk["type"] == "token":
                 full_text += chunk["text"]
                 yield {"type": "token", "text": chunk["text"]}
@@ -96,7 +96,8 @@ class PlannerAgent(BaseAgent):
 
     async def execute(self, task: dict, conversation_id: str):
         # Planner uses plan(), not execute() — satisfy ABC
-        async for chunk in self.plan(task["description"], conversation_id):
+        params = task.get("params")
+        async for chunk in self.plan(task["description"], conversation_id, params=params):
             yield chunk
 
     # ── Internal ──────────────────────────────────────────────────────────

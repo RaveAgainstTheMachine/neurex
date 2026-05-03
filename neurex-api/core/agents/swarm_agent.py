@@ -41,7 +41,8 @@ class SwarmAgent(BaseAgent):
         """
         
         sub_plan = []
-        async for chunk in self.stream([{"role": "user", "content": plan_prompt}]):
+        params = task.get("params")
+        async for chunk in self.stream([{"role": "user", "content": plan_prompt}], params=params):
             if chunk["type"] == "done":
                 import json
                 import re

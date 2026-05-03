@@ -143,35 +143,52 @@
 }
 
 .routing-card__role {
-  font-size: 11px;
-  font-weight: 800;
-  color: white;
+  font-size: 10px;
+  font-weight: 700;
   letter-spacing: 0.05em;
-  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.routing-card__controls {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
 }
 
 .routing-card__selector {
   width: 100%;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 6px;
-  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  padding: 4px 8px;
   font-size: 11px;
-  color: #a1a1aa;
-  cursor: pointer;
+  color: var(--text-color);
   outline: none;
-  transition: all 0.2s;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .routing-card__selector:hover {
-  border-color: rgba(255, 255, 255, 0.2);
-  color: white;
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--accent-color);
 }
 
-.routing-card__selector:focus {
-  border-color: var(--accent-purple);
-  background: rgba(139, 92, 246, 0.05);
-  color: white;
+.routing-card__params {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 10px;
+  color: var(--accent-color);
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.routing-card__params:focus {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--accent-color);
 }
 
 .routing-card__add {

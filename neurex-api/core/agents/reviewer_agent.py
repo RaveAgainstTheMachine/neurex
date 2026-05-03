@@ -47,8 +47,9 @@ class ReviewerAgent(BaseAgent):
         yield {"type": "status", "status": TaskStatus.TESTING}
         log.info("agent.reviewer.start", task=task.get("title"), conversation_id=conversation_id)
 
+        params = task.get("params")
         full_text = ""
-        async for chunk in self.stream(messages):
+        async for chunk in self.stream(messages, params=params):
             if chunk["type"] == "token":
                 full_text += chunk["text"]
                 yield {"type": "token", "text": chunk["text"]}

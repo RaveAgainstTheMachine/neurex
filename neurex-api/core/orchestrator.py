@@ -271,16 +271,34 @@ class Orchestrator:
                         
                         routes = settings_manager.get("model_routes") or {}
                         target_role = role_map.get(node.agent_type, "Coding")
-                        model_name = routes.get(target_role) or settings_manager.get(f"{node.agent_type}_model")
+                        route_config = routes.get(target_role) or settings_manager.get(f"{node.agent_type}_model")
+                        
+                        # Phase 61: Structured Route Resolution (Model + Params)
+                        if isinstance(route_config, dict):
+                            model_name = route_config.get("model")
+                            model_params = route_config.get("params")
+                        else:
+                            model_name = route_config
+                            model_params = None
                         
                         log.info("orchestrator.using_model", 
                                  agent=node.agent_type, 
                                  role=target_role, 
-                                 model=model_name, 
+                                 model=model_name,
+                                 params=model_params,
                                  task=node.title)
-                                    
+    
                         AgentClass = AGENT_MAP.get(node.agent_type, CoderAgent)
                         agent = AgentClass(self.rules, self.ctx, model=model_name)
+                        
+                        # 3. Execute
+                        task_payload = {
+                            "title": node.title,
+                            "description": node.description,
+                            "context": node.context,
+                            "model": model_name,
+                            "params": model_params
+                        }
                         
                         # Gather and summarize history context
                         history_stmt = select(TaskNode).where(

@@ -29,9 +29,10 @@ All notable changes to the Neurex project will be documented in this file.
 ### Added
 - **Dynamic Model Routing Architecture**: Completely decoupled agent logic from static model assignments, transitioning to a flexible, role-based routing substrate.
 - **Model Routing Grid**: Rebuilt the `InfraPanel` with a high-density, glassmorphic grid for managing cognitive role-to-model mappings (Planning, Coding, Testing, Reviewing, etc.).
+- **Role-Specific Parameterization**: Extended the routing grid to support granular model parameters (e.g., quantization tags like `q4_K_M`, parameter counts like `14B`).
 - **Autonomous Role Expansion**: Enabled users to add custom cognitive roles and bind them to any available mesh model on the fly.
-- **Dynamic Orchestrator Resolution**: Upgraded the `Orchestrator` to resolve models via the `model_routes` registry at runtime, supporting shared routes and smart fallbacks.
-- **Substrate Type Hardening**: Formalized the `Settings` interface and eliminated `any/unknown` types in the frontend store to ensure strict structural integrity.
+- **Dynamic Orchestrator Resolution**: Upgraded the `Orchestrator` to resolve models via the `model_routes` registry at runtime, supporting structured `(model, params)` tuples with smart fallbacks.
+- **Substrate Type Hardening**: Formalized the `Settings` and `ModelRoute` interfaces, eliminating `any/unknown` types in the frontend store to ensure strict structural integrity.
 
 ### Fixed
 - **Orchestrator Indentation**: Resolved a critical Python syntax error in the task execution loop that caused substrate instability.

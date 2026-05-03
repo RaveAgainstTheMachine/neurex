@@ -134,8 +134,13 @@ export interface User {
   is_active?: boolean;
 }
 
+export interface ModelRoute {
+  model: string;
+  params?: string;
+}
+
 export interface Settings {
-  model_routes: Record<string, string>;
+  model_routes: Record<string, string | ModelRoute>;
   [key: string]: any;
 }
 

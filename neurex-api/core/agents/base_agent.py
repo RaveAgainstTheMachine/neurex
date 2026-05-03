@@ -117,13 +117,18 @@ class BaseAgent(ABC):
         messages: list[dict],
         model: str | None = None,
         tools: list[dict] | None = None,
+        params: str | None = None,
     ) -> AsyncGenerator[dict, None]:
         """Stream from Mesh/Local with high-speed token chunking."""
+        options = {"temperature": 0.2}
+        if params:
+            options["params"] = params
+
         payload: dict[str, Any] = {
             "model": model or self.model or get_default_model(),
             "messages": messages,
             "stream": True,
-            "options": {"temperature": 0.2},
+            "options": options,
         }
 
         skill_tools = self.skills.get_enabled_tools()

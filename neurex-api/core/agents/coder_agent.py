@@ -127,11 +127,13 @@ class CoderAgent(BaseAgent):
         ]
 
         yield {"type": "status", "status": TaskStatus.THINKING}
+        
+        params = task.get("params")
 
         # Phase 45: Autonomous Self-Repair Loop
         max_rounds = 10
         for i in range(max_rounds):
-            async for chunk in self.stream(messages, tools=CODER_TOOLS):
+            async for chunk in self.stream(messages, tools=CODER_TOOLS, params=params):
                 if chunk["type"] == "token":
                     yield {"type": "token", "text": chunk["text"]}
 

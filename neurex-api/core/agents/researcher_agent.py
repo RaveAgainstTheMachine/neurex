@@ -63,10 +63,11 @@ class ResearcherAgent(BaseAgent):
         yield {"type": "status", "status": TaskStatus.THINKING}
         log.info("agent.researcher.start", task=task.get("title"), conversation_id=conversation_id)
 
+        params = task.get("params")
         # Rule 71: max_rounds guard
         max_rounds = 5
         for _ in range(max_rounds):
-            async for chunk in self.stream(messages, tools=RESEARCHER_TOOLS):
+            async for chunk in self.stream(messages, tools=RESEARCHER_TOOLS, params=params):
                 if chunk["type"] == "token":
                     yield {"type": "token", "text": chunk["text"]}
 
