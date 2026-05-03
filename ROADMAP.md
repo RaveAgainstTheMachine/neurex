@@ -30,11 +30,11 @@ Welcome to the official Neurex roadmap. This document tracks the trajectory of t
 - [x] **Transparent Proxy Substrate**: Standardized `X-Forwarded-*` header integration.
 - [x] **Granular CORS Sovereignty**: Dynamic whitelisting for mesh-wide credential integrity.
 
-### Phase 61: Dynamic Model Routing [COMPLETE]
+### Phase 61: Dynamic Model Routing & Derivation [COMPLETE]
 - [x] **Decoupled Cognitive Roles**: Orchestrator abstraction of Planning/Coding/Reviewing targets.
 - [x] **Dynamic Resolution Registry**: Runtime binding of roles to optimal models.
-- [x] **Granular Parameterization**: Support for model-specific quantization and parameter tags (e.g. 14B, q4_K_M).
-- [x] **High-Density Routing Grid**: Premium UI for functional topology management with parameter inputs.
+- [x] **Autonomous Parameter Derivation (Phase 61.1)**: Zero-config extraction of model sizes (e.g. 14B) from metadata.
+- [x] **High-Density Routing Grid**: Premium UI for functional topology management with reactive parameter badges.
 
 ### Phase 62: Autonomous Coreutils WASM Bundler [PENDING]
 - [ ] Automated build pipeline for self-generating `.wasm` tools during provision.

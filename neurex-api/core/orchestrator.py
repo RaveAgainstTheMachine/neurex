@@ -142,6 +142,15 @@ class Orchestrator:
             routes = settings_manager.get("model_routes") or {}
             model_name = model or routes.get("Planning") or settings_manager.get("planner_model")
             
+            # Resolve params for planner
+            if isinstance(model_name, dict):
+                model_params = model_name.get("params")
+                model_name = model_name.get("model")
+            else:
+                model_params = await self.infra.resolve_model_params(model_name)
+                if model_params == "Unknown":
+                    model_params = None
+            
             log.info("orchestrator.using_model", agent="planner", model=model_name, source="user" if model else "routes")
             
             # Consult Hive Mind for context
@@ -157,7 +166,7 @@ class Orchestrator:
             await update_task(self.session, planner_node.id, TaskStatus.THINKING)
             yield {"event": "task_updated", "data": {"id": planner_node.id, "status": TaskStatus.THINKING}}
 
-            async for chunk in planner.plan(augmented_message, conversation_id):
+            async for chunk in planner.plan(augmented_message, conversation_id, params=model_params):
                 if chunk["type"] == "token":
                     yield {"event": "token", "data": chunk["text"]}
                 elif chunk["type"] == "result":
@@ -281,6 +290,12 @@ class Orchestrator:
                             model_name = route_config
                             model_params = None
                         
+                        # Phase 61.1: Derive params if missing
+                        if not model_params and model_name:
+                            model_params = await self.infra.resolve_model_params(model_name)
+                            if model_params == "Unknown":
+                                model_params = None
+                        
                         log.info("orchestrator.using_model", 
                                  agent=node.agent_type, 
                                  role=target_role, 
@@ -290,15 +305,6 @@ class Orchestrator:
     
                         AgentClass = AGENT_MAP.get(node.agent_type, CoderAgent)
                         agent = AgentClass(self.rules, self.ctx, model=model_name)
-                        
-                        # 3. Execute
-                        task_payload = {
-                            "title": node.title,
-                            "description": node.description,
-                            "context": node.context,
-                            "model": model_name,
-                            "params": model_params
-                        }
                         
                         # Gather and summarize history context
                         history_stmt = select(TaskNode).where(
@@ -311,9 +317,13 @@ class Orchestrator:
                         history_context = await self._summarize_history(done_tasks, model_name)
                         
                         task_payload = {
+                            "id": node.id,
                             "title": node.title,
                             "description": node.description,
+                            "context": node.context,
                             "history": history_context,
+                            "model": model_name,
+                            "params": model_params,
                             "last_tool_call": last_tool_calls.get(node.id)
                         }
     
@@ -395,10 +405,20 @@ class Orchestrator:
             settings_key = f"{node.agent_type}_model"
             model_name = settings_manager.get(settings_key)
             
+            # Resolve params
+            model_params = await self.infra.resolve_model_params(model_name)
+            if model_params == "Unknown":
+                model_params = None
+            
             AgentClass = AGENT_MAP.get(node.agent_type, CoderAgent)
             agent = AgentClass(self.rules, self.ctx, model=model_name)
             
-            step = {"description": f"{node.description}\n[USER APPROVED SHELL EXECUTION]", "title": node.title}
+            step = {
+                "id": node.id,
+                "description": f"{node.description}\n[USER APPROVED SHELL EXECUTION]", 
+                "title": node.title,
+                "params": model_params
+            }
             
             async for chunk in agent.execute(step, conversation_id):
                 if chunk["type"] == "status":

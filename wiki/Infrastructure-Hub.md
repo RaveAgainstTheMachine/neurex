@@ -68,7 +68,8 @@ Users can bind specific agent personas to optimal models:
 ### The Routing Grid
 The **InfraPanel** features a high-density grid for managing these mappings:
 - **Role Assignment**: Click any role card to swap its model binding on the fly.
-- **Granular Parameters**: Define model-specific tags (e.g., `14B`, `q4_K_M`) directly in the routing card to fine-tune execution.
+- **Autonomous Parameter Derivation**: Parameters like model size (e.g., `14B`, `7B`) are autonomously derived from Ollama tags or Hugging Face metadata. These are displayed as reactive badges on the routing cards.
+- **Zero-Config Routing**: Manual parameter entry is no longer required. The **Infrastructure Manager** resolves and propagates optimal neural metadata automatically based on the model name.
 - **Custom Roles**: The "Add Role" affordance allows for the creation of proprietary cognitive targets.
 - **Smart Fallbacks**: If a specific route is missing, the substrate automatically falls back to the global `default_model`, ensuring zero-latency execution.
 - **Runtime Resolution**: The **Orchestrator** resolves these bindings at the start of every task, allowing for zero-restart functional topology updates.

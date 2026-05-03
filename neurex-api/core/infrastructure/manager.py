@@ -192,9 +192,14 @@ class InfrastructureManager:
                         for m in data.get("models", []):
                             size_bytes = m.get("size", 0)
                             name = m["name"]
+                            import re
+                            param_match = re.search(r'[:\-]([0-9.]+[bB])', name)
+                            params = param_match.group(1).upper() if param_match else "Unknown"
+
                             models.append({
                                 "name": name,
                                 "size_gb": round(size_bytes / (1024 ** 3), 2),
+                                "params": params,
                                 "modified_at": m.get("modified_at"),
                                 "is_active": any(name == rm or name.split(':')[0] == rm.split(':')[0] for rm in running_models)
                             })
@@ -244,9 +249,15 @@ class InfrastructureManager:
                                 except Exception:
                                     pass
 
+                                # Extract params (e.g., 14b, 7b, 70b) from name
+                                import re
+                                param_match = re.search(r'[:\-]([0-9.]+[bB])', f"{model_name}:{file}")
+                                params = param_match.group(1).upper() if param_match else "Unknown"
+
                                 models.append({
                                     "name": f"{model_name}:{file}",
                                     "size_gb": size_gb,
+                                    "params": params,
                                     "modified_at": "filesystem_fallback"
                                 })
             
@@ -591,5 +602,27 @@ class InfrastructureManager:
         except:
             pass
         return "unknown"
+
+    async def resolve_model_params(self, model_name: str) -> str:
+        """
+        Attempt to resolve model parameters (e.g. 14B) from the registry or tags.
+        """
+        # Try local Ollama first
+        try:
+            models = await self.get_installed_models("ollama")
+            for m in models:
+                if m["name"] == model_name or m["name"].split(':')[0] == model_name.split(':')[0]:
+                    if m.get("params") and m["params"] != "Unknown":
+                        return m["params"]
+        except:
+            pass
+
+        # Try regex on name as fallback
+        import re
+        param_match = re.search(r'[:\-]([0-9.]+[bB])', model_name)
+        if param_match:
+            return param_match.group(1).upper()
+
+        return "Unknown"
 
 infrastructure_manager = InfrastructureManager()

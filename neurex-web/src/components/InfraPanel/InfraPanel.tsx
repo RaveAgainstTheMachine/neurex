@@ -79,10 +79,10 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
     "Chat":        MessageSquare
   };
 
-  const handleUpdateRoute = async (role: string, model: string, params?: string) => {
+  const handleUpdateRoute = async (role: string, model: string) => {
     if (!settings) return;
     const newRoutes = { ...settings.model_routes };
-    newRoutes[role] = params ? { model, params } : model;
+    newRoutes[role] = model;
     
     try {
       const res = await fetch(`${API_BASE}/api/settings/`, {
@@ -280,8 +280,6 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
               const isDefault = ["Planning", "Coding", "Testing", "Researching", "Reviewing", "Vision", "Media", "Audio", "Chat"].includes(role);
               
               const modelStr = typeof routeValue === 'string' ? routeValue : routeValue.model;
-              const paramsStr = typeof routeValue === 'string' ? "" : routeValue.params || "";
-              
               const isActive = engines.some(e => e.status === 'running' && modelStr.includes(e.name));
 
               return (
@@ -302,7 +300,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
                     <select 
                       className="routing-card__selector"
                       value={modelStr.split(':')[0]}
-                      onChange={(e) => handleUpdateRoute(role, e.target.value, paramsStr)}
+                      onChange={(e) => handleUpdateRoute(role, e.target.value)}
                     >
                       <option value="" disabled>Select model...</option>
                       {modelOptions.map(opt => (
@@ -310,18 +308,16 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
                       ))}
                     </select>
 
-                    <input 
-                      type="text"
-                      className="routing-card__params"
-                      placeholder="Params (e.g. 14B)"
-                      value={paramsStr}
-                      onBlur={(e) => handleUpdateRoute(role, modelStr, e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          handleUpdateRoute(role, modelStr, (e.target as HTMLInputElement).value);
-                        }
-                      }}
-                    />
+                    {/* Derived params display (non-editable) */}
+                    {(() => {
+                      const modelData = registry.find(m => m.name.startsWith(modelStr));
+                      const derived = modelData?.params || "";
+                      return derived && derived !== "Unknown" ? (
+                        <div className="routing-card__params-badge">
+                          {derived}
+                        </div>
+                      ) : null;
+                    })()}
                   </div>
 
                   <div className={`routing-card__status ${isActive ? 'active' : ''}`}>

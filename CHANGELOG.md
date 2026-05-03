@@ -27,12 +27,13 @@ All notable changes to the Neurex project will be documented in this file.
 
 ## [0.4.1] - 2026-05-03: DYNAMIC MODEL ROUTING
 ### Added
+- [x] Phase 61: Dynamic Model Routing Grid (v0.4.1)
+- [x] Phase 61.1: Autonomous Parameter Derivation (Zero-Config Routing)
 - **Dynamic Model Routing Architecture**: Completely decoupled agent logic from static model assignments, transitioning to a flexible, role-based routing substrate.
 - **Model Routing Grid**: Rebuilt the `InfraPanel` with a high-density, glassmorphic grid for managing cognitive role-to-model mappings (Planning, Coding, Testing, Reviewing, etc.).
-- **Role-Specific Parameterization**: Extended the routing grid to support granular model parameters (e.g., quantization tags like `q4_K_M`, parameter counts like `14B`).
-- **Autonomous Role Expansion**: Enabled users to add custom cognitive roles and bind them to any available mesh model on the fly.
-- **Dynamic Orchestrator Resolution**: Upgraded the `Orchestrator` to resolve models via the `model_routes` registry at runtime, supporting structured `(model, params)` tuples with smart fallbacks.
-- **Substrate Type Hardening**: Formalized the `Settings` and `ModelRoute` interfaces, eliminating `any/unknown` types in the frontend store to ensure strict structural integrity.
+- **Autonomous Parameter Derivation (Phase 61.1)**: Eliminated manual parameter configuration in favor of metadata-driven extraction. The substrate now autonomously identifies model sizes (e.g., 14B, 7B) from Ollama tags and Hugging Face metadata.
+- **Dynamic Routing Badges**: Replaced manual input fields in the `InfraPanel` with reactive, non-editable badges that display derived parameters directly from the source of truth.
+- **Unified Parameter Resolution**: Hardened the `Orchestrator` to dynamically resolve model parameters using the `InfrastructureManager` if they are missing from the route configuration, ensuring agents always receive precise neural metadata.
 
 ### Fixed
 - **Orchestrator Indentation**: Resolved a critical Python syntax error in the task execution loop that caused substrate instability.
