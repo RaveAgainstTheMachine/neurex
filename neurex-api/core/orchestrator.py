@@ -139,9 +139,10 @@ class Orchestrator:
 
 
             from core.settings.manager import settings_manager
-            model_name = model or settings_manager.get("planner_model")
+            routes = settings_manager.get("model_routes") or {}
+            model_name = model or routes.get("Planning") or settings_manager.get("planner_model")
             
-            log.info("orchestrator.using_model", agent="planner", model=model_name, source="user" if model else "settings")
+            log.info("orchestrator.using_model", agent="planner", model=model_name, source="user" if model else "routes")
             
             # Consult Hive Mind for context
             memories = hive_mind.recall(user_message, limit=3)
@@ -248,18 +249,36 @@ class Orchestrator:
                     break
 
                 for node in tasks:
-                    active_node_id = node.id
-                    log.info("orchestrator.executing_task", task_id=node.id, title=node.title)
-                    await update_task(self.session, node.id, TaskStatus.THINKING)
-                    yield {"event": "task_updated", "data": {"id": node.id, "status": TaskStatus.THINKING}}
-
                     try:
+                        active_node_id = node.id
+                        log.info("orchestrator.executing_task", task_id=node.id, title=node.title)
+                        await update_task(self.session, node.id, TaskStatus.THINKING)
+                        yield {"event": "task_updated", "data": {"id": node.id, "status": TaskStatus.THINKING}}
+    
                         from core.settings.manager import settings_manager
-                        settings_key = f"{node.agent_type}_model"
-                        model_name = settings_manager.get(settings_key)
+                    
+                        # Phase 60: Resolve model via Route Map
+                        role_map = {
+                            "planner":    "Planning",
+                            "coder":      "Coding",
+                            "tester":     "Testing",
+                            "researcher": "Researching",
+                            "reviewer":   "Reviewing",
+                            "debater":    "Reviewing", # Shared route
+                            "commander":  "Planning",  # Shared route
+                            "swarm":      "Coding"     # Shared route
+                        }
                         
-                        log.info("orchestrator.using_model", agent=node.agent_type, model=model_name, task=node.title)
+                        routes = settings_manager.get("model_routes") or {}
+                        target_role = role_map.get(node.agent_type, "Coding")
+                        model_name = routes.get(target_role) or settings_manager.get(f"{node.agent_type}_model")
                         
+                        log.info("orchestrator.using_model", 
+                                 agent=node.agent_type, 
+                                 role=target_role, 
+                                 model=model_name, 
+                                 task=node.title)
+                                    
                         AgentClass = AGENT_MAP.get(node.agent_type, CoderAgent)
                         agent = AgentClass(self.rules, self.ctx, model=model_name)
                         
@@ -279,7 +298,7 @@ class Orchestrator:
                             "history": history_context,
                             "last_tool_call": last_tool_calls.get(node.id)
                         }
-
+    
                         node_result = ""
                         async for chunk in agent.execute(task_payload, conversation_id):
                             if chunk["type"] == "token":
@@ -300,10 +319,10 @@ class Orchestrator:
                                     }
                                     last_tool_calls[node.id] = chunk
                                     return 
-
+    
                             elif chunk["type"] == "result":
                                 node_result = chunk["result"]
-
+    
                         # Mark as DONE
                         await update_task(self.session, node.id, TaskStatus.DONE, result=node_result)
                         yield {"event": "task_updated", "data": {"id": node.id, "status": TaskStatus.DONE}}

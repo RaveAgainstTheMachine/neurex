@@ -40,6 +40,13 @@ Agents inherit from a `BaseAgent` class providing RAG context, tool-calling loop
 - **Coder Agent**: Focused on surgical codebase modifications using the `write_file` tool.
 - **Reviewer Agent**: Performs validation using a "Critique-and-Refine" loop.
 
+### 2.3 Dynamic Model Routing
+Neurex moves beyond static model recommendations by implementing a decoupled **Routing Substrate**:
+- **Cognitive Roles**: Defined roles (e.g., Planning, Coding, Testing, Reviewing) act as abstract targets for task execution.
+- **Dynamic Resolution**: The `Orchestrator` resolves the target model at runtime by consulting the `model_routes` registry in the `SettingsManager`.
+- **User Governance**: Users can autonomously reconfigure the cognitive topology through the **InfraPanel**, swapping models for specific roles without impacting the underlying agent logic.
+- **Fallback Logic**: If a specific route is undefined, the system falls back to role-specific defaults or the global `default_model`, ensuring zero-latency execution.
+
 ## 3. Hive Mind: Semantic Memory
 
 ### 3.1 Indexing Pipeline

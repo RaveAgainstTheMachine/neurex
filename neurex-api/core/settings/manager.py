@@ -17,6 +17,19 @@ DEFAULT_SETTINGS = {
     "reviewer_model":   "qwen2.5-coder:14b",
     "tester_model":     "qwen2.5-coder:14b",
 
+    # Model Routing (Phase 60: Cognitive Orchestration)
+    "model_routes": {
+        "Planning":    "deepseek-r1:32b",
+        "Coding":      "qwen2.5-coder:32b",
+        "Testing":     "qwen2.5-coder:14b",
+        "Researching": "qwen2.5-coder:14b",
+        "Reviewing":   "qwen2.5-coder:14b",
+        "Vision":      "llama3.2-vision:11b",
+        "Media":       "llama3.2-vision:11b",
+        "Audio":       "whisper-large-v3-turbo",
+        "Chat":        "qwen2.5-coder:14b"
+    },
+
     # Agent Behavior
     "autonomy_level": "limited",
     "enable_agent_internet": False,

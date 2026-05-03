@@ -636,17 +636,24 @@ Fetch current application settings (model selection, context window, autonomy ce
 ---
 
 ### `POST /api/settings/`
-Update settings.
+Update settings. Partial update is supported. This endpoint is the source of truth for the **Dynamic Model Routing** substrate.
 
 **Auth**: `admin`  
-**Body** (partial update accepted):
+**Body** (example with routing):
 ```json
 {
   "default_model": "qwen2.5-coder:32b",
-  "context_window": 16384,
-  "autonomy_ceiling": "limited"
+  "autonomy_ceiling": "limited",
+  "model_routes": {
+    "Planning": "gpt-4o",
+    "Coding": "qwen2.5-coder:32b",
+    "Testing": "llama3.1:8b",
+    "Reviewing": "claude-3-5-sonnet"
+  }
 }
 ```
+> [!NOTE]
+> The `model_routes` map allows overriding specific agent roles. If a role is missing, the orchestrator falls back to role-specific defaults or the `default_model`.
 
 ---
 
