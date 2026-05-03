@@ -111,7 +111,7 @@ async def init_db():
         await conn.run_sync(SQLModel.metadata.create_all)
 
 async def get_session() -> AsyncSession:
-    async with AsyncSession(engine) as session:
+    async with AsyncSession(engine, expire_on_commit=False) as session:
         yield session
 
 async def create_task(session: AsyncSession, **kwargs) -> TaskNode:

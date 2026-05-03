@@ -49,7 +49,7 @@ async def _persist_message(conversation_id: str, role: str, content: str, graph_
     from core.task_graph import AsyncSession, engine
     from api.routes.chat import ChatMessage
     try:
-        async with AsyncSession(engine) as session:
+        async with AsyncSession(engine, expire_on_commit=False) as session:
             msg = ChatMessage(
                 conversation_id=conversation_id,
                 role=role,
@@ -76,7 +76,7 @@ async def websocket_endpoint(
     log.info("ws.connected", conversation_id=conversation_id)
 
     from core.task_graph import engine
-    async with AsyncSession(engine) as session:
+    async with AsyncSession(engine, expire_on_commit=False) as session:
         rules = RulesParser()
         ctx = ContextManager()
         orch = Orchestrator(session, rules, ctx)
