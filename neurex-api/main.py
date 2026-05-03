@@ -75,6 +75,16 @@ async def lifespan(app: FastAPI):
     from core.observability.service_sentinel import sentinel as service_sentinel
     await service_sentinel.start()
 
+    # Phase 55: Proactive LLM Health Check
+    from core.infrastructure.manager import infrastructure_manager
+    ollama_running = await infrastructure_manager._is_process_running("ollama")
+    if not ollama_running:
+        log.info("neurex.infra_startup", engine="ollama", msg="Attempting to start Ollama...")
+        try:
+            await infrastructure_manager.start_engine("ollama")
+        except Exception as e:
+            log.error("neurex.infra_startup_failed", engine="ollama", error=str(e))
+
     # Start CI/CD Healer (External Self-Healing)
     from core.observability.ci_healer import ci_healer
     asyncio.create_task(ci_healer.check_pipeline_health())
