@@ -30,6 +30,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
   const [hfResults, setHfResults] = useState<ModelProfile[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState<ModelProfile | null>(null);
+  const [selectedVariant, setSelectedVariant] = useState<string>("");
   const [quantization, setQuantization] = useState("4-bit (Fastest)");
   const [showDashboard, setShowDashboard] = useState(false);
 
@@ -416,12 +417,19 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
               </div>
             ) : (
               filteredRegistry.map((m) => (
-                <div key={m.name} className="catalog-item" onClick={() => setSelectedModel(m)}>
+                <div key={m.name} className="catalog-item" onClick={() => {
+                  setSelectedModel(m);
+                  if (m.variants && m.variants.length > 0) {
+                    setSelectedVariant(m.variants[0].name);
+                  } else {
+                    setSelectedVariant("");
+                  }
+                }}>
                   <div className="catalog-main">
                     <div className="catalog-header">
                       <Cpu size={14} className="text-muted" />
                       <span className="catalog-name">{m.name.replace('registry.ollama.ai/library/', '').replace('library/', '').split(':')[0]}</span>
-                      {m.params !== 'Local' && m.params !== 'Mesh' && <span className="catalog-tag">{m.params}</span>}
+                      {m.params && m.params !== "Unknown" && <span className="catalog-tag">{m.params}</span>}
                       <span className={`catalog-badge origin-${(m as any).origin.toLowerCase()}`}>
                         {(m as any).origin === 'HF' ? 'HF' : 
                          (m as any).origin === 'RPC' ? 'MESH(RPC)' :
@@ -464,7 +472,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
                 <Cpu size={18} className="text-purple" />
                 <div>
                   <h3>{selectedModel.is_downloaded ? 'Model Diagnostics' : 'Deploy Model'}</h3>
-                  <p>{selectedModel.name.replace('registry.ollama.ai/library/', '').replace('library/', '')}</p>
+                  <p className="infra-modal__subtitle">{selectedModel.name.replace('registry.ollama.ai/library/', '').replace('library/', '')}</p>
                 </div>
               </div>
               <button className="infra-modal__close" onClick={() => setSelectedModel(null)}>
@@ -473,36 +481,67 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
             </div>
 
             <div className="infra-modal__content">
+              {/* TECHNICAL SPECS */}
               <div className="infra-modal__stats">
                 <div className="stat-box">
                   <span className="stat-label">VRAM REQ</span>
-                  <span className="stat-value">{selectedModel.vram_required_gb > 0 ? `${selectedModel.vram_required_gb}GB` : 'AUTO'}</span>
+                  <span className="stat-value">
+                    {(() => {
+                      const v = selectedModel.variants?.find(v => v.name === selectedVariant);
+                      const size = v?.size_gb || selectedModel.size_gb || 0;
+                      return size > 0 ? `${Math.ceil(size * 1.2)}GB` : (selectedModel.vram_required_gb > 0 ? `${selectedModel.vram_required_gb}GB` : 'AUTO');
+                    })()}
+                  </span>
                 </div>
                 <div className="stat-box">
                   <span className="stat-label">CONTEXT</span>
                   <span className="stat-value">{selectedModel.context_window / 1024}k</span>
                 </div>
                 <div className="stat-box">
-                  <span className="stat-label">DISK SPACE</span>
-                  <span className="stat-value">{(selectedModel.size_gb || 0) > 0 ? `${selectedModel.size_gb?.toFixed(1)}GB` : '...'}</span>
+                  <span className="stat-label">DISK SIZE</span>
+                  <span className="stat-value">
+                    {(() => {
+                      const v = selectedModel.variants?.find(v => v.name === selectedVariant);
+                      return (v?.size_gb || selectedModel.size_gb || 0).toFixed(1) + 'GB';
+                    })()}
+                  </span>
                 </div>
               </div>
 
+              {/* SELECTION GRID */}
               <div className="infra-modal__section">
-                <label>Configuration</label>
+                <label>Configuration & Variants</label>
                 <div className="config-grid">
-                  <div className="config-item">
-                    <span>Quantization</span>
-                    <select 
-                      className="settings-select" 
-                      value={quantization}
-                      onChange={(e) => setQuantization(e.target.value)}
-                    >
-                      <option>4-bit (Fastest)</option>
-                      <option>8-bit (Balanced)</option>
-                      <option>FP16 (High Precision)</option>
-                    </select>
-                  </div>
+                  {selectedModel.variants && selectedModel.variants.length > 0 ? (
+                    <div className="config-item full-width">
+                      <span>Available Versions (Quantization)</span>
+                      <select 
+                        className="settings-select" 
+                        value={selectedVariant}
+                        onChange={(e) => setSelectedVariant(e.target.value)}
+                      >
+                        {selectedModel.variants.map(v => (
+                          <option key={v.name} value={v.name}>
+                            {v.name} ({v.size_gb.toFixed(1)} GB)
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : (
+                    <div className="config-item">
+                      <span>Quantization</span>
+                      <select 
+                        className="settings-select" 
+                        value={quantization}
+                        onChange={(e) => setQuantization(e.target.value)}
+                      >
+                        <option>4-bit (Fastest)</option>
+                        <option>8-bit (Balanced)</option>
+                        <option>FP16 (High Precision)</option>
+                      </select>
+                    </div>
+                  )}
+                  
                   <div className="config-item">
                     <span>Node Affinity</span>
                     <select className="settings-select">
@@ -516,7 +555,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
 
               {selectedModel.description && (
                 <div className="infra-modal__section">
-                  <label>Description</label>
+                  <label>Architectural Context</label>
                   <p className="infra-modal__desc">{selectedModel.description}</p>
                 </div>
               )}
@@ -529,8 +568,11 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
                 disabled={loading}
                 onClick={async () => {
                   let modelName = selectedModel.name;
-                  // For Ollama models, apply quantization tags if not already present
-                  if (selectedModel.engine === 'ollama' && !modelName.includes(':')) {
+                  // If it's a community model from HF, we need 'repo:file'
+                  if ((selectedModel as any).origin === 'HF' && selectedVariant) {
+                    modelName = `${selectedModel.name}:${selectedVariant}`;
+                  } else if (selectedModel.engine === 'ollama' && !modelName.includes(':')) {
+                    // For Ollama library models, apply quantization tags
                     if (quantization.startsWith('4-bit')) modelName = `${modelName}:q4_K_M`;
                     else if (quantization.startsWith('8-bit')) modelName = `${modelName}:q8_0`;
                   }

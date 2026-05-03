@@ -73,6 +73,7 @@ export interface ModelProfile {
   is_downloaded?: boolean;
   is_community?: boolean;
   deployed?: boolean;
+  variants?: { name: string; size_gb: number; params: string }[];
 }
 
 export interface InfraEngine {

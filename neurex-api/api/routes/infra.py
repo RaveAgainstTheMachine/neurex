@@ -117,28 +117,43 @@ from core.infrastructure.registry import LLMRecommender, search_huggingface
 async def get_model_registry():
     """List only the models actually available on this node."""
     local_models = await infra_manager.get_installed_models("ollama")
-    enriched_registry = []
+    
+    # Group local models by base name (e.g. qwen2.5-coder)
+    grouped: Dict[str, Dict[str, Any]] = {}
     
     for lm in local_models:
-        # Defense in depth: skip if somehow we still have a string (legacy cache/stale process)
         if not isinstance(lm, dict):
             continue
-            
-        enriched_registry.append({
+        
+        base_name = lm["name"].split(':')[0]
+        if base_name not in grouped:
+            grouped[base_name] = {
+                "name": base_name,
+                "engine": "ollama",
+                "params": lm.get("params", "Local"),
+                "size_gb": lm.get("size_gb", 0),
+                "context_window": 32768,
+                "vram_required_gb": 0,
+                "recommended_tasks": [],
+                "is_downloaded": True,
+                "is_community": False,
+                "is_active": lm.get("is_active", False),
+                "origin": "LOCAL",
+                "variants": []
+            }
+        
+        # Add this specific tag as a variant
+        grouped[base_name]["variants"].append({
             "name": lm["name"],
-            "engine": "ollama",
-            "params": "Local",
             "size_gb": lm.get("size_gb", 0),
-            "context_window": 32768,
-            "vram_required_gb": 0,
-            "recommended_tasks": [],
-            "is_downloaded": True,
-            "is_community": False,
-            "is_active": lm.get("is_active", False),
-            "origin": "LOCAL"
+            "params": lm.get("params", "Local")
         })
-            
-    return enriched_registry
+        
+        # Update aggregate active state
+        if lm.get("is_active"):
+            grouped[base_name]["is_active"] = True
+
+    return list(grouped.values())
 
 @router.post("/model/pull", dependencies=[Depends(require_role(UserRole.ADMIN))])
 async def pull_model(engine: str, model: str):

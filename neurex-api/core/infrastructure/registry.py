@@ -36,6 +36,7 @@ class ModelProfile(BaseModel):
     description: Optional[str] = "No description available."
     benchmarks: Optional[Dict[str, str]] = {}
     repo_url: Optional[str] = None
+    variants: Optional[List[Dict[str, Any]]] = []
 
 # Abandoning predefined library in favor of real-time infrastructure discovery.
 # Suggestions are now handled directly in the UI or via specialized recommendation logic.
@@ -88,18 +89,27 @@ async def search_huggingface(query: str) -> List[Dict[str, Any]]:
                         tags = m.get("tags", [])
                         size_tag = next((t for t in tags if "B" in t and any(c.isdigit() for c in t)), "Unknown")
                         
-                        # Find the main GGUF file size
-                        size_gb = 0.0
+                        # Extract all GGUF variants
+                        variants = []
                         siblings = m.get("siblings", [])
-                        gguf_file = next((s for s in siblings if s.get("rfilename", "").endswith(".gguf")), None)
-                        if gguf_file and "size" in gguf_file:
-                            size_gb = round(gguf_file["size"] / (1024 ** 3), 2)
+                        for s in siblings:
+                            fname = s.get("rfilename", "")
+                            if fname.endswith(".gguf"):
+                                variants.append({
+                                    "name": fname,
+                                    "size_gb": round(s.get("size", 0) / (1024 ** 3), 2),
+                                    "params": size_tag # Default to repo tag
+                                })
+                        
+                        # Default size from first variant
+                        size_gb = variants[0]["size_gb"] if variants else 0.0
                         
                         results.append({
                             "name": m["id"],
                             "engine": "llamacpp",
                             "params": size_tag,
                             "size_gb": size_gb,
+                            "variants": variants,
                             "context_window": 32768,
                             "vram_required_gb": 8.0 if "7B" in size_tag else 20.0 if "30B" in size_tag else 12.0,
                             "recommended_tasks": ["community_model"],

@@ -657,9 +657,21 @@
   gap: 8px;
 }
 
+.config-item.full-width {
+  grid-column: 1 / -1;
+}
+
 .config-item span {
   font-size: 11px;
   color: #a1a1aa;
+}
+
+.infra-modal__subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  opacity: 0.6;
 }
 
 .infra-modal__desc {
