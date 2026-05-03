@@ -25,6 +25,20 @@ All notable changes to the Neurex project will be documented in this file.
 - **Neural Law Engine**: Enforced the Anti-Gravity Protocol at the neural weight level during evolution.
 - **Consensus Dashboard**: High-fidelity frontend for overseeing substrate bridges and protocol alignment.
 
+## [0.4.0] - 2026-05-03: SECURE LAN INFRASTRUCTURE
+### Added
+- **Phase 60: Secure LAN Sovereignty**: Enforced mandatory SSL/TLS encryption for all local and mobile network access.
+- **Autonomous Protocol Upgrade**: Implemented a browser-side sentinel that detects unencrypted HTTP connections and triggers an instantaneous upgrade to HTTPS.
+- **Dual-Protocol Coherence**: Re-engineered the web server to handle simultaneous HTTP/HTTPS handshakes on port 3000, eliminating handshake errors during initial discovery.
+- **HSTS Enforcement**: Activated `Strict-Transport-Security` (HSTS) to harden browsers against protocol downgrade attacks across the LAN.
+- **Transparent Proxy Infrastructure**: Integrated professional `X-Forwarded-*` headers into the Axum proxy, ensuring the backend maintains full protocol and client awareness.
+- **Neural Chat Send AFFORDANCE**: Added a high-visibility "Send Arrow" to the chat interface with reactive hover effects and dynamic input states.
+- **Granular CORS Sovereignty**: Implemented dynamic origin whitelisting for 127.0.0.1, localhost, and common LAN subnets (10.*, 192.168.*) to secure credential-bearing requests.
+
+### Performance & Stability
+- **Substrate Release Build**: Completed the definitive production-grade release build of the Neurex CLI and embedded Web assets.
+- **Self-Healing Backend Diagnostics**: Introduced `DebugLoggingMiddleware` and granular proxy status reporting to autonomously diagnose authentication and protocol bottlenecks.
+
 ## [0.3.5] - 2026-05-01: THE SENTIENT SUBSTRATE
 ### Added
 - **Phase 55: The Sentient UI**: Launched the real-time **Substrate Dashboard**, a premium glassmorphic visualizer that monitors execution tier health (Docker/WASM/Native) and hardware telemetry.

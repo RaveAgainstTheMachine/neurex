@@ -7,7 +7,9 @@ use axum::{
     response::{IntoResponse, Response},
     routing::{get, post, any},
     extract::ws::{WebSocketUpgrade, WebSocket, Message},
+    extract::ConnectInfo,
 };
+use std::net::SocketAddr;
 use rust_embed::RustEmbed;
 use std::sync::Arc;
 use std::path::Path;
@@ -15,6 +17,9 @@ use tracing::{info, error};
 use serde::{Deserialize, Serialize};
 use futures_util::{StreamExt, SinkExt};
 use tokio_tungstenite::connect_async;
+use axum::middleware::{self, Next};
+use axum::http::{Request};
+use axum::response::Redirect;
 
 use crate::wasi_sandbox;
 use crate::sandbox;
@@ -26,6 +31,7 @@ pub struct Asset;
 pub struct AppState {
     pub api_port: u16,
     pub wasi_sandbox: Arc<wasi_sandbox::WasiSandbox>,
+    pub enable_https: bool,
 }
 
 #[derive(Deserialize)]
@@ -180,19 +186,26 @@ pub async fn static_handler(State(state): State<Arc<AppState>>, uri: Uri) -> imp
             
             if path == "index.html" {
                 let html = String::from_utf8_lossy(&content.data);
-                let injected = html.replace(
+                let config_injected = html.replace(
                     "window.__NEUREX_CONFIG__ = {}",
-                    &format!("window.__NEUREX_CONFIG__ = {{ apiPort: {} }}", state.api_port)
+                    &format!("window.__NEUREX_CONFIG__ = {{ apiPort: {}, enableHttps: {} }}", state.api_port, state.enable_https)
                 );
+                
+                // Final Safeguard: Frontend Redirect for HTTP -> HTTPS
+                let redirect_script = r#"<script>if(window.location.protocol==='http:' && window.location.hostname !== 'localhost') { window.location.href = window.location.href.replace('http:', 'https:'); }</script>"#;
+                let final_html = config_injected.replace("<head>", &format!("<head>{}", redirect_script));
+
                 return Response::builder()
                     .header(header::CONTENT_TYPE, "text/html")
-                    .body(Body::from(injected))
+                    .header("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+                    .body(Body::from(final_html))
                     .unwrap()
                     .into_response();
             }
 
             Response::builder()
                 .header(header::CONTENT_TYPE, mime.as_ref())
+                .header("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
                 .body(Body::from(content.data.to_vec()))
                 .unwrap()
                 .into_response()
@@ -203,14 +216,19 @@ pub async fn static_handler(State(state): State<Arc<AppState>>, uri: Uri) -> imp
 
 pub async fn proxy_handler(
     State(state): State<Arc<AppState>>,
+    ConnectInfo(peer_addr): ConnectInfo<SocketAddr>,
     method: axum::http::Method,
     headers: axum::http::HeaderMap,
     uri: Uri,
     body: Body,
 ) -> impl IntoResponse {
+    info!("Proxying {} {}", method, uri);
     let query = uri.query().map(|q| format!("?{}", q)).unwrap_or_default();
     let api_url = format!("http://127.0.0.1:{}{}{}", state.api_port, uri.path(), query);
-    let client = reqwest::Client::new();
+    
+    let client = reqwest::Client::builder()
+        .build()
+        .unwrap();
     
     // Convert Axum body to bytes to send via reqwest
     let body_bytes = match axum::body::to_bytes(body, 10 * 1024 * 1024).await {
@@ -229,6 +247,11 @@ pub async fn proxy_handler(
         }
     }
 
+    // Add X-Forwarded headers for proper backend identification
+    req_headers.insert("X-Forwarded-For", reqwest::header::HeaderValue::from_str(&peer_addr.ip().to_string()).unwrap());
+    req_headers.insert("X-Forwarded-Proto", reqwest::header::HeaderValue::from_str(if state.enable_https { "https" } else { "http" }).unwrap());
+    req_headers.insert("X-Forwarded-Host", reqwest::header::HeaderValue::from_bytes(headers.get("host").map(|h| h.as_bytes()).unwrap_or(b"localhost")).unwrap());
+
     let resp = client.request(method, &api_url)
         .headers(req_headers)
         .body(body_bytes)
@@ -238,6 +261,7 @@ pub async fn proxy_handler(
     match resp {
         Ok(r) => {
             let status = r.status();
+            info!("Backend responded with status: {}", status);
             // Forward back the response headers (especially Content-Type)
             let mut res_builder = Response::builder()
                 .status(StatusCode::from_u16(status.as_u16()).unwrap());
@@ -250,7 +274,7 @@ pub async fn proxy_handler(
             res_builder.body(Body::from(bytes)).unwrap().into_response()
         }
         Err(e) => {
-            error!("Proxy Error: {}", e);
+            error!("Proxy Backend Error: {}", e);
             (StatusCode::BAD_GATEWAY, "Gateway Error").into_response()
         }
     }
@@ -262,7 +286,7 @@ pub async fn ws_proxy_handler(
     ws: WebSocketUpgrade,
 ) -> impl IntoResponse {
     let query = uri.query().unwrap_or("");
-    let ws_url = format!("ws://127.0.0.1:8000{}?{}", uri.path(), query);
+    let ws_url = format!("ws://127.0.0.1:{}{}?{}", state.api_port, uri.path(), query);
     
     ws.on_upgrade(move |socket| handle_ws_socket(socket, ws_url))
 }

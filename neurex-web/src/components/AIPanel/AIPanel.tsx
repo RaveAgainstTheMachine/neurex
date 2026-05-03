@@ -56,9 +56,12 @@ const AUTONOMY_OPTIONS = [
 const VOICE_OPTIONS = [
   { value: "male", label: "Male" },
   { value: "female", label: "Female" },
-  { value: "freeman", label: "Freeman" },
-  { value: "attenborough", label: "Attenborough" },
-  { value: "rick", label: "Rick" }
+  { value: "narrator", label: "Narrator" },
+  { value: "explorer", label: "Explorer" },
+  { value: "scientist", label: "Scientist" },
+  { value: "system", label: "System" },
+  { value: "core", label: "Core" },
+  { value: "companion", label: "Companion" }
 ];
 
 const LANG_OPTIONS = [
@@ -129,15 +132,33 @@ export function AIPanel({ send, conversationId, isActive = true }: AIPanelProps)
 
   const [isListening, setIsListening] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [voicePreset, setVoicePreset] = useState("male");
+  const [voicePreset, setVoicePreset] = useState(() => {
+    const saved = localStorage.getItem("neurex_voice_preset");
+    const migrationMap: Record<string, string> = {
+      freeman: "narrator",
+      attenborough: "explorer",
+      rick: "scientist",
+      glados: "system",
+      hal: "core",
+      samantha: "companion"
+    };
+    return (saved && migrationMap[saved]) || saved || "male";
+  });
+  const [autoSpeak, setAutoSpeak] = useState(() => localStorage.getItem("neurex_auto_speak") === "true");
   const [mentionQuery, setMentionQuery] = useState("");
   const [showMentions, setShowMentions] = useState(false);
   const [mentionIndex, setMentionIndex] = useState(0);
+  const lastSpokenRef = useRef<string>("");
   const recognitionRef = useRef<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     // Initialize Web Speech API for voice dictation
+    const handleVoicesChanged = () => {
+      window.speechSynthesis.getVoices();
+    };
+    window.speechSynthesis.onvoiceschanged = handleVoicesChanged;
+
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (SpeechRecognition) {
       const recognition = new SpeechRecognition();
@@ -153,15 +174,106 @@ export function AIPanel({ send, conversationId, isActive = true }: AIPanelProps)
           }
         }
         if (finalTranscript) {
-          setInput(prev => prev + (prev ? " " : "") + finalTranscript);
+          setInput(prev => {
+            const newVal = prev + (prev ? " " : "") + finalTranscript;
+            // Auto-send if it sounds like a command (optional heuristic)
+            return newVal;
+          });
         }
       };
 
-      recognition.onend = () => setIsListening(false);
+      recognition.onend = () => {
+        setIsListening(false);
+        // We could auto-send here if we wanted
+      };
       recognition.onerror = () => setIsListening(false);
       recognitionRef.current = recognition;
     }
   }, []);
+  const nodes = Object.values(tasks || {}).sort(
+    (a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
+  );
+
+  const isWorking = nodes.some((t) =>
+    ["THINKING", "WRITING", "TESTING"].includes(t.status)
+  );
+
+
+  useEffect(() => {
+    if (!autoSpeak || messages.length === 0) return;
+    const lastMsg = messages[messages.length - 1];
+    
+    // Only speak if it's the assistant and it's a new message
+    if (lastMsg.role === "assistant" && lastMsg.content !== lastSpokenRef.current) {
+      // Small delay to ensure streaming is truly done
+      const timer = setTimeout(() => {
+        speakContent(lastMsg.content);
+        lastSpokenRef.current = lastMsg.content;
+      }, 600);
+      return () => clearTimeout(timer);
+    }
+  }, [messages, isWorking, autoSpeak]);
+
+  const speakContent = async (content: string) => {
+    if (!content) return;
+    
+    // Stop any existing audio
+    const existingAudio = (window as any)._neurex_audio;
+    if (existingAudio) {
+      existingAudio.pause();
+      existingAudio.src = "";
+    }
+
+    // Attempt Backend Neural Synthesis (Phase 55.9)
+    try {
+      const response = await fetch(`${API_BASE}/api/voice/speak`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text: content,
+          voice: voicePreset
+        })
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        (window as any)._neurex_audio = audio;
+        audio.play().catch(e => {
+          console.warn("Audio playback blocked. User interaction required.", e);
+          // Fallback to browser TTS if audio blocked
+          fallbackBrowserSpeak(content);
+        });
+        return;
+      }
+    } catch (err) {
+      console.error("Backend synthesis failed, falling back to browser.", err);
+    }
+
+    fallbackBrowserSpeak(content);
+  };
+
+  const fallbackBrowserSpeak = (content: string) => {
+    window.speechSynthesis.resume();
+    window.speechSynthesis.cancel();
+    
+    const utterance = new SpeechSynthesisUtterance(content);
+    utterance.lang = speechLang;
+    const voices = window.speechSynthesis.getVoices();
+    
+    if (voices.length > 0) {
+      // Find closest browser voice
+      const v = voices.find(v => v.lang.startsWith("en")) || voices[0];
+      utterance.voice = v;
+      // Apply rough pitch/rate mods
+      if (voicePreset === "narrator") { utterance.pitch = 0.75; utterance.rate = 0.85; }
+      else if (voicePreset === "explorer") { utterance.pitch = 0.95; utterance.rate = 0.82; }
+      else if (voicePreset === "scientist") { utterance.pitch = 1.35; utterance.rate = 1.25; }
+    }
+
+    window.speechSynthesis.speak(utterance);
+  };
 
   const toggleListen = () => {
     if (isListening) {
@@ -175,13 +287,6 @@ export function AIPanel({ send, conversationId, isActive = true }: AIPanelProps)
     }
   };
 
-  const nodes = Object.values(tasks || {}).sort(
-    (a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
-  );
-
-  const isWorking = nodes.some((t) =>
-    ["THINKING", "WRITING", "TESTING"].includes(t.status)
-  );
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
@@ -363,13 +468,7 @@ export function AIPanel({ send, conversationId, isActive = true }: AIPanelProps)
         className="voice-selector" 
         value={voicePreset} 
         onChange={(val) => setVoicePreset(val)} 
-        options={[
-          { value: "male", label: "Male" },
-          { value: "female", label: "Female" },
-          { value: "freeman", label: "Freeman" },
-          { value: "attenborough", label: "Attenborough" },
-          { value: "rick", label: "Rick" }
-        ]}
+        options={VOICE_OPTIONS}
         title="TTS Voice Personality"
       />
     ),
@@ -481,25 +580,7 @@ export function AIPanel({ send, conversationId, isActive = true }: AIPanelProps)
                 {msg.role === "assistant" && (
                   <button 
                     className="icon-btn message__tts" 
-                    onClick={() => {
-                      const utterance = new SpeechSynthesisUtterance(msg.content);
-                      utterance.lang = speechLang;
-                      
-                      // Personality Presets
-                      if (voicePreset === "freeman") {
-                        utterance.pitch = 0.8; utterance.rate = 0.85;
-                      } else if (voicePreset === "attenborough") {
-                        utterance.pitch = 0.9; utterance.rate = 0.8;
-                      } else if (voicePreset === "rick") {
-                        utterance.pitch = 1.4; utterance.rate = 1.2;
-                      } else if (voicePreset === "female") {
-                        utterance.pitch = 1.2;
-                      } else {
-                        utterance.pitch = 1.0;
-                      }
-
-                      window.speechSynthesis.speak(utterance);
-                    }}
+                    onClick={() => speakContent(msg.content)}
                     title="Read Aloud"
                   >
                     <Volume2 size={12} />
@@ -519,51 +600,61 @@ export function AIPanel({ send, conversationId, isActive = true }: AIPanelProps)
           </div>
           <div className="ai-input">
             <div className="ai-input__wrapper">
-              <textarea
-                ref={inputRef}
-                value={input}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setInput(val);
-                  
-                  // Mention detection
-                  const cursor = e.target.selectionStart;
-                  const textBefore = val.slice(0, cursor);
-                  const match = textBefore.match(/@(\w*)$/);
-                  
-                  if (match) {
-                    setMentionQuery(match[1]);
-                    setShowMentions(true);
-                    setMentionIndex(0);
-                  } else {
-                    setShowMentions(false);
-                  }
-
-                  // Auto-expand logic
-                  const el = inputRef.current;
-                  if (el) {
-                    el.style.height = "auto";
-                    el.style.height = Math.min(el.scrollHeight, window.innerHeight * 0.4) + "px";
-                  }
-                }}
-                onKeyDown={(e) => {
-                  if (showMentions) {
-                    if (e.key === "ArrowDown") { e.preventDefault(); setMentionIndex(i => i + 1); }
-                    if (e.key === "ArrowUp") { e.preventDefault(); setMentionIndex(i => i - 1); }
-                    if (e.key === "Enter" || e.key === "Tab") {
-                      e.preventDefault();
-                      insertMention();
+              <div className="ai-input__textarea-container">
+                <textarea
+                  ref={inputRef}
+                  value={input}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setInput(val);
+                    
+                    // Mention detection
+                    const cursor = e.target.selectionStart;
+                    const textBefore = val.slice(0, cursor);
+                    const match = textBefore.match(/@(\w*)$/);
+                    
+                    if (match) {
+                      setMentionQuery(match[1]);
+                      setShowMentions(true);
+                      setMentionIndex(0);
+                    } else {
+                      setShowMentions(false);
                     }
-                    if (e.key === "Escape") setShowMentions(false);
-                    return;
-                  }
-                  if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
-                }}
-                placeholder={wsStatus !== "connected" ? "Connecting…" : isWorking ? "Agent is working…" : isListening ? "Listening..." : "Ask Neurex anything…"}
-                disabled={wsStatus !== "connected" || isWorking}
-                rows={1}
-                className="ai-input__textarea"
-              />
+
+                    // Auto-expand logic
+                    const el = inputRef.current;
+                    if (el) {
+                      el.style.height = "auto";
+                      el.style.height = Math.min(el.scrollHeight, window.innerHeight * 0.4) + "px";
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (showMentions) {
+                      if (e.key === "ArrowDown") { e.preventDefault(); setMentionIndex(i => i + 1); }
+                      if (e.key === "ArrowUp") { e.preventDefault(); setMentionIndex(i => i - 1); }
+                      if (e.key === "Enter" || e.key === "Tab") {
+                        e.preventDefault();
+                        insertMention();
+                      }
+                      if (e.key === "Escape") setShowMentions(false);
+                      return;
+                    }
+                    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
+                  }}
+                  placeholder={wsStatus !== "connected" ? "Connecting…" : isWorking ? "Agent is working…" : isListening ? "Listening..." : "Ask Neurex anything…"}
+                  disabled={wsStatus !== "connected" || isWorking}
+                  rows={1}
+                  className="ai-input__textarea"
+                />
+                <button 
+                  className="ai-input__send-embedded"
+                  onClick={handleSend}
+                  disabled={!input.trim() || wsStatus !== "connected" || isWorking}
+                  title="Send Message (Enter)"
+                >
+                  <ArrowUp size={18} strokeWidth={2.5} />
+                </button>
+              </div>
               <div className="ai-input__footer">
                 <div className="ai-input__footer-left">
                   <CustomSelect 
@@ -584,8 +675,17 @@ export function AIPanel({ send, conversationId, isActive = true }: AIPanelProps)
                 <div className="ai-input__footer-right">
                   <VoiceLangSelect 
                     voiceValue={voicePreset}
-                    voiceOnChange={setVoicePreset}
+                    voiceOnChange={(val) => {
+                      setVoicePreset(val);
+                      localStorage.setItem("neurex_voice_preset", val);
+                    }}
                     voiceOptions={VOICE_OPTIONS}
+                    autoSpeak={autoSpeak}
+                    onAutoSpeakToggle={() => {
+                      const next = !autoSpeak;
+                      setAutoSpeak(next);
+                      localStorage.setItem("neurex_auto_speak", String(next));
+                    }}
                     langValue={speechLang}
                     langOnChange={setSpeechLang}
                     langOptions={LANG_OPTIONS}

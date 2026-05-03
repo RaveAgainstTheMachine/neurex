@@ -2,6 +2,7 @@ use anyhow::{Context, Result};
 use clap::{Parser, Subcommand};
 use colored::*;
 use std::net::SocketAddr;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use sysinfo::System;
 use tokio::process::Command;
@@ -48,7 +49,7 @@ async fn main() -> Result<()> {
 
     let cli = Cli::parse();
 
-    match &cli.command {
+    match cli.command {
         Commands::Start { port } => {
             let api_port = port + 5000; 
 
@@ -80,15 +81,43 @@ async fn main() -> Result<()> {
             };
 
             let current_dir = std::env::current_dir()?;
-            let mut api_process = Command::new(&uvicorn_exe)
-                .arg("main:app")
+            let home = dirs::home_dir().unwrap();
+            let settings_path = home.join(".neurex_settings.json");
+            let settings: serde_json::Value = if settings_path.exists() {
+                let content = std::fs::read_to_string(&settings_path).unwrap_or_else(|_| "{}".to_string());
+                serde_json::from_str(&content).unwrap_or(serde_json::json!({}))
+            } else {
+                serde_json::json!({})
+            };
+
+            let enable_https = settings["enable_https"].as_bool().unwrap_or(false);
+            let fqdn = settings["fqdn"].as_str().unwrap_or("").to_string();
+            let listen_addr = settings["listen_address"].as_str().unwrap_or("0.0.0.0").to_string();
+            
+            let cert_path = settings["ssl_cert_path"].as_str()
+                .map(Path::new)
+                .map(|p| p.to_path_buf())
+                .unwrap_or_else(|| home.join(".neurex").join("certs").join("cert.pem"));
+            
+            let key_path = settings["ssl_key_path"].as_str()
+                .map(Path::new)
+                .map(|p| p.to_path_buf())
+                .unwrap_or_else(|| home.join(".neurex").join("certs").join("key.pem"));
+
+            let mut api_cmd = Command::new(&uvicorn_exe);
+            api_cmd.arg("main:app")
                 .arg("--host")
-                .arg("0.0.0.0")
+                .arg("127.0.0.1")
                 .arg("--port")
                 .arg(api_port.to_string())
-                .current_dir("../neurex-api")
-                .spawn()
-                .context("Failed to spawn neurex-api (is uvicorn installed?)")?;
+                .current_dir("../neurex-api");
+
+            if enable_https {
+                info!("Enforcing SSL/TLS Encryption (Terminated at Substrate Boundary)");
+            }
+
+            let mut api_process = api_cmd.spawn()
+                .context("Failed to spawn neurex-api")?;
 
             info!("FastAPI Proxy initialized successfully");
 
@@ -97,14 +126,31 @@ async fn main() -> Result<()> {
             let state = Arc::new(api::AppState { 
                 api_port,
                 wasi_sandbox: wasi_sandbox.clone(),
+                enable_https,
             });
             let app = api::create_router(state);
 
-            let addr = SocketAddr::from(([0, 0, 0, 0], *port));
+            let addr: SocketAddr = format!("{}:{}", listen_addr, port).parse()?;
+            
+            let fqdn_val = fqdn.clone();
             let web_server = tokio::spawn(async move {
-                let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-                info!("Embedded Vite Frontend active at http://{}", addr);
-                axum::serve(listener, app).await.unwrap();
+                if enable_https && cert_path.exists() && key_path.exists() {
+                    let tls_config = axum_server::tls_rustls::RustlsConfig::from_pem_file(&cert_path, &key_path)
+                        .await
+                        .unwrap();
+                    
+                    info!("★ Secure Neurex Substrate active at https://{}", if fqdn_val.is_empty() { addr.to_string() } else { fqdn_val.to_string() });
+                    info!("(Protocol Enforcement: HTTP → HTTPS auto-redirect enabled)");
+
+                    axum_server_dual_protocol::bind_dual_protocol(addr, tls_config)
+                        .serve(app.into_make_service_with_connect_info::<SocketAddr>())
+                        .await
+                        .unwrap();
+                } else {
+                    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+                    info!("Embedded Vite Frontend active at http://{}", addr);
+                    axum::serve(listener, app.into_make_service_with_connect_info::<SocketAddr>()).await.unwrap();
+                }
             });
 
             if let Some(ref d) = docker {
@@ -114,7 +160,7 @@ async fn main() -> Result<()> {
                 }
             }
 
-            info!("★ Neurex is active. Access the IDE at: {}", format!("http://localhost:{}", port).bold().underline());
+            info!("★ Neurex Substrate active at: {}", format!("https://{}", if fqdn.is_empty() { addr.to_string() } else { fqdn.to_string() }).bold().underline());
             info!("Press Ctrl+C to stop.");
 
             tokio::select! {

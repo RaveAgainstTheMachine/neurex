@@ -14,6 +14,8 @@ interface VoiceLangSelectProps {
   langValue: string;
   langOnChange: (val: string) => void;
   langOptions: Option[];
+  autoSpeak?: boolean;
+  onAutoSpeakToggle?: () => void;
 }
 
 export function VoiceLangSelect({
@@ -22,7 +24,9 @@ export function VoiceLangSelect({
   voiceOptions,
   langValue,
   langOnChange,
-  langOptions
+  langOptions,
+  autoSpeak,
+  onAutoSpeakToggle
 }: VoiceLangSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -53,6 +57,14 @@ export function VoiceLangSelect({
           <div className="voice-lang-select__section">
             <div className="voice-lang-select__header">
               <Volume2 size={12} /> <span>Voice</span>
+              <label className="voice-lang-select__auto-toggle">
+                <input 
+                   type="checkbox" 
+                   checked={autoSpeak} 
+                   onChange={onAutoSpeakToggle} 
+                />
+                <span>Auto</span>
+              </label>
             </div>
             <div className="voice-lang-select__grid">
               {voiceOptions.map(opt => (

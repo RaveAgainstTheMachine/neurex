@@ -125,18 +125,23 @@ async def lifespan(app: FastAPI):
 
 
 from fastapi.responses import ORJSONResponse
+from core.infrastructure.logging_middleware import DebugLoggingMiddleware
 
 app = FastAPI(
-    title="Neurex Neural Mesh",
-    description="Decentralized Autonomous Agentic Infrastructure",
-    version="0.2.1-stable",
+    title="Neurex API",
+    description="The Sentient IDE Control Plane",
+    version="1.0.0",
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+    openapi_url="/api/openapi.json",
     lifespan=lifespan,
     default_response_class=ORJSONResponse
 )
 
+app.add_middleware(DebugLoggingMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origin_regex="https?://(127\\.0\\.0\\.1|localhost|10\\..*|192\\.168\\..*|neurex\\..*)",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

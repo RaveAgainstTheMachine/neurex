@@ -108,6 +108,25 @@ Static performance metrics (MMLU, HumanEval, etc.) utilized by the `LLMRecommend
 ---
 © 2026 Steven Frost. All rights reserved.
 
+## 23. Secure LAN Sovereignty (Phase 60)
+
+Phase 60 focuses on the hardening of the Neurex substrate for multi-device collaboration across local and mobile networks.
+
+### 23.1 Protocol Upgrade Sentinel (Enforced HTTPS)
+The substrate implements a mandatory **SSL/TLS Encryption** model for all non-loopback traffic.
+- **Auto-Upgrade Logic**: The frontend implements a zero-latency protocol sentinel. Upon detecting an unencrypted `http` connection, it immediately upgrades the browser to `https`.
+- **Dual-Protocol Coherence**: The Axum control plane has been re-engineered to handle simultaneous HTTP/HTTPS handshakes on port 3000. This ensures that browsers can discover the substrate without handshake errors, while still enforcing a hard upgrade for subsequent data transfer.
+
+### 23.2 Transparent Proxy Identity
+To maintain session integrity between the Rust Control Plane and the Python Logic Plane, a **Transparent Proxy** layer was integrated:
+- **Header Injection**: The Axum proxy injects standard `X-Forwarded-For`, `X-Forwarded-Proto`, and `X-Forwarded-Host` headers into every backend request.
+- **Backend Recognition**: The FastAPI backend utilizes these headers to correctly perceive the client's original protocol and host, resolving previous authentication and CORS conflicts encountered on mobile devices.
+
+### 23.3 Dynamic CORS Sovereignty
+Multi-device collaboration is secured via a dynamic whitelisting engine in the backend:
+- **Subnet Awareness**: The system automatically whitelists local loopback (127.0.0.1) and standard LAN subnets (10.0.0.0/8, 192.168.0.0/16).
+- **Credential Integrity**: This ensures that secure, credential-bearing requests (Auth Tokens) remain valid and authorized even when originating from disparate nodes within the secure LAN perimeter.
+
 ## 4. Real-Time Communication
 
 ### 4.1 WebSocket Protocol

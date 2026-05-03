@@ -12,3 +12,6 @@
 | 008 | Proper Gitea Issue Integration | FIXED | MEDIUM | Migrated to native Gitea Issues substrate via API sync. |
 | 013 | Critical planning failure: All connection attempts failed | FIXED | CRITICAL | Upgraded Sentinel to host-aware mode + proactive lifespan start. |
 | 014 | Critical planning failure: greenlet_spawn error | FIXED | HIGH | Disabled expire_on_commit to protect async history access. |
+| 015 | Secure LAN Sovereignty (HTTPS Enforcement) | FIXED | CRITICAL | Implemented browser-side auto-upgrade sentinel and dual-protocol listener. |
+| 016 | Transparent Proxy Header Propagation | FIXED | HIGH | Integrated X-Forwarded-* headers into Axum proxy for backend awareness. |
+| 017 | Chat Send Affordance optimization | FIXED | MEDIUM | Added high-visibility send button to AI chat UI. |

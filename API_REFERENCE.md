@@ -1,9 +1,10 @@
 # Neurex API Reference
 
-> **Base URL**: `http://localhost:8000`  
+> **Base URL**: `https://localhost:3000` (Control Plane Gateway)  
+> **Internal API**: `http://localhost:8000`  
 > **Auth**: Bearer JWT (obtain via `POST /api/auth/token`)  
-> **WebSocket**: `ws://localhost:8000/ws/{conversation_id}`  
-> **Version**: 0.6.0-stable
+> **WebSocket**: `wss://localhost:3000/ws/{conversation_id}` (Internal: `ws://localhost:8000/ws/...`)  
+> **Version**: 0.7.0-stable (SECURE LAN SOVEREIGNTY)
 
 ---
 
@@ -38,6 +39,18 @@ All endpoints (except `/health`, `/api/auth/register`, `/api/auth/token`) requir
 > **JWT_SECRET**: The API will refuse to start if the `JWT_SECRET` environment variable is not set.
 
 **Roles**: `admin` > `developer` > `viewer`
+
+### 1.1 Proxy Transparency (Phase 60)
+
+When connecting via the **Neurex CLI Substrate**, all requests are proxied. To ensure session integrity and correct origin validation, the proxy injects the following headers:
+
+| Header | Description |
+|:---|:---|
+| `X-Forwarded-For` | The real IP address of the client device. |
+| `X-Forwarded-Proto` | The external protocol (`https`). |
+| `X-Forwarded-Host` | The external hostname (e.g., `neurex.local`). |
+
+The backend automatically utilizes these headers to validate CORS origins and protocol-sensitive auth callbacks.
 
 ### `POST /api/auth/register`
 Register a new user. The **first** user registered is automatically granted `admin` role.

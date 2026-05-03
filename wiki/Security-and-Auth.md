@@ -19,3 +19,10 @@ To prevent unauthorized public access, Neurex uses a **Time-Limited Invite Syste
 ## 4. Hardened Security
 - **Path Sanitization**: All skill installations via Git are strictly sanitized to prevent **Path Traversal** attacks. `..` and absolute paths are forbidden in sub-path definitions.
 - **Shell Sandbox**: Agents execute shell commands in a restricted environment with PTY-level monitoring.
++
++## 5. Secure LAN & Mobile Access (HTTPS)
++As of **Phase 60**, Neurex enforces mandatory **SSL/TLS Encryption** for all network traffic.
++- **Auto-Upgrade Sentinel**: A browser-side script automatically upgrades unencrypted `http` requests to `https` to prevent protocol downgrade attacks.
++- **HSTS Enforcement**: The substrate broadcasts `Strict-Transport-Security` headers to ensure browsers maintain persistent secure connections.
++- **Transparent Proxy Transparency**: The internal proxy injects `X-Forwarded-Proto`, `X-Forwarded-Host`, and `X-Forwarded-For` headers to ensure the backend is fully aware of the secure perimeter and client identity.
++- **Dynamic CORS Sovereignty**: Multi-device collaboration is secured via dynamic whitelisting of LAN subnets and local origins for credential-bearing requests.

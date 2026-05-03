@@ -35,6 +35,11 @@ DEFAULT_SETTINGS = {
     "vllm_port":       8002,
     "llama_cpp_port":  8080,
     "rpc_port":        50051,
+    "listen_address":  "0.0.0.0",
+    "fqdn":            "",
+    "enable_https":    True,
+    "ssl_cert_path":   "",
+    "ssl_key_path":    "",
 
     # Firewall
     "firewall_enabled": True,
