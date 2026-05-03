@@ -6,7 +6,7 @@ import {
   Play, Square, RefreshCcw, Cpu, Zap, Search, 
   Brain, Braces, Video, AudioLines, 
   Thermometer, Gauge, Eye, X, Image as ImageIcon,
-  Monitor, HardDrive, Activity, Info
+  Monitor, HardDrive, Activity, Info, MessageSquare, Plus, Trash2
 } from "lucide-react";
 import "./InfraPanel.css";
 import { useStore } from "../../lib/store";
@@ -22,7 +22,9 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
   const registry = useStore(s => s.infraRegistry);
   const skills = useStore(s => s.infraSkills);
   const peers = useStore(s => s.infraPeers);
+  const settings = useStore(s => s.settings);
   const fetchData = useStore(s => s.refreshInfra);
+  const refreshSettings = useStore(s => s.refreshSettings);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [hfResults, setHfResults] = useState<ModelProfile[]>([]);
@@ -33,6 +35,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
 
   useEffect(() => {
     fetchData();
+    refreshSettings();
     const timer = setInterval(fetchData, 5000);
     onExpand(35);
     return () => {
@@ -64,15 +67,70 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const recommendations = [
-    { id: 'thinking', role: 'THINKING', model: 'deepseek-r1', specs: '32B • 20G VRAM • 22G DISK', vram: 20, disk: 22, icon: Brain },
-    { id: 'coding', role: 'CODING', model: 'qwen2.5-coder', specs: '32B • 20G VRAM • 18G DISK', vram: 20, disk: 18, icon: Braces },
-    { id: 'vision', role: 'VISION', model: 'llama3.2-vision', specs: '11B • 8.5G VRAM • 9G DISK', vram: 8.5, disk: 9, icon: Eye },
-    { id: 'media', role: 'MEDIA', model: 'llama3.2-vision', specs: '11B • 8.5G VRAM • 9G DISK', vram: 8.5, disk: 9, icon: ImageIcon },
-    { id: 'video', role: 'VIDEO', model: 'ltx-video', specs: 'Multi-Modal • 24G VRAM • 45G DISK', vram: 24, disk: 45, icon: Video },
-    { id: 'audio-turbo', role: 'AUDIO (FAST)', model: 'whisper-large-v3-turbo', specs: '1.5B • 4G VRAM • 3G DISK', vram: 4, disk: 3, icon: AudioLines },
-    { id: 'audio-large', role: 'AUDIO (PRO)', model: 'whisper-large-v3', specs: '1.5B • 12G VRAM • 5G DISK', vram: 12, disk: 5, icon: Brain },
-  ];
+  const routeIcons: Record<string, any> = {
+    "Planning":    Brain,
+    "Coding":      Braces,
+    "Testing":     Zap,
+    "Researching": Search,
+    "Reviewing":   Eye,
+    "Vision":      Eye,
+    "Media":       ImageIcon,
+    "Audio":       AudioLines,
+    "Chat":        MessageSquare
+  };
+
+  const handleUpdateRoute = async (role: string, model: string) => {
+    if (!settings) return;
+    const newRoutes = { ...settings.model_routes, [role]: model };
+    try {
+      const res = await fetch(`${API_BASE}/api/settings/`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${useStore.getState().token}` 
+        },
+        body: JSON.stringify({ settings: { model_routes: newRoutes } })
+      });
+      if (!res.ok) throw new Error(await res.text());
+      refreshSettings();
+      toast.success(`Route ${role} updated to ${model}`);
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  const handleAddRoute = async () => {
+    const role = prompt("Enter new cognitive role name (e.g. Documentation):");
+    if (!role) return;
+    handleUpdateRoute(role, modelOptions[0] || "qwen2.5-coder:14b");
+  };
+
+  const handleDeleteRoute = async (role: string) => {
+    if (!settings) return;
+    const newRoutes = { ...settings.model_routes };
+    delete newRoutes[role];
+    try {
+      const res = await fetch(`${API_BASE}/api/settings/`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${useStore.getState().token}` 
+        },
+        body: JSON.stringify({ settings: { model_routes: newRoutes } })
+      });
+      if (!res.ok) throw new Error(await res.text());
+      refreshSettings();
+      toast.success(`Route ${role} removed`);
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+  };
+
+  const modelOptions = useMemo(() => {
+    const local = registry.map(m => m.name.split(':')[0]);
+    const peerModels = peers.flatMap(p => p.models || []).map(m => m.split(':')[0]);
+    return Array.from(new Set([...local, ...peerModels])).sort();
+  }, [registry, peers]);
 
   const handlePullModel = async (engine: string, model: string) => {
     setLoading(true);
@@ -211,47 +269,52 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
         </div>
 
       <div className="infra-content">
-        {/* AGENT RECOMMENDATIONS */}
+        {/* MODEL ROUTING GRID */}
         <div className="infra-section">
-          <div className="infra-section__title">AGENT RECOMMENDATIONS</div>
-          <div className="recommendation-grid">
-            {recommendations
-              .filter(rec => {
-                const totalVram = (metrics?.vram_gb || 0) + (peers?.reduce((acc, p) => acc + (p.vram_gb || 0), 0) || 0);
-                const freeDisk = metrics?.disk_free_gb || 0;
-                return rec.vram <= totalVram && rec.disk <= freeDisk;
-              })
-              .map((rec) => (
-              <div 
-                key={rec.id} 
-                className="rec-card"
-                onClick={() => {
-                  const [mName] = rec.model.split(':');
-                  const diskSize = parseInt(rec.specs.match(/(\d+)G DISK/)?.[1] || "0");
-                  setSelectedModel({ 
-                    name: mName, 
-                    engine: 'ollama', 
-                    params: rec.specs.split(' ')[0], 
-                    size_gb: diskSize,
-                    context_window: 32768, 
-                    vram_required_gb: parseInt(rec.specs.match(/(\d+)G VRAM/)?.[1] || "0"),
-                    recommended_tasks: [rec.role],
-                    description: `Recommended model for ${rec.role} tasks on this hardware.`
-                  });
-                }}
-              >
-                <div className="rec-header">
-                  <span className="rec-role">{rec.role}</span>
-                  <span className="rec-specs">{rec.specs}</span>
+          <div className="infra-section__title">MODEL ROUTING</div>
+          <div className="routing-grid">
+            {settings?.model_routes && Object.entries(settings.model_routes).map(([role, model]) => {
+              const Icon = routeIcons[role] || Info;
+              const isDefault = ["Planning", "Coding", "Testing", "Researching", "Reviewing", "Vision", "Media", "Audio", "Chat"].includes(role);
+              const isActive = engines.some(e => e.status === 'running' && model.includes(e.name));
+
+              return (
+                <div key={role} className="routing-card">
+                  {!isDefault && (
+                    <div className="routing-card__delete" onClick={() => handleDeleteRoute(role)}>
+                      <Trash2 size={12} />
+                    </div>
+                  )}
+                  <div className="routing-card__header">
+                    <div className="routing-card__icon">
+                      <Icon size={14} />
+                    </div>
+                    <span className="routing-card__role">{role}</span>
+                  </div>
+                  
+                  <select 
+                    className="routing-card__selector"
+                    value={model.split(':')[0]}
+                    onChange={(e) => handleUpdateRoute(role, e.target.value)}
+                  >
+                    <option value="" disabled>Select model...</option>
+                    {modelOptions.map(opt => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+
+                  <div className={`routing-card__status ${isActive ? 'active' : ''}`}>
+                    <div className="routing-card__status-dot" />
+                    <span>{isActive ? 'SUBSTRATE ACTIVE' : 'STANDBY'}</span>
+                  </div>
                 </div>
-                <div className="rec-model">{rec.model}</div>
-                <button 
-                  className="rec-deploy-btn" 
-                >
-                  DEPLOY
-                </button>
-              </div>
-            ))}
+              );
+            })}
+            
+            <div className="routing-card routing-card__add" onClick={handleAddRoute}>
+              <Plus size={24} className="opacity-20" />
+              <span className="text-[10px] font-black opacity-40">ADD ROLE</span>
+            </div>
           </div>
         </div>
 

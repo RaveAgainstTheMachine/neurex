@@ -83,59 +83,159 @@
 }
 
 /* ── Agent Recommendations (Grid) ── */
-.recommendation-grid {
+/* ── Model Routing Grid ── */
+.routing-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
 }
 
-.rec-card {
+.routing-card {
+  position: relative;
   background: rgba(255, 255, 255, 0.02);
-  border: 1px dashed rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
 }
 
-.rec-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 10px;
-  font-weight: 800;
-}
-
-.rec-role { color: white; }
-.rec-specs { color: var(--text-muted); }
-
-.rec-model {
-  font-size: 14px;
-  font-weight: 700;
-  color: white;
-  margin-bottom: 8px;
-}
-
-.rec-deploy-btn {
-  align-self: flex-end;
-  padding: 8px 16px;
-  background: rgba(139, 92, 246, 0.05);
-  color: var(--accent-purple);
-  border: 1px solid rgba(139, 92, 246, 0.2);
-  border-radius: 6px;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  transition: all 0.2s;
-  margin-top: auto;
-}
-
-.rec-deploy-btn:hover {
-  background: var(--accent-purple);
-  color: white;
+.routing-card:hover {
+  background: rgba(255, 255, 255, 0.04);
   border-color: var(--accent-purple);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
+
+.routing-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-purple), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.routing-card:hover::before {
+  opacity: 1;
+}
+
+.routing-card__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.routing-card__icon {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(139, 92, 246, 0.1);
+  color: var(--accent-purple);
+  border-radius: 8px;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.routing-card__role {
+  font-size: 11px;
+  font-weight: 800;
+  color: white;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.routing-card__selector {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 11px;
+  color: #a1a1aa;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.routing-card__selector:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.routing-card__selector:focus {
+  border-color: var(--accent-purple);
+  background: rgba(139, 92, 246, 0.05);
+  color: white;
+}
+
+.routing-card__add {
+  background: transparent;
+  border: 1px dashed var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+
+.routing-card__add:hover {
+  border-style: solid;
+  border-color: var(--accent-purple);
+  color: white;
+}
+
+.routing-card__delete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  opacity: 0;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.routing-card:hover .routing-card__delete {
+  opacity: 1;
+}
+
+.routing-card__delete:hover {
+  color: #ef4444;
+  transform: scale(1.1);
+}
+
+.routing-card__status {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.routing-card__status.active {
+  color: #10b981;
+}
+
+.routing-card__status-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
 
 /* ── Compute Engines (Stack) ── */
 .engine-stack {

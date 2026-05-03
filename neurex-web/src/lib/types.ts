@@ -134,6 +134,11 @@ export interface User {
   is_active?: boolean;
 }
 
+export interface Settings {
+  model_routes: Record<string, string>;
+  [key: string]: any;
+}
+
 export interface SearchResult {
   path: string;
   root?: string;
@@ -313,8 +318,8 @@ export interface NeurexStore {
   setTheme: (theme: any) => void;
   refreshTheme: () => Promise<void>;
   // Settings
-  settings: any | null;
-  setSettings: (settings: any) => void;
+  settings: Settings | null;
+  setSettings: (settings: Settings) => void;
   refreshSettings: () => Promise<void>;
   send: (payload: any) => void;
 

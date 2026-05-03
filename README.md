@@ -8,8 +8,8 @@
 
   <p>
     <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-purple.svg?style=for-the-badge" alt="License"></a>
-    <a href="#"><img src="https://img.shields.io/badge/Version-v0.4.0--NOC-blueviolet.svg?style=for-the-badge" alt="Version"></a>
-    <a href="#"><img src="https://img.shields.io/badge/Status-Phase%2055%20Stable-success.svg?style=for-the-badge" alt="Status"></a>
+    <a href="#"><img src="https://img.shields.io/badge/Version-v0.4.1--DYNAMIC-blueviolet.svg?style=for-the-badge" alt="Version"></a>
+    <a href="#"><img src="https://img.shields.io/badge/Status-Phase%2061%20Stable-success.svg?style=for-the-badge" alt="Status"></a>
     <a href="#"><img src="https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Win-white.svg?style=for-the-badge" alt="Platform"></a>
   </p>
 
@@ -43,6 +43,7 @@
 ## 🚀 Key Pillars
 
 ### 🧠 Sentient Autonomy
+*   **Dynamic Model Routing**: Decoupled cognitive roles (Planning, Coding, Reviewing) with on-the-fly model remapping.
 *   **Infrastructure NOC**: Real-time telemetry for storage health, multi-disk environments, and "Hot/Cold" model states.
 *   **Neural Self-Repair**: Autonomous agents that detect, analyze, and fix their own regressions in real-time.
 *   **Neural Linter**: Architectural validation of every code mutation against project-specific design laws.
@@ -54,6 +55,7 @@
 *   **Predictive Prefetching**: Eliminates cold-start latency by warming model weights based on agent trajectory.
 
 ### 🌐 Universal Connectivity
+*   **Secure LAN Sovereignty**: Enforced HTTPS and transparent proxying for secure multi-device collaboration.
 *   **Federated RAG 2.0**: Semantic and relational retrieval across the entire Mesh.
 *   **Neural Virtualization**: Mesh-wide VRAM pooling and autonomous re-quantization to fit distributed hardware.
 *   **Native Gitea Sync**: Professional issue tracking and substrate synchronization directly with the origin server.
@@ -158,5 +160,5 @@ Neurex development is governed by the **Anti-Gravity Protocol** (see `.antigravi
 ---
 
 <div align="center">
-  <sub>Built with 💜 by the Neurex Collective. Phase 55 Stable.</sub>
+  <sub>Built with 💜 by the Neurex Collective. Phase 61 Stable.</sub>
 </div>

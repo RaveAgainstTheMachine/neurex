@@ -9,7 +9,9 @@ import "./SettingsPanel.css";
 import { useStore } from "../../lib/store";
 import { API_BASE } from "../../lib/config";
 
-interface SettingsState {
+import { Settings } from "../../lib/types";
+
+interface SettingsState extends Settings {
   autonomy_level: string;
   enable_agent_internet: boolean;
   system_prompt_addition: string;
@@ -42,7 +44,6 @@ interface SettingsState {
   neurex_install_dir: string;
   models_dir: string;
   storage_paths: string | string[];
-  [key: string]: any;
 }
 
 interface UserProfile {
@@ -54,7 +55,7 @@ interface UserProfile {
 
 export function SettingsPanel() {
   const store = useStore();
-  const [localSettings, setLocalSettings] = useState<SettingsState | null>(store.settings);
+  const [localSettings, setLocalSettings] = useState<SettingsState | null>(store.settings as SettingsState);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(!store.settings);
   const [saving, setSaving] = useState(false);
@@ -65,7 +66,7 @@ export function SettingsPanel() {
     if (!store.token) return;
     try {
       await store.refreshSettings();
-      if (useStore.getState().settings) setLocalSettings(useStore.getState().settings);
+      if (useStore.getState().settings) setLocalSettings(useStore.getState().settings as SettingsState);
       if (store.user?.role === "admin") {
         const res = await fetch(`${API_BASE}/api/auth/users`, {
           headers: { "Authorization": `Bearer ${store.token}` }
