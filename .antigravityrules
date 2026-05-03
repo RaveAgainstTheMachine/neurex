@@ -10,6 +10,7 @@
 - **Atomic Commits**: Git commits must be atomic and descriptive. Format: `[service] <type>: <description>`. Example: `[api] feat: add pty session timeout`.
 - **Documentation Parity**: Every git commit MUST be preceded by a full documentation audit. Update `API_REFERENCE.md` for route changes, `ARCHITECTURE.md` for logic shifts, `CHANGELOG.md` for versioning, and `NEUREX_REVIEW.md` for architectural milestones.
 - **Confirmation Rule**: Before any thinking or action, you must explicitly state that you have read and are applying these rules (Source of Law: .antigravityrules).
+- **Technical Precision**: Use objective, technical language. Do not overhype, embellish, or use marketing-speak. Focus on architectural facts, metrics, and implementation details.
 - **Refactoring Integrity**: When refactoring React components or Backend routes, NEVER leave orphaned syntax (e.g., missing `);`), corrupted dependency arrays, or missing imports. Test the specific modified block for logical completeness before saving.
 
 # ─────────────────────────────────────────────────────────────────────────────
