@@ -105,7 +105,10 @@ async def search_huggingface(query: str) -> List[Dict[str, Any]]:
                             "downloads": m.get("downloads", 0),
                             "likes": m.get("likes", 0),
                             "repo_url": f"https://huggingface.co/{m['id']}",
-                            "variants": [] # Will populate below
+                            "variants": [
+                                {"name": s.get("rfilename"), "size_gb": 0.0, "params": size_tag}
+                                for s in m.get("siblings", []) if s.get("rfilename", "").endswith(".gguf")
+                            ]
                         })
 
                     # Parallel fetch tree info for top results to get actual LFS sizes
@@ -114,25 +117,38 @@ async def search_huggingface(query: str) -> List[Dict[str, Any]]:
                         repo_id = m_obj["id"]
                         tree_url = f"https://huggingface.co/api/models/{repo_id}/tree/main?lfs=true"
                         try:
-                            async with session.get(tree_url, timeout=3) as t_resp:
+                            async with session.get(tree_url, timeout=5) as t_resp:
                                 if t_resp.status == 200:
                                     tree_data = await t_resp.json()
+                                    if not isinstance(tree_data, list):
+                                        return
+                                        
                                     variants = []
+                                    import re
                                     for item in tree_data:
                                         if isinstance(item, dict) and item.get("path", "").endswith(".gguf"):
+                                            fname = item["path"]
+                                            # Try to extract params from filename if repo tag is Unknown
+                                            p_match = re.search(r'([0-9.]+[bB])', fname)
+                                            v_params = p_match.group(1).upper() if p_match else results[model_idx]["params"]
+                                            
                                             variants.append({
-                                                "name": item["path"],
+                                                "name": fname,
                                                 "size_gb": round(item.get("size", 0) / (1024 ** 3), 2),
-                                                "params": results[model_idx]["params"]
+                                                "params": v_params
                                             })
-                                    results[model_idx]["variants"] = variants
+                                    
                                     if variants:
+                                        results[model_idx]["variants"] = variants
                                         results[model_idx]["size_gb"] = variants[0]["size_gb"]
+                                        # Update top-level params if we found a better one
+                                        if results[model_idx]["params"] == "Unknown" and variants[0]["params"] != "Unknown":
+                                            results[model_idx]["params"] = variants[0]["params"]
                         except Exception:
                             pass
 
                     import asyncio
-                    tasks = [fetch_sizes(i) for i in range(min(len(results), 8))]
+                    tasks = [fetch_sizes(i) for i in range(len(results))]
                     await asyncio.gather(*tasks)
 
                     return results
