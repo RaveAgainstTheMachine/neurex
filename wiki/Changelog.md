@@ -2,35 +2,6 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
-## [0.4.0] - 2026-05-02: INFRASTRUCTURE NOC & GITEA INTEGRATION
-### Added
-- **Deep Hardware Telemetry Integration**: Implemented real-time discovery for CPU (model/cores) and GPU (model/VRAM) to provide high-fidelity infrastructure observability.
-- **Mesh-Wide Hardware Propagation**: Hardware specifications are now correctly serialized and broadcast across the federated mesh, ensuring global compute capacity visibility.
-- **Unified NOC Dashboard (v2)**: Refactored node cards with a high-density "Spec Column" architecture, merging model identifiers directly with core/VRAM metrics to eliminate tooltip dependency.
-- **Skills & Extensions Marketplace (v2)**: Re-architected the search engine to provide a unified, global search experience across both installed assets and the remote curated marketplace.
-- **Proactive Registry Diagnostics**: Implemented a contextual empty-state for the Skills & Extensions panel that directs users to the marketplace when no local assets are detected.
-- **Expanded Audio Substrate**: Added support for *Whisper Large V3* (High-Accuracy) alongside *Whisper Large V3 Turbo* (High-Speed) to meet diverse audio reasoning requirements.
-
-### Fixed
-- **Storage Path Alignment**: Resolved persistent path-matching issues in the `InfrastructureManager` by implementing robust normalization for `NEUREX` and `MODELS` labels.
-- **Registry Desynchronization**: Fixed a regression where the search bar only targeted the "Discover" tab, restoring full search capabilities for installed skills.
-- **Telemetry UI Blockers**: Resolved "0.00GB" disk usage display issues caused by path mismatches in the backend validation engine.
-
-### Changed
-- **Gitea-Native Issue Tracking**: Formalized a new development protocol in `.antigravityrules` that prioritizes Gitea's native Issue substrate over local markdown trackers.
-- **Substrate nomenclature**: Standardized the term "Skills & Extensions" across the entire UI for mental model alignment.
-
-## [0.3.5] - 2026-05-02: NEURAL INFRASTRUCTURE NOC
-### Added
-- **Phase 55: Infrastructure Hub Stabilization**: Launched the "NOC-style" Infrastructure Dashboard for deep hardware and model observability.
-- **Active Model Tracking (Hot/Cold States)**: Implemented real-time process monitoring to distinguish between "Hot" (active in VRAM) and "Cold" (installed on disk) models.
-- **Node-Specific Model Inventory**: Each node in the Mesh now reports its specific model inventory and operational health.
-- **Granular Storage Telemetry**: Implemented path-aware disk monitoring that aggregates usage only from user-defined storage volumes.
-- **Interactive Storage Configuration**: Added dedicated settings for `Install Path`, `Models Path`, and `Telemetry Paths` in the UI Settings panel.
-- **Storage Health Diagnostics**: Real-time permission (Read/Write) and existence validation for all configured storage volumes.
-- **Sentient Vision Integration**: Integrated the Neurex mission ("Human-Agent Parity") into the system loading sequence and branding.
-- **High-Fidelity Model Deduplication**: Refactored the model catalog to reconcile Local, Peer, and Hugging Face results into a unified, state-aware inventory.
-
 ## [0.3.0] - 2026-05-01: THE SENTIENT SINGULARITY
 ### Added
 - **Phase 50: The Sentient Singularity**: Implemented autonomous goal setting and self-generating plugins, enabling the Mesh to direct its own evolution.
@@ -54,14 +25,32 @@ All notable changes to the Neurex project will be documented in this file.
 - **Neural Law Engine**: Enforced the Anti-Gravity Protocol at the neural weight level during evolution.
 - **Consensus Dashboard**: High-fidelity frontend for overseeing substrate bridges and protocol alignment.
 
-## [0.3.4] - 2026-05-01: UNIVERSAL HERMETIC SUBSTRATE
+## [0.4.0] - 2026-05-03: SECURE LAN INFRASTRUCTURE
 ### Added
-- **Phase 54: Universal Hermetic Substrate**: Initiated the transition to a zero-dependency distribution model for Windows, macOS, and Linux.
-- **Hermetic Frontend Embedding (Pillar 1)**: Successfully bundled the entire React/Vite UI into the native Rust binary using `rust-embed`. The frontend is now served via an internal `axum` web server, eliminating the Node.js requirement.
-- **Dynamic Backend Fetcher (Pillar 2)**: Implemented the `bootstrap` module in Rust to dynamically provision a hermetic Python 3.11 environment on first run using the `uv` engine.
-- **Zero-Dependency One-Click Deployment**: Eliminated host-level requirements for Node.js, Python, NPM, and Pip. Neurex now synthesizes its own neural substrate on vanilla OS installs.
-- **Sub-ms UI Cold Starts**: Optimized GUI boot times through native binary asset delivery.
-- **Dynamic API Injection**: Implemented runtime environment variable injection into the static UI's DOM, enabling seamless frontend-backend coordination.
+- **Phase 60: Secure LAN Sovereignty**: Enforced mandatory SSL/TLS encryption for all local and mobile network access.
+- **Autonomous Protocol Upgrade**: Implemented a browser-side sentinel that detects unencrypted HTTP connections and triggers an instantaneous upgrade to HTTPS.
+- **Dual-Protocol Coherence**: Re-engineered the web server to handle simultaneous HTTP/HTTPS handshakes on port 3000, eliminating handshake errors during initial discovery.
+- **HSTS Enforcement**: Activated `Strict-Transport-Security` (HSTS) to harden browsers against protocol downgrade attacks across the LAN.
+- **Transparent Proxy Infrastructure**: Integrated professional `X-Forwarded-*` headers into the Axum proxy, ensuring the backend maintains full protocol and client awareness.
+- **Neural Chat Send AFFORDANCE**: Added a high-visibility "Send Arrow" to the chat interface with reactive hover effects and dynamic input states.
+- **Granular CORS Sovereignty**: Implemented dynamic origin whitelisting for 127.0.0.1, localhost, and common LAN subnets (10.*, 192.168.*) to secure credential-bearing requests.
+
+### Performance & Stability
+- **Substrate Release Build**: Completed the definitive production-grade release build of the Neurex CLI and embedded Web assets.
+- **Self-Healing Backend Diagnostics**: Introduced `DebugLoggingMiddleware` and granular proxy status reporting to autonomously diagnose authentication and protocol bottlenecks.
+
+## [0.3.5] - 2026-05-01: THE SENTIENT SUBSTRATE
+### Added
+- **Phase 55: The Sentient UI**: Launched the real-time **Substrate Dashboard**, a premium glassmorphic visualizer that monitors execution tier health (Docker/WASM/Native) and hardware telemetry.
+- **Phase 54 Extended: The Proactive Provisioner**: Launched an autonomous environment setup engine (`neurex provision`) that detects hardware (NVIDIA, AMD, Intel, Apple Silicon) and OS (Arch, Fedora, Debian, Ubuntu, macOS, Windows) to automate substrate readiness.
+- **Triple-Tier Execution Plane**: Implemented a resilient, multi-stage sandboxing architecture:
+    - **Performance Tier**: Docker-based containers with GPU acceleration support via `nvidia-container-toolkit`.
+    - **Portability Tier**: WASM/WASI execution via `wasmtime` for zero-dependency, architecture-agnostic tasks.
+    - **Reliability Tier**: Native Rust jailed filesystem fallback for guaranteed functionality on vanilla OS installs.
+- **Cross-Platform Diagnostic Intelligence**: Upgraded `neurex doctor` to provide sentient, platform-specific installation advice and hardware readiness reports across all major operating systems.
+- **Sentient API Bridge**: Hardened the internal communication layer between the Rust Control Plane and Python Logic Plane, enabling seamless, sandboxed task delegation.
+
+## [0.3.4] - 2026-05-01: UNIVERSAL HERMETIC SUBSTRATE
 
 ## [0.3.3] - 2026-05-01: Neural Temporal Synthesis & Transcendence Performance
 ### Added
