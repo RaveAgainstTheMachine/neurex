@@ -83,9 +83,16 @@ class InfrastructureManager:
             if not shutil.which("ollama"):
                 raise Exception("Ollama not installed")
             
-            log.info("infra.model_pull_start", engine=engine, model=model_name)
+            from core.settings.manager import settings_manager
+            models_dir = os.path.expanduser(settings_manager.get("models_dir"))
+            
+            log.info("infra.model_pull_start", engine=engine, model=model_name, path=models_dir)
+            env = os.environ.copy()
+            env["OLLAMA_MODELS"] = models_dir
+            
             process = await asyncio.create_subprocess_exec(
                 "ollama", "pull", model_name,
+                env=env,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
@@ -258,8 +265,11 @@ class InfrastructureManager:
                 raise Exception("Ollama not installed in PATH")
             
             port = settings_manager.get("ollama_port")
+            models_dir = os.path.expanduser(settings_manager.get("models_dir"))
+            
             env = os.environ.copy()
             env["OLLAMA_HOST"] = f"0.0.0.0:{port}"
+            env["OLLAMA_MODELS"] = models_dir
             
             process = await asyncio.create_subprocess_exec(
                 "ollama", "serve",

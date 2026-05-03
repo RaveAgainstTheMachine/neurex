@@ -16,8 +16,6 @@ SERVICES = {
     "api":    {"port": 8000, "type": "api"},
     "web":    {"port": 3000, "type": "web"},
     "ollama": {"port": 11434, "type": "engine", "name": "ollama"},
-    "vllm":   {"port": 8002,  "type": "engine", "name": "vllm"},
-    "llama.cpp": {"port": 8080, "type": "engine", "name": "llama.cpp"},
 }
 
 class Sentinel:

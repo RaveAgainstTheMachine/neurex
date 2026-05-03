@@ -242,8 +242,8 @@ class Orchestrator:
                 for node in tasks:
                     active_node_id = node.id
                     log.info("orchestrator.executing_task", task_id=node.id, title=node.title)
-                    await update_task(self.session, node.id, TaskStatus.RUNNING)
-                    yield {"event": "task_updated", "data": {"id": node.id, "status": TaskStatus.RUNNING}}
+                    await update_task(self.session, node.id, TaskStatus.THINKING)
+                    yield {"event": "task_updated", "data": {"id": node.id, "status": TaskStatus.THINKING}}
 
                     try:
                         from core.settings.manager import settings_manager
