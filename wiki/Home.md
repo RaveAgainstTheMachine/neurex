@@ -5,7 +5,7 @@ Neurex is a high-performance, agentic IDE built for absolute technical precision
 ## 核心 (Core Modules)
 
 - **[[Architecture]]**: Deep dive into the Orchestrator, TaskGraph, and **Sentient Mesh**.
-- **[[Infrastructure-Hub]]**: NOC-style telemetry and model operational states.
+- **[[Infrastructure-Hub]]**: NOC-style telemetry, model operational states, and **Dynamic Model Routing**.
 - **[[Language-Intelligence]]**: Universal LSP Hub, Neural Lens, and **Neural Linter**.
 - **[[Security-and-Auth]]**: RBAC, **Swarm Consensus**, and Invite Codes.
 - **[[Skill-System]]**: Building MCP toolsets and **Autonomous Self-Repair**.
@@ -30,5 +30,7 @@ Neurex operates under the **Anti-Gravity Protocol** (Source of Law: `.antigravit
 - **[[Temporal-Synthesis]]**: Neural state snapshotting and quantum architectural simulation (Phase 53).
 - **[[Hermetic-Substrate]]**: Zero-dependency distribution and autonomous runtime provisioning (Phase 54).
 - **[[Infrastructure-Stabilization]]**: Deep hardware telemetry and NOC consolidation (Phase 55).
+- **[[Secure-LAN-Sovereignty]]**: Enforced HTTPS and transparent proxy substrate (Phase 60).
+- **[[Dynamic-Model-Routing]]**: Decoupled cognitive roles and functional topology (Phase 61).
 
-See the [[Changelog]] for recent massive updates (Phase 55: INFRASTRUCTURE NOC & GITEA INTEGRATION).
+See the [[Changelog]] for recent massive updates (Phase 61: DYNAMIC MODEL ROUTING).

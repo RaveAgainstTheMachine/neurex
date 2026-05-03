@@ -25,6 +25,18 @@ All notable changes to the Neurex project will be documented in this file.
 - **Neural Law Engine**: Enforced the Anti-Gravity Protocol at the neural weight level during evolution.
 - **Consensus Dashboard**: High-fidelity frontend for overseeing substrate bridges and protocol alignment.
 
+## [0.4.1] - 2026-05-03: DYNAMIC MODEL ROUTING
+### Added
+- **Dynamic Model Routing Architecture**: Completely decoupled agent logic from static model assignments, transitioning to a flexible, role-based routing substrate.
+- **Model Routing Grid**: Rebuilt the `InfraPanel` with a high-density, glassmorphic grid for managing cognitive role-to-model mappings (Planning, Coding, Testing, Reviewing, etc.).
+- **Autonomous Role Expansion**: Enabled users to add custom cognitive roles and bind them to any available mesh model on the fly.
+- **Dynamic Orchestrator Resolution**: Upgraded the `Orchestrator` to resolve models via the `model_routes` registry at runtime, supporting shared routes and smart fallbacks.
+- **Substrate Type Hardening**: Formalized the `Settings` interface and eliminated `any/unknown` types in the frontend store to ensure strict structural integrity.
+
+### Fixed
+- **Orchestrator Indentation**: Resolved a critical Python syntax error in the task execution loop that caused substrate instability.
+- **Neural Gradient Rendering**: Added standard `background-clip` properties to `LoadingOverlay.css` to ensure consistent text-clipping effects across all modern browsers.
+
 ## [0.4.0] - 2026-05-03: SECURE LAN INFRASTRUCTURE
 ### Added
 - **Phase 60: Secure LAN Sovereignty**: Enforced mandatory SSL/TLS encryption for all local and mobile network access.

@@ -55,3 +55,18 @@ The catalog reconciles multiple telemetry streams into a single, deduplicated vi
 ### Smart Deployment
 - **Deduplication**: If a model is already installed locally, the "Deploy" button is hidden to prevent redundant pulls.
 - **Engine Awareness**: The system automatically detects if the required inference engine (e.g., Ollama) is offline and provides one-click recovery hints.
+
+## 5. Dynamic Model Routing
+Introduced in Phase 61, **Dynamic Model Routing** decouples the Orchestrator's cognitive roles from static model assignments.
+
+### Cognitive Role Mapping
+Users can bind specific agent personas to optimal models:
+- **Planning**: Assigned to high-reasoning models (e.g., GPT-4o, Llama-3-70B).
+- **Coding**: Assigned to specialized code generation models (e.g., Qwen2.5-Coder).
+- **Testing/Reviewing**: Assigned to rapid-inference or specific validation models.
+
+### The Routing Grid
+The **InfraPanel** features a high-density grid for managing these mappings:
+- **Role Assignment**: Click any role card to swap its model binding on the fly.
+- **Custom Roles**: The "Add Role" affordance allows for the creation of proprietary cognitive targets.
+- **Smart Fallbacks**: If a specific route is missing, the substrate automatically falls back to the global `default_model`, ensuring zero-latency execution.
