@@ -163,6 +163,14 @@ class Orchestrator:
                     plan = chunk["plan"]
 
             log.info("orchestrator.plan_received", steps_count=len(plan))
+            
+            if len(plan) == 1 and plan[0].get("agent") == "chat":
+                # Direct conversational reply - bypass task approval
+                await update_task(self.session, planner_node.id, TaskStatus.DONE, result=plan[0]["description"])
+                yield {"event": "chat_reply", "data": plan[0]["description"]}
+                yield {"event": "graph_complete", "data": {"graph_id": graph_id}}
+                return
+
             for i, step in enumerate(plan):
                 agent_type = step.get("agent", "coder")
                 log.info("orchestrator.creating_subtask", step=i, agent=agent_type, title=step.get("title"))

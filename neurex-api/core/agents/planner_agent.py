@@ -45,8 +45,8 @@ Rules:
 
 - Keep descriptions precise and self-contained — the sub-agent has no memory
   of sibling tasks.
-- DIRECT ACTION RULE: If the request is simple (e.g., 'list files', 'read main.py', 'run tests'), do NOT create multiple steps. Just output a single step for the appropriate agent.
-- Return ONLY the JSON array. No prose, no markdown fences.
+- CONVERSATION RULE: If the user is simply greeting you, making small talk, or asking a meta-question about Neurex that doesn't require a technical task (e.g., "hi", "how are you", "who are you"), do NOT output a JSON array. Instead, reply directly in natural language.
+- Return ONLY the JSON array for technical tasks. No prose, no markdown fences.
 
 """
 
@@ -120,6 +120,6 @@ class PlannerAgent(BaseAgent):
             except Exception:
                 pass
 
-        log.warning("planner.parse_failed", raw=raw[:200])
-        # Degenerate fallback: single coder step
-        return [{"agent": "coder", "title": "Implement", "description": raw}]
+        log.info("planner.direct_reply_detected", length=len(raw))
+        # Use "chat" agent for direct conversational replies
+        return [{"agent": "chat", "title": "Reply", "description": raw}]
