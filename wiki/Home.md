@@ -9,6 +9,7 @@
 
 ## Core Modules
 
+- **[[Installation]]**: System requirements and OS-specific setup guides.
 - **[[Architecture]]**: How the Orchestrator, TaskGraph, and **Agentic Mesh** work together.
 - **[[Infrastructure-Hub]]**: Real-time telemetry, model management, and **Smart Model Routing**.
 - **[[Language-Intelligence]]**: LSP integration, structural verification, and the **Neural Linter**.

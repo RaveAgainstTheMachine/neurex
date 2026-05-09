@@ -23,6 +23,7 @@
   </p>
 
   <p align="center">
+    <a href="./INSTALL.md"><b>Installation</b></a> •
     <a href="./wiki/Home.md"><b>Documentation</b></a> •
     <a href="./wiki/Changelog.md"><b>Changelog</b></a> •
     <a href="./CREDITS.md"><b>Credits</b></a> •
