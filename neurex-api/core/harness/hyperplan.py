@@ -66,7 +66,7 @@ class HyperPlan:
         try:
             import json
             return json.loads(raw_json)
-        except:
+        except (json.JSONDecodeError, ValueError):
             return {"raw_blueprint": raw_json}
 
     async def _ask_brain(self, prompt: str, model: str) -> str:

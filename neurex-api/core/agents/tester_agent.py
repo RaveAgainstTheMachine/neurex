@@ -70,10 +70,21 @@ class TesterAgent(BaseAgent):
         description = task.get("description", "")
         system = await self.build_system_prompt(conversation_id)
 
+        # Inject prior agent context so tester can verify what was produced
+        history = task.get("history", [])
+        context = task.get("context", "")
+
+        user_content = description
+        if context:
+            user_content = f"Relevant code context:\n{context}\n\n{user_content}"
+
         messages = [
             {"role": "system", "content": system},
-            {"role": "user",   "content": description},
         ]
+        # Include prior agent conversation (e.g., coder's output) if available
+        for msg in history:
+            messages.append({"role": msg.get("role", "user"), "content": msg.get("content", "")})
+        messages.append({"role": "user", "content": user_content})
 
         yield {"type": "status", "status": TaskStatus.TESTING}
 

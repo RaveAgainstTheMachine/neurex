@@ -355,7 +355,11 @@ class Orchestrator:
                         await update_task(self.session, node.id, TaskStatus.DONE, result=node_result)
                         yield {"event": "task_updated", "data": {"id": node.id, "status": TaskStatus.DONE}}
                         
-                        hive_mind.store(f"Completed task '{node.title}' in graph {graph_id}. Result: {node_result}")
+                        hive_mind.remember(
+                            content=f"Completed task '{node.title}' in graph {graph_id}. Result: {node_result}",
+                            metadata={"graph_id": graph_id, "agent_type": node.agent_type, "type": "task_result"},
+                            doc_id=node.id
+                        )
                         active_node_id = None
 
                     except Exception as e:
@@ -368,7 +372,8 @@ class Orchestrator:
             if active_node_id:
                 try:
                     await update_task(self.session, active_node_id, TaskStatus.FAILED, error=f"Orchestrator crash: {str(e)}")
-                except:
+                except Exception as update_err:
+                    log.error("orchestrator.crash_update_failed", error=str(update_err))
                     pass
             yield {"event": "error", "data": {"message": f"Critical execution failure: {str(e)}"}}
 

@@ -49,7 +49,7 @@ class SwarmAgent(BaseAgent):
                 raw = re.sub(r"```(?:json)?", "", chunk["full_text"]).strip()
                 try:
                     sub_plan = json.loads(raw)
-                except:
+                except (json.JSONDecodeError, ValueError):
                     # Fallback
                     sub_plan = [{"title": task["title"], "description": task["description"]}]
         

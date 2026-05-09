@@ -94,7 +94,7 @@ async def websocket_endpoint(
         async def on_terminal_output(sid: str, data: str):
             try:
                 await websocket.send_json({"event": "terminal_output", "sessionId": sid, "data": data})
-            except:
+            except Exception:
                 pass
 
         def get_output_handler(sid: str):

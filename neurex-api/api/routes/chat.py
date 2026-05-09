@@ -6,7 +6,7 @@ let the frontend hydrate history on reconnect and fetch past conversations.
 """
 from __future__ import annotations
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -28,7 +28,7 @@ class ChatMessage(SQLModel, table=True):
     role: str                    # "user" | "assistant"
     content: str
     graph_id: Optional[str] = None  # links to the TaskGraph that produced this reply
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class SendMessageRequest(BaseModel):

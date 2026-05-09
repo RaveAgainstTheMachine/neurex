@@ -167,7 +167,7 @@ class BaseAgent(ABC):
                     try:
                         import json
                         data = json.loads(line)
-                    except: continue
+                    except (json.JSONDecodeError, ValueError): continue
                     
                     msg = data.get("message", {})
                     if msg.get("tool_calls"):

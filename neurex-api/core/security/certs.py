@@ -1,4 +1,5 @@
 import os
+import ipaddress
 from pathlib import Path
 from cryptography import x509
 from cryptography.x509.oid import NameOID
@@ -39,12 +40,12 @@ def generate_self_signed_cert(cert_dir: Path):
     ).serial_number(
         x509.random_serial_number()
     ).not_valid_before(
-        datetime.datetime.utcnow()
+        datetime.datetime.now(datetime.timezone.utc)
     ).not_valid_after(
         # Our certificate will be valid for 10 years
-        datetime.datetime.utcnow() + datetime.timedelta(days=3650)
+        datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=3650)
     ).add_extension(
-        x509.SubjectAlternativeName([x509.DNSName(u"localhost"), x509.IPAddress(bytes([10, 10, 10, 48]))]),
+        x509.SubjectAlternativeName([x509.DNSName(u"localhost"), x509.IPAddress(ipaddress.IPv4Address("10.10.10.48"))]),
         critical=False,
     ).sign(key, hashes.SHA256())
 
@@ -66,5 +67,6 @@ if __name__ == "__main__":
     import sys
     d = Path(sys.argv[1]) if len(sys.argv) > 1 else Path.home() / ".neurex" / "certs"
     cert, key = generate_self_signed_cert(d)
-    print(f"CERT: {cert}")
-    print(f"KEY: {key}")
+    import structlog
+    log = structlog.get_logger()
+    log.info("certs.generated", cert=str(cert), key=str(key))

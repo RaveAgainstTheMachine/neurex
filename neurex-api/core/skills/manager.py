@@ -120,7 +120,7 @@ class SkillManager:
             try:
                 with open(manifest_path, "r") as f:
                     m = json.load(f)
-            except: pass
+            except (json.JSONDecodeError, OSError): pass
             
         # 2. Try Markdown Frontmatter (Fallback & Instructions)
         for fname in ["SKILL.md", "README.md", "readme.md"]:
@@ -151,7 +151,7 @@ class SkillManager:
                     if not m.get("description"):
                         m["description"] = "\n".join(m.get("instructions", "").split("\n")[:5])
                     break
-                except: pass
+                except (Exception, yaml.YAMLError): pass
         return m
 
     def list_available(self) -> List[Dict[str, Any]]:

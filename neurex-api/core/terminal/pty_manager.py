@@ -150,7 +150,7 @@ class PTYSession:
                 if self.proc and self.proc.isalive():
                     try:
                         self.proc.write(data)
-                    except:
+                    except OSError:
                         pass
 
     def resize(self, rows: int, cols: int):
@@ -170,7 +170,7 @@ class PTYSession:
             try:
                 if self.proc.isalive():
                     self.proc.terminate(force=True)
-            except:
+            except OSError:
                 pass
             self.proc = None
         

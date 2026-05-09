@@ -33,7 +33,7 @@ class DiagnosticTracker:
                 rel_path = str(abs_path.relative_to(WORKSPACE))
                 if rel_path == ".": rel_path = ""
                 path = rel_path
-        except:
+        except Exception:
             pass
         
         if not items:
@@ -313,7 +313,7 @@ class LSPManager:
                         elif item.suffix in ext_map:
                             found_langs.add(ext_map[item.suffix])
                         if len(found_langs) > 5: break
-                except: pass
+                except Exception: pass
             
             scan_dir(root, 3)
             supported = self.get_supported_languages()
@@ -329,7 +329,7 @@ class LSPManager:
                 logger.info(f"auto_starting_lsp: {lang} for workspace {workspace_path}")
                 try:
                     await self.get_session(lang, workspace_path)
-                except: pass
+                except Exception: pass
             elif lang in LSP_RECIPES:
                 # Autopilot: Auto-install if recipe exists but binary not found
                 logger.info(f"autopilot_installing_lsp: {lang} for workspace {workspace_path}")

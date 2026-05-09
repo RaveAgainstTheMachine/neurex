@@ -123,12 +123,12 @@ class OnboardingManager:
     def generate_token(self):
         self.init_token = secrets.token_hex(16)
         self.expiry = time.time() + (15 * 60) # 15 minutes
-        print("\n" + "="*60)
-        print(" NEUREX ADMIN ONBOARDING REQUIRED ".center(60, "⬡"))
-        print("="*60)
-        print(f" INITIALIZATION TOKEN: {self.init_token}")
-        print(f" EXPIRES IN: 15 MINUTES")
-        print("="*60 + "\n")
+        log.warning(
+            "admin.onboarding_required",
+            message="NEUREX ADMIN ONBOARDING REQUIRED",
+            init_token=self.init_token,
+            expires_in="15 MINUTES"
+        )
         return self.init_token
 
     def verify_token(self, token: str) -> bool:
@@ -209,8 +209,9 @@ async def register(
     
     try:
         await session.commit()
-    except:
-        raise HTTPException(status_code=400, detail="Username already exists")
+    except Exception as e:
+        log.error("auth.register_commit_failed", error=str(e))
+        raise HTTPException(status_code=400, detail="Registration failed: username may already exist")
     
     return {"message": f"Account created with role: {invitation.role}", "role": invitation.role}
 
@@ -340,7 +341,7 @@ async def setup_otp(current_user: User = Depends(get_current_user), session: Asy
     
     img = qrcode.make(provisioning_uri)
     buffered = io.BytesIO()
-    img.save(buffered, format="PNG")
+    img.save(buffered)
     img_str = base64.b64encode(buffered.getvalue()).decode()
     
     return {

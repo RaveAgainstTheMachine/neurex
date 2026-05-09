@@ -69,7 +69,7 @@ class DistributedManager:
             local_ip = s.getsockname()[0]
             s.close()
             return f"{local_ip}:{self.port}"
-        except:
+        except OSError:
             return f"127.0.0.1:{self.port}"
 
 distributed_manager = DistributedManager()

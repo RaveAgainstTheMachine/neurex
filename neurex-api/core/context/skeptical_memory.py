@@ -33,7 +33,7 @@ class SkepticalMemory:
         try:
             with open(self.memory_file, "r") as f:
                 return f.read()
-        except:
+        except OSError:
             return ""
 
     def get_skeptical_instruction(self) -> str:

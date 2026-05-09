@@ -10,7 +10,7 @@ export type TaskStatus =
   | "CANCELLED"
   | "AWAITING_APPROVAL";
 
-export type AgentType = "planner" | "coder" | "tester" | "researcher" | "reviewer";
+export type AgentType = "planner" | "coder" | "tester" | "researcher" | "reviewer" | "debater" | "commander" | "swarm";
 
 export interface TaskNode {
   id: string;
@@ -74,6 +74,14 @@ export interface ModelProfile {
   is_community?: boolean;
   deployed?: boolean;
   variants?: { name: string; size_gb: number; params: string }[];
+}
+
+export type CatalogOrigin = 'LOCAL' | 'HF' | 'RPC' | 'NODE';
+
+export interface CatalogEntry extends ModelProfile {
+  origin: CatalogOrigin;
+  nodeName?: string;
+  is_active?: boolean;
 }
 
 export interface InfraEngine {

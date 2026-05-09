@@ -25,14 +25,14 @@ class WorkspaceState:
                     self.path = None
                 elif saved and Path(saved).exists():
                     self.path = Path(saved).resolve()
-            except:
+            except (OSError, ValueError):
                 pass
 
     def persist(self):
         try:
             val = str(self.path) if self.path else "NONE"
             self.config_path.write_text(val)
-        except:
+        except OSError:
             pass
 
 workspace_state = WorkspaceState()
@@ -121,7 +121,7 @@ async def file_tree(path: str = ".", depth: int = 2, root_path: str = None):
                     try:
                         rel_to_workspace = str(abs_path.relative_to(WORKSPACE))
                         git_status[rel_to_workspace] = "M" if "M" in status_codes else "U" if "??" in status_codes else None
-                    except:
+                    except ValueError:
                         pass
     except Exception as e:
         log.error("files.git_status_failed", error=str(e))
@@ -320,7 +320,7 @@ async def search_files(
                             "line": line_num,
                             "content": content.strip()
                         })
-                except:
+                except (json.JSONDecodeError, KeyError):
                     continue
             return matches[:500]
         except Exception as e:
@@ -353,7 +353,7 @@ async def search_files(
                                 "line": int(line_num),
                                 "content": content.strip()
                             })
-                        except:
+                        except ValueError:
                             continue
             return matches[:200]
         except Exception as e:

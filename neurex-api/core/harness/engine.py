@@ -86,6 +86,6 @@ class NeuralHarness:
         for name, args_raw in matches:
             try:
                 calls.append({"tool": name, "args": json.loads(args_raw)})
-            except:
+            except (json.JSONDecodeError, ValueError):
                 continue
         return calls

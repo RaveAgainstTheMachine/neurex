@@ -41,7 +41,7 @@ def get_all_git_roots(workspace: Path) -> List[Path]:
                 root = (workspace / line).parent.resolve()
                 if root not in roots:
                     roots.append(root)
-    except:
+    except (subprocess.SubprocessError, OSError):
         pass
     return roots
 
@@ -103,7 +103,7 @@ async def get_status(user=Depends(get_current_user)):
                             "staged": staged,
                             "repo_root": str(root)
                         })
-            except:
+            except (subprocess.CalledProcessError, OSError):
                 continue
                 
         return {"branch": main_branch, "changes": all_changes}
@@ -127,7 +127,7 @@ async def get_diff(path: str = Query(...), user=Depends(get_current_user)):
         original = ""
         try:
             original = run_git(["show", f"HEAD:{path}"])
-        except:
+        except HTTPException:
             pass # File might be new
             
         # Get current from disk

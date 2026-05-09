@@ -6,13 +6,15 @@ import {
   Play, Square, RefreshCcw, Cpu, Zap, Search, 
   Brain, Braces, Video, AudioLines, 
   Thermometer, Gauge, Eye, X, Image as ImageIcon,
-  Monitor, HardDrive, Activity, Info, MessageSquare, Plus, Trash2
+  Monitor, HardDrive, Activity, Info, MessageSquare, Plus, Trash2,
+  LucideIcon
 } from "lucide-react";
 import "./InfraPanel.css";
 import { useStore } from "../../lib/store";
-import { ModelProfile } from "../../lib/types";
+import { ModelProfile, CatalogEntry, CatalogOrigin } from "../../lib/types";
 import toast from "react-hot-toast";
 import { API_BASE } from "../../lib/config";
+import { api } from "../../lib/api";
 import { InfraDashboard } from "../InfraDashboard/InfraDashboard";
 import { AnimatePresence } from "framer-motion";
 
@@ -29,7 +31,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
   const [searchQuery, setSearchQuery] = useState("");
   const [hfResults, setHfResults] = useState<ModelProfile[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedModel, setSelectedModel] = useState<ModelProfile | null>(null);
+  const [selectedModel, setSelectedModel] = useState<CatalogEntry | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<string>("");
   const [quantization, setQuantization] = useState("4-bit (Fastest)");
   const [showDashboard, setShowDashboard] = useState(false);
@@ -68,7 +70,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  const routeIcons: Record<string, any> = {
+  const routeIcons: Record<string, LucideIcon> = {
     "Planning":    Brain,
     "Coding":      Braces,
     "Testing":     Zap,
@@ -86,19 +88,11 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
     newRoutes[role] = model;
     
     try {
-      const res = await fetch(`${API_BASE}/api/settings/`, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${useStore.getState().token}` 
-        },
-        body: JSON.stringify({ settings: { model_routes: newRoutes } })
-      });
-      if (!res.ok) throw new Error(await res.text());
+      await api.post('/api/settings/', { settings: { model_routes: newRoutes } });
       refreshSettings();
       toast.success(`Route ${role} updated`);
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to update route');
     }
   };
 
@@ -113,19 +107,11 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
     const newRoutes = { ...settings.model_routes };
     delete newRoutes[role];
     try {
-      const res = await fetch(`${API_BASE}/api/settings/`, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${useStore.getState().token}` 
-        },
-        body: JSON.stringify({ settings: { model_routes: newRoutes } })
-      });
-      if (!res.ok) throw new Error(await res.text());
+      await api.post('/api/settings/', { settings: { model_routes: newRoutes } });
       refreshSettings();
       toast.success(`Route ${role} removed`);
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete route');
     }
   };
 
@@ -146,15 +132,11 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
     }
 
     try {
-      const res = await fetch(`${API_BASE}/api/infra/model/pull?engine=${engine}&model=${targetModel}`, { 
-        method: "POST",
-        headers: { "Authorization": `Bearer ${useStore.getState().token}` }
-      });
-      if (!res.ok) throw new Error(await res.text());
+      await api.post(`/api/infra/model/pull?engine=${engine}&model=${targetModel}`);
       toast.success(`Deploying ${targetModel} to node...`);
       fetchData();
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to pull model');
     } finally {
       setLoading(false);
     }
@@ -163,15 +145,11 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
   const handleEngineControl = async (action: 'start' | 'stop' | 'install', engine: string) => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/infra/engine/${engine}/${action}`, { 
-        method: "POST",
-        headers: { "Authorization": `Bearer ${useStore.getState().token}` }
-      });
-      if (!res.ok) throw new Error(await res.text());
+      await api.post(`/api/infra/engine/${engine}/${action}`);
       toast.success(`${engine.toUpperCase()} ${action} successful`);
       fetchData();
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Engine action failed');
     } finally {
       setLoading(false);
     }
@@ -179,24 +157,20 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
 
   const handleToggleSkill = async (skillId: string, enable: boolean) => {
     try {
-      const res = await fetch(`${API_BASE}/api/infra/skills/${skillId}/toggle?enable=${enable}`, {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${useStore.getState().token}` }
-      });
-      if (!res.ok) throw new Error(await res.text());
+      await api.post(`/api/infra/skills/${skillId}/toggle?enable=${enable}`);
       toast.success(`Skill ${skillId} ${enable ? 'enabled' : 'disabled'}`);
       fetchData();
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to toggle skill');
     }
   };
 
-  const filteredRegistry = useMemo(() => {
-    const resultsMap: Map<string, any> = new Map();
+  const filteredRegistry: CatalogEntry[] = useMemo(() => {
+    const resultsMap = new Map<string, CatalogEntry>();
 
     // 1. Local Models
     registry.forEach(m => {
-      resultsMap.set(m.name, { ...m, origin: 'LOCAL', is_downloaded: true });
+      resultsMap.set(m.name, { ...m, origin: 'LOCAL' as CatalogOrigin, is_downloaded: true });
     });
 
     // 2. Peer Models
@@ -211,7 +185,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
               context_window: 32768,
               vram_required_gb: 0,
               recommended_tasks: [],
-              origin: peer.rpc_endpoint ? 'RPC' : 'NODE',
+              origin: peer.rpc_endpoint ? 'RPC' as CatalogOrigin : 'NODE' as CatalogOrigin,
               nodeName: peer.name,
               is_downloaded: true
             });
@@ -224,7 +198,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
     if (searchQuery.trim().length >= 3) {
       hfResults.forEach(m => {
         if (!resultsMap.has(m.name)) {
-          resultsMap.set(m.name, { ...m, origin: 'HF', is_downloaded: false });
+          resultsMap.set(m.name, { ...m, origin: 'HF' as CatalogOrigin, is_downloaded: false });
         }
       });
     }
@@ -447,13 +421,13 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
                       <Cpu size={14} className="text-muted" />
                       <span className="catalog-name">{m.name.replace('registry.ollama.ai/library/', '').replace('library/', '').split(':')[0]}</span>
                       {m.params && m.params !== "Unknown" && <span className="catalog-tag">{m.params}</span>}
-                      <span className={`catalog-badge origin-${(m as any).origin.toLowerCase()}`}>
-                        {(m as any).origin === 'HF' ? 'HF' : 
-                         (m as any).origin === 'RPC' ? 'MESH(RPC)' :
-                         (m as any).origin === 'NODE' ? `NODE: ${(m as any).nodeName}` : 
+                      <span className={`catalog-badge origin-${m.origin.toLowerCase()}`}>
+                        {m.origin === 'HF' ? 'HF' : 
+                         m.origin === 'RPC' ? 'MESH(RPC)' :
+                         m.origin === 'NODE' ? `NODE: ${m.nodeName}` : 
                          'LOCAL'}
                       </span>
-                      {(m as any).is_active && (
+                      {m.is_active && (
                         <span className="catalog-badge status-active">
                           <Activity size={8} /> ACTIVE
                         </span>
@@ -463,7 +437,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
                       <span>{m.size_gb ? `${m.size_gb.toFixed(1)}GB` : (m.vram_required_gb > 0 ? `${m.vram_required_gb}GB VRAM` : '0.0GB')}</span>
                       <RefreshCcw size={10} />
                       <span>{m.context_window / 1000}k ctx</span>
-                      {!m.is_downloaded && ((m as any).origin === 'HF' || (m as any).origin === 'NODE') && (
+                      {!m.is_downloaded && (m.origin === 'HF' || m.origin === 'NODE') && (
                         <button 
                           className="catalog-deploy-btn"
                           onClick={(e) => { e.stopPropagation(); setSelectedModel(m); }}
@@ -586,7 +560,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
                 onClick={async () => {
                   let modelName = selectedModel.name;
                   // If it's a community model from HF, we need 'repo:file'
-                  if ((selectedModel as any).origin === 'HF' && selectedVariant) {
+                  if (selectedModel.origin === 'HF' && selectedVariant) {
                     modelName = `${selectedModel.name}:${selectedVariant}`;
                   } else if (selectedModel.engine === 'ollama' && !modelName.includes(':')) {
                     // For Ollama library models, apply quantization tags

@@ -40,7 +40,7 @@ class LiveReloader:
                 try:
                     importlib.import_module(module_name)
                     return True
-                except:
+                except ImportError:
                     return False
         except Exception as e:
             log.error("runtime.reload_failure", module=file_path, error=str(e))

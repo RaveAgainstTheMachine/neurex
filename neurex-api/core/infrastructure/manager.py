@@ -584,7 +584,7 @@ class InfrastructureManager:
                 async with aiohttp.ClientSession() as session:
                     async with session.get(f"{base_url}/api/tags", timeout=1) as resp:
                         return resp.status == 200
-            except:
+            except Exception:
                 return False
         return is_active
 
@@ -613,7 +613,7 @@ class InfrastructureManager:
                 )
                 stdout, _ = await proc.communicate()
                 return stdout.decode().strip()
-        except:
+        except Exception:
             pass
         return "unknown"
 
@@ -628,7 +628,7 @@ class InfrastructureManager:
                 if m["name"] == model_name or m["name"].split(':')[0] == model_name.split(':')[0]:
                     if m.get("params") and m["params"] != "Unknown":
                         return m["params"]
-        except:
+        except Exception:
             pass
 
         # Try regex on name as fallback

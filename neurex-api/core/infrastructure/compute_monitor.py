@@ -70,7 +70,7 @@ class ComputeMonitor:
                         "vram_free": data.get("vram", {}).get("free_gb", 0),
                         "temp": data.get("vram", {}).get("temp_c", 45)
                     }
-        except:
+        except Exception:
             pass
         return None
 
