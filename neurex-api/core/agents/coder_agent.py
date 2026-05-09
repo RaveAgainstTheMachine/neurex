@@ -3,7 +3,9 @@ core/agents/coder_agent.py
 Writes, edits, and refactors code files using MCP filesystem tools.
 """
 from __future__ import annotations
-from typing import AsyncGenerator
+
+from collections.abc import AsyncGenerator
+
 import structlog
 
 from core.agents.base_agent import BaseAgent

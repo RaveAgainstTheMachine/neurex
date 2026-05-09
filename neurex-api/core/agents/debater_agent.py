@@ -3,8 +3,11 @@ core/agents/debater_agent.py
 Specialized agent for architectural peer-review and strategy refinement.
 """
 from __future__ import annotations
-from typing import AsyncGenerator
+
+from collections.abc import AsyncGenerator
+
 import structlog
+
 from core.agents.base_agent import BaseAgent
 
 log = structlog.get_logger()

@@ -4,9 +4,10 @@ Decomposes a natural-language request into an ordered list of sub-tasks,
 each tagged with the appropriate agent type.
 """
 from __future__ import annotations
+
 import json
 import re
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import structlog
 

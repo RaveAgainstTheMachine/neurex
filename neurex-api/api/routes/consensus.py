@@ -3,10 +3,11 @@ api/routes/consensus.py
 Exposes Phase 52 Universal Neural Consensus telemetry for the frontend dashboard.
 Handles substrate bridges and neural law alignment status.
 """
+
 from fastapi import APIRouter
-from typing import List, Dict, Any
-from core.infrastructure.substrate_sync import substrate_synchronizer
+
 from core.infrastructure.neural_law import neural_law
+from core.infrastructure.substrate_sync import substrate_synchronizer
 
 router = APIRouter(prefix="/api/consensus", tags=["Consensus"])
 

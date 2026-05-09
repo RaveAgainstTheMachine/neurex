@@ -2,18 +2,17 @@
 core/infrastructure/distributed.py
 Manages llama.cpp RPC server lifecycle for distributed tensor pooling.
 """
-import asyncio
-import structlog
 import subprocess
-import os
-from typing import Optional
+
+import structlog
+
 from core.settings.manager import settings_manager
 
 log = structlog.get_logger()
 
 class DistributedManager:
     def __init__(self):
-        self.rpc_process: Optional[subprocess.Popen] = None
+        self.rpc_process: subprocess.Popen | None = None
         self.port = 50051 # Default llama.cpp RPC port
 
     async def start_rpc_server(self):

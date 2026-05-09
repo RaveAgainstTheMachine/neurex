@@ -5,8 +5,10 @@ Coordinates federated attention heads and distributed neural context across the 
 Enables sub-ms context sharding and cross-node attention pooling.
 """
 import asyncio
+from typing import Any
+
 import structlog
-from typing import List, Dict, Any, Optional
+
 from core.infrastructure.mesh import mesh_router
 
 log = structlog.get_logger()
@@ -17,13 +19,13 @@ class AttentionShard:
         self.head_range = head_range
         self.context_slice = context_slice
         self.status = "idle"
-        self.result: Optional[Any] = None
+        self.result: Any | None = None
 
 class ContextSharder:
     def __init__(self, shard_size: int = 16384): # Default 16k tokens per shard
         self.shard_size = shard_size
 
-    def shard_context(self, context: str) -> List[str]:
+    def shard_context(self, context: str) -> list[str]:
         """Slices a massive context string into federated shards."""
         # Simple character-based sharding for now (assuming 1 token ~ 4 chars)
         char_shard_size = self.shard_size * 4
@@ -33,7 +35,7 @@ class ContextSharder:
 
 class AttentionCoordinator:
     def __init__(self):
-        self.active_pools: Dict[str, List[AttentionShard]] = {} # session_id -> shards
+        self.active_pools: dict[str, list[AttentionShard]] = {} # session_id -> shards
         self.sharder = ContextSharder()
         self.shard_lock = asyncio.Lock()
 
@@ -90,7 +92,7 @@ class AttentionCoordinator:
             log.error("attention.dispatch_failed", node=shard.node_id, error=str(e))
             return None
 
-    def _aggregate_heads(self, results: List[Any], session_id: str) -> Dict[str, Any]:
+    def _aggregate_heads(self, results: list[Any], session_id: str) -> dict[str, Any]:
         """Pools results and propagates state to the Mesh."""
         valid_results = [r for r in results if r]
         

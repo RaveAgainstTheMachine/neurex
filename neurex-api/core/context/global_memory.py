@@ -4,10 +4,13 @@ Mesh-Wide Memory (Persistent Global State).
 Synchronizes 'Global Sticky Notes' and experience patterns across the Mesh.
 """
 from __future__ import annotations
+
 import asyncio
+from typing import Any
+
 import httpx
 import structlog
-from typing import List, Dict, Any
+
 from core.infrastructure.mesh import mesh_router
 from core.observability.flight_recorder import record_decision
 
@@ -17,9 +20,9 @@ class GlobalMemory:
     def __init__(self):
         # Local cache of global memory pointers
         # key: str, value: {"content": str, "source_node": str, "timestamp": str}
-        self.pointers: Dict[str, Dict[str, Any]] = {}
+        self.pointers: dict[str, dict[str, Any]] = {}
         # Historical success patterns
-        self.patterns: List[Dict[str, Any]] = []
+        self.patterns: list[dict[str, Any]] = []
         # Phase 44.7: Persistent Sync Client
         self._client: httpx.AsyncClient = httpx.AsyncClient(timeout=5)
 
@@ -37,7 +40,7 @@ class GlobalMemory:
         # Phase 41.1: Optimized Delta Broadcast
         asyncio.create_task(self.broadcast_delta(key, pointer))
 
-    async def broadcast_delta(self, key: str, pointer: Dict[str, Any]):
+    async def broadcast_delta(self, key: str, pointer: dict[str, Any]):
         """Broadcasts only the newly added pointer to peers."""
         peers = list(mesh_router.peers.values())
         if not peers:
@@ -70,7 +73,7 @@ class GlobalMemory:
         await asyncio.gather(*tasks, return_exceptions=True)
         log.info("memory.broadcast_complete", peers=len(peers))
 
-    def sync_from_peer(self, peer_id: str, remote_pointers: Dict[str, Dict[str, Any]]):
+    def sync_from_peer(self, peer_id: str, remote_pointers: dict[str, dict[str, Any]]):
         """Merges remote pointers into local memory."""
         log.info("memory.sync_from_peer", peer=peer_id, count=len(remote_pointers))
         for key, val in remote_pointers.items():

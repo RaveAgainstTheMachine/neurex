@@ -2,8 +2,8 @@
 api/routes/observability.py
 Observability endpoints for the Flight Recorder.
 """
-from fastapi import APIRouter, Depends, HTTPException
-from api.routes.auth import require_role, UserRole
+from fastapi import APIRouter, HTTPException
+
 from core.observability.flight_recorder import get_flight_log
 
 router = APIRouter()

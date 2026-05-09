@@ -1,11 +1,11 @@
 # neurex-api/core/infrastructure/watcher.py
 import asyncio
-import os
-from typing import Optional
 from pathlib import Path
+
 import structlog
-from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
+
 from core.collaboration.presence import presence_manager
 
 log = structlog.get_logger()
@@ -14,7 +14,7 @@ class WatcherHandler(FileSystemEventHandler):
     def __init__(self, loop: asyncio.AbstractEventLoop):
         self.loop = loop
         self._buffer: set[str] = set()
-        self._timer: Optional[asyncio.TimerHandle] = None
+        self._timer: asyncio.TimerHandle | None = None
 
     def _queue_broadcast(self, path: str):
         """Phase 44.11: Quiet-Period Debouncing & Batching."""

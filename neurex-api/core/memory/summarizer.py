@@ -2,8 +2,9 @@
 core/memory/summarizer.py
 Lightweight summarization service for semantic enrichment of codebase indexing.
 """
-import httpx
 import os
+
+import httpx
 import structlog
 
 log = structlog.get_logger()

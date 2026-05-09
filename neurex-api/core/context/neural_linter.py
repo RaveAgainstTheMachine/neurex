@@ -3,11 +3,11 @@ core/context/neural_linter.py
 Phase 45: Sentient IDE (Autonomous Self-Repair)
 Architectural validation layer that verifies proposed mutations against DESIGN_SYSTEM.md and ARCHITECTURE.md.
 """
-import os
 import json
+import os
+
 import httpx
 import structlog
-from typing import Tuple
 
 log = structlog.get_logger()
 
@@ -17,7 +17,7 @@ class NeuralLinter:
         self.design_system_path = os.path.join(self.workspace_path, "DESIGN_SYSTEM.md")
         self.architecture_path = os.path.join(self.workspace_path, "ARCHITECTURE.md")
 
-    async def verify_mutation(self, name: str, args: dict, conversation_id: str) -> Tuple[bool, str]:
+    async def verify_mutation(self, name: str, args: dict, conversation_id: str) -> tuple[bool, str]:
         """
         Validates a file mutation against architectural standards.
         Returns: (is_valid, reason)
@@ -33,10 +33,10 @@ class NeuralLinter:
         # 2. Context Loading
         standards = ""
         if os.path.exists(self.design_system_path):
-            with open(self.design_system_path, "r") as f:
+            with open(self.design_system_path) as f:
                 standards += f"### DESIGN SYSTEM\n{f.read()}\n\n"
         if os.path.exists(self.architecture_path):
-            with open(self.architecture_path, "r") as f:
+            with open(self.architecture_path) as f:
                 standards += f"### ARCHITECTURE\n{f.read()}\n\n"
 
         if not standards:

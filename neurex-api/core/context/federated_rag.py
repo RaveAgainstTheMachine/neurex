@@ -4,12 +4,15 @@ Mesh-Scale Distributed RAG (Global Intelligence).
 Federates search queries across all nodes in the Neurex Mesh.
 """
 from __future__ import annotations
+
 import asyncio
+from typing import Any
+
 import httpx
 import structlog
-from typing import List, Dict, Any
-from core.infrastructure.mesh import mesh_router
+
 from core.context.manager import ContextManager
+from core.infrastructure.mesh import mesh_router
 
 log = structlog.get_logger()
 
@@ -54,7 +57,7 @@ class FederatedRAG:
         log.info("rag.global_search_complete", results=len(flat_results))
         return f"<global_mesh_context>\n{formatted}\n</global_mesh_context>"
 
-    async def _search_peer(self, client: httpx.AsyncClient, peer, query: str, limit: int) -> List[Dict[str, Any]]:
+    async def _search_peer(self, client: httpx.AsyncClient, peer, query: str, limit: int) -> list[dict[str, Any]]:
         """Queries a peer's RAG endpoint using the shared client."""
         try:
             resp = await client.get(

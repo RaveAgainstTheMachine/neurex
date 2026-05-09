@@ -5,37 +5,31 @@ sub-tasks to specialized agents and streams status updates over a websocket.
 Supports Human-in-the-Loop for plan approval.
 """
 from __future__ import annotations
-import json
-import uuid
-import asyncio
-import os
-from pathlib import Path
-import structlog
-from typing import AsyncGenerator, List, Dict, Any
 
+import json
+import os
+import uuid
+from collections.abc import AsyncGenerator
+from pathlib import Path
+
+import structlog
 from fastapi.encoders import jsonable_encoder
 from sqlmodel import select
-
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from core.task_graph import (
-    TaskNode, TaskStatus, create_task, update_task,
-    get_graph, is_stalled
-)
-from core.agents.planner_agent import PlannerAgent
 from core.agents.coder_agent import CoderAgent
-from core.agents.tester_agent import TesterAgent
+from core.agents.commander_agent import CommanderAgent
+from core.agents.debater_agent import DebaterAgent
+from core.agents.planner_agent import PlannerAgent
 from core.agents.researcher_agent import ResearcherAgent
 from core.agents.reviewer_agent import ReviewerAgent
-from core.agents.debater_agent import DebaterAgent
-from core.agents.commander_agent import CommanderAgent
 from core.agents.swarm_agent import SwarmAgent
-
+from core.agents.tester_agent import TesterAgent
 from core.context.manager import ContextManager
 from core.context.rules_parser import RulesParser
-from core.infrastructure.registry import LLMRecommender
 from core.infrastructure.manager import InfrastructureManager
 from core.memory.hive import hive_mind
+from core.task_graph import TaskNode, TaskStatus, create_task, get_graph, update_task
 
 log = structlog.get_logger()
 
@@ -68,7 +62,7 @@ class Orchestrator:
         """Override the session-specific autonomy level."""
         self.autonomy_level = level
 
-    async def _summarize_history(self, tasks: List[TaskNode], model: str) -> str:
+    async def _summarize_history(self, tasks: list[TaskNode], model: str) -> str:
         """Condense a long task history into a manageable summary."""
         if not tasks:
             return ""

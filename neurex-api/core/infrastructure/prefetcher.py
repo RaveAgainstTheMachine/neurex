@@ -5,9 +5,11 @@ Proactively loads model weights and context into VRAM based on agent trajectory.
 Reduces first-token latency during complex multi-stage swarms.
 """
 import asyncio
+from typing import Any
+
 import httpx
 import structlog
-from typing import List, Dict, Any
+
 from core.infrastructure.mesh import mesh_router
 
 log = structlog.get_logger()
@@ -16,7 +18,7 @@ class NeuralPrefetcher:
     def __init__(self):
         self._client = httpx.AsyncClient(timeout=2)
 
-    async def prefetch_swarm_assets(self, plan: List[Dict[str, Any]]):
+    async def prefetch_swarm_assets(self, plan: list[dict[str, Any]]):
         """
         Analyzes a swarm plan and warms up potential inference nodes.
         """
@@ -43,7 +45,7 @@ class NeuralPrefetcher:
             await asyncio.gather(*tasks, return_exceptions=True)
             log.info("prefetcher.warmup_complete", nodes=len(tasks))
 
-    async def _warmup_node(self, node_url: str, models: List[str]):
+    async def _warmup_node(self, node_url: str, models: list[str]):
         """Sends a low-priority warmup signal to a Mesh node."""
         try:
             # Phase 46: Specialized /api/inference/warmup endpoint

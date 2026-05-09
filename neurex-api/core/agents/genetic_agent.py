@@ -4,16 +4,17 @@ Neural Architecture Evolution: Self-Optimizing Codebase.
 Clones, mutates, and benchmarks modules to find superior implementations.
 """
 from __future__ import annotations
+
 import os
-import shutil
-import asyncio
+from typing import TYPE_CHECKING
+
 import structlog
-from typing import List, Dict, Any, TYPE_CHECKING
+
 if TYPE_CHECKING:
     from core.agents.base_agent import BaseAgent
+from core.collaboration.consensus import consensus_manager
 from core.context.manager import ContextManager
 from core.harness.hyperplan import HyperPlan
-from core.collaboration.consensus import consensus_manager
 from core.observability.flight_recorder import record_decision
 
 log = structlog.get_logger()
@@ -38,7 +39,7 @@ class GeneticAgent:
             return False
 
         # 1. Read original content
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             original_content = f.read()
 
         # 2. Mutate (Optimize for Performance/Clarity)

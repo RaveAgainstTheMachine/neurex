@@ -5,8 +5,9 @@ Enables the Neurex Mesh to autonomously propose its own engineering goals
 based on codebase entropy, architectural debt, and mission success telemetry.
 """
 import asyncio
+
 import structlog
-from typing import List, Dict, Any, Optional
+
 from core.infrastructure.evolution import evolution_coordinator
 
 log = structlog.get_logger()
@@ -22,7 +23,7 @@ class EvolutionaryGoal:
 
 class GoalGenerator:
     def __init__(self):
-        self.proposed_goals: List[EvolutionaryGoal] = []
+        self.proposed_goals: list[EvolutionaryGoal] = []
         self.generator_lock = asyncio.Lock()
 
     async def analyze_and_propose_goals(self):
@@ -55,7 +56,7 @@ class GoalGenerator:
             
             return goals
 
-    def get_pending_goals(self) -> List[EvolutionaryGoal]:
+    def get_pending_goals(self) -> list[EvolutionaryGoal]:
         """Retrieves all goals that require swarm consensus or user approval."""
         return [g for g in self.proposed_goals if g.status == "proposed"]
 

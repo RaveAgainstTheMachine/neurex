@@ -4,7 +4,9 @@ Web research tools for the Neurex Researcher agent.
 Uses DuckDuckGo to search for documentation and technical solutions.
 """
 from __future__ import annotations
+
 import asyncio
+
 import structlog
 from duckduckgo_search import DDGS
 

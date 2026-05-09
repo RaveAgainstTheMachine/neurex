@@ -5,17 +5,18 @@ Enables the Neurex Mesh to autonomously refactor its own core infrastructure.
 Analyzes runtime telemetry to propose logic optimizations for its own components.
 """
 import asyncio
+from typing import Any
+
 import structlog
-from typing import Dict, Any, List, Optional
 
 log = structlog.get_logger()
 
 class SelfOptimizer:
     def __init__(self):
         self.optimization_lock = asyncio.Lock()
-        self.pending_optimizations: Dict[str, Dict[str, Any]] = {}
+        self.pending_optimizations: dict[str, dict[str, Any]] = {}
 
-    async def analyze_core_efficiency(self, component: str, performance_data: Dict[str, Any]):
+    async def analyze_core_efficiency(self, component: str, performance_data: dict[str, Any]):
         """
         Analyzes the efficiency of a core Mesh component.
         If latency or resource overhead is high, it proposes a recursive refactor.

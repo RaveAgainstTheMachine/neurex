@@ -5,8 +5,10 @@ Enables decentralized knowledge distillation between distinct Neurex workspaces.
 Allows one Mesh to benefit from the neural evolution of another while preserving privacy.
 """
 import asyncio
+from typing import Any
+
 import structlog
-from typing import Dict, List, Any, Optional
+
 from core.infrastructure.evolution import evolution_coordinator
 
 log = structlog.get_logger()
@@ -19,7 +21,7 @@ class NeuralLesson:
 
 class ProjectDistiller:
     def __init__(self):
-        self.export_queue: List[NeuralLesson] = []
+        self.export_queue: list[NeuralLesson] = []
         self.distillation_lock = asyncio.Lock()
 
     async def extract_neural_lessons(self, domain: str):
@@ -39,7 +41,7 @@ class ProjectDistiller:
             self.export_queue.append(lesson)
             return [lesson]
 
-    async def ingest_external_lesson(self, lesson_data: Dict[str, Any]):
+    async def ingest_external_lesson(self, lesson_data: dict[str, Any]):
         """
         Ingests a neural lesson from another Neurex workspace.
         Applies the knowledge gain to local adapters without raw weight transfer.

@@ -2,11 +2,11 @@
 core/mcp/tools/skills_builder.py
 Tools for autonomous skill authorship and expansion.
 """
-import os
 import json
-import shutil
-import structlog
+import os
 from pathlib import Path
+
+import structlog
 
 log = structlog.get_logger()
 

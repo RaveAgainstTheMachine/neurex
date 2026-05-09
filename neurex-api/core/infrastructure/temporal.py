@@ -5,14 +5,15 @@ Enables the Neurex Mesh to snapshot and revert its entire neural state.
 Allows for 'Temporal Debugging' of recursive self-optimizations and neural evolution.
 """
 import asyncio
-import structlog
-from typing import Dict, Any, List, Optional
 from datetime import datetime
+from typing import Any
+
+import structlog
 
 log = structlog.get_logger()
 
 class NeuralSnapshot:
-    def __init__(self, id: str, timestamp: datetime, metadata: Dict[str, Any]):
+    def __init__(self, id: str, timestamp: datetime, metadata: dict[str, Any]):
         self.id = id
         self.timestamp = timestamp
         self.metadata = metadata # snapshot of weights, active bridges, etc.
@@ -21,7 +22,7 @@ class NeuralSnapshot:
 class NeuralTemporalRegistry:
     def __init__(self):
         self.temporal_lock = asyncio.Lock()
-        self.snapshots: Dict[str, NeuralSnapshot] = {}
+        self.snapshots: dict[str, NeuralSnapshot] = {}
 
     async def capture_state_snapshot(self, reason: str) -> str:
         """Captures the entire neural state of the Mesh as a temporal snapshot."""

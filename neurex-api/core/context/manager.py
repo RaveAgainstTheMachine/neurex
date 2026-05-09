@@ -4,13 +4,51 @@ Dynamic context manager. Handles RAG retrieval and token budgets.
 Gracefully degrades if ChromaDB or embedder is unavailable.
 """
 from __future__ import annotations
+
 import asyncio
 import os
+
 import structlog
+
 log = structlog.get_logger()
 
 CHROMA_DB_DIR  = os.getenv("CHROMA_DB_DIR", "/games/AI/chroma_db")
 COLLECTION     = "neurex_codebase"
+
+class ContextManager:
+    def __init__(self):
+        self._chroma = None
+        self._collection = None
+        self._embedder = None
+        self._reranker = None
+        self._enc = None
+        self._available = False
+        
+        try:
+            import tiktoken
+            self._enc = tiktoken.get_encoding("cl100k_base")
+        except Exception:
+            log.warning("context.tiktoken_unavailable", hint="Token counting disabled")
+
+        try:
+            from core.memory.embedder import Embedder, Reranker
+            self._embedder = Embedder()
+            self._reranker = Reranker()
+        except Exception as e:
+            log.warning("context.embedder_unavailable", error=str(e))
+
+    def _get_collection(self):
+        """Synchronous retrieval of collection from PersistentClient."""
+        if self._chroma is None:
+            try:
+                import chromadb
+                self._chroma = chromadb.PersistentClient(path=CHROMA_DB_DIR)
+                self._collection = self._chroma.get_or_create_collection(COLLECTION)
+                self._available = True
+            except Exception as e:
+                log.warning("context.chroma_unavailable", error=str(e))
+                self._available = False
+        return self._collection
 
     def get_budgets(self, model_name: str | None = None) -> dict[str, int]:
         cw = 8192

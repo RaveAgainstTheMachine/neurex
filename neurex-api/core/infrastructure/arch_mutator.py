@@ -5,24 +5,24 @@ Autonomously redesigns neural adapter architectures (rank, alpha, modules)
 based on reasoning complexity and task performance.
 """
 import asyncio
+from typing import Any
+
 import structlog
-from typing import Dict, Any, List, Optional
-from core.infrastructure.evolution import evolution_coordinator
 
 log = structlog.get_logger()
 
 class AdapterSpec:
-    def __init__(self, rank: int = 8, alpha: int = 16, target_modules: List[str] = None):
+    def __init__(self, rank: int = 8, alpha: int = 16, target_modules: list[str] = None):
         self.rank = rank
         self.alpha = alpha
         self.target_modules = target_modules or ["q_proj", "v_proj"]
 
 class ArchitectureMutator:
     def __init__(self):
-        self.specs: Dict[str, AdapterSpec] = {} # domain -> spec
+        self.specs: dict[str, AdapterSpec] = {} # domain -> spec
         self.mutation_lock = asyncio.Lock()
 
-    async def analyze_complexity_and_mutate(self, domain: str, performance_telemetry: Dict[str, Any]):
+    async def analyze_complexity_and_mutate(self, domain: str, performance_telemetry: dict[str, Any]):
         """
         Analyzes task complexity (e.g., number of tool rounds, repair attempts) 
         and decides if the adapter architecture needs a rank increase or module expansion.

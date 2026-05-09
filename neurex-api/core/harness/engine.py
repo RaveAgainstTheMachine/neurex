@@ -4,12 +4,14 @@ Model-agnostic agentic harness for Neurex.
 Implements autonomous Plan-Act-Review cycles for any supported LLM.
 """
 from __future__ import annotations
-import asyncio
+
+from collections.abc import AsyncGenerator
+from typing import TYPE_CHECKING, Any
+
 import structlog
-from typing import List, Dict, Any, AsyncGenerator, TYPE_CHECKING
+
 if TYPE_CHECKING:
     from core.agents.base_agent import BaseAgent
-    from core.mcp.client import MCPClient
 
 log = structlog.get_logger()
 
@@ -19,7 +21,7 @@ class NeuralHarness:
         self.agent = agent
         self.mcp = MCPClient()
         self.max_steps = 15
-        self.history: List[Dict[str, str]] = []
+        self.history: list[dict[str, str]] = []
 
     async def execute(self, objective: str) -> AsyncGenerator[dict, None]:
         """Runs the autonomous loop to achieve the objective."""
@@ -77,9 +79,9 @@ class NeuralHarness:
         Think step-by-step. Plan your actions. Review observations.
         """
 
-    def _parse_tool_calls(self, text: str) -> List[Dict[str, Any]]:
-        import re
+    def _parse_tool_calls(self, text: str) -> list[dict[str, Any]]:
         import json
+        import re
         pattern = r'<tool_call name="(\w+)">\s*(.*?)\s*</tool_call>'
         matches = re.findall(pattern, text, re.DOTALL)
         calls = []

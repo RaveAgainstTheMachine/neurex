@@ -3,11 +3,12 @@ api/routes/synthesis.py
 Exposes Phase 51 Neural Self-Synthesis telemetry for the frontend dashboard.
 Handles project inceptions, self-optimizations, and governance DAO.
 """
+
 from fastapi import APIRouter
-from typing import List, Dict, Any
+
+from core.infrastructure.governance import governance_dao
 from core.infrastructure.inceptor import project_inceptor
 from core.infrastructure.self_optimizer import self_optimizer
-from core.infrastructure.governance import governance_dao
 
 router = APIRouter(prefix="/api/synthesis", tags=["Self-Synthesis"])
 

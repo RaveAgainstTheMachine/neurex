@@ -2,11 +2,12 @@
 core/mcp/tools/workspace.py
 Maintenance tools for workspace integrity.
 """
+import asyncio
 import os
 import shutil
-import asyncio
-import structlog
 from pathlib import Path
+
+import structlog
 
 log = structlog.get_logger()
 

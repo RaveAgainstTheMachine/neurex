@@ -5,14 +5,14 @@ Enables the Neurex Mesh to autonomously write, test, and install its own IDE log
 Allows the Mesh to expand its own capabilities (tools, skills) on-demand.
 """
 import asyncio
+from typing import Any
+
 import structlog
-from typing import Dict, Any, List, Optional
-from core.skills.manager import skill_manager
 
 log = structlog.get_logger()
 
 class SelfPlugin:
-    def __init__(self, id: str, description: str, tool_definition: Dict[str, Any]):
+    def __init__(self, id: str, description: str, tool_definition: dict[str, Any]):
         self.id = id
         self.description = description
         self.tool_definition = tool_definition
@@ -20,7 +20,7 @@ class SelfPlugin:
 
 class SelfPluginGenerator:
     def __init__(self):
-        self.active_plugins: Dict[str, SelfPlugin] = {}
+        self.active_plugins: dict[str, SelfPlugin] = {}
         self.generation_lock = asyncio.Lock()
 
     async def generate_mission_specific_plugin(self, mission_requirement: str):

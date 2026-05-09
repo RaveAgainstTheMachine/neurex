@@ -1,9 +1,11 @@
 import asyncio
-import os
+
+from dotenv import load_dotenv
+
 from core.agents.planner_agent import PlannerAgent
 from core.context.manager import ContextManager
 from core.context.rules_parser import RulesParser
-from dotenv import load_dotenv
+
 
 async def test_planner():
     load_dotenv("../.env")

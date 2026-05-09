@@ -5,9 +5,9 @@ Enforces the Neurex Core Protocol at the neural weight level during evolution.
 Ensures evolved adapters are aligned with core architectural principles.
 """
 import asyncio
-import structlog
 import re
-from typing import Dict, Any, List, Optional
+
+import structlog
 
 log = structlog.get_logger()
 
@@ -26,7 +26,7 @@ class NeuralLawEngine:
         self.re_print = re.compile(r'\bprint\s*\(')
         self.re_func_def = re.compile(r'^\s*def\s+\w+\s*\(.*\)\s*(?!->).*:', re.MULTILINE)
 
-    async def verify_weight_alignment(self, adapter_id: str, sample_outputs: List[str]) -> bool:
+    async def verify_weight_alignment(self, adapter_id: str, sample_outputs: list[str]) -> bool:
         """
         Verifies that an evolved neural adapter generates protocol-aligned code.
         Analyzes sample outputs against the Neurex Core Protocol.

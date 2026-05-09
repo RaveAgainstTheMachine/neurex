@@ -4,8 +4,10 @@ Filesystem tools scoped to WORKSPACE_PATH. All paths are resolved relative
 to the workspace root and validated to prevent path traversal.
 """
 from __future__ import annotations
+
 import os
 from pathlib import Path
+
 import aiofiles
 import structlog
 
@@ -47,11 +49,11 @@ async def read_file(path: str) -> str:
     safe = _safe_path(path)
     if not safe.is_file():
         return f"Error: file not found: {path}"
-    async with aiofiles.open(safe, "r", errors="replace") as f:
+    async with aiofiles.open(safe, errors="replace") as f:
         content = await f.read()
     # Truncate very large files to avoid flooding context
     if len(content) > 40_000:
-        content = content[:40_000] + f"\n... [truncated at 40k chars]"
+        content = content[:40_000] + "\n... [truncated at 40k chars]"
     log.info("fs.read", path=path, chars=len(content))
     return content
 
@@ -128,7 +130,7 @@ async def apply_diff(path: str, search: str, replace: str, autonomy_level: str =
     if not safe.is_file():
         return f"Error: file not found: {path}"
     
-    async with aiofiles.open(safe, "r", errors="replace") as f:
+    async with aiofiles.open(safe, errors="replace") as f:
         content = await f.read()
     
     if search not in content:

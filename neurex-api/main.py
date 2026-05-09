@@ -2,23 +2,44 @@
 neurex-api — main.py
 Entry point: mounts routers, starts background workers, manages lifespan.
 """
-from contextlib import asynccontextmanager
 import asyncio
+from contextlib import asynccontextmanager
+
 import structlog
+from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from dotenv import load_dotenv
 
 load_dotenv()
 
 
-from core.memory.worker import MemoryWorker
-from core.context.rules_parser import RulesParser
-from api.routes import chat, tasks, files, infra, notifications, skills, settings, auth, memory, update, observability, git, languages, evolution, singularity, synthesis, consensus, temporal, voice
+from api.routes import (
+    auth,
+    chat,
+    consensus,
+    evolution,
+    files,
+    git,
+    infra,
+    languages,
+    memory,
+    notifications,
+    observability,
+    settings,
+    singularity,
+    skills,
+    synthesis,
+    tasks,
+    temporal,
+    update,
+    voice,
+)
 from api.websocket import router as ws_router
-from core.task_graph import init_db
+from core.context.rules_parser import RulesParser
 from core.logger import setup_logging
+from core.memory.worker import MemoryWorker
+from core.task_graph import init_db
 
 setup_logging()
 log = structlog.get_logger()
@@ -90,7 +111,6 @@ async def lifespan(app: FastAPI):
     asyncio.create_task(ci_healer.check_pipeline_health())
 
     # Trigger initial hardware benchmark
-    from core.infrastructure.benchmarker import hardware_benchmarker
     
     # Phase 44.9: Start Flight Recorder Batch Worker
     from core.observability.flight_recorder import flush_decisions
@@ -125,6 +145,7 @@ async def lifespan(app: FastAPI):
 
 
 from fastapi.responses import ORJSONResponse
+
 from core.infrastructure.logging_middleware import DebugLoggingMiddleware
 
 app = FastAPI(

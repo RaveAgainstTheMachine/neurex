@@ -4,10 +4,10 @@ Phase 45: Sentient IDE (Runtime Evolution)
 Enables zero-restart logic reloading for core Neurex modules.
 Allows the Mesh to update its own soul without terminating the process.
 """
-import sys
 import importlib
+import sys
+
 import structlog
-from typing import Optional
 
 log = structlog.get_logger()
 

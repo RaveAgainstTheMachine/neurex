@@ -5,9 +5,8 @@ Dynamically re-quantizes neural weights to fit models into available Mesh VRAM.
 Enables "Degraded Mode" inference when hardware pressure is high.
 """
 import asyncio
+
 import structlog
-from typing import Dict, Any, List, Optional
-from core.infrastructure.vram_pool import vram_pool
 
 log = structlog.get_logger()
 
@@ -19,7 +18,7 @@ class QuantizationLevel:
 
 class AutonomousQuantizer:
     def __init__(self):
-        self.active_models: Dict[str, str] = {} # model_id -> current_quant
+        self.active_models: dict[str, str] = {} # model_id -> current_quant
         self.quant_lock = asyncio.Lock()
 
     async def optimize_model_storage(self, model_id: str, target_vram_gb: float):

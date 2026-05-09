@@ -4,8 +4,11 @@ Implements RAG 2.0: Hybrid Neural Code Search.
 Combines Vector Retrieval with AST-aware Graph Traversal.
 """
 from __future__ import annotations
+
+from typing import Any
+
 import structlog
-from typing import List, Dict, Any
+
 from core.context.manager import ContextManager
 
 log = structlog.get_logger()
@@ -13,11 +16,11 @@ log = structlog.get_logger()
 class NeuralExplorer:
     def __init__(self, context_manager: ContextManager):
         self.ctx = context_manager
-        self.call_graph: Dict[str, List[str]] = {} # file -> list of referenced files
+        self.call_graph: dict[str, list[str]] = {} # file -> list of referenced files
         # Phase 44.2: Fast Search Cache
-        self._search_cache: Dict[str, List[Dict[str, Any]]] = {}
+        self._search_cache: dict[str, list[dict[str, Any]]] = {}
 
-    async def hybrid_search(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
+    async def hybrid_search(self, query: str, limit: int = 10) -> list[dict[str, Any]]:
         """
         Performs a cached hybrid search.
         """
@@ -49,7 +52,7 @@ class NeuralExplorer:
         self._search_cache[cache_key] = expanded_results
         return expanded_results
 
-    def update_call_graph(self, file_path: str, references: List[str]):
+    def update_call_graph(self, file_path: str, references: list[str]):
         """Updates the relational mapping and invalidates the search cache."""
         self.call_graph[file_path] = references
         self._search_cache.clear() # Invalidate on change

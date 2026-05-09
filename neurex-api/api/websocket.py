@@ -4,23 +4,27 @@ WebSocket endpoint. Each connection maps to one conversation.
 Streams Orchestrator events as newline-delimited JSON.
 """
 from __future__ import annotations
-import json
+
 import asyncio
+import json
 import os
+
 import structlog
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from fastapi import status as http_status
 
-from core.orchestrator import Orchestrator
 from core.context.manager import ContextManager
 from core.context.rules_parser import RulesParser
+from core.orchestrator import Orchestrator
 from core.task_graph import AsyncSession
 
 log = structlog.get_logger()
 router = APIRouter()
 
-from api.routes.auth import get_secret_key, ALGORITHM
-from jose import jwt, JWTError
+from jose import JWTError, jwt
+
+from api.routes.auth import ALGORITHM, get_secret_key
+
 
 async def _authenticate(websocket: WebSocket) -> bool:
     token = websocket.query_params.get("token", "").strip()
@@ -46,8 +50,8 @@ async def _authenticate(websocket: WebSocket) -> bool:
 
 async def _persist_message(conversation_id: str, role: str, content: str, graph_id: str | None = None):
     """Persist a chat message to SQLite so history survives reconnects. Uses its own session for isolation."""
-    from core.task_graph import AsyncSession, engine
     from api.routes.chat import ChatMessage
+    from core.task_graph import AsyncSession, engine
     try:
         async with AsyncSession(engine, expire_on_commit=False) as session:
             msg = ChatMessage(

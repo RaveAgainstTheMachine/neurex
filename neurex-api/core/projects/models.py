@@ -1,10 +1,12 @@
 from __future__ import annotations
-import uuid
+
 import random
+import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Optional, List
-from sqlmodel import SQLModel, Field, Relationship
+
+from sqlmodel import Field, SQLModel
+
 
 class ProjectRole(str, Enum):
     OWNER     = "owner"      # Full control, can delete project, manage users
@@ -21,7 +23,7 @@ class Project(SQLModel, table=True):
     """A collaborative workspace/project."""
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
     name: str = Field(index=True)
-    description: Optional[str] = Field(default=None)
+    description: str | None = Field(default=None)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     is_active: bool = Field(default=True)
 
@@ -47,11 +49,11 @@ class ProjectTask(SQLModel, table=True):
     project_id: str = Field(foreign_key="project.id", index=True)
     
     title: str
-    description: Optional[str] = Field(default=None)
+    description: str | None = Field(default=None)
     status: ProjectTaskStatus = Field(default=ProjectTaskStatus.TODO)
     
     created_by: str = Field(foreign_key="user.id")
-    assignee_id: Optional[str] = Field(default=None, foreign_key="user.id")
+    assignee_id: str | None = Field(default=None, foreign_key="user.id")
     
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)

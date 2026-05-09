@@ -1,12 +1,14 @@
 
 import asyncio
 import os
+
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from core.orchestrator import Orchestrator
 from core.context.manager import ContextManager
 from core.context.rules_parser import RulesParser
+from core.orchestrator import Orchestrator
+
 
 async def trigger():
     # Dynamically determine workspace path
@@ -25,7 +27,7 @@ async def trigger():
         conversation_id = "default"
         message = "Implement a Human-in-the-loop Shell Approval workflow. Update terminal.py to detect unsafe commands and the UI to show an Approve/Deny button."
         
-        print(f"Force-triggering task...")
+        print("Force-triggering task...")
         
         async for event in orchestrator.run(message, conversation_id):
             if event.get("event") == "plan_ready":

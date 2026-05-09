@@ -4,35 +4,45 @@ MCP tool dispatcher. Routes tool names to concrete tool implementations.
 Add new tools here and register them in TOOL_REGISTRY.
 """
 from __future__ import annotations
+
 import inspect
-import structlog
 from typing import Any
-from core.mcp.tools.filesystem import (
-    read_file, write_file, list_directory, delete_file
-)
-from core.mcp.tools.terminal import run_command
-from core.mcp.tools.search import grep_search
-from core.mcp.tools.researcher import web_search
-from core.mcp.tools.browser import (
-    browser_navigate, browser_screenshot, browser_click, browser_type, browser_get_content
-)
-from core.mcp.tools.workspace import deep_clean, analyze_project_structure
-from core.mcp.tools.security import security_scan
-from core.mcp.tools.intel import synthesize_project_intel, query_project_intel, audit_codebase_health, check_design_compliance
-from core.mcp.tools.skills_builder import create_skill, publish_skill
-from core.mcp.tools.mesh_intel import get_mesh_topology, check_peer_suitability
-from core.context.scratchpad import set_scratchpad_value, get_scratchpad, clear_scratchpad
-from core.observability.flight_recorder import record_decision, get_flight_log
-from core.mcp.servers.neural_harness import run_neural_harness
-from core.harness.hyperplan import HyperPlan
+
+import structlog
+
 from core.agents.genetic_agent import GeneticAgent
+from core.context.scratchpad import clear_scratchpad, get_scratchpad, set_scratchpad_value
+from core.harness.hyperplan import HyperPlan
+from core.mcp.servers.neural_harness import run_neural_harness
+from core.mcp.tools.browser import (
+    browser_click,
+    browser_get_content,
+    browser_navigate,
+    browser_screenshot,
+    browser_type,
+)
+from core.mcp.tools.filesystem import delete_file, list_directory, read_file, write_file
+from core.mcp.tools.intel import (
+    audit_codebase_health,
+    check_design_compliance,
+    query_project_intel,
+    synthesize_project_intel,
+)
+from core.mcp.tools.mesh_intel import check_peer_suitability, get_mesh_topology
+from core.mcp.tools.researcher import web_search
+from core.mcp.tools.search import grep_search
+from core.mcp.tools.security import security_scan
+from core.mcp.tools.skills_builder import create_skill, publish_skill
+from core.mcp.tools.terminal import run_command
+from core.mcp.tools.workspace import analyze_project_structure, deep_clean
+from core.observability.flight_recorder import get_flight_log, record_decision
 
 log = structlog.get_logger()
 
 async def run_hyperplan(query: str) -> str:
     """Invokes the multi-pass HyperPlan engine for complex architecture."""
-    from core.context.manager import ContextManager
     from core.agents.base_agent import BaseAgent
+    from core.context.manager import ContextManager
     agent = BaseAgent(None, ContextManager()) # Placeholder rules
     up = HyperPlan(agent)
     blueprint = await up.generate_blueprint(query)
@@ -41,8 +51,8 @@ async def run_hyperplan(query: str) -> str:
 
 async def run_genetic_optimization(file_path: str) -> str:
     """Invokes the Genetic Evolution cycle to optimize a module."""
-    from core.context.manager import ContextManager
     from core.agents.base_agent import BaseAgent
+    from core.context.manager import ContextManager
     agent = BaseAgent(None, ContextManager())
     ga = GeneticAgent(agent)
     success = await ga.evolve_module(file_path)

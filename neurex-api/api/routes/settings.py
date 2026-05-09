@@ -3,12 +3,14 @@ api/routes/settings.py
 Endpoints for managing dynamic platform settings.
 Port changes automatically re-apply cross-platform firewall rules.
 """
-from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
-from pydantic import BaseModel
-from typing import Dict, Any
 import os
+from typing import Any
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from pydantic import BaseModel
+
+from api.routes.auth import UserRole, require_role
 from core.settings.manager import settings_manager
-from api.routes.auth import require_role, UserRole
 from core.task_graph import User
 
 router = APIRouter()
@@ -19,7 +21,7 @@ PORT_KEYS = {"api_port", "web_port", "chromadb_port", "ollama_port", "rpc_port",
 
 
 class SettingsUpdateRequest(BaseModel):
-    settings: Dict[str, Any]
+    settings: dict[str, Any]
 
 
 async def _reapply_firewall() -> dict:

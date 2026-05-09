@@ -4,11 +4,13 @@ Autonomous self-healing service for Neurex. Monitors port health and auto-restar
 failed background services.
 """
 from __future__ import annotations
+
 import asyncio
-import socket
-import structlog
 import os
+import socket
 from pathlib import Path
+
+import structlog
 
 log = structlog.get_logger()
 
@@ -59,7 +61,7 @@ class Sentinel:
             try:
                 s.connect(("127.0.0.1", port))
                 return True
-            except (ConnectionRefusedError, socket.timeout):
+            except (TimeoutError, ConnectionRefusedError):
                 return False
 
     async def _restart_service(self, name: str, config: dict):

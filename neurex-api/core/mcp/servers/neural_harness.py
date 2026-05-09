@@ -4,8 +4,9 @@ Universal MCP bridge for the Neurex Neural Harness.
 Enables model-agnostic autonomous execution.
 """
 from __future__ import annotations
+
 import structlog
-from typing import Dict, Any
+
 log = structlog.get_logger()
 
 async def run_neural_harness(query: str, model: str = "qwen2.5-coder:14b") -> str:
@@ -16,8 +17,8 @@ async def run_neural_harness(query: str, model: str = "qwen2.5-coder:14b") -> st
     log.info("neural_harness.invoked", query=query, model=model)
     
     # Create a specialized agent for this model
-    from core.context.manager import ContextManager
     from core.agents.base_agent import BaseAgent
+    from core.context.manager import ContextManager
     from core.harness.engine import NeuralHarness
     
     agent = BaseAgent(ContextManager())

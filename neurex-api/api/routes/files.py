@@ -1,12 +1,15 @@
 """api/routes/files.py — Workspace file browser endpoints."""
-import os
 import json
+import os
 import shutil
 import subprocess
 from pathlib import Path
-from fastapi import APIRouter, HTTPException, UploadFile, File
+
+from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel
+
 from core.collaboration.manager import CollaborationManager
+from core.logger import log
 
 router = APIRouter()
 class WorkspaceState:
@@ -218,7 +221,7 @@ async def save_file(req: SaveRequest):
     
     # Advanced Collision Prevention
     if not collab_manager.acquire_lock(req.path, req.requester_id):
-        raise HTTPException(status_code=423, detail=f"File is currently locked by another user or agent.")
+        raise HTTPException(status_code=423, detail="File is currently locked by another user or agent.")
     
     try:
         # Ensure parent directory exists
@@ -249,7 +252,6 @@ async def upload_file(file: UploadFile = File(...), path: str = "uploads"):
         
     return {"filename": file.filename, "path": str(file_path.relative_to(WORKSPACE)), "status": "uploaded"}
 
-import subprocess
 
 @router.get("/search")
 async def search_files(

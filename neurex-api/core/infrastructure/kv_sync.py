@@ -5,15 +5,17 @@ Implements sub-ms neural state propagation and federated K/V cache synchronizati
 Enables real-time hidden state pooling across Mesh nodes during reasoning bursts.
 """
 import asyncio
+from typing import Any
+
 import structlog
-from typing import Dict, List, Any, Optional
+
 from core.infrastructure.mesh import mesh_router
 
 log = structlog.get_logger()
 
 class KVSyncProtocol:
     def __init__(self):
-        self.state_cache: Dict[str, Any] = {} # session_id -> hidden_states
+        self.state_cache: dict[str, Any] = {} # session_id -> hidden_states
         self.sync_lock = asyncio.Lock()
         # Phase 46.5: High-Speed Buffer
         self.propagation_delay_ms = 0.5 # Targeted sub-ms latency
@@ -56,7 +58,7 @@ class KVSyncProtocol:
         except Exception:
             return False
 
-    def get_pooled_state(self, session_id: str) -> Optional[Any]:
+    def get_pooled_state(self, session_id: str) -> Any | None:
         """Retrieves the aggregated hidden state for a reasoning session."""
         return self.state_cache.get(session_id)
 

@@ -5,9 +5,9 @@ For code files: chunks at function/class boundaries.
 For prose files (md, txt): sliding window with sentence awareness.
 """
 from __future__ import annotations
+
 import hashlib
 from pathlib import Path
-from typing import NamedTuple
 
 import structlog
 

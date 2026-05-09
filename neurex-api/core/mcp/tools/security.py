@@ -2,10 +2,11 @@
 core/mcp/tools/security.py
 Security auditing tools for Neurex.
 """
-import os
 import asyncio
-import structlog
+import os
 from pathlib import Path
+
+import structlog
 
 log = structlog.get_logger()
 
@@ -61,7 +62,7 @@ async def security_scan() -> str:
         stdout, _ = await proc.communicate()
         if stdout:
             leaks = stdout.decode().strip().split("\n")
-            issues.append(f"WARNING: Sensitive files are being tracked in Git:\n- " + "\n- ".join(leaks))
+            issues.append("WARNING: Sensitive files are being tracked in Git:\n- " + "\n- ".join(leaks))
     except Exception:
         pass
 

@@ -1,6 +1,7 @@
 
 import sqlite3
 
+
 def migrate():
     conn = sqlite3.connect("./neurex.db")
     cursor = conn.cursor()

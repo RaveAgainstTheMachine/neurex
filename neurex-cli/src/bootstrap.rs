@@ -15,7 +15,8 @@ fn get_uv_target() -> Result<&'static str> {
         ("windows", "x86_64") => Ok("x86_64-pc-windows-msvc"),
         _ => bail!(
             "Unsupported OS/Architecture combination for Neurex Bootstrapper: {}-{}",
-            OS, ARCH
+            OS,
+            ARCH
         ),
     }
 }
@@ -37,18 +38,12 @@ pub async fn ensure_uv() -> Result<PathBuf> {
 
     let target = get_uv_target()?;
     let ext = if OS == "windows" { "zip" } else { "tar.gz" };
-    let url = format!(
-        "https://github.com/astral-sh/uv/releases/latest/download/uv-{}.{}",
-        target, ext
-    );
+    let url =
+        format!("https://github.com/astral-sh/uv/releases/latest/download/uv-{}.{}", target, ext);
 
     let client = reqwest::Client::new();
-    let response = client
-        .get(&url)
-        .send()
-        .await
-        .context("Failed to download uv runtime")?;
-    
+    let response = client.get(&url).send().await.context("Failed to download uv runtime")?;
+
     let bytes = response.bytes().await.context("Failed to read uv bytes")?;
 
     info!("Extracting Runtime Engine...");
@@ -78,15 +73,19 @@ pub async fn ensure_uv() -> Result<PathBuf> {
             let mut file = file.context("Failed to access tar entry")?;
             let path = file.path().context("Failed to get tar entry path")?.into_owned();
             if path.file_name().and_then(|n| n.to_str()) == Some("uv") {
-                let mut outfile = fs::File::create(&uv_path).context("Failed to create uv binary")?;
+                let mut outfile =
+                    fs::File::create(&uv_path).context("Failed to create uv binary")?;
                 std::io::copy(&mut file, &mut outfile).context("Failed to copy uv binary bytes")?;
 
                 #[cfg(unix)]
                 {
                     use std::os::unix::fs::PermissionsExt;
-                    let mut perms = fs::metadata(&uv_path).context("Failed to get uv binary metadata")?.permissions();
+                    let mut perms = fs::metadata(&uv_path)
+                        .context("Failed to get uv binary metadata")?
+                        .permissions();
                     perms.set_mode(0o755);
-                    fs::set_permissions(&uv_path, perms).context("Failed to set uv binary permissions")?;
+                    fs::set_permissions(&uv_path, perms)
+                        .context("Failed to set uv binary permissions")?;
                 }
                 break;
             }

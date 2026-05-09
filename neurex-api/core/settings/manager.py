@@ -3,11 +3,10 @@ core/settings/manager.py
 Manages dynamic platform configurations.
 Settings are hot-reloadable and stored in a persistent JSON registry.
 """
-import os
 import json
+import os
 from pathlib import Path
-from typing import Dict, Any
-
+from typing import Any
 
 DEFAULT_SETTINGS = {
     # Agent Models (Default assignments)
@@ -97,8 +96,8 @@ DEFAULT_SETTINGS = {
 
 class SettingsManager:
     def __init__(self):
-        self.global_settings: Dict[str, Any] = {}
-        self.workspace_settings: Dict[str, Any] = {}
+        self.global_settings: dict[str, Any] = {}
+        self.workspace_settings: dict[str, Any] = {}
         self._load_global()
         self._load_workspace()
 
@@ -115,7 +114,7 @@ class SettingsManager:
         path = self._get_global_path()
         if path.exists():
             try:
-                with open(path, "r") as f:
+                with open(path) as f:
                     self.global_settings = json.load(f)
             except Exception:
                 self.global_settings = {}
@@ -128,7 +127,7 @@ class SettingsManager:
         path = self._get_workspace_path()
         if path and path.exists():
             try:
-                with open(path, "r") as f:
+                with open(path) as f:
                     self.workspace_settings = json.load(f)
             except Exception:
                 self.workspace_settings = {}
@@ -152,7 +151,7 @@ class SettingsManager:
         self._load_global()
         self._load_workspace()
 
-    def get_all(self) -> Dict[str, Any]:
+    def get_all(self) -> dict[str, Any]:
         # Merge hierarchy: Default -> Global -> Workspace
         merged = DEFAULT_SETTINGS.copy()
         merged.update(self.global_settings)

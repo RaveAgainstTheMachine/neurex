@@ -4,15 +4,17 @@ Monitors CI/CD pipelines and autonomously triggers self-healing tasks.
 Integrates with the Orchestrator to fix regression bugs in the background.
 """
 from __future__ import annotations
+
 import asyncio
+from typing import Any
+
 import structlog
-from typing import List, Dict, Any
 
 log = structlog.get_logger()
 
 class CIHealer:
     def __init__(self):
-        self.monitored_repos: List[str] = []
+        self.monitored_repos: list[str] = []
         self.healing_active = False
 
     async def check_pipeline_health(self):
@@ -32,7 +34,7 @@ class CIHealer:
                 
             await asyncio.sleep(300) # Poll every 5 minutes
 
-    async def initiate_healing(self, failure_data: Dict[str, Any]):
+    async def initiate_healing(self, failure_data: dict[str, Any]):
         """
         Launches a background Orchestrator task to resolve the CI failure.
         """
@@ -42,7 +44,6 @@ class CIHealer:
         log.warning("ci_healer.failure_detected", repo=repo, error=error_log[:100])
         
         # Trigger autonomous recovery
-        from core.orchestrator import Orchestrator
         # We need a session and rules... usually this happens in a background worker context.
         # For Phase 23, we log the intent and queue a 'Self-Healing' task.
         log.info("ci_healer.healing_task_queued", repo=repo)

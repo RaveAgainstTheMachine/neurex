@@ -12,10 +12,12 @@ This is intentionally a fallback — the primary strategy is KV-cache pinning
 + sliding window (see core/context/manager.py).
 """
 from __future__ import annotations
+
 import structlog
+
 from core.agents.base_agent import BaseAgent
-from core.context.rules_parser import RulesParser
 from core.context.manager import ContextManager
+from core.context.rules_parser import RulesParser
 
 log = structlog.get_logger()
 

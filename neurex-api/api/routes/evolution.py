@@ -2,10 +2,10 @@
 api/routes/evolution.py
 Exposes Phase 48 Neural Evolution telemetry for the frontend dashboard.
 """
-from fastapi import APIRouter, Depends
-from typing import List, Dict, Any
-from core.infrastructure.evolution import evolution_coordinator
+from fastapi import APIRouter
+
 from core.infrastructure.arch_mutator import arch_mutator
+from core.infrastructure.evolution import evolution_coordinator
 
 router = APIRouter(prefix="/api/evolution", tags=["Evolution"])
 

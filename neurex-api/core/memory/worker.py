@@ -4,9 +4,11 @@ Background worker that indexes the workspace into ChromaDB.
 Gracefully degrades if ChromaDB is unavailable — logs once and disables indexing.
 """
 from __future__ import annotations
+
 import asyncio
 import os
 from pathlib import Path
+
 import structlog
 
 log = structlog.get_logger()
@@ -43,6 +45,7 @@ class MemoryWorker:
         # Try to connect to ChromaDB — gracefully degrade if unavailable
         try:
             import chromadb
+
             from core.memory.embedder import Embedder
 
             log.info("memory_worker.init_chroma", path=CHROMA_DB_DIR)
@@ -171,8 +174,8 @@ class MemoryWorker:
 
 
 try:
-    from watchdog.observers import Observer
     from watchdog.events import FileSystemEventHandler
+    from watchdog.observers import Observer
 
     class _ChangeHandler(FileSystemEventHandler):
         """Watchdog event handler that enqueues changed files for re-indexing."""

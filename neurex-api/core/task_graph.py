@@ -4,15 +4,15 @@ SQLite-backed task graph. Relationships removed to ensure database stability.
 The UI can still build the tree view using parent_id.
 """
 from __future__ import annotations
-import uuid
-from datetime import datetime, timezone
-from enum import Enum
-from typing import Optional, List
 
-from sqlmodel import SQLModel, Field, select
-from sqlmodel.ext.asyncio.session import AsyncSession
+import uuid
+from datetime import UTC, datetime
+from enum import Enum
+
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import create_async_engine
+from sqlmodel import Field, SQLModel, select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 DATABASE_URL = "sqlite+aiosqlite:///./neurex.db"
 
@@ -47,11 +47,11 @@ class User(SQLModel, table=True):
     username: str = Field(index=True, unique=True)
     hashed_password: str
     role: UserRole = UserRole.DEVELOPER
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     is_active: bool = Field(default=True)
-    otp_secret: Optional[str] = None
+    otp_secret: str | None = None
     otp_enabled: bool = Field(default=False)
-    otp_backup_codes: Optional[str] = None # JSON-serialized list of hashed codes
+    otp_backup_codes: str | None = None # JSON-serialized list of hashed codes
     force_password_change: bool = Field(default=False)
 
 class InviteCode(SQLModel, table=True):
@@ -60,7 +60,7 @@ class InviteCode(SQLModel, table=True):
     expires_at: datetime
     is_used: bool = Field(default=False)
     created_by: str # username of admin who created it
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 class AutonomyLevel(str, Enum):
     RESTRICTED = "restricted" # Everything needs approval
@@ -79,19 +79,19 @@ class TaskStatus(str, Enum):
 
 class TaskNode(SQLModel, table=True):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
-    parent_id: Optional[str] = Field(default=None, foreign_key="tasknode.id", index=True)
+    parent_id: str | None = Field(default=None, foreign_key="tasknode.id", index=True)
     graph_id: str = Field(index=True)
     agent_type: str
     title: str
     description: str
     status: TaskStatus = TaskStatus.PENDING
-    approval_reason: Optional[str] = None # Why are we waiting?
-    result: Optional[str] = None
-    error: Optional[str] = None
+    approval_reason: str | None = None # Why are we waiting?
+    result: str | None = None
+    error: str | None = None
     iteration: int = 0
     max_iterations: int = 10
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     is_checkpoint: bool = Field(default=False)
 
 class FileLock(SQLModel, table=True):
@@ -99,14 +99,11 @@ class FileLock(SQLModel, table=True):
     locked_by: str # user_id or agent_id
     owner_node: str # Which node instance holds the lock
     expires_at: datetime
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 # DecisionEvent moved to core.observability.flight_recorder
 
 async def init_db():
-    import core.projects.models # Ensure models are registered with SQLModel
-    from api.routes.chat import ChatMessage # Register ChatMessage
-    from core.observability.flight_recorder import DecisionEvent # Register DecisionEvent
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
 
@@ -143,7 +140,7 @@ async def update_task(
     if not node:
         return None
     node.status = status
-    node.updated_at = datetime.now(timezone.utc)
+    node.updated_at = datetime.now(UTC)
     node.iteration += 1
     if result is not None:
         node.result = result
@@ -167,7 +164,7 @@ async def update_task(
              
     return node
 
-async def get_graph(session: AsyncSession, graph_id: str) -> List[TaskNode]:
+async def get_graph(session: AsyncSession, graph_id: str) -> list[TaskNode]:
     result = await session.exec(
         select(TaskNode).where(TaskNode.graph_id == graph_id)
     )

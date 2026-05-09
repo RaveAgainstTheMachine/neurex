@@ -4,8 +4,9 @@ Implements Neural Context Compression to maximize the effective context window.
 Uses LLM-based summarization for mature modules and semantic pruning for irrelevant chunks.
 """
 from __future__ import annotations
+
 import structlog
-from typing import List, Dict, Any
+
 from core.context.manager import ContextManager
 
 log = structlog.get_logger()
@@ -38,10 +39,9 @@ class ContextCompressor:
 
     def _prune_boilerplate(self, text: str) -> str:
         """Removes common boilerplate like large import blocks and license headers."""
-        import re
         # Remove lines starting with 'import ' or 'from '
         lines = text.split("\n")
-        filtered = [l for l in lines if not l.strip().startswith(("import ", "from "))]
+        filtered = [line for line in lines if not line.strip().startswith(("import ", "from "))]
         return "\n".join(filtered)
 
     def _structural_summary(self, text: str) -> str:

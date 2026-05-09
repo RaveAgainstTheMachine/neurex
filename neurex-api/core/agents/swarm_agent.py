@@ -4,8 +4,11 @@ Specialized agent that handles distributed swarm execution.
 Acts as the interface between the Orchestrator and the SwarmManager.
 """
 from __future__ import annotations
-from typing import AsyncGenerator
+
+from collections.abc import AsyncGenerator
+
 import structlog
+
 from core.agents.base_agent import BaseAgent
 from core.agents.swarm_manager import swarm_manager
 from core.task_graph import TaskNode
@@ -58,7 +61,6 @@ class SwarmAgent(BaseAgent):
         # 2. Handoff to SwarmManager for Mesh dispatch
         # We need a TaskNode reference, but 'task' dict is just a payload.
         # We'll create a dummy context for the manager.
-        from core.task_graph import TaskNode
         dummy_parent = TaskNode(title=task["title"], description=task["description"], agent_type="swarm")
         
         swarm_id = await swarm_manager.initiate_swarm(dummy_parent, sub_plan)
@@ -74,4 +76,4 @@ class SwarmAgent(BaseAgent):
         
         yield {"type": "result", "result": f"Swarm {swarm_id} completed successfully.\n\nSummary of work:\n{summary}"}
 
-import asyncio # Needed for the sleep loop
+import asyncio  # Needed for the sleep loop

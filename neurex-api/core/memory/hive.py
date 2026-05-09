@@ -2,11 +2,12 @@
 core/memory/hive.py
 Distributed Vector Memory (Hive Mind) for cross-conversation context.
 """
-import chromadb
-from chromadb.utils import embedding_functions
-import structlog
-from typing import List, Dict, Any
 import os
+from typing import Any
+
+import chromadb
+import structlog
+from chromadb.utils import embedding_functions
 
 log = structlog.get_logger()
 
@@ -25,7 +26,7 @@ class HiveMind:
             metadata={"hnsw:space": "cosine"}
         )
 
-    def remember(self, content: str, metadata: Dict[str, Any], doc_id: str):
+    def remember(self, content: str, metadata: dict[str, Any], doc_id: str):
         """Inject a memory into the global store."""
         try:
             self.collection.upsert(
@@ -37,7 +38,7 @@ class HiveMind:
         except Exception as e:
             log.error("hive.remember_failed", error=str(e))
 
-    def recall(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
+    def recall(self, query: str, limit: int = 5) -> list[dict[str, Any]]:
         """Search the collective memory for relevant context."""
         try:
             results = self.collection.query(

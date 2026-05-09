@@ -2,13 +2,15 @@
 api/routes/infra.py
 Endpoints for managing AI infrastructure (engines, VRAM, performance).
 """
-from fastapi import APIRouter, HTTPException, Depends
-from typing import List, Dict, Any
+from typing import Any
+
+from fastapi import APIRouter, Depends, HTTPException
+
+from api.routes.auth import UserRole, require_role
+from core.infrastructure.benchmarker import hardware_benchmarker as benchmarker
 from core.infrastructure.manager import InfrastructureManager
 from core.infrastructure.registry import LLMRecommender, search_huggingface
-from core.infrastructure.benchmarker import hardware_benchmarker as benchmarker
 from core.skills.manager import SkillManager
-from api.routes.auth import require_role, UserRole
 
 router = APIRouter()
 infra_manager = InfrastructureManager()
@@ -57,12 +59,13 @@ async def get_infra_status():
     metrics["benchmarks"] = benchmarker.last_results
 
     # Include project intelligence if available
-    import os, json
+    import json
+    import os
     ws = os.getenv("WORKSPACE_PATH", "/workspace")
     intel_path = os.path.join(ws, ".neurex", "intel.json")
     if os.path.exists(intel_path):
         try:
-            with open(intel_path, "r") as f:
+            with open(intel_path) as f:
                 metrics["intel"] = json.load(f)
         except Exception:
             pass
@@ -111,7 +114,6 @@ async def recommend_model(task: str):
         raise HTTPException(status_code=404, detail="No suitable model found")
     return recommendation
 
-from core.infrastructure.registry import LLMRecommender, search_huggingface
 
 @router.get("/registry")
 async def get_model_registry():
@@ -119,7 +121,7 @@ async def get_model_registry():
     local_models = await infra_manager.get_installed_models("ollama")
     
     # Group local models by base name (e.g. qwen2.5-coder)
-    grouped: Dict[str, Dict[str, Any]] = {}
+    grouped: dict[str, dict[str, Any]] = {}
     
     for lm in local_models:
         if not isinstance(lm, dict):
@@ -165,11 +167,13 @@ async def pull_model(engine: str, model: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 # ── Mesh Federation ──
-from core.infrastructure.mesh import mesh_router
-from pydantic import BaseModel
 import httpx
-from fastapi.responses import StreamingResponse
 from fastapi import Request
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
+
+from core.infrastructure.mesh import mesh_router
+
 
 class PeerRequest(BaseModel):
     url: str
@@ -245,8 +249,10 @@ async def search_registry(query: str):
     return await search_huggingface(query)
 
 # ── Neurex Somnus (autoDream) ──
-from core.harness.somnus import somnus_daemon
 import os
+
+from core.harness.somnus import somnus_daemon
+
 
 @router.post("/somnus/start", dependencies=[Depends(require_role(UserRole.ADMIN))])
 async def start_somnus():

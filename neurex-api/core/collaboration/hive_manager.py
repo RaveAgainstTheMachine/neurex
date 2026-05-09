@@ -4,9 +4,11 @@ Neural Mesh Hive-Mind (Phase 44).
 Coordinates multiple swarms on shared planning blueprints via sharding and locking.
 """
 from __future__ import annotations
-import asyncio
+
+from typing import Any
+
 import structlog
-from typing import List, Dict, Any, Set
+
 from core.context.global_memory import global_memory
 from core.observability.flight_recorder import record_decision
 
@@ -15,13 +17,13 @@ log = structlog.get_logger()
 class HiveManager:
     def __init__(self):
         # Local locks for paths being mutated: path -> task_id
-        self.path_locks: Dict[str, str] = {}
+        self.path_locks: dict[str, str] = {}
         # Active blueprints: id -> list of shards
-        self.active_blueprints: Dict[str, List[Dict[str, Any]]] = {}
+        self.active_blueprints: dict[str, list[dict[str, Any]]] = {}
         # Phase 44.1: O(1) Shard Lookup
-        self.shards_by_id: Dict[str, Dict[str, Any]] = {}
+        self.shards_by_id: dict[str, dict[str, Any]] = {}
 
-    async def shard_blueprint(self, blueprint_id: str, blueprint: Dict[str, Any]) -> List[Dict[str, Any]]:
+    async def shard_blueprint(self, blueprint_id: str, blueprint: dict[str, Any]) -> list[dict[str, Any]]:
         """Breaks a massive HyperPlan blueprint into parallelizable shards."""
         log.info("hive.sharding_blueprint", id=blueprint_id)
         

@@ -8,22 +8,24 @@ Abstract base for all Neurex agents. Handles:
   - Skeptical Memory (Phase 31)
 """
 from __future__ import annotations
-import os
+
 import asyncio
-from abc import ABC, abstractmethod
 import json
-from typing import AsyncGenerator, Any
+import os
+from abc import ABC, abstractmethod
+from collections.abc import AsyncGenerator
+from typing import Any
 
 import httpx
 import structlog
 
-from core.context.manager import ContextManager
-from core.context.rules_parser import RulesParser
-from core.mcp.client import MCPClient
-from core.skills.manager import SkillManager
 from core.collaboration.manager import collaboration_manager
 from core.context.compression import ContextCompressor
+from core.context.manager import ContextManager
+from core.context.rules_parser import RulesParser
 from core.context.skeptical_memory import SkepticalMemory
+from core.mcp.client import MCPClient
+from core.skills.manager import SkillManager
 
 log = structlog.get_logger()
 
@@ -69,7 +71,7 @@ class BaseAgent(ABC):
         intel_path = os.path.join(ws, ".neurex", "intel.json")
         if os.path.exists(intel_path):
             try:
-                with open(intel_path, "r") as f:
+                with open(intel_path) as f:
                     intel = json.load(f)
                     intel_str = json.dumps(intel, indent=2)
                     parts.append(f"\n\n<project_architecture>\n{intel_str}\n</project_architecture>")
@@ -91,7 +93,7 @@ class BaseAgent(ABC):
         domain = "generic-coding" # Default domain
         lessons = swarm_kb.query_lessons(domain)
         if lessons:
-            best_lessons = "\n".join([f"- {l.pattern_id} (Fitness: {l.success_delta})" for l in lessons[:3]])
+            best_lessons = "\n".join([f"- {lsn.pattern_id} (Fitness: {lsn.success_delta})" for lsn in lessons[:3]])
             parts.append(f"\n\n<global_collective_intelligence>\nDomain: {domain}\nTop Patterns:\n{best_lessons}\n</global_collective_intelligence>")
 
         if extra:
@@ -135,8 +137,8 @@ class BaseAgent(ABC):
         if final_tools:
             payload["tools"] = final_tools
 
-        from core.infrastructure.mesh import mesh_router
         from core.infrastructure.adapter_orchestrator import adapter_orchestrator
+        from core.infrastructure.mesh import mesh_router
 
         # Phase 48: Neural Evolution (Specialized Adapter Loading)
         # We determine the domain from the current task context if possible

@@ -2,9 +2,10 @@
 core/context/scratchpad.py
 Persistent shared scratchpad for inter-agent communication during graph execution.
 """
-import os
 import json
+import os
 from pathlib import Path
+
 import structlog
 
 log = structlog.get_logger()
@@ -19,7 +20,7 @@ async def set_scratchpad_value(conversation_id: str, key: str, value: str) -> st
     
     data = {}
     if file_path.exists():
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             data = json.load(f)
             
     data[key] = value
@@ -36,7 +37,7 @@ async def get_scratchpad(conversation_id: str) -> dict:
     if not file_path.exists():
         return {}
         
-    with open(file_path, "r") as f:
+    with open(file_path) as f:
         return json.load(f)
 
 async def clear_scratchpad(conversation_id: str) -> str:

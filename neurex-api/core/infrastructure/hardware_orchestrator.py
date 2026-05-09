@@ -4,18 +4,19 @@ Phase 47: Neural Hardware Virtualization (Mesh Orchestration)
 Coordinates VRAM pooling, swapping, and re-quantization to fulfill high-reasoning tasks.
 The "Brain" of the virtualized hardware substrate.
 """
-import asyncio
+from typing import Any
+
 import structlog
-from typing import Dict, Any, List, Optional
-from core.infrastructure.vram_pool import vram_pool
+
 from core.infrastructure.neural_swap import neural_swap
 from core.infrastructure.quantizer import quantizer
+from core.infrastructure.vram_pool import vram_pool
 
 log = structlog.get_logger()
 
 class HardwareOrchestrator:
     def __init__(self):
-        self.active_sessions: Dict[str, Any] = {} # session_id -> allocation_plan
+        self.active_sessions: dict[str, Any] = {} # session_id -> allocation_plan
 
     async def provision_inference_burst(self, session_id: str, model_id: str, estimated_vram_gb: float):
         """

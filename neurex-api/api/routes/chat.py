@@ -5,17 +5,16 @@ The primary interaction path is WebSocket (/ws/{id}), but these endpoints
 let the frontend hydrate history on reconnect and fetch past conversations.
 """
 from __future__ import annotations
-import uuid
-from datetime import datetime, timezone
-from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+import uuid
+from datetime import UTC, datetime
+
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from sqlmodel import SQLModel, Field, select
+from sqlmodel import Field, SQLModel, select, text
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from core.task_graph import get_session, engine
-from sqlmodel import text
+from core.task_graph import engine, get_session
 
 router = APIRouter()
 
@@ -27,15 +26,15 @@ class ChatMessage(SQLModel, table=True):
     conversation_id: str = Field(index=True)
     role: str                    # "user" | "assistant"
     content: str
-    graph_id: Optional[str] = None  # links to the TaskGraph that produced this reply
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    graph_id: str | None = None  # links to the TaskGraph that produced this reply
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 class SendMessageRequest(BaseModel):
     conversation_id: str
     role: str
     content: str
-    graph_id: Optional[str] = None
+    graph_id: str | None = None
 
 
 # ── Ensure table exists ────────────────────────────────────────────────────────

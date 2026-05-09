@@ -5,22 +5,22 @@ Monitors telemetry and filesystem churn to proactively trigger workspace re-inde
 Ensures that the Mesh intelligence (RAG/Memory) remains synchronized with the physical state of the codebase.
 """
 import asyncio
+from datetime import UTC, datetime
+
 import structlog
-from datetime import datetime, timezone
-from typing import List, Set
 
 log = structlog.get_logger()
 
 class PredictiveMaintenance:
     def __init__(self):
-        self.churn_buffer: Set[str] = set()
-        self.last_index_time = datetime.now(timezone.utc)
+        self.churn_buffer: set[str] = set()
+        self.last_index_time = datetime.now(UTC)
         self.churn_threshold = 50 # Trigger re-index after 50 distinct file changes
         self.index_interval = 3600 # Force re-index every hour regardless of churn
         self._lock = asyncio.Lock()
         self._indexing_active = False
 
-    async def report_churn(self, paths: List[str]):
+    async def report_churn(self, paths: list[str]):
         """
         Adds paths to the churn buffer and evaluates if a proactive re-index is required.
         Called by the WatcherService.
@@ -39,7 +39,7 @@ class PredictiveMaintenance:
         """Periodically checks for stale indices."""
         while True:
             await asyncio.sleep(300) # Check every 5 minutes
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             delta = (now - self.last_index_time).total_seconds()
             
             if delta >= self.index_interval:
@@ -64,7 +64,7 @@ class PredictiveMaintenance:
             
             # Reset churn after successful trigger
             self.churn_buffer.clear()
-            self.last_index_time = datetime.now(timezone.utc)
+            self.last_index_time = datetime.now(UTC)
             
             # Simulate indexing work
             await asyncio.sleep(10) 

@@ -1,17 +1,17 @@
 # neurex-api/api/routes/git.py
-from fastapi import APIRouter, Depends, HTTPException, Query
-from typing import List, Optional
 import subprocess
-import os
 from pathlib import Path
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from .auth import get_current_user
 from .files import get_workspace
+
 # subprocess-based git management
 
 router = APIRouter()
 
-def run_git(args: List[str], cwd: Optional[str] = None):
+def run_git(args: list[str], cwd: str | None = None):
     workspace = get_workspace()
     if not cwd:
         cwd = str(workspace)
@@ -21,7 +21,7 @@ def run_git(args: List[str], cwd: Optional[str] = None):
         return res.stdout.strip()
     except subprocess.CalledProcessError as e:
         raise HTTPException(status_code=500, detail=f"Git error: {e.stderr}")
-def get_all_git_roots(workspace: Path) -> List[Path]:
+def get_all_git_roots(workspace: Path) -> list[Path]:
     """Find all directories containing a .git folder within the workspace."""
     roots = []
     # Check workspace itself
@@ -107,7 +107,7 @@ async def get_status(user=Depends(get_current_user)):
                 continue
                 
         return {"branch": main_branch, "changes": all_changes}
-    except Exception as e:
+    except Exception:
         return {"branch": "unknown", "changes": []}
 
 @router.post("/stage")
@@ -132,7 +132,7 @@ async def get_diff(path: str = Query(...), user=Depends(get_current_user)):
             
         # Get current from disk
         file_path = get_workspace() / path
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             modified = f.read()
             
         return {"original": original, "modified": modified}
@@ -197,5 +197,5 @@ async def get_history(path: str = Query(...), user=Depends(get_current_user)):
                         "summary": s
                     })
         return {"history": history}
-    except Exception as e:
+    except Exception:
         return {"history": []}

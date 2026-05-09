@@ -4,9 +4,10 @@ Implements Role-Based Access Control (RBAC) for the Neurex Mesh.
 Defines permissions for local and remote entities.
 """
 from __future__ import annotations
+
 import enum
+
 import structlog
-from typing import List, Dict, Set
 
 log = structlog.get_logger()
 
@@ -23,7 +24,7 @@ class Permission(enum.Enum):
     MUTATE_WORKSPACE = "mutate_workspace"
     INITIATE_SWARM = "initiate_swarm"
 
-ROLE_PERMISSIONS: Dict[Role, Set[Permission]] = {
+ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
     Role.OWNER: {
         Permission.READ, Permission.WRITE, Permission.EXECUTE_TERMINAL,
         Permission.MUTATE_WORKSPACE, Permission.INITIATE_SWARM
@@ -41,14 +42,14 @@ ROLE_PERMISSIONS: Dict[Role, Set[Permission]] = {
 
 class RBACManager:
     def __init__(self):
-        self.user_roles: Dict[str, Role] = {} # token_hash -> Role
-        self.path_rules: Dict[str, Set[Permission]] = {} # glob_pattern -> AllowedPermissions
+        self.user_roles: dict[str, Role] = {} # token_hash -> Role
+        self.path_rules: dict[str, set[Permission]] = {} # glob_pattern -> AllowedPermissions
 
     def register_token(self, token_hash: str, role: Role):
         self.user_roles[token_hash] = role
         log.info("rbac.token_registered", role=role.value)
 
-    def set_path_rule(self, glob_pattern: str, permissions: Set[Permission]):
+    def set_path_rule(self, glob_pattern: str, permissions: set[Permission]):
         self.path_rules[glob_pattern] = permissions
         log.info("rbac.path_rule_set", pattern=glob_pattern, perms=[p.value for p in permissions])
 

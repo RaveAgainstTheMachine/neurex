@@ -5,15 +5,17 @@ Aggregates neural gradients and weight deltas across Mesh nodes.
 Enables decentralized model specialization and collective learning.
 """
 import asyncio
+from typing import Any
+
 import structlog
-from typing import Dict, List, Any, Optional
+
 from core.infrastructure.mesh import mesh_router
 
 log = structlog.get_logger()
 
 class GradientHub:
     def __init__(self):
-        self.pending_deltas: Dict[str, List[Any]] = {} # adapter_id -> deltas
+        self.pending_deltas: dict[str, list[Any]] = {} # adapter_id -> deltas
         self.aggregation_lock = asyncio.Lock()
 
     async def submit_delta(self, adapter_id: str, delta: Any, node_id: str):
@@ -48,8 +50,8 @@ class GradientHub:
             await asyncio.sleep(0.5) 
             
             # Phase 48: Finalize and Broadcast Evolved Weights
-            from core.infrastructure.weight_sync import weight_sync
             from core.infrastructure.evolution import evolution_coordinator
+            from core.infrastructure.weight_sync import weight_sync
             
             adapter = next((a for a in evolution_coordinator.adapters.values() if a.id == adapter_id), None)
             if adapter:

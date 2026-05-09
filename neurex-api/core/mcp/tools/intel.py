@@ -2,10 +2,11 @@
 core/mcp/tools/intel.py
 Intelligence and project-education tools for Neurex.
 """
-import os
 import json
-import structlog
+import os
 from pathlib import Path
+
+import structlog
 
 log = structlog.get_logger()
 
@@ -36,7 +37,7 @@ async def synthesize_project_intel() -> str:
     for doc in doc_files:
         path = ws / doc
         if path.exists():
-            with open(path, "r") as f:
+            with open(path) as f:
                 content = f.read().lower()
                 # Simple keyword extraction
                 if "fastapi" in content: intel["architecture_patterns"].append("FastAPI/REST")
@@ -73,7 +74,7 @@ async def query_project_intel() -> str:
     if not intel_path.exists():
         return "No project intelligence found. Please run 'synthesize_project_intel' first."
     
-    with open(intel_path, "r") as f:
+    with open(intel_path) as f:
         return f.read()
 
 async def audit_codebase_health() -> str:
@@ -122,7 +123,7 @@ async def check_design_compliance(file_path: str) -> str:
     if not path.exists():
         return f"Error: file {file_path} not found."
 
-    with open(path, "r") as f:
+    with open(path) as f:
         content = f.read()
 
     findings = []

@@ -3,10 +3,11 @@ api/routes/temporal.py
 Exposes Phase 53 Neural Temporal Synthesis telemetry for the frontend dashboard.
 Handles neural snapshots, temporal restoration, and quantum simulation visualization.
 """
+
 from fastapi import APIRouter
-from typing import List, Dict, Any
-from core.infrastructure.temporal import neural_temporal_registry
+
 from core.infrastructure.quantum_sim import quantum_path_sim
+from core.infrastructure.temporal import neural_temporal_registry
 
 router = APIRouter(prefix="/api/temporal", tags=["Temporal"])
 

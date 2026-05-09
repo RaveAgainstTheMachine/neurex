@@ -4,9 +4,11 @@ Manages isolated Git Worktrees for Swarm sub-agents.
 Prevents overlapping file changes and race conditions during parallel refactors.
 """
 from __future__ import annotations
+
 import asyncio
 import os
 import shutil
+
 import structlog
 
 log = structlog.get_logger()

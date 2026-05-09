@@ -3,13 +3,14 @@ core/collaboration/manager.py
 Federated Governance & Zero-Trust Collision Prevention Engine
 """
 import time
+from datetime import UTC, datetime, timedelta
+
 import structlog
-from datetime import datetime, timedelta, timezone
-from typing import Optional, List
 from sqlmodel import select
-from core.task_graph import FileLock, engine
 from sqlmodel.ext.asyncio.session import AsyncSession
+
 from core.collaboration.presence import presence_manager
+from core.task_graph import FileLock, engine
 
 log = structlog.get_logger()
 
@@ -18,13 +19,13 @@ class CollaborationManager:
         # We use a unique node ID to identify which mesh instance holds a lock
         self.node_id = f"node-{int(time.time())}"
 
-    async def acquire_lock(self, path: str, requester_id: str, ttl_seconds: int = 300, conversation_id: Optional[str] = None) -> bool:
+    async def acquire_lock(self, path: str, requester_id: str, ttl_seconds: int = 300, conversation_id: str | None = None) -> bool:
         """
         Federated Collision Prevention:
         Ensure only one entity (User or Agent) can mutate a file across the entire mesh.
         """
         async with AsyncSession(engine) as session:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             
             # Check for existing lock
             statement = select(FileLock).where(FileLock.path == path)
@@ -69,7 +70,7 @@ class CollaborationManager:
             log.info("collaboration.lock_acquired", path=path, requester=requester_id, node=self.node_id)
             return True
 
-    async def release_lock(self, path: str, requester_id: str, conversation_id: Optional[str] = None) -> bool:
+    async def release_lock(self, path: str, requester_id: str, conversation_id: str | None = None) -> bool:
         """Release a held lock, allowing others to edit."""
         async with AsyncSession(engine) as session:
             statement = select(FileLock).where(FileLock.path == path)
@@ -91,10 +92,10 @@ class CollaborationManager:
             
             return False
 
-    async def get_active_locks(self) -> List[FileLock]:
+    async def get_active_locks(self) -> list[FileLock]:
         """Fetch all active locks across the mesh."""
         async with AsyncSession(engine) as session:
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             statement = select(FileLock).where(FileLock.expires_at > now)
             results = await session.exec(statement)
             return results.all()

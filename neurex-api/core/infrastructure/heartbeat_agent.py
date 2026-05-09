@@ -12,9 +12,10 @@ Usage (via docker-compose.node.yml):
 import asyncio
 import os
 import socket
-import structlog
+
 import httpx
 import psutil
+import structlog
 
 log = structlog.get_logger()
 

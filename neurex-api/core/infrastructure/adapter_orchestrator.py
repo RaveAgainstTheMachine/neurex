@@ -5,15 +5,17 @@ Manages the dynamic loading and switching of neural adapters (LoRA) during infer
 Ensures that agents are always using the most evolved weights for their specific task domain.
 """
 import asyncio
+from typing import Any
+
 import structlog
-from typing import Dict, Any, Optional
+
 from core.infrastructure.evolution import evolution_coordinator
 
 log = structlog.get_logger()
 
 class AdapterOrchestrator:
     def __init__(self):
-        self.active_adapters: Dict[str, str] = {} # session_id -> adapter_id
+        self.active_adapters: dict[str, str] = {} # session_id -> adapter_id
         self.load_lock = asyncio.Lock()
 
     async def prepare_inference_session(self, session_id: str, domain: str):
@@ -45,7 +47,7 @@ class AdapterOrchestrator:
         if adapter_id:
             log.debug("adapter_orchestrator.session_released", session=session_id, adapter=adapter_id)
 
-    async def get_adapter_for_task(self, task: Dict[str, Any]) -> Optional[str]:
+    async def get_adapter_for_task(self, task: dict[str, Any]) -> str | None:
         """Determines the correct adapter for a given task based on its domain."""
         domain = task.get("domain", "generic-coding")
         adapter = evolution_coordinator.get_active_adapter(domain)

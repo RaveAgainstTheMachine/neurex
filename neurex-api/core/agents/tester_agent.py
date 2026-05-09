@@ -4,7 +4,9 @@ Runs tests, linters, and type-checkers inside a sandboxed Docker container
 via the MCP terminal tool. Never executes on the host directly.
 """
 from __future__ import annotations
-from typing import AsyncGenerator
+
+from collections.abc import AsyncGenerator
+
 import structlog
 
 from core.agents.base_agent import BaseAgent

@@ -1,12 +1,12 @@
-import os
+import datetime
 import ipaddress
 from pathlib import Path
+
 from cryptography import x509
-from cryptography.x509.oid import NameOID
-from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives import serialization
-import datetime
+from cryptography.x509.oid import NameOID
+
 
 def generate_self_signed_cert(cert_dir: Path):
     cert_dir.mkdir(parents=True, exist_ok=True)
@@ -24,11 +24,11 @@ def generate_self_signed_cert(cert_dir: Path):
 
     # Generate a self-signed certificate
     subject = issuer = x509.Name([
-        x509.NameAttribute(NameOID.COUNTRY_NAME, u"US"),
-        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, u"California"),
-        x509.NameAttribute(NameOID.LOCALITY_NAME, u"San Francisco"),
-        x509.NameAttribute(NameOID.ORGANIZATION_NAME, u"Neurex AI"),
-        x509.NameAttribute(NameOID.COMMON_NAME, u"neurex.local"),
+        x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "California"),
+        x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
+        x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Neurex AI"),
+        x509.NameAttribute(NameOID.COMMON_NAME, "neurex.local"),
     ])
     
     cert = x509.CertificateBuilder().subject_name(
@@ -40,12 +40,12 @@ def generate_self_signed_cert(cert_dir: Path):
     ).serial_number(
         x509.random_serial_number()
     ).not_valid_before(
-        datetime.datetime.now(datetime.timezone.utc)
+        datetime.datetime.now(datetime.UTC)
     ).not_valid_after(
         # Our certificate will be valid for 10 years
-        datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=3650)
+        datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=3650)
     ).add_extension(
-        x509.SubjectAlternativeName([x509.DNSName(u"localhost"), x509.IPAddress(ipaddress.IPv4Address("10.10.10.48"))]),
+        x509.SubjectAlternativeName([x509.DNSName("localhost"), x509.IPAddress(ipaddress.IPv4Address("10.10.10.48"))]),
         critical=False,
     ).sign(key, hashes.SHA256())
 

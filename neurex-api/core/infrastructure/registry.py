@@ -7,9 +7,10 @@ Data Sources:
 - Official Model Cards: Alibaba (Qwen), Meta (Llama), Stability AI, OpenAI (Whisper)
 """
 from enum import Enum
-from typing import List, Dict, Optional, Any
-from pydantic import BaseModel
+from typing import Any
+
 import structlog
+from pydantic import BaseModel
 
 log = structlog.get_logger()
 
@@ -30,21 +31,21 @@ class ModelProfile(BaseModel):
     params: str  # e.g. "8B", "70B"
     size_gb: float = 0.0
     context_window: int
-    capabilities: List[ModelCapability]
-    recommended_tasks: List[str]
+    capabilities: list[ModelCapability]
+    recommended_tasks: list[str]
     vram_required_gb: float
-    description: Optional[str] = "No description available."
-    benchmarks: Optional[Dict[str, str]] = {}
-    repo_url: Optional[str] = None
-    variants: Optional[List[Dict[str, Any]]] = []
+    description: str | None = "No description available."
+    benchmarks: dict[str, str] | None = {}
+    repo_url: str | None = None
+    variants: list[dict[str, Any]] | None = []
 
 # Abandoning predefined library in favor of real-time infrastructure discovery.
 # Suggestions are now handled directly in the UI or via specialized recommendation logic.
-MODEL_REGISTRY: List[ModelProfile] = []
+MODEL_REGISTRY: list[ModelProfile] = []
 
 class LLMRecommender:
     @staticmethod
-    def recommend(task_type: str, available_vram_gb: float = 0.0) -> Optional[ModelProfile]:
+    def recommend(task_type: str, available_vram_gb: float = 0.0) -> ModelProfile | None:
         # If available_vram_gb is not provided, use the global mesh pool
         if available_vram_gb <= 0:
             from core.infrastructure.vram_pool import vram_pool
@@ -72,7 +73,7 @@ class LLMRecommender:
             
         return candidates[0] if candidates else None
 
-async def search_huggingface(query: str) -> List[Dict[str, Any]]:
+async def search_huggingface(query: str) -> list[dict[str, Any]]:
     """
     Search Hugging Face for models compatible with the Neurex ecosystem.
     """

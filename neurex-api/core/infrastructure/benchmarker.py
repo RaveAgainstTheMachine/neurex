@@ -4,23 +4,26 @@ Autonomous Hardware Quantification (Phase 43).
 Benchmarks local/peer hardware and tunes quantization levels for optimal throughput.
 """
 from __future__ import annotations
-import time
+
 import asyncio
+import time
+from typing import Any
+
 import structlog
-from typing import Dict, Any
+
 from core.observability.flight_recorder import record_decision
 
 log = structlog.get_logger()
 
 class HardwareBenchmarker:
     def __init__(self):
-        self.last_results: Dict[str, Any] = {}
+        self.last_results: dict[str, Any] = {}
 
     @property
     def last_benchmark(self):
         return self.last_results
 
-    async def run_benchmark(self, model_name: str = "default") -> Dict[str, Any]:
+    async def run_benchmark(self, model_name: str = "default") -> dict[str, Any]:
         """Runs a simulated token throughput test to quantify performance."""
         log.info("benchmarker.test_start", model=model_name)
         

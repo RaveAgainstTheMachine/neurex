@@ -2,12 +2,11 @@
 core/mcp/tools/browser.py
 Playwright-based browser control tool for agents.
 """
-import asyncio
 import os
 import uuid
-from typing import Optional
-from playwright.async_api import async_playwright
+
 import structlog
+from playwright.async_api import async_playwright
 
 log = structlog.get_logger()
 

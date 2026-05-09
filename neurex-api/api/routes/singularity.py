@@ -3,8 +3,9 @@ api/routes/singularity.py
 Exposes Phase 50 Singularity telemetry for the frontend dashboard.
 Handles autonomous goals and self-generated plugins.
 """
+
 from fastapi import APIRouter
-from typing import List, Dict, Any
+
 from core.infrastructure.goal_generator import goal_generator
 from core.infrastructure.plugin_gen import plugin_gen
 

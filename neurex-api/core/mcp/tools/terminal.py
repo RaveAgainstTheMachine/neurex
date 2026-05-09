@@ -10,9 +10,11 @@ Security model:
   - Command allowlist enforced before exec
 """
 from __future__ import annotations
+
 import asyncio
 import os
 import shlex
+
 import structlog
 
 log = structlog.get_logger()
@@ -103,7 +105,7 @@ async def run_command(command: str, cwd: str = ".", approved: bool = False, auto
         )
         try:
             stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=TIMEOUT)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             proc.kill()
             return f"Error: command timed out after {TIMEOUT}s"
 
@@ -180,7 +182,7 @@ async def _host_exec_fallback(command: str, cwd: str) -> str:
     )
     try:
         stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=TIMEOUT)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         proc.kill()
         return f"Error: timed out after {TIMEOUT}s"
 

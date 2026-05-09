@@ -5,9 +5,10 @@ Ensures that all shared neural lessons are scrubbed of sensitive project-specifi
 Implements Differential Privacy (DP) for neural weight delta sharing.
 """
 import asyncio
-import structlog
 import random
-from typing import Dict, Any, List
+from typing import Any
+
+import structlog
 
 log = structlog.get_logger()
 
@@ -16,7 +17,7 @@ class PrivacyGuard:
         self.epsilon = epsilon # Differential Privacy parameter
         self.guard_lock = asyncio.Lock()
 
-    async def scrub_neural_lesson(self, lesson_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def scrub_neural_lesson(self, lesson_data: dict[str, Any]) -> dict[str, Any]:
         """
         Applies Differential Privacy and scrubbing to a neural lesson.
         Removes paths, names, and adds noise to success deltas.

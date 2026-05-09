@@ -5,9 +5,9 @@ Enables decentralized autonomous decision making (DAO) for Mesh-wide architectur
 Allows nodes to vote on global configuration changes based on reputation and success.
 """
 import asyncio
-import structlog
-from typing import Dict, List, Any, Optional
 from datetime import datetime
+
+import structlog
 
 log = structlog.get_logger()
 
@@ -17,18 +17,17 @@ class GovernanceProposal:
         self.title = title
         self.description = description
         self.creator_node = creator_node
-        self.votes: Dict[str, bool] = {} # node_id -> support
+        self.votes: dict[str, bool] = {} # node_id -> support
         self.created_at = datetime.now()
         self.status = "voting"
 
 class GovernanceDAO:
     def __init__(self):
-        self.proposals: Dict[str, GovernanceProposal] = {}
+        self.proposals: dict[str, GovernanceProposal] = {}
         self.dao_lock = asyncio.Lock()
 
     async def submit_proposal(self, title: str, description: str, creator_node: str) -> str:
         """Submits a new governance proposal to the Mesh DAO with fitness validation."""
-        from core.infrastructure.evolution import evolution_coordinator
         
         # Phase 51: High-Fitness Governance Requirement
         # We assume the creator_node provides its current fitness for validation

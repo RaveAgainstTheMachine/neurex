@@ -5,9 +5,10 @@ Forces agents to verify state via grep/read before acting and maintains a
 lightweight sticky-note memory for high-speed context restoration.
 """
 from __future__ import annotations
+
 import os
+
 import structlog
-from typing import List, Dict
 
 log = structlog.get_logger()
 
@@ -31,7 +32,7 @@ class SkepticalMemory:
         if not os.path.exists(self.memory_file):
             return ""
         try:
-            with open(self.memory_file, "r") as f:
+            with open(self.memory_file) as f:
                 return f.read()
         except OSError:
             return ""

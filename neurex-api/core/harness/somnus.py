@@ -5,12 +5,14 @@ Continuously monitors the repository and updates architectural intelligence.
 Replaces the 'Kairos' protocol with a native Neurex persistent observer.
 """
 from __future__ import annotations
+
 import asyncio
-import os
 import time
+
 import structlog
-from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+from watchdog.observers import Observer
+
 from core.mcp.tools.intel import synthesize_project_intel
 
 log = structlog.get_logger()
@@ -61,7 +63,7 @@ class SomnusDaemon:
 
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(SomnusDaemon, cls).__new__(cls)
+            cls._instance = super().__new__(cls)
             cls._instance.observer = None
             cls._instance.is_running = False
         return cls._instance

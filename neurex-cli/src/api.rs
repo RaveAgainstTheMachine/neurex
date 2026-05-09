@@ -2,27 +2,24 @@
 use axum::{
     Router,
     body::Body,
+    extract::ConnectInfo,
     extract::State,
+    extract::ws::{Message, WebSocket, WebSocketUpgrade},
     http::{StatusCode, Uri, header},
     response::{IntoResponse, Response},
-    routing::{get, post, any},
-    extract::ws::{WebSocketUpgrade, WebSocket, Message},
-    extract::ConnectInfo,
+    routing::{any, get, post},
 };
-use std::net::SocketAddr;
+use futures_util::{SinkExt, StreamExt};
 use rust_embed::RustEmbed;
-use std::sync::Arc;
-use std::path::Path;
-use tracing::{info, error};
 use serde::{Deserialize, Serialize};
-use futures_util::{StreamExt, SinkExt};
+use std::net::SocketAddr;
+use std::path::Path;
+use std::sync::Arc;
 use tokio_tungstenite::connect_async;
-use axum::middleware::{self, Next};
-use axum::http::{Request};
-use axum::response::Redirect;
+use tracing::{error, info};
 
-use crate::wasi_sandbox;
 use crate::sandbox;
+use crate::wasi_sandbox;
 
 #[derive(RustEmbed)]
 #[folder = "../neurex-web/dist"]
@@ -76,9 +73,7 @@ pub struct HardwareStatus {
     pub ram_gb: u64,
 }
 
-pub async fn substrate_status_handler(
-    State(_state): State<Arc<AppState>>,
-) -> impl IntoResponse {
+pub async fn substrate_status_handler(State(_state): State<Arc<AppState>>) -> impl IntoResponse {
     use sysinfo::System;
     let mut sys = System::new_all();
     sys.refresh_all();
@@ -89,7 +84,7 @@ pub async fn substrate_status_handler(
             let has_nvidia = std::path::Path::new("/dev/nvidia0").exists();
             DockerStatus { active: true, version: ver, gpu_acceleration: has_nvidia }
         }
-        Err(_) => DockerStatus { active: false, version: None, gpu_acceleration: false }
+        Err(_) => DockerStatus { active: false, version: None, gpu_acceleration: false },
     };
 
     let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
@@ -106,11 +101,7 @@ pub async fn substrate_status_handler(
         ram_gb: sys.total_memory() / (1024 * 1024 * 1024), // Convert to GB
     };
 
-    axum::Json(SubstrateStatus {
-        docker: docker_info,
-        wasm: wasm_info,
-        hardware: hw_info,
-    })
+    axum::Json(SubstrateStatus { docker: docker_info, wasm: wasm_info, hardware: hw_info })
 }
 
 pub async fn sandbox_exec_handler(
@@ -122,54 +113,74 @@ pub async fn sandbox_exec_handler(
     if let Some(path) = payload.wasm_path {
         let wasm_path = Path::new(&path);
         if !wasm_path.exists() {
-            return (StatusCode::NOT_FOUND, axum::Json(SandboxExecResponse {
-                stdout: "".into(),
-                stderr: "".into(),
-                exit_code: -1,
-                error: Some("WASM module not found".into()),
-            }));
+            return (
+                StatusCode::NOT_FOUND,
+                axum::Json(SandboxExecResponse {
+                    stdout: "".into(),
+                    stderr: "".into(),
+                    exit_code: -1,
+                    error: Some("WASM module not found".into()),
+                }),
+            );
         }
 
         let wasm_bytes = match std::fs::read(wasm_path) {
             Ok(b) => b,
-            Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, axum::Json(SandboxExecResponse {
-                stdout: "".into(),
-                stderr: "".into(),
-                exit_code: -1,
-                error: Some(format!("Failed to read WASM module: {}", e)),
-            })),
+            Err(e) => {
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    axum::Json(SandboxExecResponse {
+                        stdout: "".into(),
+                        stderr: "".into(),
+                        exit_code: -1,
+                        error: Some(format!("Failed to read WASM module: {}", e)),
+                    }),
+                );
+            }
         };
 
         match state.wasi_sandbox.run_module(&wasm_bytes, &current_dir, payload.args) {
-            Ok(res) => (StatusCode::OK, axum::Json(SandboxExecResponse {
-                stdout: res.stdout,
-                stderr: res.stderr,
-                exit_code: res.exit_code,
-                error: None,
-            })),
-            Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, axum::Json(SandboxExecResponse {
-                stdout: "".into(),
-                stderr: "".into(),
-                exit_code: -1,
-                error: Some(format!("WASM Execution failed: {}", e)),
-            })),
+            Ok(res) => (
+                StatusCode::OK,
+                axum::Json(SandboxExecResponse {
+                    stdout: res.stdout,
+                    stderr: res.stderr,
+                    exit_code: res.exit_code,
+                    error: None,
+                }),
+            ),
+            Err(e) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                axum::Json(SandboxExecResponse {
+                    stdout: "".into(),
+                    stderr: "".into(),
+                    exit_code: -1,
+                    error: Some(format!("WASM Execution failed: {}", e)),
+                }),
+            ),
         }
     } else {
         let executor = sandbox::NativeExecutor::new(&current_dir.to_string_lossy());
-        let command = payload.args.join(" "); 
+        let command = payload.args.join(" ");
         match executor.execute(&command) {
-            Ok(res) => (StatusCode::OK, axum::Json(SandboxExecResponse {
-                stdout: res.stdout,
-                stderr: res.stderr,
-                exit_code: res.exit_code,
-                error: None,
-            })),
-            Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, axum::Json(SandboxExecResponse {
-                stdout: "".into(),
-                stderr: "".into(),
-                exit_code: -1,
-                error: Some(format!("Native Execution failed: {}", e)),
-            })),
+            Ok(res) => (
+                StatusCode::OK,
+                axum::Json(SandboxExecResponse {
+                    stdout: res.stdout,
+                    stderr: res.stderr,
+                    exit_code: res.exit_code,
+                    error: None,
+                }),
+            ),
+            Err(e) => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                axum::Json(SandboxExecResponse {
+                    stdout: "".into(),
+                    stderr: "".into(),
+                    exit_code: -1,
+                    error: Some(format!("Native Execution failed: {}", e)),
+                }),
+            ),
         }
     }
 }
@@ -183,17 +194,21 @@ pub async fn static_handler(State(state): State<Arc<AppState>>, uri: Uri) -> imp
     match Asset::get(&path) {
         Some(content) => {
             let mime = mime_guess::from_path(&path).first_or_octet_stream();
-            
+
             if path == "index.html" {
                 let html = String::from_utf8_lossy(&content.data);
                 let config_injected = html.replace(
                     "window.__NEUREX_CONFIG__ = {}",
-                    &format!("window.__NEUREX_CONFIG__ = {{ apiPort: {}, enableHttps: {} }}", state.api_port, state.enable_https)
+                    &format!(
+                        "window.__NEUREX_CONFIG__ = {{ apiPort: {}, enableHttps: {} }}",
+                        state.api_port, state.enable_https
+                    ),
                 );
-                
+
                 // Final Safeguard: Frontend Redirect for HTTP -> HTTPS
                 let redirect_script = r#"<script>if(window.location.protocol==='http:' && window.location.hostname !== 'localhost') { window.location.href = window.location.href.replace('http:', 'https:'); }</script>"#;
-                let final_html = config_injected.replace("<head>", &format!("<head>{}", redirect_script));
+                let final_html =
+                    config_injected.replace("<head>", &format!("<head>{}", redirect_script));
 
                 return Response::builder()
                     .header(header::CONTENT_TYPE, "text/html")
@@ -225,47 +240,57 @@ pub async fn proxy_handler(
     info!("Proxying {} {}", method, uri);
     let query = uri.query().map(|q| format!("?{}", q)).unwrap_or_default();
     let api_url = format!("http://127.0.0.1:{}{}{}", state.api_port, uri.path(), query);
-    
-    let client = reqwest::Client::builder()
-        .build()
-        .unwrap();
-    
+
+    let client = reqwest::Client::builder().build().unwrap();
+
     // Convert Axum body to bytes to send via reqwest
     let body_bytes = match axum::body::to_bytes(body, 10 * 1024 * 1024).await {
         Ok(b) => b,
-        Err(e) => return (StatusCode::BAD_REQUEST, format!("Body too large: {}", e)).into_response(),
+        Err(e) => {
+            return (StatusCode::BAD_REQUEST, format!("Body too large: {}", e)).into_response();
+        }
     };
 
     // Convert Axum headers to Reqwest headers
     let mut req_headers = reqwest::header::HeaderMap::new();
     for (name, value) in headers.iter() {
-        if name != "host" { // Skip host to avoid conflicts
+        if name != "host" {
+            // Skip host to avoid conflicts
             req_headers.insert(
                 reqwest::header::HeaderName::from_bytes(name.as_str().as_bytes()).unwrap(),
-                reqwest::header::HeaderValue::from_bytes(value.as_bytes()).unwrap()
+                reqwest::header::HeaderValue::from_bytes(value.as_bytes()).unwrap(),
             );
         }
     }
 
     // Add X-Forwarded headers for proper backend identification
-    req_headers.insert("X-Forwarded-For", reqwest::header::HeaderValue::from_str(&peer_addr.ip().to_string()).unwrap());
-    req_headers.insert("X-Forwarded-Proto", reqwest::header::HeaderValue::from_str(if state.enable_https { "https" } else { "http" }).unwrap());
-    req_headers.insert("X-Forwarded-Host", reqwest::header::HeaderValue::from_bytes(headers.get("host").map(|h| h.as_bytes()).unwrap_or(b"localhost")).unwrap());
+    req_headers.insert(
+        "X-Forwarded-For",
+        reqwest::header::HeaderValue::from_str(&peer_addr.ip().to_string()).unwrap(),
+    );
+    req_headers.insert(
+        "X-Forwarded-Proto",
+        reqwest::header::HeaderValue::from_str(if state.enable_https { "https" } else { "http" })
+            .unwrap(),
+    );
+    req_headers.insert(
+        "X-Forwarded-Host",
+        reqwest::header::HeaderValue::from_bytes(
+            headers.get("host").map(|h| h.as_bytes()).unwrap_or(b"localhost"),
+        )
+        .unwrap(),
+    );
 
-    let resp = client.request(method, &api_url)
-        .headers(req_headers)
-        .body(body_bytes)
-        .send()
-        .await;
-    
+    let resp = client.request(method, &api_url).headers(req_headers).body(body_bytes).send().await;
+
     match resp {
         Ok(r) => {
             let status = r.status();
             info!("Backend responded with status: {}", status);
             // Forward back the response headers (especially Content-Type)
-            let mut res_builder = Response::builder()
-                .status(StatusCode::from_u16(status.as_u16()).unwrap());
-            
+            let mut res_builder =
+                Response::builder().status(StatusCode::from_u16(status.as_u16()).unwrap());
+
             for (name, value) in r.headers().iter() {
                 res_builder = res_builder.header(name.as_str(), value.as_bytes());
             }
@@ -287,11 +312,11 @@ pub async fn ws_proxy_handler(
 ) -> impl IntoResponse {
     let query = uri.query().unwrap_or("");
     let ws_url = format!("ws://127.0.0.1:{}{}?{}", state.api_port, uri.path(), query);
-    
+
     ws.on_upgrade(move |socket| handle_ws_socket(socket, ws_url))
 }
 
-async fn handle_ws_socket(mut client_ws: WebSocket, target_url: String) {
+async fn handle_ws_socket(client_ws: WebSocket, target_url: String) {
     let (server_ws, _) = match connect_async(&target_url).await {
         Ok(res) => res,
         Err(e) => {
@@ -307,16 +332,28 @@ async fn handle_ws_socket(mut client_ws: WebSocket, target_url: String) {
         while let Some(msg) = client_rx.next().await {
             match msg {
                 Ok(Message::Text(t)) => {
-                    if let Err(_) = server_tx.send(tungstenite::Message::Text(t.to_string().into())).await { break; }
+                    if server_tx.send(tungstenite::Message::Text(t.to_string().into())).await.is_err()
+                    {
+                        break;
+                    }
                 }
                 Ok(Message::Binary(b)) => {
-                    if let Err(_) = server_tx.send(tungstenite::Message::Binary(b.to_vec().into())).await { break; }
+                    if server_tx.send(tungstenite::Message::Binary(b.to_vec().into())).await.is_err()
+                    {
+                        break;
+                    }
                 }
                 Ok(Message::Ping(p)) => {
-                    if let Err(_) = server_tx.send(tungstenite::Message::Ping(p.to_vec().into())).await { break; }
+                    if server_tx.send(tungstenite::Message::Ping(p.to_vec().into())).await.is_err()
+                    {
+                        break;
+                    }
                 }
                 Ok(Message::Pong(p)) => {
-                    if let Err(_) = server_tx.send(tungstenite::Message::Pong(p.to_vec().into())).await { break; }
+                    if server_tx.send(tungstenite::Message::Pong(p.to_vec().into())).await.is_err()
+                    {
+                        break;
+                    }
                 }
                 Ok(Message::Close(_)) => break,
                 Err(_) => break,
@@ -327,18 +364,14 @@ async fn handle_ws_socket(mut client_ws: WebSocket, target_url: String) {
     let server_to_client = async {
         while let Some(msg) = server_rx.next().await {
             match msg {
-                Ok(tungstenite::Message::Text(t)) => {
-                    if let Err(_) = client_tx.send(Message::Text(t.to_string().into())).await { break; }
-                }
-                Ok(tungstenite::Message::Binary(b)) => {
-                    if let Err(_) = client_tx.send(Message::Binary(b.to_vec().into())).await { break; }
-                }
-                Ok(tungstenite::Message::Ping(p)) => {
-                    if let Err(_) = client_tx.send(Message::Ping(p.to_vec().into())).await { break; }
-                }
-                Ok(tungstenite::Message::Pong(p)) => {
-                    if let Err(_) = client_tx.send(Message::Pong(p.to_vec().into())).await { break; }
-                }
+                Ok(tungstenite::Message::Text(t)) if client_tx.send(Message::Text(t.to_string().into())).await.is_err() => break,
+                Ok(tungstenite::Message::Text(_)) => {}
+                Ok(tungstenite::Message::Binary(b)) if client_tx.send(Message::Binary(b.to_vec().into())).await.is_err() => break,
+                Ok(tungstenite::Message::Binary(_)) => {}
+                Ok(tungstenite::Message::Ping(p)) if client_tx.send(Message::Ping(p.to_vec().into())).await.is_err() => break,
+                Ok(tungstenite::Message::Ping(_)) => {}
+                Ok(tungstenite::Message::Pong(p)) if client_tx.send(Message::Pong(p.to_vec().into())).await.is_err() => break,
+                Ok(tungstenite::Message::Pong(_)) => {}
                 Ok(tungstenite::Message::Close(_)) => break,
                 _ => {}
             }

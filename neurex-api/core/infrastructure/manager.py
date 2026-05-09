@@ -2,14 +2,16 @@
 core/infrastructure/manager.py
 Manages LLM engines (Ollama, vLLM, etc.) and system resources.
 """
-import os
-import sys
 import asyncio
-import shutil
-import psutil
+import json
+import os
 import platform
+import shutil
+import sys
+from typing import Any
+
+import psutil
 import structlog
-from typing import Dict, List, Any
 
 log = structlog.get_logger()
 
@@ -23,7 +25,7 @@ class InfrastructureManager:
     def __init__(self):
         self.supported_engines = ["ollama", "vllm", "llama.cpp"]
 
-    async def get_status(self) -> List[Dict[str, Any]]:
+    async def get_status(self) -> list[dict[str, Any]]:
         """Check status of all supported engines with detailed diagnostics."""
         statuses = []
         for engine in self.supported_engines:
@@ -109,9 +111,11 @@ class InfrastructureManager:
             engine = "llama.cpp" # Normalize
             log.info("infra.model_pull_start", engine=engine, model=model_name)
             try:
-                from huggingface_hub import hf_hub_download
-                from core.settings.manager import settings_manager
                 from pathlib import Path
+
+                from huggingface_hub import hf_hub_download
+
+                from core.settings.manager import settings_manager
                 
                 # Check if model_name is in format 'repo/name:filename' or just 'repo/name'
                 if ":" in model_name:
@@ -157,7 +161,7 @@ class InfrastructureManager:
         
         raise Exception(f"Pulling models for {engine} is not supported yet.")
 
-    async def get_installed_models(self, engine: str) -> List[Dict[str, Any]]:
+    async def get_installed_models(self, engine: str) -> list[dict[str, Any]]:
         """List models currently available and track which are currently loaded/active."""
         if engine == "ollama":
             # Phase 44.15: High-Performance Model Caching (15s TTL)
@@ -226,8 +230,9 @@ class InfrastructureManager:
 
             # 3. Filesystem Fallback (if API failed or returned nothing)
             if not models:
-                from core.settings.manager import settings_manager
                 from pathlib import Path
+
+                from core.settings.manager import settings_manager
                 
                 # Use configured models directory
                 models_base = settings_manager.get("models_dir")
@@ -254,7 +259,7 @@ class InfrastructureManager:
                                 size_gb = 0.0
                                 try:
                                     manifest_file = Path(root) / file
-                                    with open(manifest_file, "r") as f:
+                                    with open(manifest_file) as f:
                                         m_data = json.load(f)
                                         total_bytes = sum(layer.get("size", 0) for layer in m_data.get("layers", []))
                                         # Also add the config layer size if it exists
@@ -437,7 +442,7 @@ class InfrastructureManager:
             log.warning("infra.vram_detection_failed", error=str(e))
             return 0.0 # Unknown
 
-    def get_system_metrics(self) -> Dict[str, Any]:
+    def get_system_metrics(self) -> dict[str, Any]:
         """Gather real-time CPU, RAM, and Disk metrics across configured storage paths."""
         from core.settings.manager import settings_manager
         ram = psutil.virtual_memory()
@@ -485,7 +490,7 @@ class InfrastructureManager:
             "specs": self.get_hardware_specs()
         }
 
-    def get_hardware_specs(self) -> Dict[str, Any]:
+    def get_hardware_specs(self) -> dict[str, Any]:
         """Discovery of hardware identifiers (CPU model, GPU model, core count)."""
         specs = {
             "cpu_cores": psutil.cpu_count(logical=True),
@@ -497,7 +502,7 @@ class InfrastructureManager:
         # 1. Try to get CPU Model Name
         try:
             if platform.system() == "Linux":
-                with open("/proc/cpuinfo", "r") as f:
+                with open("/proc/cpuinfo") as f:
                     for line in f:
                         if "model name" in line:
                             specs["cpu_model"] = line.split(":")[1].strip()
@@ -522,7 +527,7 @@ class InfrastructureManager:
             
         return specs
 
-    def validate_storage_permissions(self) -> Dict[str, Any]:
+    def validate_storage_permissions(self) -> dict[str, Any]:
         """Checks if configured storage paths are writable and exists."""
         from core.settings.manager import settings_manager
         paths = settings_manager.get("storage_paths")
@@ -579,6 +584,7 @@ class InfrastructureManager:
         if name == "ollama" and is_active:
             try:
                 import aiohttp
+
                 from core.settings.manager import settings_manager
                 base_url = settings_manager.get("ollama_base_url")
                 async with aiohttp.ClientSession() as session:
@@ -595,6 +601,7 @@ class InfrastructureManager:
                 # Try API first as it's more accurate for the running instance
                 try:
                     import aiohttp
+
                     from core.settings.manager import settings_manager
                     base_url = settings_manager.get("ollama_base_url")
                     async with aiohttp.ClientSession() as session:

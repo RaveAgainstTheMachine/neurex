@@ -3,13 +3,14 @@ core/infrastructure/mesh.py
 Manages the decentralized Neurex Mesh Federation.
 Handles peer discovery, health checks, and LLM load balancing across nodes.
 """
-import os
-import json
 import asyncio
+import json
+import os
+from pathlib import Path
+from typing import Any
+
 import httpx
 import structlog
-from pathlib import Path
-from typing import List, Dict, Any
 
 log = structlog.get_logger()
 
@@ -33,10 +34,10 @@ class PeerNode:
         self.storage_health = {}
         self.specs = {}
         # Predictive State
-        self.history: List[Dict[str, Any]] = []
+        self.history: list[dict[str, Any]] = []
         self.predicted_load = 0.0
 
-    def record_telemetry(self, metrics: Dict[str, Any]):
+    def record_telemetry(self, metrics: dict[str, Any]):
         """Append a metric snapshot and prune history."""
         import time
         snapshot = {
@@ -74,7 +75,7 @@ class ResourcePredictor:
     """Analyzes historical telemetry to predict upcoming resource bottlenecks."""
     
     @staticmethod
-    def predict_future_load(history: List[Dict[str, Any]]) -> float:
+    def predict_future_load(history: list[dict[str, Any]]) -> float:
         """
         Calculates a trend-aware load prediction score.
         Uses a weighted moving average of the last 5 snapshots.
@@ -101,7 +102,7 @@ class ResourcePredictor:
 
 class MeshRouter:
     def __init__(self):
-        self.peers: Dict[str, PeerNode] = {}
+        self.peers: dict[str, PeerNode] = {}
         # Phase 44.10: Persistent Telemetry Client
         self._client: httpx.AsyncClient = httpx.AsyncClient(timeout=5)
         self._load_peers()
@@ -110,7 +111,7 @@ class MeshRouter:
         PEERS_FILE.parent.mkdir(parents=True, exist_ok=True)
         if PEERS_FILE.exists():
             try:
-                with open(PEERS_FILE, "r") as f:
+                with open(PEERS_FILE) as f:
                     data = json.load(f)
                     for peer_data in data:
                         peer = PeerNode(peer_data["url"], peer_data.get("token", ""))
@@ -183,9 +184,10 @@ class MeshRouter:
         Uses a Weighted-Load algorithm to calculate node capability scores.
         If model_name is provided, filters for nodes that already have the model.
         """
-        from core.infrastructure.manager import infrastructure_manager
-        from core.infrastructure.benchmarker import hardware_benchmarker as benchmarker
         import random
+
+        from core.infrastructure.benchmarker import hardware_benchmarker as benchmarker
+        from core.infrastructure.manager import infrastructure_manager
 
         candidates = []
 

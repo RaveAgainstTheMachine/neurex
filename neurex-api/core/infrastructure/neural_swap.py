@@ -5,8 +5,9 @@ Manages high-speed state swapping between System RAM and VRAM.
 Enables execution of models larger than physical VRAM by offloading inactive layers/context.
 """
 import asyncio
+
 import structlog
-from typing import Dict, Any, List
+
 from core.infrastructure.vram_pool import vram_pool
 
 log = structlog.get_logger()
@@ -20,7 +21,7 @@ class SwapChunk:
 
 class NeuralSwapManager:
     def __init__(self, ram_limit_gb: float = 64.0):
-        self.chunks: Dict[str, SwapChunk] = {}
+        self.chunks: dict[str, SwapChunk] = {}
         self.ram_limit_gb = ram_limit_gb
         self.used_ram_gb = 0.0
         self.swap_lock = asyncio.Lock()

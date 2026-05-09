@@ -4,12 +4,14 @@ HYPERPLAN: Deep Thinking & Multi-Pass Architecture Planning.
 Offloads complex design tasks to a high-compute reasoning loop.
 """
 from __future__ import annotations
+
 import asyncio
+from typing import TYPE_CHECKING, Any
+
 import structlog
-from typing import List, Dict, Any, TYPE_CHECKING
+
 if TYPE_CHECKING:
     from core.agents.base_agent import BaseAgent
-from core.context.manager import ContextManager
 
 log = structlog.get_logger()
 
@@ -18,7 +20,7 @@ class HyperPlan:
         self.agent = agent
         self.ctx = agent.ctx
 
-    async def generate_blueprint(self, task_description: str) -> Dict[str, Any]:
+    async def generate_blueprint(self, task_description: str) -> dict[str, Any]:
         """
         Executes the 4-pass HYPERPLAN cycle with predictive prefetching.
         """
@@ -51,7 +53,7 @@ class HyperPlan:
         prompt = f"HYPERPLAN PASS 1: DECOMPOSITION\nBreak this task into high-level modules and data flows.\nTask: {task}"
         return await self._ask_brain(prompt, "Neurex Brain (Logic)")
 
-    async def _pass_symbolic_trace(self, decomp: str, context: List[Dict[str, Any]]) -> str:
+    async def _pass_symbolic_trace(self, decomp: str, context: list[dict[str, Any]]) -> str:
         ctx_text = "\n".join([r.get("document", "") for r in context])
         prompt = f"HYPERPLAN PASS 2: SYMBOLIC TRACE\nAnalyze the data flows and identify potential side effects or race conditions.\nDecomposition: {decomp}\nCode Context:\n{ctx_text}"
         return await self._ask_brain(prompt, "Neurex Brain (Logic)")
@@ -60,7 +62,7 @@ class HyperPlan:
         prompt = f"HYPERPLAN PASS 3: OPTIMIZATION\nOptimize the architecture for performance, security (RBAC), and token efficiency.\nAnalysis: {trace}"
         return await self._ask_brain(prompt, "Neurex Brain (Logic)")
 
-    async def _pass_synthesis(self, optimized: str) -> Dict[str, Any]:
+    async def _pass_synthesis(self, optimized: str) -> dict[str, Any]:
         prompt = f"HYPERPLAN PASS 4: SYNTHESIS\nOutput the final, structured execution blueprint in JSON format.\nOptimization: {optimized}"
         raw_json = await self._ask_brain(prompt, "Neurex Brain (Logic)")
         try:

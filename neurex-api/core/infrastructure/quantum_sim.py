@@ -5,9 +5,9 @@ Simulates thousands of architectural paths simultaneously to find the global opt
 Uses probabilistic path branching to predict the stability of recursive refactors.
 """
 import asyncio
+from typing import Any
+
 import structlog
-import random
-from typing import Dict, Any, List, Optional
 
 log = structlog.get_logger()
 
@@ -15,7 +15,7 @@ class QuantumPathSim:
     def __init__(self):
         self.sim_lock = asyncio.Lock()
 
-    async def simulate_refactor_paths(self, target_file: str, current_logic: str) -> Dict[str, Any]:
+    async def simulate_refactor_paths(self, target_file: str, current_logic: str) -> dict[str, Any]:
         """
         Simulates multiple architectural paths for a target file refactor.
         Predicts which path yields the highest stability and lowest latency.

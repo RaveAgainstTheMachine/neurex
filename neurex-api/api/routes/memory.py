@@ -2,10 +2,11 @@
 api/routes/memory.py
 Endpoints for querying and managing the Swarm's Collective Memory (Hive Mind).
 """
+
 from fastapi import APIRouter, Depends, Query
-from typing import List, Dict, Any
+
+from api.routes.auth import UserRole, require_role
 from core.memory.hive import hive_mind
-from api.routes.auth import require_role, UserRole
 
 router = APIRouter()
 

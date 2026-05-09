@@ -7,12 +7,15 @@ in the background. The frontend polls /api/update/status to show the
 notification badge, then reloads to activate the new version.
 """
 from __future__ import annotations
+
 import asyncio
 import os
+
 import structlog
-from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
-from api.routes.auth import require_role, UserRole
-from core.infrastructure.lifecycle import snapshot_system_state, rollback_system, list_backups
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+
+from api.routes.auth import UserRole, require_role
+from core.infrastructure.lifecycle import list_backups, rollback_system, snapshot_system_state
 
 router = APIRouter(prefix="/api/update", tags=["update"])
 log = structlog.get_logger()
@@ -79,7 +82,7 @@ async def _pull_images():
         else:
             _update_state["error"] = stdout.decode(errors="replace")[-500:]
             log.error("update.pull_failed", rc=proc.returncode)
-    except asyncio.TimeoutError:
+    except TimeoutError:
         _update_state["error"] = "Image pull timed out after 5 minutes."
         log.error("update.pull_timeout")
     finally:

@@ -1,15 +1,15 @@
 """api/routes/tasks.py — Task graph REST endpoints."""
+
 from fastapi import APIRouter, Depends
-from core.task_graph import get_session, get_graph, TaskNode, AsyncSession
-from typing import List
+
+from core.task_graph import AsyncSession, TaskNode, get_graph, get_session
 
 router = APIRouter()
 
 
-@router.get("/", response_model=List[dict])
+@router.get("/", response_model=list[dict])
 async def list_tasks(graph_id: str | None = None, session: AsyncSession = Depends(get_session)):
     from sqlmodel import select
-    from core.task_graph import TaskNode
     
     query = select(TaskNode)
     if graph_id:
@@ -21,7 +21,6 @@ async def list_tasks(graph_id: str | None = None, session: AsyncSession = Depend
 @router.delete("/", response_model=dict)
 async def delete_all_tasks(session: AsyncSession = Depends(get_session)):
     from sqlmodel import delete
-    from core.task_graph import TaskNode
     await session.exec(delete(TaskNode))
     await session.commit()
     return {"deleted": True}
@@ -30,7 +29,8 @@ async def delete_all_tasks(session: AsyncSession = Depends(get_session)):
 async def approve_all_tasks(graph_id: str, session: AsyncSession = Depends(get_session)):
     """Approve all PENDING or AWAITING_APPROVAL tasks in a graph."""
     from sqlmodel import select
-    from core.task_graph import TaskNode, TaskStatus
+
+    from core.task_graph import TaskStatus
     
     stmt = select(TaskNode).where(
         TaskNode.graph_id == graph_id,
@@ -56,7 +56,8 @@ async def get_task_graph(graph_id: str, session: AsyncSession = Depends(get_sess
 async def cancel_graph(graph_id: str, session: AsyncSession = Depends(get_session)):
     """Cancel all non-completed tasks in a graph."""
     from sqlmodel import select
-    from core.task_graph import TaskNode, TaskStatus
+
+    from core.task_graph import TaskStatus
     
     stmt = select(TaskNode).where(
         TaskNode.graph_id == graph_id,

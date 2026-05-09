@@ -3,10 +3,10 @@ core/collaboration/consensus.py
 Phase 45: Sentient IDE (Swarm Consensus)
 Manages voting and agreement protocols for critical architectural mutations.
 """
-import os
+from datetime import UTC, datetime
+from typing import Any
+
 import structlog
-from typing import Dict, List, Set, Any
-from datetime import datetime, timezone
 
 log = structlog.get_logger()
 
@@ -15,12 +15,12 @@ class ConsensusProposal:
         self.path = path
         self.content = content
         self.requester = requester
-        self.votes: Dict[str, bool] = {} # agent_id -> approved
-        self.created_at = datetime.now(timezone.utc)
+        self.votes: dict[str, bool] = {} # agent_id -> approved
+        self.created_at = datetime.now(UTC)
 
 class ConsensusManager:
     def __init__(self):
-        self.proposals: Dict[str, ConsensusProposal] = {} # path -> proposal
+        self.proposals: dict[str, ConsensusProposal] = {} # path -> proposal
         self.protected_paths = [
             "core/agents/",
             "core/infrastructure/",
@@ -65,7 +65,7 @@ class ConsensusManager:
     def get_proposal(self, path: str) -> ConsensusProposal:
         return self.proposals.get(path)
 
-    async def evaluate_mutation(self, proposal_data: Dict[str, Any], reviewers: List[Any], conversation_id: str) -> bool:
+    async def evaluate_mutation(self, proposal_data: dict[str, Any], reviewers: list[Any], conversation_id: str) -> bool:
         """
         Automates the swarm review process by casting votes from multiple agents.
         Returns True if consensus reached.

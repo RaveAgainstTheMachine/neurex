@@ -4,12 +4,14 @@ Manages external skill sets (MCP tool collections).
 Supports downloading, validating, and dynamic registration.
 """
 from __future__ import annotations
-import os
+
 import json
+import os
 import shutil
 import subprocess
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any
+
 import structlog
 
 log = structlog.get_logger()
@@ -20,15 +22,15 @@ class SkillSet:
         self.path = path
         self.manifest = self._load_manifest()
 
-    def _load_manifest(self) -> Dict[str, Any]:
+    def _load_manifest(self) -> dict[str, Any]:
         manifest_path = self.path / "manifest.json"
         if manifest_path.exists():
-            with open(manifest_path, "r") as f:
+            with open(manifest_path) as f:
                 return json.load(f)
         return {}
 
     @property
-    def tools(self) -> List[Dict[str, Any]]:
+    def tools(self) -> list[dict[str, Any]]:
         return self.manifest.get("tools", [])
 
 class SkillManager:
@@ -110,7 +112,7 @@ class SkillManager:
         
         return name
 
-    def _load_metadata(self, skill_path: Path) -> Dict[str, Any]:
+    def _load_metadata(self, skill_path: Path) -> dict[str, Any]:
         """Load metadata from manifest.json or markdown frontmatter."""
         m = {}
         
@@ -118,7 +120,7 @@ class SkillManager:
         manifest_path = skill_path / "manifest.json"
         if manifest_path.exists():
             try:
-                with open(manifest_path, "r") as f:
+                with open(manifest_path) as f:
                     m = json.load(f)
             except (json.JSONDecodeError, OSError): pass
             
@@ -154,7 +156,7 @@ class SkillManager:
                 except (Exception, yaml.YAMLError): pass
         return m
 
-    def list_available(self) -> List[Dict[str, Any]]:
+    def list_available(self) -> list[dict[str, Any]]:
         """Scan skills directory and return metadata for all installed skills."""
         skills = []
         if not self.SKILLS_DIR.exists():
@@ -176,7 +178,7 @@ class SkillManager:
                 })
         return skills
 
-    def get_skill_details(self, name: str) -> Dict[str, Any]:
+    def get_skill_details(self, name: str) -> dict[str, Any]:
         """Return full manifest and tools for a specific skill, with fallbacks."""
         skill_path = self.SKILLS_DIR / name
         if not skill_path.exists() or not skill_path.is_dir():
@@ -206,7 +208,7 @@ class SkillManager:
             "installed_at": os.path.getctime(skill_path) if os.path.exists(skill_path) else 0
         }
 
-    def get_enabled_tools(self) -> List[Dict[str, Any]]:
+    def get_enabled_tools(self) -> list[dict[str, Any]]:
         """Scan skills directory and return all tool definitions."""
         all_tools = []
         self._tool_to_skill = {} # Map tool_name -> skill_name for dispatch
@@ -240,7 +242,7 @@ class SkillManager:
             
         return self._tool_to_skill.get(tool_name)
 
-    def fetch_curated_list(self) -> List[Dict[str, Any]]:
+    def fetch_curated_list(self) -> list[dict[str, Any]]:
         """Fetch the curated list from the Neurex Skills Marketplace."""
         # Fallback curated skills (Elite/Official MCP-style servers)
         fallback = [
@@ -349,7 +351,7 @@ class SkillManager:
         log.warning("skill.delete_not_found", name=name, path=str(target_path))
         return False
 
-    async def execute_skill_tool(self, skill_name: str, tool_name: str, args: Dict[str, Any]) -> str:
+    async def execute_skill_tool(self, skill_name: str, tool_name: str, args: dict[str, Any]) -> str:
         skill_path = self.SKILLS_DIR / skill_name
         handler_path = skill_path / "handler.py"
         if not handler_path.exists():

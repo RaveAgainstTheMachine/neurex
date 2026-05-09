@@ -4,12 +4,15 @@ Orchestrates multi-agent "swarms" for complex, distributed refactoring tasks.
 Assigns sub-tasks to Mesh peers and aggregates results.
 """
 from __future__ import annotations
-import uuid
+
 import asyncio
+import uuid
+from typing import Any
+
 import structlog
-from typing import List, Dict, Any
-from core.task_graph import TaskNode, TaskStatus
+
 from core.infrastructure.mesh import mesh_router
+from core.task_graph import TaskNode
 
 log = structlog.get_logger()
 
@@ -18,15 +21,15 @@ class SwarmTask:
         self.id = str(uuid.uuid4())
         self.title = title
         self.description = description
-        self.sub_tasks: List[Dict[str, Any]] = []
-        self.results: Dict[str, Any] = {}
+        self.sub_tasks: list[dict[str, Any]] = []
+        self.results: dict[str, Any] = {}
         self.status = "planning"
 
 class SwarmManager:
     def __init__(self):
-        self.active_swarms: Dict[str, SwarmTask] = {}
+        self.active_swarms: dict[str, SwarmTask] = {}
 
-    async def initiate_swarm(self, parent_task: TaskNode, plan: List[Dict[str, Any]]) -> str:
+    async def initiate_swarm(self, parent_task: TaskNode, plan: list[dict[str, Any]]) -> str:
         """
         Creates a swarm for a multi-file refactor.
         Phase 44: Hive-Mind Sharding integration.
@@ -61,7 +64,7 @@ class SwarmManager:
         
         return swarm.id
 
-    async def _dispatch_swarm(self, swarm: SwarmTask, plan: List[Dict[str, Any]]):
+    async def _dispatch_swarm(self, swarm: SwarmTask, plan: list[dict[str, Any]]):
         swarm.status = "executing"
         dispatch_tasks = []
         
@@ -87,7 +90,7 @@ class SwarmManager:
         swarm.status = "completed"
         log.info("swarm.completed", swarm_id=swarm.id)
 
-    async def _run_sub_task(self, swarm: SwarmTask, index: int, sub: Dict[str, Any], peer_url: str):
+    async def _run_sub_task(self, swarm: SwarmTask, index: int, sub: dict[str, Any], peer_url: str):
         model = sub.get("model", "qwen2.5-coder:14b")
         log.info("swarm.sub_task_dispatched", 
                  swarm_id=swarm.id, 
@@ -108,8 +111,8 @@ class SwarmManager:
         # 2. Consensus Round (Phase 45: Swarm Governance)
         # If the task is a 'mutation' (e.g. refactor), require consensus
         if sub.get("type") == "mutation":
-            from core.collaboration.consensus import consensus_manager
             from core.agents.base_agent import BaseAgent
+            from core.collaboration.consensus import consensus_manager
             from core.context.manager import ContextManager
             
             # Spawn reviewers (Logic-tier brains)

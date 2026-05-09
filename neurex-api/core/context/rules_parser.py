@@ -4,9 +4,11 @@ Loads and merges .neurexrules files.
 Robust parser that supports [section] headers without INI strictness.
 """
 from __future__ import annotations
+
 import os
 import re
 from pathlib import Path
+
 import structlog
 
 log = structlog.get_logger()

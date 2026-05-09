@@ -5,9 +5,9 @@ Coordinates the autonomous fine-tuning and evolution of neural adapters (LoRA).
 Enables the Mesh to optimize its own reasoning weights based on codebase patterns.
 """
 import asyncio
+from typing import Any
+
 import structlog
-from typing import Dict, List, Any, Optional
-from core.infrastructure.mesh import mesh_router
 
 log = structlog.get_logger()
 
@@ -18,14 +18,14 @@ class NeuralAdapter:
         self.task_domain = task_domain # e.g., "fastapi-refactoring", "react-ui-gen"
         self.fitness_score = 0.0
         self.version = 1
-        self.weights_path: Optional[str] = None
+        self.weights_path: str | None = None
 
 class EvolutionCoordinator:
     def __init__(self):
-        self.adapters: Dict[str, NeuralAdapter] = {} # domain -> adapter
+        self.adapters: dict[str, NeuralAdapter] = {} # domain -> adapter
         self.evolution_lock = asyncio.Lock()
 
-    async def record_success(self, domain: str, execution_telemetry: Dict[str, Any]):
+    async def record_success(self, domain: str, execution_telemetry: dict[str, Any]):
         """
         Records a successful agentic mission and updates the fitness of the domain adapter.
         If fitness reaches a threshold, it triggers an autonomous fine-tuning (Evolution).
@@ -73,7 +73,7 @@ class EvolutionCoordinator:
             
         log.info("evolution.mutation_complete", domain=domain, new_version=adapter.version)
 
-    def get_active_adapter(self, domain: str) -> Optional[NeuralAdapter]:
+    def get_active_adapter(self, domain: str) -> NeuralAdapter | None:
         """Retrieves the most evolved adapter for a specific task domain."""
         return self.adapters.get(domain)
 

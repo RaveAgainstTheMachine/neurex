@@ -3,6 +3,7 @@ core/infrastructure/insomnia.py
 Prevents system sleep when enabled.
 """
 import structlog
+
 import wakelock
 from core.settings.manager import settings_manager
 

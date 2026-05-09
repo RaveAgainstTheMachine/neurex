@@ -4,11 +4,12 @@ Flight recorder for agentic decision-making. Stores structured 'Reasoning Traces
 """
 import uuid
 from datetime import datetime
-from typing import Optional
-from sqlmodel import SQLModel, Field, select
-from sqlmodel.ext.asyncio.session import AsyncSession
-from core.task_graph import get_session, engine
+
 import structlog
+from sqlmodel import Field, SQLModel, select
+from sqlmodel.ext.asyncio.session import AsyncSession
+
+from core.task_graph import engine
 
 log = structlog.get_logger()
 
@@ -16,11 +17,11 @@ class DecisionEvent(SQLModel, table=True):
     __table_args__ = {"extend_existing": True}
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
     conversation_id: str = Field(index=True)
-    task_id: Optional[str] = Field(index=True, default=None)
+    task_id: str | None = Field(index=True, default=None)
     agent_type: str
     decision: str
     rationale: str
-    context_keys: Optional[str] = None # JSON string of keys used in decision
+    context_keys: str | None = None # JSON string of keys used in decision
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 async def _init_recorder_table():
@@ -40,8 +41,8 @@ async def record_decision(
     agent_type: str,
     decision: str,
     rationale: str,
-    task_id: Optional[str] = None,
-    context_keys: Optional[list] = None
+    task_id: str | None = None,
+    context_keys: list | None = None
 ):
     """Log a decision to the buffer. Flushed automatically by background worker."""
     import json

@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
+
+from api.routes.auth import UserRole, require_role
 from core.skills.manager import SkillManager
-from api.routes.auth import require_role, UserRole
 
 router = APIRouter()
 manager = SkillManager()

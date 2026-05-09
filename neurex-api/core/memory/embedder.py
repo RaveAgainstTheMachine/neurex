@@ -3,7 +3,9 @@ core/memory/embedder.py
 Embedding via Ollama (nomic-embed-text) + optional cross-encoder reranking.
 """
 from __future__ import annotations
+
 import os
+
 import httpx
 import structlog
 
@@ -50,8 +52,8 @@ class Reranker:
     def _load(self):
         if self._model is None:
             try:
-                from sentence_transformers import CrossEncoder
                 import torch
+                from sentence_transformers import CrossEncoder
                 device = "cuda" if torch.cuda.is_available() else "cpu"
                 log.info("reranker.loading", device=device)
                 self._model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2", device=device)

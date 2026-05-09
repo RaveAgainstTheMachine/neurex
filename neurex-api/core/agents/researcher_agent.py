@@ -3,7 +3,9 @@ core/agents/researcher_agent.py
 Researcher agent. Uses web search to find documentation, libraries, and solutions.
 """
 from __future__ import annotations
-from typing import AsyncGenerator
+
+from collections.abc import AsyncGenerator
+
 import structlog
 
 from core.agents.base_agent import BaseAgent

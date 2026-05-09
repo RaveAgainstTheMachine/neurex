@@ -5,15 +5,16 @@ Maintains a decentralized index of abstracted 'Neural Lessons' shared across the
 Enables workspaces to query and benefit from collective engineering patterns.
 """
 import asyncio
+
 import structlog
-from typing import Dict, List, Any, Optional
+
 from core.infrastructure.distiller import NeuralLesson
 
 log = structlog.get_logger()
 
 class SwarmKnowledgeBase:
     def __init__(self):
-        self.lessons: Dict[str, List[NeuralLesson]] = {} # domain -> [lessons]
+        self.lessons: dict[str, list[NeuralLesson]] = {} # domain -> [lessons]
         self.kb_lock = asyncio.Lock()
 
     async def register_lesson(self, lesson: NeuralLesson):
@@ -24,12 +25,12 @@ class SwarmKnowledgeBase:
             
             # Keep only the most effective lessons per domain
             self.lessons[lesson.domain].append(lesson)
-            self.lessons[lesson.domain].sort(key=lambda l: l.success_delta, reverse=True)
+            self.lessons[lesson.domain].sort(key=lambda lsn: lsn.success_delta, reverse=True)
             self.lessons[lesson.domain] = self.lessons[lesson.domain][:50]
             
         log.info("knowledge_base.lesson_indexed", domain=lesson.domain, pattern=lesson.pattern_id)
 
-    def query_lessons(self, domain: str) -> List[NeuralLesson]:
+    def query_lessons(self, domain: str) -> list[NeuralLesson]:
         """Queries the index for the most effective lessons in a specific domain."""
         return self.lessons.get(domain, [])
 

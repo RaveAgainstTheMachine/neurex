@@ -6,14 +6,14 @@ Allows the system to expand its physical footprint to solve global engineering r
 """
 import asyncio
 import os
-import structlog
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+
+import structlog
 
 log = structlog.get_logger()
 
 class InceptionSpec:
-    def __init__(self, name: str, template: str, features: List[str]):
+    def __init__(self, name: str, template: str, features: list[str]):
         self.name = name
         self.template = template # e.g., "fastapi-service", "react-component-library"
         self.features = features
@@ -21,9 +21,9 @@ class InceptionSpec:
 class ProjectInceptor:
     def __init__(self):
         self.inception_lock = asyncio.Lock()
-        self.active_inceptions: Dict[str, str] = {} # name -> path
+        self.active_inceptions: dict[str, str] = {} # name -> path
 
-    async def incept_subproject(self, spec: InceptionSpec) -> Optional[str]:
+    async def incept_subproject(self, spec: InceptionSpec) -> str | None:
         """
         Autonomously initializes a new sub-project directory with core boilerplate.
         """

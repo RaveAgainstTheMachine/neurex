@@ -3,7 +3,9 @@ core/agents/reviewer_agent.py
 Reviewer agent. Critiques code for quality, security, and adherence to rules.
 """
 from __future__ import annotations
-from typing import AsyncGenerator
+
+from collections.abc import AsyncGenerator
+
 import structlog
 
 from core.agents.base_agent import BaseAgent

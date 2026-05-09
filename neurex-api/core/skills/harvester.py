@@ -4,13 +4,13 @@ Somnus Skill Harvesting: Automatically discovers and acquires skills from the Me
 Extends the Neurex capability mesh by autonomously 'learning' from peers.
 """
 from __future__ import annotations
-import os
+
 import httpx
 import structlog
-from typing import List, Dict, Any
+
 from core.infrastructure.mesh import mesh_router
-from core.skills.manager import SkillManager
 from core.mcp.tools.security import security_scan
+from core.skills.manager import SkillManager
 
 log = structlog.get_logger()
 

@@ -1,14 +1,11 @@
 # neurex-api/core/languages/lsp_manager.py
 import asyncio
-import os
 import json
-import logging
+import os
 import shutil
 from pathlib import Path
-from typing import Dict, List, Optional
+
 from core.logger import log as logger
-
-
 
 # Path to workspace-local LSP binaries
 API_ROOT = Path(__file__).parent.parent.parent
@@ -18,9 +15,9 @@ WORKSPACE_ROOT = Path(os.getenv("WORKSPACE_PATH", "."))
 class DiagnosticTracker:
     def __init__(self):
         # path -> list of diagnostics
-        self.diagnostics: Dict[str, List[Dict]] = {}
+        self.diagnostics: dict[str, list[dict]] = {}
 
-    def update(self, uri: str, items: List[Dict]):
+    def update(self, uri: str, items: list[dict]):
         # Convert URI to relative path
         from urllib.parse import unquote
         path = unquote(uri.replace("file://", ""))
@@ -48,7 +45,7 @@ class DiagnosticTracker:
             "data": {"path": path, "diagnostics": items}
         }))
 
-    def get_for_path(self, path: str) -> List[Dict]:
+    def get_for_path(self, path: str) -> list[dict]:
         return self.diagnostics.get(path, [])
 
     def get_count_for_prefix(self, prefix: str) -> int:
@@ -65,7 +62,7 @@ class DiagnosticTracker:
                 count += len(items)
         return count
 
-    def get_all(self) -> Dict[str, List[Dict]]:
+    def get_all(self) -> dict[str, list[dict]]:
         return self.diagnostics
 
 diagnostic_tracker = DiagnosticTracker()
@@ -159,11 +156,11 @@ class LSPSession:
     def __init__(self, lang: str, workspace_path: str):
         self.lang = lang
         self.workspace_path = workspace_path
-        self.process: Optional[asyncio.subprocess.Process] = None
+        self.process: asyncio.subprocess.Process | None = None
         self.cmd = LSP_COMMANDS.get(lang)
         self._running = False
         self._output_queue = asyncio.Queue()
-        self._reader_task: Optional[asyncio.Task] = None
+        self._reader_task: asyncio.Task | None = None
 
     async def _read_loop(self):
         """Persistent background reader for LSP stdout with proper protocol parsing."""
@@ -264,14 +261,13 @@ class LSPSession:
         except Exception as e:
             logger.error(f"Failed to parse LSP JSON: {e}")
 
-import shutil
 
 class LSPManager:
     def __init__(self):
-        self.sessions: Dict[str, LSPSession] = {}
+        self.sessions: dict[str, LSPSession] = {}
         self.failed_installs: set[str] = set()
         self.installing_langs: set[str] = set()
-    def _find_executable(self, name: str) -> Optional[str]:
+    def _find_executable(self, name: str) -> str | None:
         # Check managed dir first (both root and node_modules/.bin)
         managed_root = str(MANAGED_LSP_DIR)
         managed_bin = str(MANAGED_LSP_DIR / "node_modules" / ".bin")
@@ -384,7 +380,7 @@ class LSPManager:
         finally:
             self.installing_langs.discard(lang)
 
-    def get_supported_languages(self) -> List[str]:
+    def get_supported_languages(self) -> list[str]:
         supported = []
         for lang, cmd in LSP_COMMANDS.items():
             if self._find_executable(cmd[0]):
@@ -436,7 +432,7 @@ class LSPManager:
             self.sessions[session_key] = session
         return self.sessions[session_key]
 
-    def _guess_lsp_command(self, lang: str) -> Optional[List[str]]:
+    def _guess_lsp_command(self, lang: str) -> list[str] | None:
         """Try to find an LSP binary by common naming patterns."""
         patterns = [
             f"{lang}-language-server",
@@ -453,11 +449,11 @@ class LSPManager:
                 return [p, "--stdio"]
         return None
 
-    def _load_custom_config(self, root: Path) -> Dict:
+    def _load_custom_config(self, root: Path) -> dict:
         config_path = root / ".neurex" / "lsp.json"
         if config_path.exists():
             try:
-                with open(config_path, "r") as f:
+                with open(config_path) as f:
                     return json.load(f)
             except Exception as e:
                 logger.error(f"Failed to load custom LSP config: {e}")

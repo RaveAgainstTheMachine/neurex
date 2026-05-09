@@ -5,8 +5,8 @@ Enables the Neurex Mesh to bridge with external decentralized AI substrates.
 Allows the Mesh to borrow remote VRAM/Compute for massive neural evolution bursts.
 """
 import asyncio
+
 import structlog
-from typing import Dict, Any, List, Optional
 
 log = structlog.get_logger()
 
@@ -21,8 +21,8 @@ class ExternalSubstrate:
 class SubstrateSynchronizer:
     def __init__(self):
         self.sync_lock = asyncio.Lock()
-        self.external_nodes: Dict[str, ExternalSubstrate] = {}
-        self.active_bridges: List[str] = []
+        self.external_nodes: dict[str, ExternalSubstrate] = {}
+        self.active_bridges: list[str] = []
 
     async def discovery_external_substrates(self):
         """Discovers available external compute substrates on the global network."""

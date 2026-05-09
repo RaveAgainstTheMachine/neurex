@@ -6,10 +6,11 @@ Ensures neural coherence by propagating finalized LoRA checkpoints to all nodes.
 """
 import asyncio
 import os
-import shutil
-import structlog
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Any
+
+import structlog
+
 from core.infrastructure.mesh import mesh_router
 
 log = structlog.get_logger()

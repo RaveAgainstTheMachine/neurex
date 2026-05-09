@@ -4,8 +4,9 @@ Manages real-time user presence and cursor broadcasting.
 """
 import asyncio
 import time
+from typing import Any
+
 import structlog
-from typing import Dict, List, Set, Any
 from fastapi import WebSocket
 
 log = structlog.get_logger()
@@ -13,11 +14,11 @@ log = structlog.get_logger()
 class PresenceManager:
     def __init__(self):
         # Map conversation_id -> Set of active WebSockets
-        self.active_connections: Dict[str, Set[WebSocket]] = {}
+        self.active_connections: dict[str, set[WebSocket]] = {}
         # Map conversation_id -> user_id -> presence_data
-        self.presence_state: Dict[str, Dict[str, Any]] = {}
+        self.presence_state: dict[str, dict[str, Any]] = {}
         self.node_id = "node-" + str(time.time()) # Unique ID for this specific instance
-        self._tasks: List[asyncio.Task] = []
+        self._tasks: list[asyncio.Task] = []
 
     def start(self):
         """Starts background tasks once an event loop is running."""
@@ -68,7 +69,7 @@ class PresenceManager:
                 "data": list(self.presence_state[conversation_id].values())
             })
 
-    async def update_presence(self, conversation_id: str, user_id: str, data: Dict[str, Any]):
+    async def update_presence(self, conversation_id: str, user_id: str, data: dict[str, Any]):
         if conversation_id in self.presence_state and user_id in self.presence_state[conversation_id]:
             self.presence_state[conversation_id][user_id].update(data)
             self.presence_state[conversation_id][user_id]["last_ping"] = time.time()

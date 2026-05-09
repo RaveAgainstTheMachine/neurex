@@ -2,8 +2,8 @@
 core/mcp/tools/mesh_intel.py
 Mesh-awareness tools for agentic swarm intelligence.
 """
-import os
 import structlog
+
 from core.infrastructure.mesh import mesh_router
 
 log = structlog.get_logger()

@@ -1,6 +1,8 @@
 use anyhow::{Context, Result, bail};
 use bollard::Docker;
-use bollard::container::{Config, CreateContainerOptions, RemoveContainerOptions, StartContainerOptions};
+use bollard::container::{
+    Config, CreateContainerOptions, RemoveContainerOptions, StartContainerOptions,
+};
 use bollard::models::HostConfig;
 use tracing::info;
 
@@ -15,18 +17,12 @@ pub async fn ensure_sandbox(docker: &Docker, workspace_path: &str) -> Result<()>
     let _ = docker
         .remove_container(
             "neurex-sandbox-agent",
-            Some(RemoveContainerOptions {
-                force: true,
-                ..Default::default()
-            }),
+            Some(RemoveContainerOptions { force: true, ..Default::default() }),
         )
         .await;
 
     let binds = vec![format!("{}:/workspace", workspace_path)];
-    let host_config = HostConfig {
-        binds: Some(binds),
-        ..Default::default()
-    };
+    let host_config = HostConfig { binds: Some(binds), ..Default::default() };
 
     let config = Config {
         image: Some("alpine:latest"),
@@ -35,18 +31,12 @@ pub async fn ensure_sandbox(docker: &Docker, workspace_path: &str) -> Result<()>
         ..Default::default()
     };
 
-    let options = Some(CreateContainerOptions {
-        name: "neurex-sandbox-agent",
-        platform: None,
-    });
+    let options = Some(CreateContainerOptions { name: "neurex-sandbox-agent", platform: None });
 
     docker.create_container(options, config).await.context("Failed to create sandbox container")?;
-    
+
     docker
-        .start_container(
-            "neurex-sandbox-agent",
-            None::<StartContainerOptions<String>>,
-        )
+        .start_container("neurex-sandbox-agent", None::<StartContainerOptions<String>>)
         .await
         .context("Failed to start sandbox container")?;
 
@@ -60,10 +50,7 @@ pub async fn stop_sandbox(docker: &Docker) -> Result<()> {
     docker
         .remove_container(
             "neurex-sandbox-agent",
-            Some(RemoveContainerOptions {
-                force: true,
-                ..Default::default()
-            }),
+            Some(RemoveContainerOptions { force: true, ..Default::default() }),
         )
         .await
         .context("Failed to remove sandbox container")
@@ -77,9 +64,7 @@ pub struct NativeExecutor {
 
 impl NativeExecutor {
     pub fn new(workspace: &str) -> Self {
-        Self {
-            workspace_root: std::path::PathBuf::from(workspace),
-        }
+        Self { workspace_root: std::path::PathBuf::from(workspace) }
     }
 
     pub fn execute(&self, command: &str) -> Result<super::wasi_sandbox::ExecResult> {
@@ -99,10 +84,11 @@ impl NativeExecutor {
                 let target = self.workspace_root.join(sub_path.trim_start_matches('/'));
                 match std::fs::read_dir(target) {
                     Ok(entries) => {
-                        for entry in entries {
-                            if let Ok(entry) = entry {
-                                stdout.push_str(&format!("{}\n", entry.file_name().to_string_lossy()));
-                            }
+                        for entry in entries.flatten() {
+                            stdout.push_str(&format!(
+                                "{}\n",
+                                entry.file_name().to_string_lossy()
+                            ));
                         }
                     }
                     Err(e) => {
@@ -126,7 +112,10 @@ impl NativeExecutor {
                 stdout = "/workspace".to_string();
             }
             _ => {
-                stderr = format!("Command '{}' not implemented in Native Fallback. (Docker or WASM required for full shell).", cmd);
+                stderr = format!(
+                    "Command '{}' not implemented in Native Fallback. (Docker or WASM required for full shell).",
+                    cmd
+                );
                 exit_code = 127;
             }
         }

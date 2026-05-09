@@ -3,9 +3,12 @@ core/agents/commander_agent.py
 Specialized supervisor agent for dynamic graph re-evaluation and mid-execution planning.
 """
 from __future__ import annotations
+
 import json
+from collections.abc import AsyncGenerator
+
 import structlog
-from typing import AsyncGenerator, List, Dict
+
 from core.agents.base_agent import BaseAgent
 
 log = structlog.get_logger()

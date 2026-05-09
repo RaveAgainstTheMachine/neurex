@@ -1,7 +1,9 @@
 from __future__ import annotations
+
 import os
+
 import structlog
-from typing import List, Dict, Any, Set
+
 from core.observability.flight_recorder import record_decision
 
 log = structlog.get_logger()
@@ -9,9 +11,9 @@ log = structlog.get_logger()
 class GovernanceManager:
     def __init__(self):
         # Maps task_id -> set of temporarily allowed paths
-        self.dynamic_grants: Dict[str, Set[str]] = {}
+        self.dynamic_grants: dict[str, set[str]] = {}
         # Historical success rates for specific agents/tasks
-        self.integrity_scores: Dict[str, float] = {}
+        self.integrity_scores: dict[str, float] = {}
 
     async def request_escalation(self, agent_id: str, task_id: str, required_path: str) -> bool:
         """

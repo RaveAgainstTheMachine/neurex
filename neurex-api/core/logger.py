@@ -1,8 +1,9 @@
-import os
-import structlog
-import logging
 import json
+import logging
+import os
 from pathlib import Path
+
+import structlog
 
 # Use the absolute path to the project root for logs
 # Dynamically determine base directory
@@ -33,7 +34,7 @@ def get_audit_logs(limit=100):
     
     logs = []
     try:
-        with open(LOG_FILE, "r") as f:
+        with open(LOG_FILE) as f:
             lines = f.readlines()
             for line in lines[-limit:]:
                 if not line.strip(): continue
@@ -48,7 +49,7 @@ def get_audit_logs(limit=100):
                         "ip_address": log_data.get("ip_address", "internal"),
                         "details": json.dumps(log_data, indent=2)
                     })
-                except Exception as e:
+                except Exception:
                     continue
     except Exception as e:
         logging.error(f"Error reading logs: {e}")

@@ -1,22 +1,20 @@
 from __future__ import annotations
-import asyncio
-from typing import Optional, List
-from sqlmodel import SQLModel, Field, Relationship, Session, create_engine, select
-from sqlalchemy.orm import Mapped
+
+from sqlmodel import Field, Relationship, Session, SQLModel, create_engine
 
 # SQLite engine (sync for simple test)
 engine = create_engine("sqlite:///test_neurex.db")
 
 class TaskNode(SQLModel, table=True):
     id: str = Field(default="root", primary_key=True)
-    parent_id: Optional[str] = Field(default=None, foreign_key="tasknode.id")
+    parent_id: str | None = Field(default=None, foreign_key="tasknode.id")
     
     # Correct SQLModel 0.0.22+ syntax for self-referential
-    parent: Optional[TaskNode] = Relationship(
+    parent: TaskNode | None = Relationship(
         back_populates="children",
         sa_relationship_kwargs={"remote_side": "TaskNode.id"}
     )
-    children: List[TaskNode] = Relationship(
+    children: list[TaskNode] = Relationship(
         back_populates="parent"
     )
 

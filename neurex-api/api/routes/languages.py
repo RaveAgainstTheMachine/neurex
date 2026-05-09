@@ -1,10 +1,10 @@
 # neurex-api/api/routes/languages.py
+
 from fastapi import APIRouter, Depends, HTTPException
-from typing import List
-import os
+
+from core.languages.lsp_manager import LSP_RECIPES, lsp_manager
 
 from .auth import get_current_user
-from core.languages.lsp_manager import lsp_manager, LSP_RECIPES
 
 router = APIRouter()
 

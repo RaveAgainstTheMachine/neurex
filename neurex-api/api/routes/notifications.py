@@ -1,10 +1,10 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
 import json
-import os
 from pathlib import Path
-from pywebpush import webpush, WebPushException
+
 import structlog
+from fastapi import APIRouter
+from pydantic import BaseModel
+from pywebpush import WebPushException, webpush
 
 log = structlog.get_logger()
 router = APIRouter()

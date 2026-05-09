@@ -5,8 +5,10 @@ Implements virtualized Mesh-wide VRAM pooling and neural resource orchestration.
 Enables treatement of federated hardware as a single unified neural compute pool.
 """
 import asyncio
+from typing import Any
+
 import structlog
-from typing import Dict, List, Any, Optional
+
 from core.infrastructure.mesh import mesh_router
 
 log = structlog.get_logger()
@@ -20,7 +22,7 @@ class VRAMShard:
 
 class VirtualVRAMPool:
     def __init__(self):
-        self.shards: Dict[str, VRAMShard] = {}
+        self.shards: dict[str, VRAMShard] = {}
         self.pool_lock = asyncio.Lock()
         self.total_capacity_gb = 0.0
 
@@ -51,7 +53,7 @@ class VirtualVRAMPool:
                  total_nodes=len(self.shards), 
                  total_vram_gb=f"{self.total_capacity_gb:.2f}")
 
-    def allocate_vram(self, required_gb: float) -> Optional[List[Dict[str, Any]]]:
+    def allocate_vram(self, required_gb: float) -> list[dict[str, Any]] | None:
         """
         Allocates VRAM from the virtual pool, potentially sharding across nodes.
         Returns a plan for which nodes will host which context/model shards.
@@ -88,7 +90,7 @@ class VirtualVRAMPool:
         log.info("vram_pool.allocation_successful", requested_gb=required_gb, nodes_utilized=len(allocation_plan))
         return allocation_plan
 
-    def release_vram(self, plan: List[Dict[str, Any]]):
+    def release_vram(self, plan: list[dict[str, Any]]):
         """Releases allocated VRAM back into the pool."""
         for entry in plan:
             node_id = entry["node_id"]

@@ -2,13 +2,13 @@
 core/infrastructure/lifecycle.py
 Operational lifecycle management: Backup, Restore, and Rollback.
 """
-import os
-import shutil
-import zipfile
 import asyncio
-import structlog
-from pathlib import Path
+import os
+import zipfile
 from datetime import datetime
+from pathlib import Path
+
+import structlog
 
 log = structlog.get_logger()
 

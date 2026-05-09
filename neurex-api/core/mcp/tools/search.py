@@ -1,8 +1,10 @@
 from __future__ import annotations
-import os
+
 import asyncio
-import structlog
+import os
 from pathlib import Path
+
+import structlog
 
 log = structlog.get_logger()
 WORKSPACE_ROOT = Path(os.getenv("WORKSPACE_PATH", "/workspace")).resolve()

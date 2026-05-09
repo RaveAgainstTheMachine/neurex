@@ -1,8 +1,11 @@
 import asyncio
-from api.routes.chat import ChatMessage
+import uuid
+
 from core.database import engine
 from sqlmodel import Session, select
-import uuid
+
+from api.routes.chat import ChatMessage
+
 
 async def test_persistence():
     conv_id = str(uuid.uuid4())

@@ -4,18 +4,20 @@ Autonomous Mesh Load-Balancing (Compute Steering).
 Monitors VRAM/CPU heat and steers tasks to the most efficient nodes.
 """
 from __future__ import annotations
+
 import asyncio
+from typing import Any
+
 import httpx
-import psutil
 import structlog
-from typing import List, Dict, Any
+
 from core.infrastructure.mesh import mesh_router
 
 log = structlog.get_logger()
 
 class ComputeMonitor:
     def __init__(self):
-        self.node_metrics: Dict[str, Dict[str, Any]] = {}
+        self.node_metrics: dict[str, dict[str, Any]] = {}
 
     async def refresh_mesh_metrics(self):
         """Polls all Mesh peers for real-time telemetry."""
@@ -57,7 +59,7 @@ class ComputeMonitor:
         log.info("compute.task_steered", target=best_node, score=round(highest_score, 2))
         return best_node
 
-    async def _fetch_node_metrics(self, peer) -> Dict[str, Any]:
+    async def _fetch_node_metrics(self, peer) -> dict[str, Any]:
         """Queries a peer's status endpoint."""
         try:
             async with httpx.AsyncClient(timeout=5) as client:
@@ -74,7 +76,7 @@ class ComputeMonitor:
             pass
         return None
 
-    async def _get_local_metrics(self) -> Dict[str, Any]:
+    async def _get_local_metrics(self) -> dict[str, Any]:
         """Collects local telemetry."""
         # Simple local metric collection
         vram_free = 12.0 # Placeholder: actual metrics fetched via nvidia-smi if available
