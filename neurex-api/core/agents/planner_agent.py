@@ -95,7 +95,7 @@ class PlannerAgent(BaseAgent):
                 log.info("planner.done", steps=len(plan), needs_intel=needs_intel)
                 yield {"type": "result", "plan": plan}
 
-    def execute(self, task: dict, conversation_id: str):
+    async def execute(self, task: dict, conversation_id: str):
         # Planner uses plan(), not execute() — satisfy ABC
         params = task.get("params")
         async for chunk in self.plan(task["description"], conversation_id, params=params):

@@ -66,7 +66,7 @@ class TesterAgent(BaseAgent):
     system_prompt = TESTER_SYSTEM
     agent_type = "tester"
 
-    def execute(
+    async def execute(
         self, task: dict, conversation_id: str
     ) -> AsyncGenerator[dict, None]:
         description = task.get("description", "")

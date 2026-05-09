@@ -79,7 +79,7 @@ class SummarizerAgent(BaseAgent):
         log.info("summarizer.done", original_messages=len(messages), summary_chars=len(full_text))
         return full_text.strip()
 
-    def execute(self, task: dict, conversation_id: str):
+    async def execute(self, task: dict, conversation_id: str):
         # Satisfy ABC — SummarizerAgent is invoked via summarize(), not execute()
         summary = await self.summarize([{"role": "user", "content": task.get("description", "")}])
         yield {"type": "result", "result": summary}

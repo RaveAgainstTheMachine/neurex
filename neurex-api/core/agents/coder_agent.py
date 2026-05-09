@@ -116,7 +116,7 @@ class CoderAgent(BaseAgent):
     system_prompt = CODER_SYSTEM
     agent_type = "coder"
 
-    def execute(
+    async def execute(
         self, task: dict, conversation_id: str
     ) -> AsyncGenerator[dict, None]:
         description = task.get("description", "")

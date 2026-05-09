@@ -38,7 +38,7 @@ Output your argument as a concise technical critique (max 300 words).
 class DebaterAgent(BaseAgent):
     agent_type = "debater"
 
-    def execute(self, task: dict, conversation_id: str) -> AsyncGenerator[dict, None]:
+    async def execute(self, task: dict, conversation_id: str) -> AsyncGenerator[dict, None]:
         persona = task.get("persona", "skeptic")
         intel = await self.mcp.call("query_project_intel", {}, conversation_id=conversation_id)
         

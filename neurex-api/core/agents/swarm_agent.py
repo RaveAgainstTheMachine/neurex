@@ -18,7 +18,7 @@ log = structlog.get_logger()
 class SwarmAgent(BaseAgent):
     agent_type = "swarm"
 
-    def execute(self, task: dict, conversation_id: str) -> AsyncGenerator[dict, None]:
+    async def execute(self, task: dict, conversation_id: str) -> AsyncGenerator[dict, None]:
         """
         Decomposes the high-level swarm task and orchestrates execution across peers.
         """
