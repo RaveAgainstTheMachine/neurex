@@ -58,7 +58,9 @@ export const createSystemSlice: StoreSlice<NeurexStore> = (set, get) => ({
     showAIPanel: localStorage.getItem("neurex_show_ai") !== "false",
     setShowAIPanel: (val) => set((s) => { const next = typeof val === 'function' ? val(s.showAIPanel) : val; s.showAIPanel = next; localStorage.setItem("neurex_show_ai", String(next)); }),
     showSettings: false,
-    setShowSettings: (val) => set((s) => { const next = typeof val === 'function' ? val(s.showSettings) : val; s.showSettings = next; if (next) s.showHiveMind = false; }),
+    setShowSettings: (val) => set((s) => { const next = typeof val === 'function' ? val(s.showSettings) : val; s.showSettings = next; if (next) { s.showHiveMind = false; s.showAbout = false; } }),
     showHiveMind: false,
-    setShowHiveMind: (val) => set((s) => { const next = typeof val === 'function' ? val(s.showHiveMind) : val; s.showHiveMind = next; if (next) s.showSettings = false; }),
+    setShowHiveMind: (val) => set((s) => { const next = typeof val === 'function' ? val(s.showHiveMind) : val; s.showHiveMind = next; if (next) { s.showSettings = false; s.showAbout = false; } }),
+    showAbout: false,
+    setShowAbout: (val) => set((s) => { const next = typeof val === 'function' ? val(s.showAbout) : val; s.showAbout = next; if (next) { s.showSettings = false; s.showHiveMind = false; } }),
   } as unknown as NeurexStore);

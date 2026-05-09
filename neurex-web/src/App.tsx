@@ -21,6 +21,7 @@ import { GitTimeline } from "./components/GitTimeline/GitTimeline";
 import { SettingsPanel } from "./components/SettingsPanel/SettingsPanel";
 import { HiveMindPanel } from "./components/HiveMindPanel/HiveMindPanel";
 import { EvolutionPanel } from "./components/EvolutionPanel/EvolutionPanel";
+import { AboutPanel } from "./components/AboutPanel/AboutPanel";
 import { SingularityDashboard } from "./components/SingularityDashboard/SingularityDashboard";
 import { SynthesisDashboard } from "./components/SynthesisDashboard/SynthesisDashboard";
 import { ConsensusDashboard } from "./components/ConsensusDashboard/ConsensusDashboard";
@@ -135,6 +136,8 @@ function AppContent() {
   const setShowSettings = useStore(s => s.setShowSettings);
   const showHiveMind = useStore(s => s.showHiveMind);
   const setShowHiveMind = useStore(s => s.setShowHiveMind);
+  const showAbout = useStore(s => s.showAbout);
+  const setShowAbout = useStore(s => s.setShowAbout);
   const settings = useStore(s => s.settings);
   const tasks = useStore(s => s.tasks);
   const activeFile = useStore(s => s.activeFile);
@@ -298,6 +301,10 @@ function AppContent() {
       <div className={`app ${modalOpen ? "modal-open" : ""}`}>
         {(!token || onboardingRequired) && <AuthOverlay />}
         {!isInitialized && <LoadingOverlay progress={visualProgress} />}
+        
+        <AnimatePresence>
+          {showAbout && <AboutPanel />}
+        </AnimatePresence>
         
         <CommandPalette 
           isOpen={paletteMode === "global"} 

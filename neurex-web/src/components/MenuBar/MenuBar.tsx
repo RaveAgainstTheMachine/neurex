@@ -29,7 +29,7 @@ export function MenuBar() {
     logout, saveFile, activeFile, setTheme, theme, 
     addTerminalSession, closeTerminalSession, activeTerminalId, 
     clearActiveTerminal, runActiveFile, setModalOpen, refreshFileTree,
-    addWorkspaceFolder, closeWorkspace
+    addWorkspaceFolder, closeWorkspace, setShowAbout
   } = useStore();
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -142,7 +142,7 @@ export function MenuBar() {
         { label: "Documentation", action: () => window.open("https://github.com/frosty-hq/neurex/wiki", "_blank") },
         { label: "Show All Commands", shortcut: "Ctrl+Shift+P" },
         { separator: true },
-        { label: "About Neurex" }
+        { label: "About Neurex", action: () => setShowAbout(true) }
       ]
     }
   ];

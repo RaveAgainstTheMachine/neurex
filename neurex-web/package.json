@@ -1,6 +1,7 @@
 {
   "name": "neurex-web",
   "private": true,
+  "description": "The first autonomous engineering workspace for the neural era.",
   "version": "0.0.0",
   "type": "module",
   "scripts": {

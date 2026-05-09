@@ -348,4 +348,6 @@ export interface NeurexStore {
   setShowSettings: (val: boolean | ((v: boolean) => boolean)) => void;
   showHiveMind: boolean;
   setShowHiveMind: (val: boolean | ((v: boolean) => boolean)) => void;
+  showAbout: boolean;
+  setShowAbout: (val: boolean | ((v: boolean) => boolean)) => void;
 }

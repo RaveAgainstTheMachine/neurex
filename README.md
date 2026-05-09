@@ -33,9 +33,9 @@
 ---
 
 ## 👁️ The Essence
-**Neurex** isn't a code editor with a chat-box; it's a **Self-Evolving Engineering Team.** 
+**Neurex** is an autonomous engineering workspace designed for human-agent parity. 
 
-It transforms your workspace into a **Neural Mesh**—a decentralized network of autonomous agents that collaborate with you in real-time, pool your distributed hardware, and automatically heal regressions. In Neurex, state is sacred, compute is sovereign, and agents are your peers.
+It transforms your infrastructure into a **Neural Mesh**—a decentralized network where agents are your peers, hardware is pooled via distributed VRAM, and the system autonomously heals regressions. Stop chatting with your IDE; start engineering with your mesh.
 
 ---
 

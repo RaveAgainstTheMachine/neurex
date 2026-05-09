@@ -1,6 +1,11 @@
-# Welcome to the Neurex Wiki
+# Welcome to Neurex
 
-**Neurex** is an autonomous workspace designed for the neural era. It combines a high-performance Rust core with a decentralized mesh of AI agents to manage your codebase, optimize your hardware, and automate your engineering workflow.
+**Neurex** is a high-performance, autonomous engineering workspace. It enables human-agent parity through a distributed neural mesh.
+
+### Core Pillars
+- **Agentic Engineering**: Autonomous peers with persistent state and real-time collaboration.
+- **VRAM Pooling**: Aggregate GPU power across your network for local-first inference.
+- **Zero-Config Infrastructure**: Self-bootstrapping Rust control plane with hermetic environments.
 
 ## Core Modules
 
