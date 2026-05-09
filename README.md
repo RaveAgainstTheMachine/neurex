@@ -15,9 +15,9 @@
   </p>
 
   <p>
-    <img src="https://img.shields.io/badge/TypeScript-9.8k%20LOC-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
-    <img src="https://img.shields.io/badge/Python-13.8k%20LOC-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
-    <img src="https://img.shields.io/badge/Rust-1.1k%20LOC-DEA584?style=for-the-badge&logo=rust&logoColor=white" alt="Rust">
+    <img src="https://img.shields.io/badge/TypeScript-10.6k%20LOC-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
+    <img src="https://img.shields.io/badge/Python-15.0k%20LOC-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
+    <img src="https://img.shields.io/badge/Rust-1.2k%20LOC-DEA584?style=for-the-badge&logo=rust&logoColor=white" alt="Rust">
   </p>
 
   <p align="center">

@@ -112,6 +112,12 @@ nuke:
 	docker volume rm $$(docker volume ls -q | grep neurex) 2>/dev/null || true
 	@echo "⚠️  All Neurex data removed. Model weights will re-download on next start."
 
+# ── Automation ────────────────────────────────────────────────────────────────
+
+## Update LOC badges in README.md
+loc:
+	bash scripts/update-loc.sh
+
 # ── Help ──────────────────────────────────────────────────────────────────────
 
 help:
