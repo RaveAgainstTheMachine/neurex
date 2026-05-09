@@ -2,7 +2,7 @@
 
 Neurex is a high-performance, agentic IDE built for absolute technical precision and zero-friction development. It operates as a decentralized mesh network of AI agents, hardware-accelerated engines, and collaborative workspaces.
 
-## 核心 (Core Modules)
+## Core Modules
 
 - **[[Architecture]]**: Deep dive into the Orchestrator, TaskGraph, and **Sentient Mesh**.
 - **[[Infrastructure-Hub]]**: NOC-style telemetry, model operational states, and **Dynamic Model Routing**.
@@ -13,7 +13,7 @@ Neurex is a high-performance, agentic IDE built for absolute technical precision
 - **Multi-Root Workspaces**: Parallel project management with contextual terminals.
 - **[[API-Reference]]**: REST and WebSocket protocols.
 
-## 协议 (Protocols)
+## Protocols
 
 Neurex operates under the **Neurex Core Protocol** (Rules: `.projectrules`), enforcing:
 - Atomic commits and documentation parity.
@@ -21,7 +21,7 @@ Neurex operates under the **Neurex Core Protocol** (Rules: `.projectrules`), enf
 - Async-first execution.
 - Strict Type Safety (Pydantic/TypeScript).
 
-## 进化 (Sentient Evolution)
+## Sentient Evolution
 - **[[Neural-Evolution]]**: Autonomous adapter fine-tuning and architectural mutation (Phase 48).
 - **[[Collective-Intelligence]]**: Secure, cross-project knowledge distillation (Phase 49).
 - **[[Sentient-Singularity]]**: Autonomous goal setting and self-generating capabilities (Phase 50).
