@@ -28,7 +28,7 @@ export function BottomPanel({ send }: BottomPanelProps) {
   }, []);
 
   const lines = Object.values(tasks).filter((t: any) => t.result || t.error).flatMap((t: any) => {
-    const out = [];
+    const out: string[] = [];
     if (t.result) out.push(`[${t.agent_type}] ${t.result}`);
     if (t.error)  out.push(`[ERROR] ${t.error}`);
     return out;

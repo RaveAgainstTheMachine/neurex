@@ -103,7 +103,7 @@ export function ActivityBar() {
             {sidebarOrder.map(id => {
               const item = SIDEBAR_ITEMS.find(i => i.id === id);
               if (!item) return null;
-              let badge = undefined;
+              let badge: number | undefined = undefined;
               if (id === "agent" && activeTaskCount > 0) badge = activeTaskCount;
               return (
                 <SortableActivityItem
