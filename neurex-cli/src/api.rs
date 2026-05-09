@@ -332,13 +332,19 @@ async fn handle_ws_socket(client_ws: WebSocket, target_url: String) {
         while let Some(msg) = client_rx.next().await {
             match msg {
                 Ok(Message::Text(t)) => {
-                    if server_tx.send(tungstenite::Message::Text(t.to_string().into())).await.is_err()
+                    if server_tx
+                        .send(tungstenite::Message::Text(t.to_string().into()))
+                        .await
+                        .is_err()
                     {
                         break;
                     }
                 }
                 Ok(Message::Binary(b)) => {
-                    if server_tx.send(tungstenite::Message::Binary(b.to_vec().into())).await.is_err()
+                    if server_tx
+                        .send(tungstenite::Message::Binary(b.to_vec().into()))
+                        .await
+                        .is_err()
                     {
                         break;
                     }
@@ -364,13 +370,29 @@ async fn handle_ws_socket(client_ws: WebSocket, target_url: String) {
     let server_to_client = async {
         while let Some(msg) = server_rx.next().await {
             match msg {
-                Ok(tungstenite::Message::Text(t)) if client_tx.send(Message::Text(t.to_string().into())).await.is_err() => break,
+                Ok(tungstenite::Message::Text(t))
+                    if client_tx.send(Message::Text(t.to_string().into())).await.is_err() =>
+                {
+                    break;
+                }
                 Ok(tungstenite::Message::Text(_)) => {}
-                Ok(tungstenite::Message::Binary(b)) if client_tx.send(Message::Binary(b.to_vec().into())).await.is_err() => break,
+                Ok(tungstenite::Message::Binary(b))
+                    if client_tx.send(Message::Binary(b.to_vec().into())).await.is_err() =>
+                {
+                    break;
+                }
                 Ok(tungstenite::Message::Binary(_)) => {}
-                Ok(tungstenite::Message::Ping(p)) if client_tx.send(Message::Ping(p.to_vec().into())).await.is_err() => break,
+                Ok(tungstenite::Message::Ping(p))
+                    if client_tx.send(Message::Ping(p.to_vec().into())).await.is_err() =>
+                {
+                    break;
+                }
                 Ok(tungstenite::Message::Ping(_)) => {}
-                Ok(tungstenite::Message::Pong(p)) if client_tx.send(Message::Pong(p.to_vec().into())).await.is_err() => break,
+                Ok(tungstenite::Message::Pong(p))
+                    if client_tx.send(Message::Pong(p.to_vec().into())).await.is_err() =>
+                {
+                    break;
+                }
                 Ok(tungstenite::Message::Pong(_)) => {}
                 Ok(tungstenite::Message::Close(_)) => break,
                 _ => {}

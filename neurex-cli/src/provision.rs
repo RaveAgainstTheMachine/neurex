@@ -217,16 +217,14 @@ async fn setup_storage_paths() -> Result<()> {
     let settings_path = dirs::home_dir().unwrap().join(".neurex_settings.json");
     if settings_path.exists()
         && let Ok(content) = std::fs::read_to_string(&settings_path)
-            && let Ok(mut existing) = serde_json::from_str::<serde_json::Value>(&content)
-                && let Some(obj) = existing.as_object_mut() {
-                    obj.insert(
-                        "neurex_install_dir".to_string(),
-                        serde_json::Value::String(install_dir),
-                    );
-                    obj.insert("models_dir".to_string(), serde_json::Value::String(models_dir));
-                    obj.insert("storage_paths".to_string(), serde_json::to_value(scan_paths)?);
-                    settings = existing;
-                }
+        && let Ok(mut existing) = serde_json::from_str::<serde_json::Value>(&content)
+        && let Some(obj) = existing.as_object_mut()
+    {
+        obj.insert("neurex_install_dir".to_string(), serde_json::Value::String(install_dir));
+        obj.insert("models_dir".to_string(), serde_json::Value::String(models_dir));
+        obj.insert("storage_paths".to_string(), serde_json::to_value(scan_paths)?);
+        settings = existing;
+    }
 
     std::fs::write(&settings_path, serde_json::to_string_pretty(&settings)?)?;
     info!("Storage configuration saved to {}", settings_path.display());

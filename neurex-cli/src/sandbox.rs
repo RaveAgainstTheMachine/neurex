@@ -85,10 +85,7 @@ impl NativeExecutor {
                 match std::fs::read_dir(target) {
                     Ok(entries) => {
                         for entry in entries.flatten() {
-                            stdout.push_str(&format!(
-                                "{}\n",
-                                entry.file_name().to_string_lossy()
-                            ));
+                            stdout.push_str(&format!("{}\n", entry.file_name().to_string_lossy()));
                         }
                     }
                     Err(e) => {

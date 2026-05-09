@@ -54,7 +54,7 @@ class BaseAgent(ABC):
         self._client: httpx.AsyncClient = httpx.AsyncClient(timeout=300)
 
     @abstractmethod
-    async def execute(
+    def execute(
         self, task: dict, conversation_id: str
     ) -> AsyncGenerator[dict, None]:
         """Execute a task step and yield structured chunks."""

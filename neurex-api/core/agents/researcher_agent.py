@@ -47,7 +47,7 @@ class ResearcherAgent(BaseAgent):
     system_prompt: str = RESEARCHER_SYSTEM
     agent_type: str = "researcher"
 
-    async def execute(
+    def execute(
         self, task: dict, conversation_id: str
     ) -> AsyncGenerator[dict, None]:
         description = task.get("description", "")

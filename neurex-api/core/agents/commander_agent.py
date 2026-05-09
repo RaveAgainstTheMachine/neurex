@@ -41,7 +41,7 @@ JSON Schema:
 class CommanderAgent(BaseAgent):
     agent_type = "commander"
 
-    async def execute(self, task: dict, conversation_id: str) -> AsyncGenerator[dict, None]:
+    def execute(self, task: dict, conversation_id: str) -> AsyncGenerator[dict, None]:
         intel = await self.mcp.call("query_project_intel", {}, conversation_id=conversation_id)
         progress = task.get("progress_summary", "")
         error = task.get("current_error", "")

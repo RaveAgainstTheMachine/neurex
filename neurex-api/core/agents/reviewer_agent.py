@@ -33,7 +33,7 @@ class ReviewerAgent(BaseAgent):
     system_prompt: str = REVIEWER_SYSTEM
     agent_type: str = "reviewer"
 
-    async def execute(
+    def execute(
         self, task: dict, conversation_id: str
     ) -> AsyncGenerator[dict, None]:
         description = task.get("description", "")

@@ -314,7 +314,6 @@ class Orchestrator:
                             "id": node.id,
                             "title": node.title,
                             "description": node.description,
-                            "context": node.context,
                             "history": history_context,
                             "model": model_name,
                             "params": model_params,
