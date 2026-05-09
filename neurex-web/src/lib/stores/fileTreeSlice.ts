@@ -86,11 +86,13 @@ export const createFiletreeSlice: StoreSlice<NeurexStore> = (set, get) => ({
       await get().refreshFileTree();
     },
 
-    removeWorkspaceFolder: (path: string) => set((s) => {
-      s.workspaceFolders = s.workspaceFolders.filter(p => p !== path);
-      localStorage.setItem("neurex_workspace_folders", JSON.stringify(s.workspaceFolders));
-      get().refreshFileTree();
-    }),
+    removeWorkspaceFolder: async (path: string) => {
+      set((s) => {
+        s.workspaceFolders = s.workspaceFolders.filter(p => p !== path);
+        localStorage.setItem("neurex_workspace_folders", JSON.stringify(s.workspaceFolders));
+      });
+      await get().refreshFileTree();
+    },
 
     setWorkspace: async (path: string) => {
       try {

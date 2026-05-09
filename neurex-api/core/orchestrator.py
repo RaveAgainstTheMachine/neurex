@@ -366,7 +366,8 @@ class Orchestrator:
                         log.error("orchestrator.task_failed", task_id=node.id, error=str(e))
                         await update_task(self.session, node.id, TaskStatus.FAILED, error=str(e))
                         yield {"event": "task_updated", "data": {"id": node.id, "status": TaskStatus.FAILED}}
-                        return
+                        active_node_id = None
+                        continue
         except Exception as e:
             log.critical("orchestrator.resume_crashed", graph_id=graph_id, error=str(e), exc_info=True)
             if active_node_id:

@@ -1,8 +1,4 @@
-"""
-core/security/governance.py
-Swarm Self-Governance (Autonomous RBAC).
-Manages dynamic permission escalations and consensus-linked security gates.
-"""
+import os
 from __future__ import annotations
 import structlog
 from typing import List, Dict, Any, Set
@@ -45,8 +41,9 @@ class GovernanceManager:
 
     def is_authorized(self, task_id: str, path: str) -> bool:
         """Checks if a path is authorized for a specific task."""
-        # Check global safe paths (e.g. within workspace)
-        if path.startswith("/games/CodeProjects/AntiGravity/Neurex"):
+        # Check global safe paths (e.g. within current project root)
+        cwd = os.getcwd()
+        if path.startswith(cwd):
              return True
              
         # Check dynamic grants
