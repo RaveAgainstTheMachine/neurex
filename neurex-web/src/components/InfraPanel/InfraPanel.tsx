@@ -578,8 +578,6 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
           </div>
         </div>
       )}
-        </div>
-      )}
 
       {showRolePrompt && (
         <div className="infra-modal-overlay" onClick={() => setShowRolePrompt(false)}>
@@ -630,7 +628,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
           </div>
         </div>
       )}
-      </div>
+    </div>
     </>
   );
 }
