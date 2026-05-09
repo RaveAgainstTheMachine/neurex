@@ -82,6 +82,17 @@ jobs:
         with:
           workspaces: neurex-cli
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build Frontend
+        run: |
+          cd neurex-web
+          npm install
+          npm run build
+
       - name: Build CLI
         run: |
           cd neurex-cli
