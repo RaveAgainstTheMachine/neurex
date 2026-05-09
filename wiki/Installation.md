@@ -59,22 +59,33 @@ cd neurex
 
 ## 🐧 OS-Specific Setup
 
-### Linux (Ubuntu / Arch / Debian)
+### Linux Setup
 
+#### Ubuntu / Debian / Pop!_OS
 1.  **Docker Setup**:
     ```bash
     sudo apt-get update
     sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin
     sudo usermod -aG docker $USER
     ```
-2.  **GPU Acceleration (NVIDIA)**:
-    Install the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) to allow Docker to access your GPU.
-3.  **Firewall (UFW)**:
-    Neurex requires ports `3000` (Web) and `8000` (API) to be open for LAN access.
+
+#### Arch Linux / EndeavourOS / Manjaro
+1.  **Docker Setup**:
     ```bash
-    sudo ufw allow 3000/tcp
-    sudo ufw allow 8000/tcp
+    sudo pacman -S docker docker-compose
+    sudo systemctl enable --now docker
+    sudo usermod -aG docker $USER
     ```
+
+#### GPU Acceleration (NVIDIA)
+Install the [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html) to allow Docker to access your GPU.
+
+#### Firewall (UFW)
+Neurex requires ports `3000` (Web) and `8000` (API) to be open for LAN access.
+```bash
+sudo ufw allow 3000/tcp
+sudo ufw allow 8000/tcp
+```
 
 ### Windows (WSL2)
 
