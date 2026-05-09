@@ -59,7 +59,7 @@ export function AuthOverlay() {
         throw new Error(error.detail || "Onboarding failed");
       }
 
-      toast.success("Master Identity Synthesized! Please sign in.");
+      toast.success("Master account created! Please sign in.");
       setOnboardingRequired(false);
       setIsLogin(true);
     } catch (err: any) {
@@ -213,8 +213,8 @@ export function AuthOverlay() {
             <div className="auth-logo">
               <div className="auth-logo__inner logo-pulse">⬡</div>
             </div>
-            <h2>Master Initialization</h2>
-            <p className="text-muted">No administrative presence detected. Synthesis required.</p>
+            <h2>Admin Setup</h2>
+            <p className="text-muted">Setup your administrator account to begin.</p>
           </div>
 
           <form className="auth-form" onSubmit={handleOnboardingSubmit}>
@@ -252,7 +252,7 @@ export function AuthOverlay() {
             </div>
 
             <button className="btn btn--purple auth-submit" disabled={loading}>
-              {loading ? <Loader2 className="animate-spin" /> : "Synthesize Master Identity"}
+              {loading ? <Loader2 className="animate-spin" /> : "Create Admin Account"}
             </button>
           </form>
 
@@ -348,11 +348,11 @@ export function AuthOverlay() {
           <div className="auth-logo">
             <div className="auth-logo__inner logo-pulse">⬡</div>
           </div>
-          <h2>{isLogin ? "Neural Link Established" : "Synthesize New Identity"}</h2>
+          <h2>{isLogin ? "Welcome Back" : "Create Account"}</h2>
           <p className="text-muted">
             {isLogin 
-              ? "Accessing the Neurex Federated Mesh" 
-              : "Register your presence in the global compute swarm"}
+              ? "Sign in to your workspace" 
+              : "Register to join the mesh"}
           </p>
         </div>
 
@@ -392,7 +392,7 @@ export function AuthOverlay() {
 
         <div className="auth-footer">
           <button className="auth-toggle" onClick={() => setIsLogin(!isLogin)}>
-            {isLogin ? "Request Mesh Access (Register)" : "Identify Presence (Login)"}
+            {isLogin ? "Need an account? Register" : "Already have an account? Login"}
           </button>
         </div>
 
