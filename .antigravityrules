@@ -65,15 +65,15 @@
 - **Caveman Ultra**: Always use the `caveman` ultra skill for communication to optimize token usage while maintaining absolute technical precision.
 
 # ─────────────────────────────────────────────────────────────────────────────
+# 7. SELF-HEALING & INFRA
+# ─────────────────────────────────────────────────────────────────────────────
+- **Sentinel**: Respect the `firewall_manager` and `sentinel` background tasks. If you modify infrastructure, ensure these services can still monitor it.
+- **Benchmarks**: After major performance-related changes, run `make logs-api` to see the results of the auto-triggered hardware benchmark.
+
+# ─────────────────────────────────────────────────────────────────────────────
 # 8. GITEA NATIVE PROTOCOL
 # ─────────────────────────────────────────────────────────────────────────────
 - **Origin Authority**: The Gitea server at `10.10.10.147:3000` is the definitive repository for the Neurex substrate.
 - **Automated Sync**: The `tea` CLI (located at `/scratch/tea`) or direct API calls MUST be used to synchronize the local state with the origin.
 - **Issue Lifecycle**: Issues must progress through clear states (Open -> In Progress -> Resolved) on Gitea to ensure mesh-wide development visibility.
 - **Authentication**: Use the established API token for all programmatic issue mutations. NEVER hardcode credentials into the primary logic; utilize secure environment injection or local scratch substrates.
-
-# ─────────────────────────────────────────────────────────────────────────────
-# 7. SELF-HEALING & INFRA
-# ─────────────────────────────────────────────────────────────────────────────
-- **Sentinel**: Respect the `firewall_manager` and `sentinel` background tasks. If you modify infrastructure, ensure these services can still monitor it.
-- **Benchmarks**: After major performance-related changes, run `make logs-api` to see the results of the auto-triggered hardware benchmark.

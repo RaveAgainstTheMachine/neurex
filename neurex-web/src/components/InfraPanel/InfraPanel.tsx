@@ -35,6 +35,8 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
   const [selectedVariant, setSelectedVariant] = useState<string>("");
   const [quantization, setQuantization] = useState("4-bit (Fastest)");
   const [showDashboard, setShowDashboard] = useState(false);
+  const [showRolePrompt, setShowRolePrompt] = useState(false);
+  const [newRoleName, setNewRoleName] = useState("");
 
   useEffect(() => {
     fetchData();
@@ -96,10 +98,9 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
     }
   };
 
-  const handleAddRoute = async () => {
-    const role = prompt("Enter new cognitive role name (e.g. Documentation):");
-    if (!role) return;
-    handleUpdateRoute(role, modelOptions[0] || "qwen2.5-coder:14b");
+  const handleAddRoute = () => {
+    setNewRoleName("");
+    setShowRolePrompt(true);
   };
 
   const handleDeleteRoute = async (role: string) => {
@@ -572,6 +573,58 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
                 }}
               >
                 {loading ? "Initializing..." : (selectedModel.is_downloaded ? "Redeploy (Update)" : "Start Deployment")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+        </div>
+      )}
+
+      {showRolePrompt && (
+        <div className="infra-modal-overlay" onClick={() => setShowRolePrompt(false)}>
+          <div className="infra-modal" style={{ maxWidth: '400px' }} onClick={e => e.stopPropagation()}>
+            <div className="infra-modal__header">
+              <div className="infra-modal__title-group">
+                <Brain size={18} className="text-purple" />
+                <h3>Add Cognitive Role</h3>
+              </div>
+              <button className="infra-modal__close" onClick={() => setShowRolePrompt(false)}>
+                <X size={18} />
+              </button>
+            </div>
+            <div className="infra-modal__content">
+              <div className="config-item full-width">
+                <span>Role Name (e.g., Documentation, Critic)</span>
+                <input 
+                  autoFocus
+                  className="settings-input"
+                  style={{ width: '100%', padding: '0.5rem', background: 'var(--bg-dark)', color: '#fff', border: '1px solid var(--border)', borderRadius: '4px', marginTop: '0.5rem' }}
+                  value={newRoleName}
+                  onChange={(e) => setNewRoleName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && newRoleName.trim()) {
+                      handleUpdateRoute(newRoleName.trim(), modelOptions[0] || "qwen2.5-coder:14b");
+                      setShowRolePrompt(false);
+                      setNewRoleName("");
+                    }
+                  }}
+                  placeholder="Enter role name..."
+                />
+              </div>
+            </div>
+            <div className="infra-modal__footer">
+              <button className="btn btn--outline" onClick={() => setShowRolePrompt(false)}>Cancel</button>
+              <button 
+                className="btn btn--purple"
+                disabled={!newRoleName.trim()}
+                onClick={() => {
+                  handleUpdateRoute(newRoleName.trim(), modelOptions[0] || "qwen2.5-coder:14b");
+                  setShowRolePrompt(false);
+                  setNewRoleName("");
+                }}
+              >
+                Add Role
               </button>
             </div>
           </div>

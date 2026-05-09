@@ -12,54 +12,36 @@ log = structlog.get_logger()
 CHROMA_DB_DIR  = os.getenv("CHROMA_DB_DIR", "/games/AI/chroma_db")
 COLLECTION     = "neurex_codebase"
 
-CONTEXT_WINDOW   = 8192
-SYSTEM_BUDGET    = 1500
-RAG_BUDGET       = 2000
-TOOL_OUTPUT_MAX  = 1000
-HISTORY_BUDGET   = CONTEXT_WINDOW - SYSTEM_BUDGET - RAG_BUDGET - 512
+    def get_budgets(self, model_name: str | None = None) -> dict[str, int]:
+        cw = 8192
+        if model_name:
+            from core.infrastructure.manager import infrastructure_manager
+            registry = infrastructure_manager.get_merged_registry()
+            for m in registry:
+                name = m.get("name", "")
+                if name == model_name or name.split(":")[0] == model_name.split(":")[0]:
+                    cw = m.get("context_window", cw)
+                    break
+        
+        sys = min(2000, int(cw * 0.15))
+        rag = min(8000, int(cw * 0.25))
+        tool = min(2000, int(cw * 0.1))
+        hist = max(1000, cw - sys - rag - 512)
+        
+        return {
+            "CONTEXT_WINDOW": cw,
+            "SYSTEM_BUDGET": sys,
+            "RAG_BUDGET": rag,
+            "TOOL_OUTPUT_MAX": tool,
+            "HISTORY_BUDGET": hist
+        }
 
-
-class ContextManager:
-    def __init__(self):
-        self._chroma = None
-        self._collection = None
-        self._embedder = None
-        self._reranker = None
-        self._enc = None
-        self._available = False
-        from core.context.neural_explorer import NeuralExplorer
-        self.explorer = NeuralExplorer(self)
-
-        try:
-            import tiktoken
-            self._enc = tiktoken.get_encoding("cl100k_base")
-        except Exception:
-            log.warning("context.tiktoken_unavailable", hint="Token counting disabled")
-
-        try:
-            from core.memory.embedder import Embedder, Reranker
-            self._embedder = Embedder()
-            self._reranker = Reranker()
-        except Exception as e:
-            log.warning("context.embedder_unavailable", error=str(e))
-
-    def _get_collection(self):
-        """Synchronous retrieval of collection from PersistentClient."""
-        if self._chroma is None:
-            try:
-                import chromadb
-                self._chroma = chromadb.PersistentClient(path=CHROMA_DB_DIR)
-                self._collection = self._chroma.get_or_create_collection(COLLECTION)
-                self._available = True
-            except Exception as e:
-                log.warning("context.chroma_unavailable", error=str(e))
-                self._available = False
-        return self._collection
-
-    async def retrieve(self, query: str, n_results: int = 20) -> list[dict]:
+    async def retrieve(self, query: str, n_results: int = 20, model_name: str | None = None) -> list[dict]:
         """Embed → ANN search → rerank → return top-k within budget."""
         if not self._embedder:
             return []
+            
+        rag_budget = self.get_budgets(model_name)["RAG_BUDGET"]
 
         try:
             embedding = await self._embedder.embed(query)
@@ -89,15 +71,15 @@ class ContextManager:
 
             if self._reranker:
                 reranked = self._reranker.rerank(query, candidates, top_k=10)
-                return self._budget_chunks(reranked, RAG_BUDGET)
-            return self._budget_chunks(candidates[:10], RAG_BUDGET)
+                return self._budget_chunks(reranked, rag_budget)
+            return self._budget_chunks(candidates[:10], rag_budget)
 
         except Exception as e:
             log.error("context.retrieve_error", error=str(e))
             return []
 
-    def trim_history(self, messages: list[dict], reserved_tokens: int = 0) -> list[dict]:
-        budget = HISTORY_BUDGET - reserved_tokens
+    def trim_history(self, messages: list[dict], reserved_tokens: int = 0, model_name: str | None = None) -> list[dict]:
+        budget = self.get_budgets(model_name)["HISTORY_BUDGET"] - reserved_tokens
         system = [m for m in messages if m["role"] == "system"]
         history = [m for m in messages if m["role"] != "system"]
         while history and self._count_tokens(history) > budget:
@@ -107,9 +89,9 @@ class ContextManager:
                 history = []
         return system + history
 
-    async def trim_with_summary(self, messages: list[dict], reserved_tokens: int = 0) -> list[dict]:
-        trimmed = self.trim_history(messages, reserved_tokens)
-        budget = HISTORY_BUDGET - reserved_tokens
+    async def trim_with_summary(self, messages: list[dict], reserved_tokens: int = 0, model_name: str | None = None) -> list[dict]:
+        trimmed = self.trim_history(messages, reserved_tokens, model_name)
+        budget = self.get_budgets(model_name)["HISTORY_BUDGET"] - reserved_tokens
         if self._count_tokens(trimmed) <= budget:
             return trimmed
         from core.agents.summarizer_agent import SummarizerAgent
@@ -124,11 +106,12 @@ class ContextManager:
         summary_msg = {"role": "system", "content": f"[Earlier context summary]\n{summary_text}"}
         return system + [summary_msg] + to_keep
 
-    def truncate_tool_output(self, output: str) -> str:
+    def truncate_tool_output(self, output: str, model_name: str | None = None) -> str:
+        max_tool = self.get_budgets(model_name)["TOOL_OUTPUT_MAX"]
         tokens = self._count_tokens([{"role": "tool", "content": output}])
-        if tokens <= TOOL_OUTPUT_MAX:
+        if tokens <= max_tool:
             return output
-        return output[:TOOL_OUTPUT_MAX * 4] + "\n... [truncated]"
+        return output[:max_tool * 4] + "\n... [truncated]"
 
     def _count_tokens(self, messages: list[dict]) -> int:
         if not self._enc:

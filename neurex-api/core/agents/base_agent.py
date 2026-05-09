@@ -11,6 +11,7 @@ from __future__ import annotations
 import os
 import asyncio
 from abc import ABC, abstractmethod
+import json
 from typing import AsyncGenerator, Any
 
 import httpx
@@ -68,7 +69,6 @@ class BaseAgent(ABC):
         intel_path = os.path.join(ws, ".neurex", "intel.json")
         if os.path.exists(intel_path):
             try:
-                import json
                 with open(intel_path, "r") as f:
                     intel = json.load(f)
                     intel_str = json.dumps(intel, indent=2)
@@ -81,7 +81,6 @@ class BaseAgent(ABC):
         try:
             sp = await get_scratchpad(conversation_id)
             if sp:
-                import json
                 sp_str = json.dumps(sp, indent=2)
                 parts.append(f"\n\n<shared_scratchpad>\n{sp_str}\n</shared_scratchpad>")
         except Exception:
@@ -165,7 +164,6 @@ class BaseAgent(ABC):
                 async for line in resp.aiter_lines():
                     if not line: continue
                     try:
-                        import json
                         data = json.loads(line)
                     except (json.JSONDecodeError, ValueError): continue
                     
