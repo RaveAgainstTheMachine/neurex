@@ -1,7 +1,7 @@
 // src/components/AboutPanel/AboutPanel.tsx
 import React from 'react';
 import { motion } from 'framer-motion';
-import { X, Github, Globe, Shield, Zap, Cpu } from 'lucide-react';
+import { X, GitBranch, Globe, Shield, Zap, Cpu } from 'lucide-react';
 import { useStore } from '../../lib/store';
 import './AboutPanel.css';
 
@@ -75,7 +75,7 @@ export function AboutPanel() {
             </div>
             <div className="about-links">
               <a href="https://github.com/RaveAgainstTheMachine/neurex" target="_blank" rel="noreferrer">
-                <Github size={16} /> GitHub
+                <GitBranch size={16} /> GitHub
               </a>
               <a href="https://github.com/RaveAgainstTheMachine/neurex/wiki" target="_blank" rel="noreferrer">
                 <Globe size={16} /> Wiki
