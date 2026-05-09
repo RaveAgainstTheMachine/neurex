@@ -47,8 +47,7 @@ jobs:
       - name: Build and Push Sandbox
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./neurex-api/sandbox/Dockerfile
+          context: ./neurex-sandbox
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/neurex-sandbox:latest,${{ secrets.DOCKERHUB_USERNAME }}/neurex-sandbox:${{ github.ref_name }}
 
