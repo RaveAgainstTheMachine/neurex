@@ -23,7 +23,7 @@ The Neurex Mesh has successfully evolved far beyond a Sentient IDE, achieving **
 - **Implementation**: `core/orchestrator.py`, `core/settings/manager.py`, `neurex-web/src/components/InfraPanel`.
 - **Verdict**: The Neurex substrate has transitioned from static model recommendations to a dynamic, user-configurable functional topology. Agents are now decoupled from specific models, resolving their cognitive drivers through a centralized routing registry.
 - **Findings**:
-    - **Routing Substrate (Gitea #18)**: Successfully integrated the `model_routes` map into the `Orchestrator`. Task-specific roles (Planning, Coding, Reviewing) now resolve dynamically at runtime, enabling on-the-fly model swaps.
+    - **Routing Substrate (Issue #18)**: Successfully integrated the `model_routes` map into the `Orchestrator`. Task-specific roles (Planning, Coding, Reviewing) now resolve dynamically at runtime, enabling on-the-fly model swaps.
     - **InfraPanel Refactor**: Rebuilt the infrastructure hub with a high-density **Model Routing Grid**. Users can now autonomously manage their AI swarm's functional bindings with a premium, tactile UI.
     - **Type System Hardening**: Strengthened the substrate's structural integrity by formalizing the `Settings` interface and eliminating `any/unknown` type anomalies across the frontend store.
 
@@ -65,19 +65,19 @@ The Neurex Mesh has successfully evolved far beyond a Sentient IDE, achieving **
 - **Verdict**: The Infrastructure NOC has achieved deep hardware observability. The unification of CPU/GPU telemetry and the normalization of storage paths has eliminated the "Observability Gap" for multi-disk deployments.
 - **Findings**: Unified spec columns in the UI have significantly improved scannability; path-normalization has resolved the 404/0.00GB reporting anomalies in the backend.
 
-### 2.12 Phase 55.1: Gitea Native Native Integration & Llama.cpp Expansion (Status: AWAITING VERIFICATION)
+### 2.12 Phase 55.1: Native Engine Integration & Llama.cpp Expansion (Status: AWAITING VERIFICATION)
 - **Implementation**: `core/infrastructure/manager.py`, `neurex-api/api/routes/skills.py`, `neurex-web/src/lib/api.ts`.
 - **Verdict**: The Mesh now supports native GGUF pulling for Llama.cpp engines and is protected against recursive authorization reload loops.
 - **Findings**:
-    - **Llama.cpp Pull (Gitea #10)**: Integrated `huggingface_hub` for direct GGUF acquisition. Normalizes `llamacpp` and `llama.cpp` nomenclature.
-    - **401 Loop Fix (Gitea #11)**: Conditional logout logic in `api.ts` prevents infinite reloads. Skills discovery route relaxed to allow unauthenticated discovery while protecting mutations.
-    - **Agent Type Null-Safety (Gitea #12)**: Implemented `toUpperCase()` guards in `AgentPanel` and `FlightRecorder` to prevent crashes when agent identifiers are missing from telemetry.
+    - **Llama.cpp Pull (Issue #10)**: Integrated `huggingface_hub` for direct GGUF acquisition. Normalizes `llamacpp` and `llama.cpp` nomenclature.
+    - **401 Loop Fix (Issue #11)**: Conditional logout logic in `api.ts` prevents infinite reloads. Skills discovery route relaxed to allow unauthenticated discovery while protecting mutations.
+    - **Agent Type Null-Safety (Issue #12)**: Implemented `toUpperCase()` guards in `AgentPanel` and `FlightRecorder` to prevent crashes when agent identifiers are missing from telemetry.
 
 ### 2.13 Phase 55.2: Self-Healing LLM Infrastructure (Status: RESOLVED)
 - **Implementation**: `core/observability/service_sentinel.py`, `neurex-api/main.py`.
 - **Verdict**: Neurex now autonomously detects and restores failed LLM engines (Ollama, llama.cpp, vLLM) on startup and during runtime.
 - **Findings**:
-    - **Proactive Recovery (Gitea #13)**: The API now triggers an engine-start sequence on lifespan initialization if the default model provider is unreachable.
+    - **Proactive Recovery (Issue #13)**: The API now triggers an engine-start sequence on lifespan initialization if the default model provider is unreachable.
     - **Sentinel Upgrade**: The Service Sentinel is now host-aware, eliminating the dependency on Docker for core LLM serving in hybrid environments.
     - **Connection Resiliency**: Resolved "Critical planning failure: All connection attempts failed" by ensuring Ollama is active and correctly configured models are pre-pulled.
 
@@ -85,17 +85,17 @@ The Neurex Mesh has successfully evolved far beyond a Sentient IDE, achieving **
 - **Implementation**: `core/task_graph.py`, `api/websocket.py`.
 - **Verdict**: Resolved "Critical planning failure: greenlet_spawn has not been called" by stabilizing the SQLAlchemy async lifecycle.
 - **Findings**:
-    - **Session Persistence (Gitea #14)**: Disabled `expire_on_commit` globally for orchestrator sessions. This prevents objects from becoming stale after a transaction, allowing safe access to task history in synchronous formatting blocks (e.g., during context summarization).
+    - **Session Persistence (Issue #14)**: Disabled `expire_on_commit` globally for orchestrator sessions. This prevents objects from becoming stale after a transaction, allowing safe access to task history in synchronous formatting blocks (e.g., during context summarization).
     - **Hybrid IO Isolation**: Hardened the WebSocket handler against concurrency races between chat persistence and task orchestration.
 
 ### 2.15 Phase 60: Secure LAN Sovereignty (Status: RESOLVED)
 - **Implementation**: `neurex-cli/src/api.rs`, `neurex-cli/src/main.rs`, `neurex-api/main.py`.
 - **Verdict**: Neurex has achieved production-grade security for local network and mobile deployment. The substrate now enforces mandatory HTTPS through a zero-latency browser-side redirect and a hardened dual-protocol listener.
 - **Findings**:
-    - **Protocol Sentinel (Gitea #15)**: The Axum control plane now serves a protocol-aware landing page that autonomously upgrades unencrypted HTTP requests to HTTPS, ensuring total data privacy without backend handshake overhead.
-    - **Transparent Proxy (Gitea #16)**: Integrated standard `X-Forwarded-*` headers into the substrate proxy. This maintains full protocol and host awareness for the backend, resolving previous authentication loops on mobile devices.
+    - **Protocol Sentinel (Issue #15)**: The Axum control plane now serves a protocol-aware landing page that autonomously upgrades unencrypted HTTP requests to HTTPS, ensuring total data privacy without backend handshake overhead.
+    - **Transparent Proxy (Issue #16)**: Integrated standard `X-Forwarded-*` headers into the substrate proxy. This maintains full protocol and host awareness for the backend, resolving previous authentication loops on mobile devices.
     - **Granular CORS Sovereignty**: Dynamic origin whitelisting has eliminated cross-origin blocking for LAN-based credential requests, enabling seamless multi-device collaboration.
-    - **Chat Affordance (Gitea #17)**: Added high-visibility send mechanics to the AI chat interface, optimizing the interaction loop for mobile and desktop surfaces.
+    - **Chat Affordance (Issue #17)**: Added high-visibility send mechanics to the AI chat interface, optimizing the interaction loop for mobile and desktop surfaces.
 
 ## 3. Detected Technical Debt & Risks
 - **Temporal Desync**: Reverting to snapshots with active external bridges can cause state mismatches if the external node has cycled. Recommended: Implement a 'bridge-drain' protocol before snapshot restoration.

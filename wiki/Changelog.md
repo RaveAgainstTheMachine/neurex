@@ -2,6 +2,22 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
+## [0.5.2] - 2026-05-09: ARCHITECTURAL REMEDIATION & PUBLIC RELEASE
+### Added
+- **Final Architectural Remediations**: Completed Tier 1, 2, and 3 code audit fixes to ensure production stability.
+- **Frontend Store Modularization**: Successfully refactored the monolithic 526-line `store.ts` into seven domain-specific slices (`auth`, `chat`, `editor`, `fileTree`, `infra`, `system`, `task`).
+- **Attribution & Licensing**: Formally adopted the **Business Source License 1.1** (BSL) and created `CREDITS.md` to credit the open-source substrate.
+- **Enhanced Orchestrator Resilience**: Modified the execution loop to prevent a single task failure from aborting the entire graph, enabling continued operation of independent tasks.
+- **Dynamic Governance Root**: Replaced hardcoded project paths in `GovernanceManager` with dynamic workspace resolution based on `os.getcwd()`.
+- **Async File Tree Operations**: Converted `removeWorkspaceFolder` to an asynchronous operation with proper state synchronization.
+
+### Fixed
+- **Bare Except Purge**: Eliminated all 29 occurrences of bare `except:` clauses in the backend, replacing them with specific error handling and logging.
+- **Print Statement Removal**: Purged all remaining `print()` calls in favor of structured `structlog` telemetry.
+- **TypeScript Type Hardening**: Fixed multiple type regressions in `ActivityBar`, `BottomPanel`, and `InfraPanel` caused by the store split.
+- **P0 Orchestrator Crash**: Resolved a critical failure in `orchestrator.py` by replacing invalid `hive_mind.store()` calls with the persistent `remember()` method.
+- **Security Guardrails**: Added `private_key.pem` and `public_key.pem` to `.gitignore` and established a key rotation protocol.
+
 ## [0.3.0] - 2026-05-01: THE SENTIENT SINGULARITY
 ### Added
 - **Phase 50: The Sentient Singularity**: Implemented autonomous goal setting and self-generating plugins, enabling the Mesh to direct its own evolution.

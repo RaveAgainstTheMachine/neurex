@@ -7,8 +7,9 @@
   <h3>The Universal Sentient IDE Substrate & Neural Mesh Hub</h3>
 
   <p>
-    <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-purple.svg?style=for-the-badge" alt="License"></a>
-    <a href="#"><img src="https://img.shields.io/badge/Version-v0.4.1--DYNAMIC-blueviolet.svg?style=for-the-badge" alt="Version"></a>
+  <p>
+    <a href="./LICENSE"><img src="https://img.shields.io/badge/License-BSL%201.1-purple.svg?style=for-the-badge" alt="License"></a>
+    <a href="#"><img src="https://img.shields.io/badge/Version-v0.5.2--DYNAMIC-blueviolet.svg?style=for-the-badge" alt="Version"></a>
     <a href="#"><img src="https://img.shields.io/badge/Status-Phase%2061%20Stable-success.svg?style=for-the-badge" alt="Status"></a>
     <a href="#"><img src="https://img.shields.io/badge/Platform-Linux%20%7C%20macOS%20%7C%20Win-white.svg?style=for-the-badge" alt="Platform"></a>
   </p>
@@ -28,7 +29,7 @@
   <p align="center">
     <a href="./wiki/Home.md"><b>Documentation</b></a> •
     <a href="./wiki/Changelog.md"><b>Changelog</b></a> •
-    <a href="http://10.10.10.147:3000/frosty/neurex/issues"><b>Report Bug</b></a> •
+    <a href="./CREDITS.md"><b>Credits</b></a> •
     <a href="./ROADMAP.md"><b>Roadmap</b></a>
   </p>
 </div>
@@ -42,23 +43,23 @@
 
 ## 🚀 Key Pillars
 
-### 🧠 Sentient Autonomy
-*   **Dynamic Model Routing**: Decoupled cognitive roles (Planning, Coding, Reviewing) with on-the-fly model remapping.
-*   **Infrastructure NOC**: Real-time telemetry for storage health, multi-disk environments, and "Hot/Cold" model states.
-*   **Neural Self-Repair**: Autonomous agents that detect, analyze, and fix their own regressions in real-time.
-*   **Neural Linter**: Architectural validation of every code mutation against project-specific design laws.
-*   **Swarm Consensus**: Democratic governance for critical assets, requiring multi-agent approval for core mutations.
+### 🧠 Distributed Orchestration
+*   **Role-Based Model Routing**: Decoupled cognitive topology allowing runtime re-mapping of models to specific functional roles (Planning, Coding, Reviewing).
+*   **Swarm Consensus Protocol**: Democratic mutation gates requiring multi-agent validation for core architectural changes.
+*   **Persistent Task Graphs**: SQLite-backed DAGs for complex, multi-step engineering missions with crash-resilient recovery.
+*   **Neural Linter**: Real-time validation of code mutations against AST-derived architectural laws and design tokens.
 
-### ⚡ Kinetic Performance
-*   **Hermetic Substrate**: Zero-dependency distribution via a native Rust daemon and autonomous `uv` provisioning.
-*   **Glassmorphic UI**: A high-fidelity, GPU-accelerated interface designed for deep architectural focus.
-*   **Predictive Prefetching**: Eliminates cold-start latency by warming model weights based on agent trajectory.
+### ⚡ Hermetic Substrate
+*   **Native Control Plane**: High-performance Rust daemon for hardware diagnostics, lifecycle management, and zero-trust proxying.
+*   **Autonomous Provisioning**: Self-contained Python runtime and dependency isolation via the `uv` engine, eliminating host environment pollution.
+*   **Multi-Tier Sandboxing**: Isolated execution environments using Docker and WASM/WASI for secure, non-destructive agent operations.
+*   **Accelerated Telemetry**: Buffered, non-blocking I/O and `orjson` serialization for sub-ms observability throughput.
 
-### 🌐 Universal Connectivity
-*   **Secure LAN Sovereignty**: Enforced HTTPS and transparent proxying for secure multi-device collaboration.
-*   **Federated RAG 2.0**: Semantic and relational retrieval across the entire Mesh.
-*   **Neural Virtualization**: Mesh-wide VRAM pooling and autonomous re-quantization to fit distributed hardware.
-*   **Native Gitea Sync**: Professional issue tracking and substrate synchronization directly with the origin server.
+### 🌐 Neural Mesh & Virtualization
+*   **VRAM Resource Pooling**: Mesh-wide aggregation of distributed GPU memory into a unified virtual compute substrate.
+*   **Dynamic Re-Quantization**: Autonomous model precision shifting (e.g., Q8 to IQ2) to maintain reasoning throughput under hardware pressure.
+*   **Federated RAG 2.0**: Relational and semantic retrieval across the entire mesh using ChromaDB and cross-node tensor pooling.
+*   **Predictive Weight Prefetching**: Heuristic-driven model warming based on agent trajectory to eliminate cold-start inference latency.
 
 ---
 
@@ -156,6 +157,18 @@ cargo run -- start
 
 ## 📜 Source of Law
 Neurex development is governed by the **Anti-Gravity Protocol** (see `.antigravityrules`). All mutations must be protocol-aligned, documented, and verified by the Neural Linter.
+
+---
+
+## ⚖️ Licensing
+
+Neurex is licensed under the **Business Source License 1.1** (BSL). 
+
+- **Non-Commercial Use**: Completely free for personal and educational use.
+- **Commercial Use**: Free for entities with annual gross revenue below **$5,000,000 USD**.
+- **Change Date**: On **January 1, 2030**, the license will automatically convert to the **Apache License, Version 2.0**.
+
+For full details, please refer to the [LICENSE](./LICENSE) file.
 
 ---
 
