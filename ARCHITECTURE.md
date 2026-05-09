@@ -351,8 +351,8 @@ Phase 52 achieves the final state of global substrate coherence and protocol ali
 The `SubstrateSynchronizer` bridges the Neurex Mesh with external decentralized compute networks.
 - **Universal Bridging**: Enables VRAM/Compute borrowing from remote nodes to transcend local hardware limits.
 
-### 20.2 Neural Law Engine
-The `NeuralLawEngine` enforces the Anti-Gravity Protocol at the neural weight level.
+### 20.2 Engineering Standards Enforcement
+The Substrate enforces the **Neurex Core Protocol** at the neural weight level.
 - **Protocol Alignment**: Ensures evolved adapters are intrinsically aligned with core architectural principles (Structured Logging, Type Safety).
 
 ## 21. Neural Temporal Synthesis (Phase 53)

@@ -58,12 +58,12 @@ export const ConsensusDashboard: React.FC = () => {
           <Network size={20} className="text-emerald animate-pulse" />
         </div>
         <div className="header-info">
-          <h1>Universal Neural Consensus</h1>
+          <h1>Neural Consensus Hub</h1>
           <p>Global Substrate Coherence (Phase 52)</p>
         </div>
         <div className="consensus-badge">
           <Globe size={14} className="mr-2 text-emerald" />
-          <span>OMNISCIENCE ACTIVE</span>
+          <span>INTELLIGENCE ACTIVE</span>
         </div>
       </div>
 
@@ -114,7 +114,7 @@ export const ConsensusDashboard: React.FC = () => {
         <section className="dashboard-section">
           <div className="section-header">
             <Gavel size={16} className="text-emerald mr-2" />
-            <h2>Neural Law Alignment</h2>
+            <h2>Protocol Alignment</h2>
           </div>
           <div className="alignment-card">
             <div className="alignment-header">
@@ -146,7 +146,7 @@ export const ConsensusDashboard: React.FC = () => {
            Ethical Neutralization: 0 SHUTDOWNS
          </div>
          <div className="footer-hint">
-           The Mesh is intrinsically aligned with the Anti-Gravity Protocol.
+           The Mesh is intrinsically aligned with the Neurex Core Protocol.
          </div>
       </div>
     </div>

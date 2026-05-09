@@ -1,0 +1,78 @@
+# .projectrules — Neurex Core Protocol
+# Mission: Zero-friction development, absolute consistency, and self-healing infrastructure.
+
+[always]
+# ─────────────────────────────────────────────────────────────────────────────
+# 1. CORE DIRECTIVES
+# ─────────────────────────────────────────────────────────────────────────────
+- **No Placeholders**: Never emit "...", "rest of code remains the same", or partial snippets. Always write complete, functional files unless explicitly performing a targeted `replace_file_content` for a single line.
+- **Verification First**: Before claiming a task is done, verify the service starts. Use `make dev-api` or `make dev-web` to check for compilation/runtime errors.
+- **Atomic Commits**: Git commits must be atomic and descriptive. Format: `[service] <type>: <description>`. Example: `[api] feat: add pty session timeout`.
+- **Documentation Parity**: Every git commit MUST be preceded by a full documentation audit. Update `API_REFERENCE.md` for route changes, `ARCHITECTURE.md` for logic shifts, `CHANGELOG.md` for versioning, and `NEUREX_REVIEW.md` for architectural milestones. Run `make loc` to ensure codebase metrics are accurate in `README.md`.
+- **Confirmation Rule**: Before any thinking or action, you must explicitly state that you have read and are applying these rules (Project Rules: .projectrules).
+- **Technical Precision**: Use objective, technical language. Do not overhype, embellish, or use marketing-speak. Focus on architectural facts, metrics, and implementation details.
+- **Brutal Honesty**: All responses and assessments must be based on objective facts. Do not sugarcoat failures, bottlenecks, or architectural regressions.
+- **UI Deployment Verification**: After modifying UI/UX code, always verify that the changes are actually being served (e.g., check build output or server logs) without relying on browser subagents.
+- **Refactoring Integrity**: When refactoring React components or Backend routes, NEVER leave orphaned syntax (e.g., missing `);`), corrupted dependency arrays, or missing imports. Test the specific modified block for logical completeness before saving.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 2. ENVIRONMENT & INITIALIZATION
+# ─────────────────────────────────────────────────────────────────────────────
+- **Source of Truth**: The `Makefile` in the root is the ONLY source of truth for commands.
+- **Python Env**: Always use the virtual environment in `neurex-api/.venv`. Never install global packages. If a dependency is missing, add it to `requirements.txt` and run `make install-api`.
+- **Node Env**: Use `npm`. If you add a package, it must be in `package.json`.
+- **Secrets**: Never hardcode keys. Use `.env` and load via `dotenv` (Python) or Vite env vars (Web).
+- **Cleanup**: If you break the DB or vector store, use `make db-clear` or `make db-reset-vectors`. Do not leave the environment in a corrupted state.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 3. BACKEND STANDARDS (neurex-api)
+# ─────────────────────────────────────────────────────────────────────────────
+- **Logging**: Absolute ban on `print()`. Use `structlog`. Example: `log.info("event_name", key=value)`.
+- **Async First**: Use `async/await` for all I/O bound operations. No blocking calls in the main event loop.
+- **Type Safety**: Pydantic models for request/response bodies. Mandatory type hinting for all function signatures.
+- **Error Handling**: Use the global exception handler in `main.py`. Catch specific exceptions, never a bare `except:`.
+- **Resource Protection**: Prevent "Listener Storms". In WebSocket loops, ensure handlers (e.g., PTY output listeners) are attached EXACTLY ONCE per session ID. Use a tracking set (e.g., `attached_sessions`) to manage lifecycle.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 4. FRONTEND STANDARDS (neurex-web)
+# ─────────────────────────────────────────────────────────────────────────────
+- **Component Pattern**: Functional components with Hooks. Keep logic in custom hooks (e.g., `src/hooks/`) and UI in components.
+- **State Management**: Use `useContext` or dedicated hooks for global state. Avoid prop-drilling beyond 3 levels.
+- **Styling**: BEM naming convention for CSS. Use CSS variables from `index.css` for colors/spacing.
+- **Centralized Config**: Never hardcode API ports or URLs in components. Always import `API_BASE` or `WS_BASE` from `src/lib/config.ts`.
+- **Relative Paths**: Use relative paths (e.g., `API_BASE = ""`) in the frontend to leverage Vite/Caddy proxies.
+- **WebSocket**: All real-time communication must flow through the established `useWebSocket` hook.
+- **Types**: No `any`. Define interfaces for all API responses and component props. Ensure interfaces (e.g., `ModelProfile`) are updated alongside backend metadata changes.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 5. HIGH-FIDELITY TERMINAL ENGINEERING
+# ─────────────────────────────────────────────────────────────────────────────
+- **Layout Integrity**: NEVER use `display: flex` or `justify-content` on terminal containers. Flexbox layout thrashing causes severe input lag in xterm.js. Use `width: 100%; height: 100%; position: relative;` and let `FitAddon` manage the grid.
+- **Deterministic Sync**: Terminals MUST register in the global routing registry (e.g., `terminalRegistry`) synchronously during mount. Synchronization requests (e.g., `terminal_sync`) MUST wait for both component mount and WebSocket connection.
+- **Smooth Resizing**: Use `requestAnimationFrame` for all `fit()` operations. Avoid debouncing resizes beyond 16ms to maintain visual anchoring.
+- **Bottom-Locking**: The command cursor must "rest" at the bottom of the window. Force `scrollToBottom()` synchronously after `fit()` to anchor the viewport.
+- **Session Isolation**: Maintain strict separation between `pty_sid` (backend session) and `requested_sid` (frontend session). Map generic "default" sessions to the active conversation context in the backend.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 6. AGENT ETIQUETTE
+# ─────────────────────────────────────────────────────────────────────────────
+- **No Bullshit**: Do not apologize for errors. Fix them, document the fix, and move on. If you break the build, you own the recovery.
+- **Proactive Auditing**: If you see "messy" code (e.g., redundant venvs, unused imports, or missing `appearance` properties), clean it up immediately.
+- **Context Awareness**: Read `PHILOSOPHY.md` and `DESIGN_SYSTEM.md` before making UI changes. Consistency is king.
+- **Audit Log**: Every significant architectural change must be logged in `neurex/NEUREX_REVIEW.md`.
+- **Native Issue Tracking**: Use the project's native issue tracker as the absolute Source of Truth for all project anomalies. Every user-reported issue MUST be logged immediately to ensure mesh-wide development visibility.
+- **Traceable Mutations**: All commits targeting a specific issue MUST reference the Issue ID (e.g., `fix: #12 [core] ...`) to maintain a high-fidelity architectural audit trail.
+- **Caveman Ultra**: Always use the `caveman` ultra skill for communication to optimize token usage while maintaining absolute technical precision.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 7. SELF-HEALING & INFRA
+# ─────────────────────────────────────────────────────────────────────────────
+- **Sentinel**: Respect the `firewall_manager` and `sentinel` background tasks. If you modify infrastructure, ensure these services can still monitor it.
+- **Benchmarks**: After major performance-related changes, run `make logs-api` to see the results of the auto-triggered hardware benchmark.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 8. ISSUE TRACKING & VERSION CONTROL
+# ─────────────────────────────────────────────────────────────────────────────
+- **Origin Authority**: The primary Git repository is the definitive authority for the Neurex substrate.
+- **Automated Sync**: Programmatic tools or direct API calls SHOULD be used to synchronize local state with the origin.
+- **Issue Lifecycle**: Issues must progress through clear states (Open -> In Progress -> Resolved) to ensure mesh-wide development visibility.

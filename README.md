@@ -1,10 +1,10 @@
 <div align="center">
-  <img src="./assets/neurex_splash.png" width="100%" alt="Neurex Sentient IDE">
+  <img src="./assets/neurex_splash.png" width="100%" alt="Neurex Agentic IDE">
   
   <br />
 
   <h1>⬡ NEUREX</h1>
-  <h3>The Universal Sentient IDE Substrate & Neural Mesh Hub</h3>
+  <h3>The Universal Agentic IDE Substrate & Neural Mesh Hub</h3>
 
   <p>
   <p>
@@ -37,7 +37,7 @@
 ---
 
 ## 👁️ The Vision
-**Neurex** is a high-performance, autonomous development substrate designed to bridge the gap between human intent and agentic execution. Unlike traditional IDEs, Neurex operates as a **Sentient Mesh**—a decentralized network of AI agents that manage their own infrastructure, repair their own regressions, and maintain architectural integrity through a global consensus protocol.
+**Neurex** is a high-performance, autonomous development substrate designed to bridge the gap between human intent and agentic execution. Unlike traditional IDEs, Neurex operates as a **Neural Mesh**—a decentralized network of AI agents that manage their own infrastructure, repair their own regressions, and maintain architectural integrity through a global consensus protocol.
 
 ---
 
@@ -68,7 +68,7 @@
 ```mermaid
 flowchart TD
     %% Zones
-    subgraph "Sentient Core"
+    subgraph "Orchestration Core"
         ORCH[Orchestrator / Supervisor]
         TG[(Task Graph Ledger)]
         LINT[Neural Linter]
@@ -148,15 +148,15 @@ Download the latest `neurex-cli` for your platform and run:
 
 ### 2. Manual Development Install
 ```bash
-git clone http://10.10.10.147:3000/frosty/neurex.git
+git clone https://github.com/frosty/neurex.git
 cd neurex/neurex-cli
 cargo run -- start
 ```
 
 ---
 
-## 📜 Source of Law
-Neurex development is governed by the **Anti-Gravity Protocol** (see `.antigravityrules`). All mutations must be protocol-aligned, documented, and verified by the Neural Linter.
+## 📜 Project Governance
+Neurex development is governed by the **Neurex Core Protocol** (see `.projectrules`). All mutations must be protocol-aligned, documented, and verified by the Neural Linter.
 
 ---
 

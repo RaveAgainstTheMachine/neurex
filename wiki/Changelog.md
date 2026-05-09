@@ -38,7 +38,7 @@ All notable changes to the Neurex project will be documented in this file.
 ### Added
 - **Phase 52: Universal Neural Consensus**: Achieved global substrate coherence and protocol-aligned omniscience.
 - **Substrate Synchronizer**: Enabled bridging with external decentralized compute networks (Akash/Render).
-- **Neural Law Engine**: Enforced the Anti-Gravity Protocol at the neural weight level during evolution.
+- **Neural Law Engine**: Enforced the Neurex Core Protocol at the neural weight level during evolution.
 - **Consensus Dashboard**: High-fidelity frontend for overseeing substrate bridges and protocol alignment.
 
 ## [0.4.1] - 2026-05-03: DYNAMIC MODEL ROUTING
@@ -89,7 +89,7 @@ All notable changes to the Neurex project will be documented in this file.
 
 ### Performance & Stability
 - **O(1) Self-Optimization Lookups**: Upgraded the `SelfOptimizer` to use Dictionary-based tracking, eliminating O(N) list-scan overhead when managing thousands of proposed core refactors.
-- **High-Throughput Neural Law Verification**: Upgraded the Anti-Gravity Protocol enforcer to use pre-compiled regex objects (`re.compile`), drastically reducing CPU overhead during weight evolution verification.
+- **High-Throughput Neural Law Verification**: Upgraded the Neurex Core Protocol enforcer to use pre-compiled regex objects (`re.compile`), drastically reducing CPU overhead during weight evolution verification.
 - **Non-Blocking Quantum Simulation**: Offloaded CPU-bound probabilistic math in the `QuantumPathSim` to a separate thread pool (`asyncio.to_thread`), entirely resolving the 'Quantum Overhead' event loop blocking issue.
 
 ## [0.2.1] - 2026-05-01 (UNIFIED MESH & PERSISTENT INTELLIGENCE)
@@ -359,7 +359,7 @@ All notable changes to the Neurex project will be documented in this file.
   - Enforced strict environment-based **JWT Secret** validation (prevents insecure defaults).
   - Sanitized skill installation paths to block path traversal vulnerabilities.
 - **Context Summarization**: Added an automated history condensation step in the Orchestrator to prevent context window bloat during complex task sequences.
-- **Unified Protocol**: Established `.antigravityrules` as the absolute Source of Law and mandated the **Confirmation Rule** for agentic reasoning.
+- **Unified Protocol**: Established `.projectrules` as the absolute Engineering Standards and mandated the **Confirmation Rule** for agentic reasoning.
 - **SkillsMP Marketplace**: Integrated deep-linking and marketplace discovery directly into the Skills Panel.
 - **Infrastructure Hub (v2)**: Restored high-fidelity UI for Agent Recommendations, Engine Stack monitoring, and Model Catalog management.
 - **Universal Installer**: Created a role-aware cross-platform installation system with dedicated launchers for Linux, macOS, and Windows.

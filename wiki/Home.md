@@ -15,7 +15,7 @@ Neurex is a high-performance, agentic IDE built for absolute technical precision
 
 ## 协议 (Protocols)
 
-Neurex operates under the **Anti-Gravity Protocol** (Source of Law: `.antigravityrules`), enforcing:
+Neurex operates under the **Neurex Core Protocol** (Rules: `.projectrules`), enforcing:
 - Atomic commits and documentation parity.
 - Structured logging (no `print()`).
 - Async-first execution.

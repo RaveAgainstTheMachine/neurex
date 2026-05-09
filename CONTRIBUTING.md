@@ -36,4 +36,4 @@ All new UI components MUST respect the "Persistence Principle":
 - **Documentation**: All architectural changes must be reflected in the [Roadmap](./ROADMAP.md).
 
 ---
-*Enshrined by the Neurex Core Team (Antigravity & Caveman Ultra).*
+*Enshrined by the Neurex Core Team.*

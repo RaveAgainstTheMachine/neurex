@@ -18,7 +18,7 @@ Welcome to the official Neurex roadmap. This document tracks the trajectory of t
 
 ### 🟢 Completed Milestones (Phases 1-61)
 - [x] **Phases 1-52**: From NeuralHarness v1.0 to Universal Neural Consensus and Self-Synthesis.
-- [x] **Phases 53-55**: Temporal Synthesis, Hermetic Substrate, and Sentient UI.
+- [x] **Phases 53-55**: Temporal Synthesis, Hermetic Substrate, and Substrate UI.
 - [x] **Phases 60-61**: Secure LAN Sovereignty and Dynamic Model Routing.
 
 ---
@@ -48,4 +48,4 @@ Neurex is an autonomous-first ecosystem.
 - **Protocol**: Refer to `CONTRIBUTING.md` for Skeptical Memory and Zero-Trust mutation guidelines.
 
 ---
-*Roadmap synchronized by Neurex Somnus.*
+*Roadmap synchronized by the Neurex Autonomous Monitor.*

@@ -18,7 +18,7 @@ export default defineConfig({
   },
   resolve: {
     alias: [
-      { find: '@codingame/monaco-vscode-api/vscode/vs/base/browser/cssValue', replacement: '/games/CodeProjects/AntiGravity/Neurex/neurex/neurex-web/src/shims/cssValue.js' }
+      { find: '@codingame/monaco-vscode-api/vscode/vs/base/browser/cssValue', replacement: './src/shims/cssValue.js' }
     ],
     dedupe: [
       'vscode',
