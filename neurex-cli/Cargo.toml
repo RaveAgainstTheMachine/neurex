@@ -2,6 +2,9 @@
 name = "neurex-cli"
 version = "0.5.2"
 edition = "2024"
+repository = "https://github.com/RaveAgainstTheMachine/neurex"
+homepage = "https://github.com/RaveAgainstTheMachine/neurex"
+description = "The first autonomous engineering workspace for the neural era."
 
 [dependencies]
 axum = { version = "0.8.9", features = ["ws", "http2"] }

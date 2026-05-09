@@ -146,7 +146,7 @@ Download the latest `neurex-cli` for your platform and run:
 
 ### 2. Manual Development Install
 ```bash
-git clone https://github.com/frosty/neurex.git
+git clone https://github.com/RaveAgainstTheMachine/neurex.git
 cd neurex/neurex-cli
 cargo run -- start
 ```

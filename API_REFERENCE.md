@@ -4,7 +4,7 @@
 > **Internal API**: `http://localhost:8000`  
 > **Auth**: Bearer JWT (obtain via `POST /api/auth/token`)  
 > **WebSocket**: `wss://localhost:3000/ws/{conversation_id}` (Internal: `ws://localhost:8000/ws/...`)  
-> **Version**: 0.7.0-stable (SECURE LAN SOVEREIGNTY)
+> **Version**: 0.5.2 (THE STABLE SUBSTRATE)
 
 ---
 
@@ -674,7 +674,7 @@ Polls GitHub Releases and compares against running `NEUREX_VERSION`. Updates int
 **Response `200`**:
 ```json
 {
-  "current_version": "0.1.0",
+  "current_version": "0.5.2",
   "latest_version": "0.2.0",
   "update_available": true,
   "update_ready": false,
@@ -766,6 +766,6 @@ The WebSocket is the primary channel for all real-time agent interaction, termin
 
 ### `GET /health`
 ```json
-{ "status": "ok", "version": "0.1.0" }
+{ "status": "ok", "version": "0.5.2" }
 ```
 No authentication required.

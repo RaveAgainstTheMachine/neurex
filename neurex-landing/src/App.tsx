@@ -237,7 +237,7 @@ function App() {
           </div>
           <p style={{ marginTop: '3rem', color: '#6c757d', fontSize: '0.8rem', maxWidth: '500px', margin: '3rem auto 0' }}>
             *Note: Visuals on this page are High-Fidelity Conceptual Renderings representing the North Star UI. 
-            The current stable build (v0.1.0) follows this design language but is subject to refinement during our beta phase.
+            The current stable build (v0.5.2) follows this design language but is subject to refinement during our beta phase.
           </p>
         </motion.div>
       </section>
@@ -246,7 +246,7 @@ function App() {
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <div>© 2026 Steven Frost. Built for the era of absolute autonomy.</div>
           <div style={{ display: 'flex', gap: '2rem' }}>
-            <a href="https://github.com/sickn33/Neurex" style={{ color: 'inherit' }}>GitHub</a>
+            <a href="https://github.com/RaveAgainstTheMachine/neurex" style={{ color: 'inherit' }}>GitHub</a>
             <span>Documentation</span>
             <span>Security</span>
           </div>

@@ -257,7 +257,7 @@ async fn main() -> Result<()> {
                 }
             }
 
-            println!("\nSystem is {} for Phase 55 Sentient UI.", "Ready".bold().green());
+            println!("\nSystem is {} for v0.5.2 Stable Substrate.", "Ready".bold().green());
         }
         Commands::Provision => {
             provision::run_provisioning().await?;

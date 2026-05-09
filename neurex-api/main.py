@@ -151,7 +151,7 @@ from core.infrastructure.logging_middleware import DebugLoggingMiddleware
 app = FastAPI(
     title="Neurex API",
     description="The Sentient IDE Control Plane",
-    version="1.0.0",
+    version="0.5.2",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",

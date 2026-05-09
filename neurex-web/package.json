@@ -2,6 +2,11 @@
   "name": "neurex-web",
   "private": true,
   "description": "The first autonomous engineering workspace for the neural era.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RaveAgainstTheMachine/neurex.git"
+  },
+  "homepage": "https://github.com/RaveAgainstTheMachine/neurex",
   "version": "0.5.2",
   "type": "module",
   "scripts": {

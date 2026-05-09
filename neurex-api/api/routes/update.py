@@ -20,8 +20,8 @@ from core.infrastructure.lifecycle import list_backups, rollback_system, snapsho
 router = APIRouter(prefix="/api/update", tags=["update"])
 log = structlog.get_logger()
 
-CURRENT_VERSION = os.getenv("NEUREX_VERSION", "0.1.0")
-GITHUB_REPO     = os.getenv("NEUREX_GITHUB_REPO", "sickn33/neurex")
+CURRENT_VERSION = os.getenv("NEUREX_VERSION", "0.5.2")
+GITHUB_REPO     = os.getenv("NEUREX_GITHUB_REPO", "RaveAgainstTheMachine/neurex")
 
 # In-memory state (reset on process restart)
 _update_state: dict = {
