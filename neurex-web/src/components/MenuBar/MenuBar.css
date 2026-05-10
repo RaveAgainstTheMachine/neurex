@@ -168,5 +168,4 @@
   min-width: 180px;
   padding: 4px 0;
 }
-.2s cubic-bezier(0.4, 0, 0.2, 1); }
 .animate-fade-in { animation: fadeIn 0.15s ease-out; }
