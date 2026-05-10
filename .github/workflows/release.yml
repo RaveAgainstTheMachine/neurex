@@ -31,21 +31,21 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/neurex-sandbox
 
       - name: Build and Push API
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./neurex-api
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/neurex-api:latest,${{ secrets.DOCKERHUB_USERNAME }}/neurex-api:${{ github.ref_name }}
 
       - name: Build and Push Web
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./neurex-web
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/neurex-web:latest,${{ secrets.DOCKERHUB_USERNAME }}/neurex-web:${{ github.ref_name }}
 
       - name: Build and Push Sandbox
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./neurex-sandbox
           push: true
