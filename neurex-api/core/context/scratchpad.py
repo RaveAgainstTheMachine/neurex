@@ -15,6 +15,11 @@ SCRATCHPAD_DIR = Path(os.getenv("WORKSPACE_PATH", "/workspace")) / ".neurex" / "
 
 async def set_scratchpad_value(conversation_id: str, key: str, value: str) -> str:
     """Store a persistent note or variable for the current conversation."""
+    # SECURITY: Sanitize conversation_id to prevent path traversal
+    import re
+    if not re.match(r"^[a-zA-Z0-9_\-]+$", conversation_id):
+        raise ValueError("Invalid conversation_id")
+        
     SCRATCHPAD_DIR.mkdir(parents=True, exist_ok=True)
     file_path = SCRATCHPAD_DIR / f"{conversation_id}.json"
     
@@ -33,6 +38,11 @@ async def set_scratchpad_value(conversation_id: str, key: str, value: str) -> st
 
 async def get_scratchpad(conversation_id: str) -> dict:
     """Retrieve all shared notes for the current conversation."""
+    # SECURITY: Sanitize conversation_id
+    import re
+    if not re.match(r"^[a-zA-Z0-9_\-]+$", conversation_id):
+        return {}
+        
     file_path = SCRATCHPAD_DIR / f"{conversation_id}.json"
     if not file_path.exists():
         return {}
@@ -42,6 +52,11 @@ async def get_scratchpad(conversation_id: str) -> dict:
 
 async def clear_scratchpad(conversation_id: str) -> str:
     """Clear all shared notes for the current conversation."""
+    # SECURITY: Sanitize conversation_id
+    import re
+    if not re.match(r"^[a-zA-Z0-9_\-]+$", conversation_id):
+        return "❌ Invalid ID."
+        
     file_path = SCRATCHPAD_DIR / f"{conversation_id}.json"
     if file_path.exists():
         file_path.unlink()

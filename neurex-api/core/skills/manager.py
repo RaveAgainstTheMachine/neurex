@@ -42,10 +42,22 @@ class SkillManager:
         """Clone a skill repository into the local skills store, supporting subdirectories."""
         # Handle skillsmp.com deep links
         if "skillsmp.com" in url:
+            # SSRF PROTECTION: Ensure URL is a legitimate skillsmp.com link and not an internal IP/localhost
+            from urllib.parse import urlparse
+            parsed = urlparse(url)
+            if parsed.netloc != "skillsmp.com":
+                log.error("security.ssrf_attempt", url=url)
+                return url # Skip resolve but allow git part if it's actually a git url
+                
             try:
                 import httpx
-                log.info("skill.resolve_marketplace", url=url)
-                resp = httpx.get(url, timeout=10)
+                # Reconstruct URL from validated parts to satisfy CodeQL (breaks taint flow)
+                safe_url = f"https://skillsmp.com{parsed.path}"
+                if parsed.query:
+                    safe_url += f"?{parsed.query}"
+                    
+                log.info("skill.resolve_marketplace", url=safe_url)
+                resp = httpx.get(safe_url, timeout=10, follow_redirects=False)
                 if resp.status_code == 200:
                     import re
                     match = re.search(r"githubUrl=([^&\"' >]+)", resp.text)
