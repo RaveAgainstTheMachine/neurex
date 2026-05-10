@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
 use std::path::Path;
 use wasmtime::*;
+use wasmtime_wasi::p1::{self, WasiP1Ctx};
 use wasmtime_wasi::{DirPerms, FilePerms, WasiCtxBuilder};
 
 pub struct WasiSandbox {
@@ -25,18 +26,19 @@ impl WasiSandbox {
         workspace_path: &Path,
         args: Vec<String>,
     ) -> Result<ExecResult> {
-        let linker = Linker::new(&self.engine);
-        // Using Wasmtime 29 preview1 explicitly if needed, or skipping for green build
-        // wasmtime_wasi::add_to_linker(&mut linker, |s| s)?;
+        let mut linker: Linker<WasiP1Ctx> = Linker::new(&self.engine);
+        p1::add_to_linker_sync(&mut linker, |s| s)?;
+
 
         let mut builder = WasiCtxBuilder::new();
         builder.inherit_env().inherit_stdout().inherit_stderr().args(&args);
 
         builder.preopened_dir(workspace_path, "/workspace", DirPerms::all(), FilePerms::all())?;
 
-        let wasi = builder.build();
+        let wasi = builder.build_p1();
         let mut store = Store::new(&self.engine, wasi);
         let module = Module::from_binary(&self.engine, wasm_bytes)
+            .map_err(|e| anyhow::anyhow!(e))
             .context("Failed to compile WASM module")?;
 
         let instance = linker.instantiate(&mut store, &module)?;
