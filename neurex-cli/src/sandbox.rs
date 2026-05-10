@@ -1,9 +1,7 @@
 use anyhow::{Context, Result, bail};
 use bollard::Docker;
-use bollard::container::{
-    Config, CreateContainerOptions, RemoveContainerOptions, StartContainerOptions,
-};
-use bollard::models::HostConfig;
+use bollard::models::{ContainerCreateBody, HostConfig};
+use bollard::query_parameters::{CreateContainerOptions, RemoveContainerOptions, StartContainerOptions};
 use tracing::info;
 
 pub async fn connect_docker() -> Result<Docker> {
@@ -24,19 +22,22 @@ pub async fn ensure_sandbox(docker: &Docker, workspace_path: &str) -> Result<()>
     let binds = vec![format!("{}:/workspace", workspace_path)];
     let host_config = HostConfig { binds: Some(binds), ..Default::default() };
 
-    let config = Config {
-        image: Some("alpine:latest"),
-        cmd: Some(vec!["tail", "-f", "/dev/null"]),
+    let config = ContainerCreateBody {
+        image: Some("alpine:latest".to_string()),
+        cmd: Some(vec!["tail".to_string(), "-f".to_string(), "/dev/null".to_string()]),
         host_config: Some(host_config),
         ..Default::default()
     };
 
-    let options = Some(CreateContainerOptions { name: "neurex-sandbox-agent", platform: None });
+    let options = Some(CreateContainerOptions { 
+        name: Some("neurex-sandbox-agent".to_string()),
+        ..Default::default()
+    });
 
     docker.create_container(options, config).await.context("Failed to create sandbox container")?;
 
     docker
-        .start_container("neurex-sandbox-agent", None::<StartContainerOptions<String>>)
+        .start_container("neurex-sandbox-agent", None::<StartContainerOptions>)
         .await
         .context("Failed to start sandbox container")?;
 
