@@ -7,7 +7,7 @@
     "url": "https://github.com/RaveAgainstTheMachine/neurex.git"
   },
   "homepage": "https://github.com/RaveAgainstTheMachine/neurex",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "type": "module",
   "scripts": {
     "dev": "vite",
