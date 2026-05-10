@@ -40,15 +40,10 @@ class SkillManager:
 
     def install_from_git(self, url: str) -> str:
         """Clone a skill repository into the local skills store, supporting subdirectories."""
-        # Handle skillsmp.com deep links
-        if "skillsmp.com" in url:
-            # SSRF PROTECTION: Ensure URL is a legitimate skillsmp.com link and not an internal IP/localhost
-            from urllib.parse import urlparse
-            parsed = urlparse(url)
-            if parsed.netloc != "skillsmp.com":
-                log.error("security.ssrf_attempt", url=url)
-                return url # Skip resolve but allow git part if it's actually a git url
-                
+        # SECURITY: Use urlparse to validate domain to prevent SSRF
+        from urllib.parse import urlparse
+        parsed = urlparse(url)
+        if parsed.netloc == "skillsmp.com":
             try:
                 import httpx
                 # Reconstruct URL from validated parts to satisfy CodeQL (breaks taint flow)
@@ -112,7 +107,8 @@ class SkillManager:
                 import tempfile
                 with tempfile.TemporaryDirectory() as tmpdir:
                     log.info("skill.install_subpath", repo=url, path=sub_path)
-                    subprocess.run(["git", "clone", "--depth", "1", url, tmpdir], check=True)
+                    # SECURITY: Use '--' to prevent parameter injection
+                    subprocess.run(["git", "clone", "--depth", "1", "--", url, tmpdir], check=True)
                     source = Path(tmpdir) / sub_path
                     if source.exists():
                         shutil.copytree(source, target_path)
@@ -120,7 +116,8 @@ class SkillManager:
                         raise Exception(f"Sub-path {sub_path} not found in repository")
             else:
                 log.info("skill.install", name=name, url=url)
-                subprocess.run(["git", "clone", url, str(target_path)], check=True)
+                # SECURITY: Use '--' to prevent parameter injection
+                subprocess.run(["git", "clone", "--", url, str(target_path)], check=True)
         
         return name
 

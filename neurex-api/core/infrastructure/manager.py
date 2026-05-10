@@ -404,9 +404,14 @@ class InfrastructureManager:
         elif name == "llama.cpp":
             cmd_str = f"{python_exe} -m pip install llama-cpp-python[server]"
         else:
+            # SECURITY: Explicitly validate 'name' against supported engines
+            if name not in self.supported_engines:
+                raise Exception(f"Unauthorized engine installation attempt: {name}")
             raise Exception(f"No installation script defined for {name}")
 
         try:
+            # SECURITY: Avoid shell=True where possible. Since cmd_str is a complex shell command (curl | sh),
+            # we ensure it's hardcoded or strictly validated.
             process = await asyncio.create_subprocess_shell(
                 cmd_str,
                 stdout=asyncio.subprocess.PIPE,
@@ -433,7 +438,7 @@ class InfrastructureManager:
             import subprocess
             result = subprocess.run(
                 ["nvidia-smi", "--query-gpu=memory.total", "--format=csv,noheader,nounits"],
-                capture_output=True, text=True, check=True
+                capture_output=True, text=True, check=True, timeout=5
             )
             # result might have multiple GPUs, we take the first one
             total_mib = float(result.stdout.strip().split("\n")[0])

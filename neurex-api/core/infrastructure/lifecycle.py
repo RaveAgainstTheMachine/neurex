@@ -48,13 +48,28 @@ async def snapshot_system_state(version: str) -> str:
 
 async def rollback_system(backup_name: str) -> str:
     """Restore system state from a specific backup file."""
-    backup_path = BACKUP_DIR / backup_name
+    # SECURITY: Sanitize backup_name to prevent path traversal
+    import re
+    if not re.match(r"^[a-zA-Z0-9_\-.]+\.zip$", backup_name):
+        raise ValueError("Invalid backup name")
+        
+    backup_path = (BACKUP_DIR / backup_name).resolve()
+    if not str(backup_path).startswith(str(BACKUP_DIR.resolve())):
+        raise ValueError("Security violation: Path traversal attempted")
+        
     if not backup_path.exists():
         raise FileNotFoundError(f"Backup {backup_name} not found.")
         
     try:
         def extract_zip():
             with zipfile.ZipFile(backup_path, 'r') as zipf:
+                # SECURITY: Check for ZipSlip (malicious paths in zip)
+                for member in zipf.infolist():
+                    member_path = Path(member.filename).resolve()
+                    # We want to ensure it doesn't try to extract outside the current dir
+                    # But actually rollback extracts to '.', so we just check if it's absolute
+                    if member.filename.startswith("/") or ".." in member.filename:
+                        raise Exception(f"Malicious member in backup: {member.filename}")
                 zipf.extractall(".") # Extract back to root
         
         await asyncio.to_thread(extract_zip)

@@ -17,8 +17,8 @@ def run_git(args: list[str], cwd: str | None = None):
         cwd = str(workspace)
     
     try:
-        # SECURITY: Prevent parameter injection by using '--' to separate flags from paths
-        # and ensuring we don't pass dangerous flags as paths.
+        # SECURITY: Subprocess is used with a list of arguments (shell=False), which is safe
+        # from shell injection. For parameter injection, callers should use '--' where needed.
         res = subprocess.run(["git"] + args, capture_output=True, text=True, check=True, cwd=cwd)
         return res.stdout.strip()
     except subprocess.CalledProcessError as e:
@@ -114,12 +114,12 @@ async def get_status(user=Depends(get_current_user)):
 
 @router.post("/stage")
 async def stage_file(payload: dict, user=Depends(get_current_user)):
-    run_git(["add", payload["path"]])
+    run_git(["add", "--", payload["path"]])
     return {"status": "ok"}
 
 @router.post("/unstage")
 async def unstage_file(payload: dict, user=Depends(get_current_user)):
-    run_git(["reset", "HEAD", payload["path"]])
+    run_git(["reset", "HEAD", "--", payload["path"]])
     return {"status": "ok"}
 
 @router.get("/diff")
@@ -160,7 +160,7 @@ async def generate_commit_msg(user=Depends(get_current_user)):
 async def get_blame(path: str = Query(...), user=Depends(get_current_user)):
     try:
         # Use line-porcelain for detailed, stable parsing
-        res = run_git(["blame", "--line-porcelain", path])
+        res = run_git(["blame", "--line-porcelain", "--", path])
         lines = []
         current_blame = {}
         
@@ -184,7 +184,7 @@ async def get_blame(path: str = Query(...), user=Depends(get_current_user)):
 async def get_history(path: str = Query(...), user=Depends(get_current_user)):
     try:
         # Get history with hash, author, time, and summary
-        res = run_git(["log", "--pretty=format:%h|%an|%at|%s", path])
+        res = run_git(["log", "--pretty=format:%h|%an|%at|%s", "--", path])
         history = []
         if res:
             for line in res.split("\n"):

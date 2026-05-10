@@ -96,14 +96,15 @@ class Orchestrator:
         import subprocess
         try:
             # Check if git is initialized
-            subprocess.run(["git", "rev-parse", "--is-inside-work-tree"], cwd=self.workspace, check=True, capture_output=True)
+            subprocess.run(["git", "-C", str(self.workspace), "rev-parse", "--is-inside-work-tree"], check=True, capture_output=True)
             
             # Create a snapshot tag
             tag_name = f"neurex-pre-{graph_id[:8]}"
-            subprocess.run(["git", "add", "."], cwd=self.workspace, check=True)
+            subprocess.run(["git", "-C", str(self.workspace), "add", "."], check=True)
             # Use --allow-empty in case there are no changes
-            subprocess.run(["git", "commit", "-m", f"Neurex Safe Snapshot: {graph_id}"], cwd=self.workspace, capture_output=True)
-            subprocess.run(["git", "tag", tag_name], cwd=self.workspace, check=True)
+            subprocess.run(["git", "-C", str(self.workspace), "commit", "--allow-empty", "-m", f"Neurex Safe Snapshot: {graph_id}"], capture_output=True)
+            # SECURITY: tag_name is constructed from graph_id (UUID), but we use '--' for safety
+            subprocess.run(["git", "-C", str(self.workspace), "tag", "--", tag_name], check=True)
             log.info("safety.snapshot_created", tag=tag_name)
         except Exception as e:
             log.warning("safety.snapshot_failed", error=str(e), hint="Is git initialized in the workspace?")

@@ -21,7 +21,11 @@ async def set_scratchpad_value(conversation_id: str, key: str, value: str) -> st
         raise ValueError("Invalid conversation_id")
         
     SCRATCHPAD_DIR.mkdir(parents=True, exist_ok=True)
-    file_path = SCRATCHPAD_DIR / f"{conversation_id}.json"
+    file_path = (SCRATCHPAD_DIR / f"{conversation_id}.json").resolve()
+    
+    # SECURITY: Ensure the path is within the scratchpad directory
+    if not str(file_path).startswith(str(SCRATCHPAD_DIR.resolve())):
+        raise ValueError("Security violation: Path traversal attempted")
     
     data = {}
     if file_path.exists():
@@ -43,7 +47,10 @@ async def get_scratchpad(conversation_id: str) -> dict:
     if not re.match(r"^[a-zA-Z0-9_\-]+$", conversation_id):
         return {}
         
-    file_path = SCRATCHPAD_DIR / f"{conversation_id}.json"
+    file_path = (SCRATCHPAD_DIR / f"{conversation_id}.json").resolve()
+    # SECURITY: Ensure the path is within the scratchpad directory
+    if not str(file_path).startswith(str(SCRATCHPAD_DIR.resolve())):
+        return {}
     if not file_path.exists():
         return {}
         
@@ -57,7 +64,10 @@ async def clear_scratchpad(conversation_id: str) -> str:
     if not re.match(r"^[a-zA-Z0-9_\-]+$", conversation_id):
         return "❌ Invalid ID."
         
-    file_path = SCRATCHPAD_DIR / f"{conversation_id}.json"
+    file_path = (SCRATCHPAD_DIR / f"{conversation_id}.json").resolve()
+    # SECURITY: Ensure the path is within the scratchpad directory
+    if not str(file_path).startswith(str(SCRATCHPAD_DIR.resolve())):
+        return "❌ Security violation."
     if file_path.exists():
         file_path.unlink()
     return "✅ Scratchpad cleared."
