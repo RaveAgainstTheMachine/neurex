@@ -22,7 +22,7 @@ tiktoken==0.7.0
 
 # Async file I/O
 aiofiles==24.1.0
-aiohttp==3.11.2
+aiohttp==3.13.4
 
 # State & persistence
 sqlmodel==0.0.21
@@ -42,10 +42,10 @@ duckduckgo-search==6.3.0
 
 # Security & Auth
 passlib[bcrypt]==1.7.4
-python-jose[cryptography]==3.3.0
-python-multipart==0.0.12
+python-jose[cryptography]==3.4.0
+python-multipart==0.0.27
 wakepy==0.7.0
-python-dotenv==1.0.1
+python-dotenv==1.2.2
 psutil==6.0.0
 pywebpush==1.14.0
 playwright==1.49.1
