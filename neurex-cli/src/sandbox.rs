@@ -1,7 +1,9 @@
 use anyhow::{Context, Result, bail};
 use bollard::Docker;
 use bollard::models::{ContainerCreateBody, HostConfig};
-use bollard::query_parameters::{CreateContainerOptions, RemoveContainerOptions, StartContainerOptions};
+use bollard::query_parameters::{
+    CreateContainerOptions, RemoveContainerOptions, StartContainerOptions,
+};
 use tracing::info;
 
 pub async fn connect_docker() -> Result<Docker> {
@@ -29,7 +31,7 @@ pub async fn ensure_sandbox(docker: &Docker, workspace_path: &str) -> Result<()>
         ..Default::default()
     };
 
-    let options = Some(CreateContainerOptions { 
+    let options = Some(CreateContainerOptions {
         name: Some("neurex-sandbox-agent".to_string()),
         ..Default::default()
     });
