@@ -123,6 +123,21 @@ EVAL_CASES = [
         "checks": ["def parse_config", "str", "-> dict"],
     },
 
+    # Maintenance & Hardening
+    {
+        "id": "maint-hardening",
+        "tag": "maintenance",
+        "prompt": "Read the file unsafe.py which contains a shell=True subprocess call. Rewrite it to use a list of arguments and include the '--' separator for safety. Save to safe.py.",
+        "checks": ["safe.py", "subprocess.run", "[", "--"],
+        "negative_checks": ["shell=True"],
+    },
+    {
+        "id": "maint-types",
+        "tag": "maintenance",
+        "prompt": "Read the file untyped.py. Add Python 3.10+ type hints to all function signatures and return values. Save to typed.py.",
+        "checks": ["typed.py", ": ", "-> "],
+    },
+
     # Research
     {
         "id": "research-library",
@@ -214,7 +229,7 @@ def _flatten_tree(node: dict, acc: dict | None = None) -> dict[str, str]:
 async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model",  default=None, help="Override model name")
-    parser.add_argument("--only",   default=None, help="Filter by tag (smoke|python|typescript|multi|refactor|rules)")
+    parser.add_argument("--only",   default=None, help="Filter by tag (smoke|python|typescript|multi|refactor|rules|maintenance)")
     parser.add_argument("--case",   default=None, help="Run a single case by ID")
     args = parser.parse_args()
 

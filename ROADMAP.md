@@ -36,23 +36,29 @@ Neurex focuses on three pillars:
 
 ---
 
-## ⚡ Active Development (v0.6.0 Horizon)
+## ⚡ Active Development: The Maintenance Pivot (v0.6.0)
 
-### Substrate Optimization
-- [ ] **Inference Caching**: Aggressive caching of prompt prefixes to reduce GPU overhead during iterative tasks.
-- [ ] **WASM Toolchain**: Self-generating WASI tools for zero-dependency agent operations on systems without Docker.
-- [ ] **Binary Size Reduction**: Optimizing the Rust control plane for faster cold starts.
+Our current focus is transforming Neurex from a "general substrate" into a high-reliability **Autonomous Maintenance Engine**.
 
-### Agent Capabilities
-- [ ] **Improved Tool Reasoning**: Refining agent loops to handle large-scale refactors (>50 files) more reliably.
-- [ ] **Context Pre-computation**: Background indexing of AST symbols during idle time.
+### 🛠️ Core Maintenance Workflows
+- [ ] **Automated Dependency Hardening**: Tools for agents to upgrade library major versions and autonomously fix breaking changes.
+- [ ] **Security Sentinel**: Background scanning and auto-patching of subprocess command injections and path traversals.
+- [ ] **Type-Safety Enforcement**: Repo-wide autonomous addition of type hints and docstrings with verification.
+
+### 🧪 Reliability & Evals
+- [ ] **Release Evals**: Every release must pass a standardized suite of 50+ maintenance tasks (see `eval/run_evals.py`).
+- [ ] **Agent Trace Debugger**: A high-fidelity UI for inspecting agent tool usage to reduce "loop hallucinations."
+- [ ] **Regression Snapshots**: Automatic git snapshots before any agent mutation to ensure 100% rollback reliability.
+
+### 🔬 Experimental Labs (Lower Priority)
+- **Distributed VRAM Pooling**: Functional but considered a niche power-user feature.
+- **Mobile Peer Support**: Experimental nodes for running inference on mobile NPUs.
 
 ---
 
 ## 🛠️ Future Backlog
-- [ ] **Multi-Agent Collaboration**: Framework for multiple specialized agents to debate and review changes before surfacing to the human.
-- [ ] **Plugin System**: Public API for extending the IDE with custom themes and language support.
-- [ ] **Mobile Integration**: Leveraging on-device NPUs for RAG indexing on tablets and phones.
+- [ ] **Plugin System**: Public API for extending the IDE.
+- [ ] **Multi-Agent Debate**: Refinement loop for high-risk maintenance tasks.
 
 ---
-*Roadmap updated for the v0.5.3-STABLE release.*
+*Roadmap updated to reflect the Maintenance & Reliability pivot.*

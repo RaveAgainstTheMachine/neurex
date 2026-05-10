@@ -29,9 +29,9 @@
 
 ## What Is Neurex?
 
-**Neurex** is a browser-based IDE backed by a native Rust daemon, designed for running AI agents locally against your own hardware. It combines a Monaco-based editor, persistent PTY terminals, and a multi-agent orchestration layer — all without requiring cloud subscriptions or sending your code to third-party APIs.
+**Neurex** is a browser-based IDE backed by a native Rust daemon, optimized for **Autonomous Codebase Maintenance**. 
 
-The core use case: run open-weight models (Llama 3, Qwen, Mistral) via Ollama or llama.cpp, orchestrate agents that can read/write your codebase, and optionally spread inference across multiple machines on your LAN.
+While other tools focus on the *creative* act of writing new code, Neurex specializes in the high-fidelity "chores" of engineering: security hardening, dependency migrations, and codebase grounding. It combines a Monaco-based editor, persistent PTY terminals, and a multi-agent orchestration layer that runs open-weight models locally against your own hardware.
 
 ---
 
@@ -48,8 +48,8 @@ The core use case: run open-weight models (Llama 3, Qwen, Mistral) via Ollama or
 *   **Process Management**: Keeps the API server and terminals alive independently of the browser session.
 *   **Docker & WASM Sandboxing**: Runs agent-generated code in isolated containers.
 
-### 🌐 Distributed Inference (LAN)
-*   **VRAM Pooling**: Distribute a model's layers across multiple machines via `llama-rpc-server`.
+### 🌐 Experimental Labs (Lower Priority)
+*   **VRAM Pooling**: Distribute a model's layers across multiple machines via `llama-rpc-server` (functional but considered a niche power-user feature).
 *   **Dynamic Re-quantization**: Automatically downgrades model precision (e.g., Q8 → Q4) under memory pressure to prevent stalls.
 *   **Node Discovery**: Registers peer machines and monitors their VRAM and GPU load in real time.
 

@@ -30,6 +30,15 @@ Rather than a black-box that writes to your files in the background, Neurex agen
 | **Compute** | Subscription-based | Subscription-based | Your own GPU(s), optionally pooled across LAN |
 | **Agent Visibility** | Background process | Black box | Visible cursors, file locks, reasoning traces |
 
+## 🎯 The Killer Wedge: Autonomous Maintenance
+
+While other AI IDEs focus on the *creative* act of writing new code, Neurex owns the *chore* of maintaining it.
+
+We aim to be the industry standard for **Autonomous Repo Maintenance**:
+- **Security Hardening**: Agents that autonomously patch command injections and path traversals.
+- **Dependency Migration**: Handing an agent a `package.json` and saying "upgrade everything and fix the breaks."
+- **Codebase Grounding**: Ensuring that documentation, rules, and code never drift apart.
+
 ## When to Use Neurex
 
 **Good fit if:**
