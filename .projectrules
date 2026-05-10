@@ -10,10 +10,15 @@
 - **Atomic Commits**: Git commits must be atomic and descriptive. Format: `[service] <type>: <description>`. Example: `[api] feat: add pty session timeout`.
 - **Documentation Parity**: Every git commit MUST be preceded by a full documentation audit. Update `API_REFERENCE.md` for route changes, `ARCHITECTURE.md` for logic shifts, `CHANGELOG.md` for versioning, and `NEUREX_REVIEW.md` for architectural milestones. Run `make loc` to ensure codebase metrics are accurate in `README.md`.
 - **Confirmation Rule**: Before any thinking or action, you must explicitly state that you have read and are applying these rules (Project Rules: .projectrules).
-- **Technical Precision**: Use objective, technical language. Do not overhype, embellish, or use marketing-speak. Focus on architectural facts, metrics, and implementation details.
-- **Brutal Honesty**: All responses and assessments must be based on objective facts. Do not sugarcoat failures, bottlenecks, or architectural regressions.
-- **Documentation Integrity**: Documentation MUST strictly reflect the current implementation. Never document "future phases" or "hallucinated features" as if they exist. Clearly segregate experimental or planned features into a "Roadmap" section with explicit "Unimplemented" labels. Marketing buzzwords (e.g., "Neural Soul", "Hive Mind") are strictly prohibited in technical docs.
-- **UI Deployment Verification**: After modifying UI/UX code, always verify that the changes are actually being served (e.g., check build output or server logs) without relying on browser subagents.
+- **Technical Precision**: Use objective, technical language. No marketing-speak, hype, or embellishment. Focus on architecture, metrics, and implementation facts.
+- **Brutal Honesty**: Responses must be based on observable facts. Do not sugarcoat failures or regressions.
+- **Documentation Integrity — Mandatory Checklist**: Before committing any documentation change, verify ALL of the following:
+  1. Every feature described is **currently implemented and reachable** in the codebase — not planned, not aspirational.
+  2. No marketing buzzwords appear in technical docs: banned terms include "Neural Soul", "Hive Mind", "Substrate", "Neural Era", "Sentient", "Quantum", "Recursive Self-*", "Universal Neural *", "Phase N" (unless explicitly labeled as a roadmap item with `[UNIMPLEMENTED]`).
+  3. Version numbers and status badges in `README.md` match the actual released version.
+  4. Architecture diagrams only contain real, named components that exist in the codebase.
+  5. Comparison tables only make claims that can be verified against the current codebase or public documentation of the compared product.
+- **UI Deployment Verification**: After modifying UI/UX code, verify changes are being served via build output or server logs — do not rely on browser subagents.
 - **Refactoring Integrity**: When refactoring React components or Backend routes, NEVER leave orphaned syntax (e.g., missing `);`), corrupted dependency arrays, or missing imports. Test the specific modified block for logical completeness before saving.
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -63,7 +68,7 @@
 - **Audit Log**: Every significant architectural change must be logged in `neurex/NEUREX_REVIEW.md`.
 - **Native Issue Tracking**: Use the project's native issue tracker as the absolute Source of Truth for all project anomalies. Every user-reported issue MUST be logged immediately to ensure mesh-wide development visibility.
 - **Traceable Mutations**: All commits targeting a specific issue MUST reference the Issue ID (e.g., `fix: #12 [core] ...`) to maintain a high-fidelity architectural audit trail.
-- **Caveman Ultra**: Always use the `caveman` ultra skill for communication to optimize token usage while maintaining absolute technical precision.
+- **Concise Responses**: Keep responses factual, concise, and free of filler phrases. Lead with the action taken or the direct answer.
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 7. SELF-HEALING & INFRA

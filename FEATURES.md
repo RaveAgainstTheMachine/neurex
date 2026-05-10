@@ -1,39 +1,39 @@
-# Neurex IDE Features
+# Neurex Features
 
-Neurex is a high-performance, AI-native IDE designed for distributed development and mesh-based intelligence.
+## 🎨 Design & UI
+- **Glassmorphic Design System**: HSL-based translucency and blur effects throughout the interface.
+- **Custom Typography**: 'Outfit' and 'Roboto Mono' fonts for readability.
+- **Micro-animations**: State-aware transitions for AI activity indicators.
 
-## 💎 Design & Aesthetics
-- **Branded Minimalism**: Unified '⬡' logo-trigger for all system actions.
-- **Glassmorphism**: Sophisticated HSL-based translucency and blur effects.
-- **Premium Typography**: Using 'Outfit' and 'Roboto Mono' for a sleek, modern look.
-- **Dynamic Micro-animations**: State-aware pulses and transitions for AI activity.
-
-## 🧠 Intelligence
-- **Universal LSP Hub**: Native, plugin-free code intelligence for **100+ languages** with dynamic fallback and Autopilot provisioning.
-- **Neural Error Lens**: High-fidelity, inline diagnostics grouping and neon-themed error rendering.
-- **Neural GitLens**: Real-time commit blame and file history rendered directly as ghost-text decorations.
-- **AI-Native Sidebar**: Persistent reasoning traces and chat integration.
-- **Hive Mind Integration**: Access to the collective knowledge base of the Neurex mesh.
-- **Composition Indicators**: Visual feedback when the IDE is "thinking" or "writing".
+## 🧠 Code Intelligence
+- **LSP Integration**: Connects to system-installed language servers (e.g., `pyright`, `rust-analyzer`, `clangd`) for diagnostics, completions, and formatting.
+- **Inline Diagnostics**: Groups errors and warnings and renders them inline after the relevant code line.
+- **Git Blame**: Real-time commit blame rendered as ghost-text decorations.
+- **RAG / Codebase Search**: Semantic search over your project using local embedding models and ChromaDB.
 
 ## 🛠️ Editor & Productivity
+- **Monaco Editor**: Full VS Code-grade editing experience.
 - **Global Command Palette**: Searchable command center (Cmd+Shift+P).
 - **Multi-Tab Search**: Grouped file results with search-and-replace.
 - **Source Control**: Native Git staging and commit interface.
-- **Interactive Status Bar**: Real-time control over indentation, encoding, and language.
-- **Monaco Engine**: Full VS Code-grade editing experience.
-- **Multi-Root Workspace Engine**: Simultaneous management of disparate project roots with root-aware searching, editor tabs, and contextual terminal anchoring.
+- **Interactive Status Bar**: Control over indentation, encoding, and language mode.
+- **Multi-Root Workspaces**: Manage multiple project roots simultaneously with root-scoped file operations and terminals.
 
-## 🌐 Mesh Infrastructure
-- **Real-time Synchronization**: WebSocket-based heartbeat and node tracking.
-- **Presence Tracking**: See other collaborators on the Neurex Mesh.
-- **AI Offload**: Seamlessly offload tasks to available RPC nodes in the hive.
+## 🤖 Agentic Capabilities
+- **Task Orchestration**: Persistent, SQLite-backed task graphs for multi-step engineering goals.
+- **Role-Based Model Routing**: Assign different models (e.g., Llama for coding, Qwen for planning) to different cognitive roles independently.
+- **Tool Calling**: Agents can read/write files, run shell commands, and perform semantic search.
+- **Docker Sandbox**: Agent-generated code runs in an isolated Docker container with restricted networking and filesystem access.
+
+## 🌐 Distributed Inference (LAN)
+- **VRAM Pooling**: Distribute model layers across multiple LAN machines via `llama-rpc-server`.
+- **Node Monitoring**: Real-time tracking of peer node GPU load and VRAM utilization.
+- **Dynamic Re-quantization**: Automatically downgrades model precision under memory pressure.
 
 ## 🐚 Terminal
-- **Seamless Integration**: Flush, borderless terminal rest aligned with the status bar.
-- **Descender Clearance**: 2px lifting for perfect character legibility.
-- **Multiplexed Sessions**: Support for concurrent, independent terminal tabs with session-aware routing.
+- **Persistent PTY Sessions**: Terminals stay alive across browser refreshes and reconnections.
+- **Multiplexed Tabs**: Multiple independent terminal sessions with per-session routing.
 
-## 🧩 Extensibility
-- **Skill Discovery**: Native marketplace-style interface for discovering agentic toolsets.
-- **Git Injection**: Install new capabilities directly from Git repositories.
+## 🧩 Skills / Extensibility
+- **Skill Discovery**: Interface for discovering and installing agentic toolsets.
+- **Git-based Install**: Install skills directly from Git repositories.

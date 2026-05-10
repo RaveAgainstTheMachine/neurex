@@ -4,28 +4,22 @@
   <br />
 
   <h1>⬡ NEUREX</h1>
-  <h3>The first autonomous workspace for the neural era.</h3>
+  <h3>A local-first AI engineering workspace.</h3>
 
   <p align="center">
-    <b>Stop chatting with your IDE. Start engineering with your mesh.</b>
+    <b>Run models locally, execute agents safely, and collaborate in real time.</b>
   </p>
 
   <p>
     <a href="./LICENSE"><img src="https://img.shields.io/badge/License-BSL%201.1-purple.svg?style=for-the-badge" alt="License"></a>
-    <a href="#"><img src="https://img.shields.io/badge/Version-v0.5.3--STABLE-blueviolet.svg?style=for-the-badge" alt="Version"></a>
-    <a href="#"><img src="https://img.shields.io/badge/Status-Phase%2062%20Stable-success.svg?style=for-the-badge" alt="Status"></a>
-  </p>
-
-  <p align="center">
-    <i>"An IDE that doesn't just execute; it evolves with you."</i>
-    <br />
-    <b>Built for Human-Agent Parity.</b>
+    <a href="#"><img src="https://img.shields.io/badge/Version-v0.5.3-blueviolet.svg?style=for-the-badge" alt="Version"></a>
+    <a href="#"><img src="https://img.shields.io/badge/Status-Active%20Development-success.svg?style=for-the-badge" alt="Status"></a>
   </p>
 
   <p align="center">
     <a href="./INSTALL.md"><b>Installation</b></a> •
     <a href="./wiki/Home.md"><b>Documentation</b></a> •
-    <a href="./wiki/Changelog.md"><b>Changelog</b></a> •
+    <a href="./CHANGELOG.md"><b>Changelog</b></a> •
     <a href="./CREDITS.md"><b>Credits</b></a> •
     <a href="./ROADMAP.md"><b>Roadmap</b></a>
   </p>
@@ -33,32 +27,38 @@
 
 ---
 
-## 👁️ The Essence
-**Neurex** is an autonomous engineering workspace designed for human-agent parity. 
+## What Is Neurex?
 
-It transforms your infrastructure into a **Neural Mesh**—a decentralized network where agents are your peers, hardware is pooled via distributed VRAM, and the system autonomously heals regressions. Stop chatting with your IDE; start engineering with your mesh.
+**Neurex** is a browser-based IDE backed by a native Rust daemon, designed for running AI agents locally against your own hardware. It combines a Monaco-based editor, persistent PTY terminals, and a multi-agent orchestration layer — all without requiring cloud subscriptions or sending your code to third-party APIs.
+
+The core use case: run open-weight models (Llama 3, Qwen, Mistral) via Ollama or llama.cpp, orchestrate agents that can read/write your codebase, and optionally spread inference across multiple machines on your LAN.
 
 ---
 
-## 🚀 The Core Experience
+## Core Features
 
-### 🧠 Collaborative Intelligence
-*   **Agentic Peers**: Work alongside agents with their own visual cursors and persistent state.
-*   **Role Routing**: Dynamically assign models (GPT-4, Claude, Llama 3) to specific tasks like planning or testing.
-*   **Swarm Validation**: High-risk changes require multi-agent verification before they hit your disk.
-*   **Persistent Context**: Task graphs that survive crashes, restarts, and network drops.
+### 🧠 Agentic Orchestration
+*   **Task Graphs**: Persistent SQLite-backed task plans that survive restarts.
+*   **Role-Based Routing**: Assign different models to planning, coding, and review tasks independently.
+*   **Multi-Agent Review**: Route changes through multiple agent personas before applying them.
+*   **Tool Calling**: Agents can read files, write files, run shell commands, and search the codebase.
 
-### ⚡ High-Performance Substrate
-*   **Rust Control Plane**: A native daemon that keeps your terminals and background tasks alive forever.
-*   **Zero-Config Setup**: One-click bootstrap that manages its own hermetic Python and Rust environments.
-*   **Safe Execution**: Built-in Docker and WASM sandboxing for non-destructive agent operations.
-*   **Real-time Telemetry**: Sub-millisecond observability into agent reasoning and tool usage.
+### ⚡ Rust Control Plane (`neurex-cli`)
+*   **Self-Provisioning**: Downloads and configures a hermetic Python environment via `uv` on first run — no pre-installed Python required.
+*   **Process Management**: Keeps the API server and terminals alive independently of the browser session.
+*   **Docker & WASM Sandboxing**: Runs agent-generated code in isolated containers.
 
-### 🌐 Resource Sovereignty
-*   **VRAM Pooling**: Combine the GPU power of every machine on your network into a single compute pool.
-*   **Adaptive Precision**: Automatically shifts model quality to maintain speed when your hardware is under load.
-*   **Distributed Memory**: Shared relational context across your entire engineering mesh.
-*   **Predictive Loading**: Model pre-loading so your agents are always ready to code.
+### 🌐 Distributed Inference (LAN)
+*   **VRAM Pooling**: Distribute a model's layers across multiple machines via `llama-rpc-server`.
+*   **Dynamic Re-quantization**: Automatically downgrades model precision (e.g., Q8 → Q4) under memory pressure to prevent stalls.
+*   **Node Discovery**: Registers peer machines and monitors their VRAM and GPU load in real time.
+
+### 📁 IDE Features
+*   **Monaco Editor**: Full VS Code-grade editing with syntax highlighting and formatting.
+*   **LSP Integration**: Connects to system-installed language servers for diagnostics and completion.
+*   **Multi-Root Workspaces**: Manage multiple project roots in a single session.
+*   **Persistent Terminals**: PTY sessions that reconnect after browser refresh.
+*   **RAG / Codebase Indexing**: Semantic search over your project via ChromaDB and local embedding models.
 
 ---
 
@@ -66,60 +66,33 @@ It transforms your infrastructure into a **Neural Mesh**—a decentralized netwo
 
 ```mermaid
 flowchart TD
-    %% Zones
-    subgraph "Orchestration Core"
-        ORCH[Orchestrator / Supervisor]
-        TG[(Task Graph Ledger)]
-        LINT[Neural Linter]
-        CONS[Swarm Consensus]
-        REPAIR[Self-Repair Loop]
+    subgraph "Control Plane (neurex-cli)"
+        CLI[Rust Daemon]
+        PROV[uv Provisioner]
     end
 
-    subgraph "Neural Mesh Hub"
-        POOL[Attention Coordinator]
-        SHARD[Context Sharder]
-        PEERS[Federated Peer Nodes]
-        PREFETCH[Predictive Prefetcher]
+    subgraph "API Layer (neurex-api)"
+        ORCH[Orchestrator]
+        TG[(Task Graph / SQLite)]
+        PTY[PTY Manager]
+        RAG[ChromaDB / Embeddings]
     end
 
-    subgraph "Infrastructure NOC"
-        TELEMETRY[Real-time Metrics]
-        HEALTH[Storage Health]
-        MODELS[Model Lifecycle]
+    subgraph "Inference Layer"
+        OLLAMA[Ollama / llama.cpp]
+        RPC[llama-rpc-server Nodes]
     end
 
-    %% IO Layer
-    User((Developer)) == Request ==> UI[Glassmorphic Frontend]
-    UI == Bridge ==> WS[WebSocket / API Hub]
-    WS == Control ==> ORCH
-
-    %% Internal Connections
-    ORCH --- TG
-    ORCH --- LINT
-    ORCH --- CONS
-    LINT --- REPAIR
-    
-    ORCH <== Neural Link ==> POOL
-    POOL --- SHARD
-    SHARD --- PEERS
-    PREFETCH -.-> POOL
-
-    ORCH == Monitoring ==> TELEMETRY
-    TELEMETRY --- HEALTH
-    TELEMETRY --- MODELS
-
-    ORCH == Intelligence ==> RAG[Distributed RAG / Hive Mind]
-
-    %% Professional Styling
-    classDef core fill:#9c6fff15,stroke:#9c6fff,stroke-width:2px,color:#fff
-    classDef mesh fill:#00d2ff15,stroke:#00d2ff,stroke-width:2px,color:#fff
-    classDef infra fill:#22c55e15,stroke:#22c55e,stroke-width:2px,color:#fff
-    classDef io fill:#0f172a,stroke:#334155,stroke-width:1px,color:#94a3b8
-
-    class ORCH,TG,LINT,CONS,REPAIR core
-    class POOL,SHARD,PEERS,PREFETCH mesh
-    class TELEMETRY,HEALTH,MODELS infra
-    class UI,WS,RAG io
+    User((Developer)) ==> UI[React Frontend]
+    UI ==> WS[WebSocket / REST]
+    CLI --> PROV
+    CLI --> API
+    WS --> ORCH
+    ORCH --> TG
+    ORCH --> PTY
+    ORCH --> RAG
+    ORCH --> OLLAMA
+    OLLAMA --> RPC
 ```
 
 ---
@@ -129,21 +102,21 @@ flowchart TD
 | Layer | Technologies |
 | :--- | :--- |
 | **Frontend** | React 18, Vite, Zustand, Monaco Editor, Framer Motion |
-| **Backend** | FastAPI, Python 3.14+, Asyncio, Pydantic v2 |
-| **Core Daemon** | Rust 1.80, Tokio, Axum, Sysinfo |
-| **Persistence** | SQLite (Tasks), ChromaDB (Vector Memory), SkepticalMemory |
-| **Inference** | llama-cpp-python, vLLM, Ollama, NeuralHarness v2.0 |
+| **Backend** | FastAPI, Python 3.11+, Asyncio, Pydantic v2 |
+| **Control Plane** | Rust (Tokio, Axum), `uv` for Python env management |
+| **Persistence** | SQLite (task graphs), ChromaDB (vector memory) |
+| **Inference** | Ollama, llama.cpp, llama-rpc-server |
 
 ---
 
 ## 🏁 Getting Started
 
 ### 1. One-Click Bootstrap (Recommended)
-Download the latest `neurex-cli` for your platform and run:
+Download the latest `neurex-cli` binary for your platform and run:
 ```bash
 ./neurex start
 ```
-*Neurex will autonomously provision its own hermetic Python environment and dependencies via the `uv` engine.*
+The CLI will provision a Python environment and install all dependencies automatically.
 
 ### 2. Manual Development Install
 ```bash
@@ -152,25 +125,22 @@ cd neurex/neurex-cli
 cargo run -- start
 ```
 
----
-
-## 📜 Project Governance
-Neurex development is governed by the **Neurex Core Protocol** (see `.projectrules`). All mutations must be protocol-aligned, documented, and verified by the Neural Linter.
+See [INSTALL.md](./INSTALL.md) for full setup instructions.
 
 ---
 
 ## ⚖️ Licensing
 
-Neurex is licensed under the **Business Source License 1.1** (BSL). 
+Neurex is licensed under the **Business Source License 1.1** (BSL).
 
-- **Non-Commercial Use**: Completely free for personal and educational use.
+- **Non-Commercial Use**: Free for personal and educational use.
 - **Commercial Use**: Free for entities with annual gross revenue below **$5,000,000 USD**.
-- **Change Date**: On **January 1, 2030**, the license will automatically convert to the **Apache License, Version 2.0**.
+- **Change Date**: On **January 1, 2030**, the license converts to the **Apache License, Version 2.0**.
 
-For full details, please refer to the [LICENSE](./LICENSE) file.
+See [LICENSE](./LICENSE) for full details.
 
 ---
 
 <div align="center">
-  <sub>Built with 💜 by the Neurex Collective. Phase 61 Stable.</sub>
+  <sub>Built by the Neurex Collective. v0.5.3.</sub>
 </div>

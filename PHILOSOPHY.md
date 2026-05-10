@@ -1,39 +1,47 @@
-# ⬡ Neurex: The No-Bullshit Overview
+# Neurex: Philosophy & Positioning
 
-In the current gold rush of "AI-Native IDEs," most offerings are essentially **VS Code forks with a chat-box attached.** Neurex is not an IDE; it is a **Distributed Agentic Substrate.**
+## Why Neurex Exists
 
-## 🛠️ The Competitive Landscape
+Most "AI IDEs" today are VS Code forks with a chat panel attached to a centralized API. That model has real tradeoffs: your code goes to a third party, you pay a monthly subscription for compute you don't own, and when you close the app your agent's context evaporates.
 
-| Feature | Cursor / Windsurf | Replit Agent | **Neurex** |
+Neurex is built on a different premise: **your hardware, your models, your data**.
+
+## Key Design Decisions
+
+### 1. Local-First Inference
+Neurex integrates with Ollama and llama.cpp, running open-weight models (Llama 3, Qwen, Mistral) entirely on your own hardware. No code leaves your network unless you explicitly configure an external provider.
+
+### 2. Persistent State (PTY Decoupling)
+The Rust control plane (`neurex-cli`) keeps the Python API and PTY terminals alive as independent processes. Closing your browser tab or refreshing the page does not destroy your active terminal sessions or agent context. When you reconnect, the buffer is replayed and the agent resumes where it left off.
+
+### 3. Distributed Inference Across a LAN
+If your codebase needs a 70B model that doesn't fit in one GPU's VRAM, Neurex can distribute the model's layers across multiple machines on your local network via `llama-rpc-server`. This is real, implemented functionality — not a roadmap item.
+
+### 4. Agents as Collaborators
+Rather than a black-box that writes to your files in the background, Neurex agents have visible presence in the IDE (cursors, file lock indicators) and operate through the same tool layer you do. The `CollaborationManager` prevents write collisions between concurrent agents and human developers.
+
+## How Neurex Compares
+
+| Dimension | Cursor / Windsurf | Replit Agent | Neurex |
 | :--- | :--- | :--- | :--- |
-| **Form Factor** | Desktop App (VS Code Fork) | Cloud-Only Browser IDE | **Native Rust Daemon + Browser/Mobile Frontend** |
-| **Intelligence** | Centralized API (OpenAI/Anthropic) | Centralized (Replit-Owned) | **Decentralized Mesh (Ollama / VRAM Pooling)** |
-| **State** | Session-based (Lost on restart) | Ephemeral Cloud Container | **Persistent PTY Substrate (Zero-Loss Refresh)** |
-| **Autonomy** | Human-in-the-loop (Chat) | "Build it for me" (Black Box) | **Human-Agent Parity (Parallel Cursors)** |
-| **Safety** | Git-based Undo | Snapshots | **One-Way Hardened Trash + Docker Sandbox** |
+| **Inference** | Centralized API (OpenAI/Anthropic) | Centralized (Replit-managed) | Local (Ollama / llama.cpp) |
+| **Data Sovereignty** | Code sent to third-party API | Code hosted in cloud | Code stays local |
+| **Terminal State** | Lost on restart | Ephemeral cloud container | Persists across browser disconnects |
+| **Compute** | Subscription-based | Subscription-based | Your own GPU(s), optionally pooled across LAN |
+| **Agent Visibility** | Background process | Black box | Visible cursors, file locks, reasoning traces |
 
-## 🚀 Key Differentiators
+## When to Use Neurex
 
-### 1. The Persistence Principle (Zero-Loss State)
-In Cursor or Windsurf, if the app crashes or you restart your machine, your active terminal state and "thinking" context are often fragmented. In Neurex, the **Control Plane is decoupled from the UI.**
-- The `PTYManager` keeps your shell alive even if you close your browser or your mobile device goes offline.
-- When you reconnect, the "Plasma" underlay re-renders the exact state, including active agent traces.
+**Good fit if:**
+- You want to run AI agents against your codebase without sending code to a cloud API
+- You have local GPU hardware (even a single consumer GPU works)
+- You want persistent terminal sessions and task state across reconnects
+- You want to pool inference across multiple local machines
 
-### 2. The Neural Mesh (Compute Sovereignty)
-Most AI IDEs require a $20/mo subscription to a centralized brain. Neurex is built for **Resource Sovereignty.**
-- **VRAM Pooling**: Neurex can bridge multiple local machines (e.g., your Mac Studio and your Linux Box) to pool GPU memory for massive models (70B+) that wouldn't fit on one card.
-- **Dynamic Re-Quantization**: The system automatically shifts model precision (Q8 -> IQ2) based on real-time hardware pressure to ensure the agent never stalls.
-
-### 3. Human-Agent Parity (Collaboration, not Automation)
-In Windsurf (Cascade) or Cursor, the agent is a background process writing to your files. In Neurex, the agent is a **Collaborator.**
-- Agents have **visual presence** (cursors, lock badges).
-- The `CollaborationManager` prevents race conditions, allowing you and an agent to work on the same module simultaneously without stepping on each other.
-
-## 🎯 The Bottom Line
-
-- **Use Cursor/Windsurf** if you want the best possible VS Code experience with an AI that's great at refactoring.
-- **Use Replit** if you're a non-coder or want to deploy an MVP in 10 minutes without touching a terminal.
-- **Use Neurex** if you want to build a **sovereign, high-performance engineering environment** where agents are your peers, state is sacred, and you own the hardware/compute that powers your brain.
+**Not the right tool if:**
+- You want a polished, zero-setup experience — Neurex requires some infrastructure setup
+- You need tight VS Code plugin ecosystem compatibility
+- You want the highest-capability models (GPT-4o, Claude Opus) — those require external API keys
 
 ---
-*Enshrined by the Neurex Core Team.*
+*Updated for v0.5.3.*
