@@ -29,7 +29,6 @@ impl WasiSandbox {
         let mut linker: Linker<WasiP1Ctx> = Linker::new(&self.engine);
         p1::add_to_linker_sync(&mut linker, |s| s)?;
 
-
         let mut builder = WasiCtxBuilder::new();
         builder.inherit_env().inherit_stdout().inherit_stderr().args(&args);
 
