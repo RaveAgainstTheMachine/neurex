@@ -5,7 +5,14 @@ import {
   Terminal, Globe, Boxes, Search 
 } from 'lucide-react';
 
-const FeatureCard = ({ icon: Icon, title, description, delay }) => (
+interface FeatureCardProps {
+  icon: any;
+  title: string;
+  description: string;
+  delay: number;
+}
+
+const FeatureCard = ({ icon: Icon, title, description, delay }: FeatureCardProps) => (
   <motion.div 
     initial={{ opacity: 0, y: 20 }}
     whileInView={{ opacity: 1, y: 0 }}
@@ -165,7 +172,7 @@ function App() {
               Neurex Mobile is your off-band control center. Approve terminal commands, 
               monitor mesh health, and receive critical alerts while you're away from your desk.
             </p>
-            <ul style={{ listSetStyle: 'none', display: 'flex', flexDirection: 'column', gap: '1rem', color: '#adb5bd' }}>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '1rem', color: '#adb5bd' }}>
               <li>✓ One-tap command approval</li>
               <li>✓ Real-time Mesh telemetry</li>
               <li>✓ Secure mTLS tunnel</li>
