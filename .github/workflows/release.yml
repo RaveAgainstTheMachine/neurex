@@ -107,7 +107,7 @@ jobs:
         run: mv neurex-cli/target/release/neurex-cli.exe neurex-cli/target/release/${{ matrix.asset_name }}
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ matrix.artifact_name }}
           path: neurex-cli/target/release/${{ matrix.asset_name }}
