@@ -292,32 +292,31 @@ function AppContent() {
     { id: "logout", label: "Account: Logout", category: "Account", action: logout }
   ];
 
-  try {
-    return (
-      <div className={`app ${modalOpen ? "modal-open" : ""}`}>
-        {(!token || onboardingRequired) && <AuthOverlay />}
-        {!isInitialized && <LoadingOverlay progress={visualProgress} />}
-        
-        <AnimatePresence>
-          {showAbout && <AboutPanel />}
-        </AnimatePresence>
-        
-        <CommandPalette 
-          isOpen={paletteMode === "global"} 
-          onClose={() => setPaletteMode("none")} 
-          title="Global Commands"
-          items={globalCommands}
-          placeholder="Type a command to execute..."
-        />
-        <CommandPalette 
-          isOpen={paletteMode === "language"} 
-          onClose={() => setPaletteMode("none")} 
-          title="Select Language Mode"
-          items={languageItems}
-        />
-        <Toaster position="top-right" />
-        
-        <div className={`app__root ${settings?.menu_mode === 'horizontal' ? 'with-horizontal-menu' : ''}`}>
+  return (
+    <div className={`app ${modalOpen ? "modal-open" : ""}`}>
+      {(!token || onboardingRequired) && <AuthOverlay />}
+      {!isInitialized && <LoadingOverlay progress={visualProgress} />}
+      
+      <AnimatePresence>
+        {showAbout && <AboutPanel />}
+      </AnimatePresence>
+      
+      <CommandPalette 
+        isOpen={paletteMode === "global"} 
+        onClose={() => setPaletteMode("none")} 
+        title="Global Commands"
+        items={globalCommands}
+        placeholder="Type a command to execute..."
+      />
+      <CommandPalette 
+        isOpen={paletteMode === "language"} 
+        onClose={() => setPaletteMode("none")} 
+        title="Select Language Mode"
+        items={languageItems}
+      />
+      <Toaster position="top-right" />
+      
+      <div className={`app__root ${settings?.menu_mode === 'horizontal' ? 'with-horizontal-menu' : ''}`}>
           {settings?.menu_mode === 'horizontal' && <TitleBar />}
           {isMobile ? (
             <MobileView send={send} />
@@ -397,10 +396,6 @@ function AppContent() {
         </div>
       </div>
     );
-  } catch (err) {
-    console.error("AppContent Error:", err);
-    throw err;
-  }
 }
 function ResizeHandle({ vertical = false }: { vertical?: boolean }) {
   return (
