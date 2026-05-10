@@ -28,8 +28,8 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 anyhow = "1.0"
 tower-http = { version = "0.6", features = ["fs", "trace"] }
-wasmtime = "29.0.1"
-wasmtime-wasi = "29.0.1"
+wasmtime = "36.0.8"
+wasmtime-wasi = "33.0.2"
 wasi-common = "29.0.1"
 cap-std = "3.4.1"
 serde = { version = "1.0", features = ["derive"] }
