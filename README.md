@@ -45,20 +45,20 @@ It transforms your infrastructure into a **Neural Mesh**—a decentralized netwo
 ### 🧠 Collaborative Intelligence
 *   **Agentic Peers**: Work alongside agents with their own visual cursors and persistent state.
 *   **Role Routing**: Dynamically assign models (GPT-4, Claude, Llama 3) to specific tasks like planning or testing.
-*   **Swarm Consensus**: High-risk changes require multi-agent validation before they hit your disk.
+*   **Swarm Validation**: High-risk changes require multi-agent verification before they hit your disk.
 *   **Persistent Context**: Task graphs that survive crashes, restarts, and network drops.
 
 ### ⚡ High-Performance Substrate
 *   **Rust Control Plane**: A native daemon that keeps your terminals and background tasks alive forever.
 *   **Zero-Config Setup**: One-click bootstrap that manages its own hermetic Python and Rust environments.
 *   **Safe Execution**: Built-in Docker and WASM sandboxing for non-destructive agent operations.
-*   **Real-time Telemetry**: Sub-millisecond observability into exactly what your agents are thinking.
+*   **Real-time Telemetry**: Sub-millisecond observability into agent reasoning and tool usage.
 
 ### 🌐 Resource Sovereignty
-*   **VRAM Pooling**: Combine the GPU power of every machine on your network into a single "unified brain."
+*   **VRAM Pooling**: Combine the GPU power of every machine on your network into a single compute pool.
 *   **Adaptive Precision**: Automatically shifts model quality to maintain speed when your hardware is under load.
-*   **Hive Mind**: Shared relational memory across your entire engineering mesh.
-*   **Zero Latency**: Predictive model pre-loading so your agents are always ready to code.
+*   **Distributed Memory**: Shared relational context across your entire engineering mesh.
+*   **Predictive Loading**: Model pre-loading so your agents are always ready to code.
 
 ---
 
