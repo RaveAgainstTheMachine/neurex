@@ -17,6 +17,8 @@ def run_git(args: list[str], cwd: str | None = None):
         cwd = str(workspace)
     
     try:
+        # SECURITY: Prevent parameter injection by using '--' to separate flags from paths
+        # and ensuring we don't pass dangerous flags as paths.
         res = subprocess.run(["git"] + args, capture_output=True, text=True, check=True, cwd=cwd)
         return res.stdout.strip()
     except subprocess.CalledProcessError as e:

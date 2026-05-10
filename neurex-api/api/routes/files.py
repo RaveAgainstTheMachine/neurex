@@ -288,6 +288,7 @@ async def search_files(
             for g in exclude_glob.split(","):
                 cmd.extend(["--glob", f"!{g.strip()}"])
                 
+        cmd.append("--")
         cmd.append(query)
         cmd.append(str(WORKSPACE))
         
@@ -338,7 +339,7 @@ async def search_files(
             cmd.append("-w")
             
         # Grep globbing is limited, we just use standard grep
-        cmd.extend([query, str(WORKSPACE)])
+        cmd.extend(["--", query, str(WORKSPACE)])
         
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
