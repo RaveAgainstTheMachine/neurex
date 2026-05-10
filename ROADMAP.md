@@ -7,10 +7,10 @@ Welcome to the official Neurex roadmap. This document tracks the trajectory of t
 ---
 
 ## 🛰️ Current Operational Status
-- **Current Version**: `v0.4.1-DYNAMIC`
+- **Current Version**: `v0.5.3-STABLE`
 - **Core Engine**: NeuralHarness v2.1 (Dynamic Routing Substrate)
 - **Active Infrastructure**: Neurex CLI (Native Rust Control Plane)
-- **Network State**: 61 Phases of Core Hardening Complete.
+- **Network State**: 62 Phases of Core Hardening Complete.
 
 ---
 
@@ -20,6 +20,7 @@ Welcome to the official Neurex roadmap. This document tracks the trajectory of t
 - [x] **Phases 1-52**: From NeuralHarness v1.0 to Universal Neural Consensus and Self-Synthesis.
 - [x] **Phases 53-55**: Temporal Synthesis, Hermetic Substrate, and Substrate UI.
 - [x] **Phases 60-61**: Secure LAN Sovereignty and Dynamic Model Routing.
+- [x] **Phase 62**: Core Security Hardening and Dependency Substrate Stabilization.
 
 ---
 
@@ -36,9 +37,15 @@ Welcome to the official Neurex roadmap. This document tracks the trajectory of t
 - [x] **Autonomous Parameter Derivation (Phase 61.1)**: Zero-config extraction of model sizes (e.g. 14B) from metadata.
 - [x] **High-Density Routing Grid**: Premium UI for functional topology management with reactive parameter badges.
 
-### Phase 62: Autonomous Coreutils WASM Bundler [PENDING]
-- [ ] Automated build pipeline for self-generating `.wasm` tools during provision.
-- [ ] Neural-optimized WASI runtime enhancements.
+### Phase 62: Deep Substrate Optimization [ACTIVE]
+- [ ] **WASI Coreutils Bundler**: Automated build pipeline for self-generating `.wasm` tools during provision.
+- [ ] **Inference Caching**: Aggressive vector caching for repetitive planning steps to drastically cut GPU overhead.
+- [ ] **Context Pre-computation**: Background compilation of AST models while agents are idle.
+
+### Phase 63: Expanded Neural Features [PENDING]
+- [ ] **Multi-Agent Debates**: Allow agents to cross-examine proposals in a hidden arena before surfacing to the human.
+- [ ] **Infinite Canvas Sandbox**: A whiteboard-like UI overlay for agents to sketch architecture diagrams.
+- [ ] **Third-Party Skill Verification**: Introduce a decentralized signature check for marketplace skills.
 
 ---
 

@@ -26,3 +26,4 @@ We will acknowledge receipt of your report within 48 hours and provide a timelin
 - **Local Sovereignty**: Neurex is designed to run locally. We recommend never exposing the API or Web ports directly to the public internet without a secure reverse proxy like the provided Caddy configuration with mTLS enabled.
 - **Sandboxing**: All agent-generated code should be executed within the provided Docker sandbox.
 - **Secret Management**: Never commit `.env` files or private keys. Neurex is configured to ignore these by default.
+- **Input Sanitization**: As of v0.5.3, Neurex strictly sanitizes all URL inputs for SSRF prevention, isolates file access to mitigate path traversal, and uses positional arguments (`--`) to prevent command injection across all subprocess layers.

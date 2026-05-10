@@ -12,8 +12,8 @@
 
   <p>
     <a href="./LICENSE"><img src="https://img.shields.io/badge/License-BSL%201.1-purple.svg?style=for-the-badge" alt="License"></a>
-    <a href="#"><img src="https://img.shields.io/badge/Version-v0.5.2--DYNAMIC-blueviolet.svg?style=for-the-badge" alt="Version"></a>
-    <a href="#"><img src="https://img.shields.io/badge/Status-Phase%2061%20Stable-success.svg?style=for-the-badge" alt="Status"></a>
+    <a href="#"><img src="https://img.shields.io/badge/Version-v0.5.3--STABLE-blueviolet.svg?style=for-the-badge" alt="Version"></a>
+    <a href="#"><img src="https://img.shields.io/badge/Status-Phase%2062%20Stable-success.svg?style=for-the-badge" alt="Status"></a>
   </p>
 
   <p align="center">

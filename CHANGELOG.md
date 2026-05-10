@@ -2,6 +2,16 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
+## [0.5.3] - 2026-05-10: SECURITY HARDENING
+### Added
+- **Command Injection Prevention**: Hardened all internal git and shell subprocesses using `--` positional argument separators.
+- **SSRF Mitigation**: Implemented strict domain validation (`urlparse`) for marketplace skill resolution.
+- **Path Traversal Protection**: Enforced boundary checks for all scratchpad operations and system rollback zip extraction.
+- **Automated Dependency Updates**: Cleared backlogs and automated integration of Dependabot updates.
+
+### Changed
+- **CLI Dependency Bump**: Upgraded `bollard` to `0.21.0` and `tungstenite` to `0.29.0`, fixing major API breaks.
+
 ## [0.5.2] - 2026-05-09: THE STABLE SUBSTRATE
 ### Added
 - **Release Automation**: Full GitHub Actions pipeline for automated Docker Hub builds (API, Web, Sandbox) and multi-platform CLI binary distribution (Linux, macOS, Windows).
