@@ -1,1 +1,1 @@
-VERSION = "0.5.3" # Security Hardening & Dependency Updates
+VERSION = "0.5.4" # Security Hardening & Documentation Grounding

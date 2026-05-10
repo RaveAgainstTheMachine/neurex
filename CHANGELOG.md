@@ -2,12 +2,15 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
-## [0.5.3] - 2026-05-10: SECURITY HARDENING
+## [0.5.4] - 2026-05-10: GROUNDED SECURITY
 ### Added
-- **Command Injection Prevention**: Hardened all internal git and shell subprocesses using `--` positional argument separators.
-- **SSRF Mitigation**: Implemented strict domain validation (`urlparse`) for marketplace skill resolution.
-- **Path Traversal Protection**: Enforced boundary checks for all scratchpad operations and system rollback zip extraction.
-- **Automated Dependency Updates**: Cleared backlogs and automated integration of Dependabot updates.
+- **Documentation Grounding**: Rewrote core documentation (Architecture, Roadmap, README) to align with actual implementation and remove speculative buzzwords.
+- **Protocol Enforcement**: Updated `.projectrules` to mandate grounded, technical documentation.
+- **Security Hardening**: Hardened subprocess calls, SSRF protection, and path traversal mitigation.
+- **Dependency Automation**: Synchronized mesh components and resolved `bollard` v0.21.0 migration breaks.
+
+## [0.5.3] - 2026-05-10: [IMMUTABLE RELEASE]
+*Note: This release was marked as immutable on GitHub and contains fragmented state. Please use v0.5.4.*
 
 ### Changed
 - **CLI Dependency Bump**: Upgraded `bollard` to `0.21.0` and `tungstenite` to `0.29.0`, fixing major API breaks.
