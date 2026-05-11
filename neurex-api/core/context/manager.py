@@ -87,6 +87,9 @@ class ContextManager:
         self, query: str, n_results: int = 20, model_name: str | None = None
     ) -> list[dict]:
         """Embed → ANN search → rerank → return top-k within budget."""
+        if os.getenv("NEUREX_MOCK_LLM") == "true":
+            return []
+
         if not self._embedder:
             return []
 
