@@ -11,6 +11,7 @@ Strategy:
 This is intentionally a fallback — the primary strategy is KV-cache pinning
 + sliding window (see core/context/manager.py).
 """
+
 from __future__ import annotations
 
 import structlog
@@ -66,7 +67,7 @@ class SummarizerAgent(BaseAgent):
 
         summary_messages = [
             {"role": "system", "content": SUMMARIZER_SYSTEM},
-            {"role": "user",   "content": f"Summarize this session:\n\n{transcript}"},
+            {"role": "user", "content": f"Summarize this session:\n\n{transcript}"},
         ]
 
         full_text = ""
@@ -93,13 +94,13 @@ class SummarizerAgent(BaseAgent):
         Split messages into (to_summarize, to_keep).
         Keeps system messages and the last `keep_last` exchanges intact.
         """
-        system   = [m for m in messages if m.get("role") == "system"]
-        non_sys  = [m for m in messages if m.get("role") != "system"]
+        system = [m for m in messages if m.get("role") == "system"]
+        non_sys = [m for m in messages if m.get("role") != "system"]
 
         if len(non_sys) <= keep_last:
             return [], messages
 
         to_summarize = non_sys[:-keep_last]
-        to_keep      = non_sys[-keep_last:]
+        to_keep = non_sys[-keep_last:]
 
         return to_summarize, system + to_keep

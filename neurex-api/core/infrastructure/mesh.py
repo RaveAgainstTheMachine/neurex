@@ -3,6 +3,7 @@ core/infrastructure/mesh.py
 Manages the decentralized Neurex Mesh Federation.
 Handles peer discovery, health checks, and LLM load balancing across nodes.
 """
+
 import asyncio
 import json
 import os
@@ -15,6 +16,7 @@ import structlog
 log = structlog.get_logger()
 
 PEERS_FILE = Path.home() / ".neurex" / "mesh_peers.json"
+
 
 class PeerNode:
     def __init__(self, url: str, token: str, name: str = "Unknown"):
@@ -40,11 +42,12 @@ class PeerNode:
     def record_telemetry(self, metrics: dict[str, Any]):
         """Append a metric snapshot and prune history."""
         import time
+
         snapshot = {
             "timestamp": time.time(),
             "cpu": metrics.get("cpu_percent", 0.0),
             "vram": metrics.get("vram_gb", 0.0),
-            "queue": metrics.get("queue_depth", 0)
+            "queue": metrics.get("queue_depth", 0),
         }
         self.history.append(snapshot)
         # Keep last 1 hour of history (assuming 60s checks)
@@ -68,12 +71,13 @@ class PeerNode:
             "distributed": self.distributed_status,
             "predicted_load": self.predicted_load,
             "storage_health": self.storage_health,
-            "specs": self.specs
+            "specs": self.specs,
         }
+
 
 class ResourcePredictor:
     """Analyzes historical telemetry to predict upcoming resource bottlenecks."""
-    
+
     @staticmethod
     def predict_future_load(history: list[dict[str, Any]]) -> float:
         """
@@ -82,23 +86,24 @@ class ResourcePredictor:
         """
         if len(history) < 3:
             return 0.0
-            
+
         recent = history[-5:]
         # Weights: more recent = more important
         weights = [0.1, 0.15, 0.2, 0.25, 0.3]
-        weights = weights[-len(recent):] # adjust if < 5
-        
+        weights = weights[-len(recent) :]  # adjust if < 5
+
         # Normalize weights
         total_w = sum(weights)
-        norm_weights = [w/total_w for w in weights]
-        
+        norm_weights = [w / total_w for w in weights]
+
         prediction = 0.0
         for i, snap in enumerate(recent):
             # Combined load metric: CPU + (Queue * 10)
             load = snap["cpu"] + (snap["queue"] * 10)
             prediction += load * norm_weights[i]
-            
+
         return round(prediction, 2)
+
 
 class MeshRouter:
     def __init__(self):
@@ -141,15 +146,19 @@ class MeshRouter:
     async def check_health(self, url: str):
         """Ping a peer to update its status via persistent client."""
         peer = self.peers.get(url)
-        if not peer: return
+        if not peer:
+            return
 
         import time
+
         start = time.time()
         try:
-            resp = await self._client.get(f"{peer.url}/api/infra/status", headers={"Authorization": f"Bearer {peer.token}"})
+            resp = await self._client.get(
+                f"{peer.url}/api/infra/status", headers={"Authorization": f"Bearer {peer.token}"}
+            )
             resp.raise_for_status()
             data = resp.json()
-                
+
             peer.status = "online"
             metrics = data.get("metrics", {})
             peer.vram_gb = metrics.get("vram_gb", 0.0)
@@ -161,7 +170,7 @@ class MeshRouter:
             peer.latency_ms = int((time.time() - start) * 1000)
             peer.storage_health = metrics.get("storage_health", {})
             peer.specs = metrics.get("specs", {})
-            
+
             # RPC Info
             dist = data.get("distributed", {})
             peer.rpc_endpoint = dist.get("rpc_endpoint")
@@ -172,7 +181,12 @@ class MeshRouter:
             peer.predicted_load = ResourcePredictor.predict_future_load(peer.history)
 
             self._save_peers()
-            log.debug("mesh.peer_healthy", url=url, latency=peer.latency_ms, predicted_load=peer.predicted_load)
+            log.debug(
+                "mesh.peer_healthy",
+                url=url,
+                latency=peer.latency_ms,
+                predicted_load=peer.predicted_load,
+            )
         except Exception as e:
             peer.status = "offline"
             self._save_peers()
@@ -196,42 +210,51 @@ class MeshRouter:
         local_vram = local_metrics.get("vram_gb", 8.0)
         local_cpu = local_metrics.get("cpu_percent", 0.0)
         local_models = await infrastructure_manager.get_installed_models("ollama")
-        has_model_locally = not model_name or any(model_name in (m["name"] if isinstance(m, dict) else m) for m in local_models)
-        
+        has_model_locally = not model_name or any(
+            model_name in (m["name"] if isinstance(m, dict) else m) for m in local_models
+        )
+
         local_tps = benchmarker.last_results.get("tps", 0.0)
         local_tps_boost = 1 + (local_tps / 10.0)
         local_multiplier = 2.0 if has_model_locally else 0.1
-        
-        # Local node has 0 latency and usually 0 queue depth if we just started, 
+
+        # Local node has 0 latency and usually 0 queue depth if we just started,
         # but we should ideally track it. For now, assume 0 latency.
-        local_load = (local_cpu / 2) + 0 # queue_depth not tracked locally yet
+        local_load = (local_cpu / 2) + 0  # queue_depth not tracked locally yet
         local_score = (local_vram * local_multiplier * local_tps_boost) / (max(0.1, local_load))
-        
-        candidates.append({
-            "url": os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
-            "score": local_score,
-            "name": "Local Node"
-        })
+
+        candidates.append(
+            {
+                "url": os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+                "score": local_score,
+                "name": "Local Node",
+            }
+        )
 
         # 2. Evaluate Peer Nodes
         for peer in self.peers.values():
             if peer.status != "online":
                 continue
-            
-            has_model_on_peer = not model_name or any(model_name in (m["name"] if isinstance(m, dict) else m) for m in peer.models)
+
+            has_model_on_peer = not model_name or any(
+                model_name in (m["name"] if isinstance(m, dict) else m) for m in peer.models
+            )
             peer_multiplier = 2.0 if has_model_on_peer else 0.1
             tps_boost = 1 + (peer.tps / 10.0)
-            
+
             # Penalize by latency, CPU load, current task queue, and PREDICTED load
             # queue_depth weight is high (25), predicted_load adds trend-awareness
-            load_factor = (peer.cpu_percent / 2) + (peer.latency_ms / 20) + (peer.queue_depth * 25) + (peer.predicted_load * 0.5)
+            load_factor = (
+                (peer.cpu_percent / 2)
+                + (peer.latency_ms / 20)
+                + (peer.queue_depth * 25)
+                + (peer.predicted_load * 0.5)
+            )
             score = (peer.vram_gb * peer_multiplier * tps_boost) / (max(0.1, load_factor))
-            
-            candidates.append({
-                "url": f"{peer.url}/api/infra/ollama_proxy",
-                "score": score,
-                "name": peer.name
-            })
+
+            candidates.append(
+                {"url": f"{peer.url}/api/infra/ollama_proxy", "score": score, "name": peer.name}
+            )
 
         if not candidates:
             return os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
@@ -239,21 +262,23 @@ class MeshRouter:
         # 3. Selection Logic (Balanced)
         # Sort by score descending
         candidates.sort(key=lambda x: x["score"], reverse=True)
-        
+
         # To prevent 'dogpiling', if the top few nodes have scores within 5% of each other,
         # pick randomly among them.
         best_score = candidates[0]["score"]
         top_tier = [c for c in candidates if c["score"] >= best_score * 0.95]
-        
+
         selected = random.choice(top_tier)
-        
-        log.info("mesh.routing_decided", 
-                 target=selected["url"], 
-                 node=selected["name"],
-                 model=model_name, 
-                 score=round(selected["score"], 2),
-                 tier_size=len(top_tier))
-        
+
+        log.info(
+            "mesh.routing_decided",
+            target=selected["url"],
+            node=selected["name"],
+            model=model_name,
+            score=round(selected["score"], 2),
+            tier_size=len(top_tier),
+        )
+
         return selected["url"]
 
     async def start_monitoring(self, interval_seconds: int = 60):
@@ -263,11 +288,13 @@ class MeshRouter:
             tasks = [self.check_health(url) for url in self.peers.keys()]
             if tasks:
                 await asyncio.gather(*tasks)
-            
+
             # Phase 47: Sync Virtual VRAM Pool
             from core.infrastructure.vram_pool import vram_pool
+
             await vram_pool.synchronize_mesh_resources()
-            
+
             await asyncio.sleep(interval_seconds)
+
 
 mesh_router = MeshRouter()

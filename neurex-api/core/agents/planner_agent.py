@@ -3,6 +3,7 @@ core/agents/planner_agent.py
 Decomposes a natural-language request into an ordered list of sub-tasks,
 each tagged with the appropriate agent type.
 """
+
 from __future__ import annotations
 
 import json
@@ -64,7 +65,7 @@ class PlannerAgent(BaseAgent):
 
         messages = [
             {"role": "system", "content": system},
-            {"role": "user",   "content": user_message},
+            {"role": "user", "content": user_message},
         ]
 
         full_text = ""
@@ -75,18 +76,19 @@ class PlannerAgent(BaseAgent):
             elif chunk["type"] == "done":
                 # Check for project intelligence
                 import os
+
                 ws = os.getenv("WORKSPACE_PATH", "/workspace")
                 intel_path = os.path.join(ws, ".neurex", "intel.json")
                 needs_intel = not os.path.exists(intel_path)
 
                 plan = self._parse_plan(full_text)
-                
+
                 if needs_intel:
                     # Inject discovery as the first step
                     discovery_step = {
                         "agent": "planner",
                         "title": "Architectural Discovery",
-                        "description": "Synthesize project intelligence to establish the architectural brain for this workspace."
+                        "description": "Synthesize project intelligence to establish the architectural brain for this workspace.",
                     }
                     # Avoid double discovery if the model already added it
                     if not any("Discovery" in s.get("title", "") for s in plan):

@@ -9,15 +9,16 @@ from ..settings.manager import settings_manager
 
 log = structlog.get_logger()
 
+
 class OllamaManager:
     def __init__(self):
         self.base_url = settings_manager.get("ollama_base_url") or "http://localhost:11434"
         self.client = httpx.AsyncClient(
-            base_url=self.base_url, 
+            base_url=self.base_url,
             timeout=httpx.Timeout(60.0, connect=5.0),
-            limits=httpx.Limits(max_keepalive_connections=5, max_connections=10)
+            limits=httpx.Limits(max_keepalive_connections=5, max_connections=10),
         )
-        self.vram = None # Infrastructure metrics handled globally
+        self.vram = None  # Infrastructure metrics handled globally
 
     async def get_running_models(self) -> list[dict[str, Any]]:
         try:
@@ -60,12 +61,10 @@ class OllamaManager:
             raise
         log.info("ollama.pull_done", model=name)
 
-    async def generate(self, model: str, prompt: str, system: str | None = None, stream: bool = False):
-        payload = {
-            "model": model,
-            "prompt": prompt,
-            "stream": stream
-        }
+    async def generate(
+        self, model: str, prompt: str, system: str | None = None, stream: bool = False
+    ):
+        payload = {"model": model, "prompt": prompt, "stream": stream}
         if system:
             payload["system"] = system
 
@@ -83,7 +82,9 @@ class OllamaManager:
             log.error("ollama.generate_failed", error=str(e), model=model)
             raise
 
-    async def _stream_generate(self, payload: dict[str, Any]) -> AsyncGenerator[dict[str, Any], None]:
+    async def _stream_generate(
+        self, payload: dict[str, Any]
+    ) -> AsyncGenerator[dict[str, Any], None]:
         try:
             async with self.client.stream("POST", "/api/generate", json=payload) as r:
                 r.raise_for_status()
@@ -98,11 +99,7 @@ class OllamaManager:
             yield {"error": str(e)}
 
     async def chat(self, model: str, messages: list[dict[str, str]], stream: bool = False):
-        payload = {
-            "model": model,
-            "messages": messages,
-            "stream": stream
-        }
+        payload = {"model": model, "messages": messages, "stream": stream}
         try:
             if stream:
                 return self._stream_chat(payload)
@@ -149,7 +146,9 @@ class OllamaManager:
 
     async def preload_model(self, name: str):
         try:
-            await self.client.post("/api/generate", json={"model": name, "prompt": "", "keep_alive": -1})
+            await self.client.post(
+                "/api/generate", json={"model": name, "prompt": "", "keep_alive": -1}
+            )
         except Exception as e:
             log.error("ollama.preload_failed", model=name, error=str(e))
 
@@ -162,10 +161,12 @@ class OllamaManager:
     async def get_metrics(self) -> dict[str, Any]:
         try:
             from core.infrastructure.manager import infrastructure_manager
+
             return infrastructure_manager.get_system_metrics()
         except Exception as e:
             log.error("ollama.metrics_failed", error=str(e))
             return {}
+
 
 # Singleton
 ollama_manager = OllamaManager()

@@ -2,6 +2,7 @@
 core/agents/commander_agent.py
 Specialized supervisor agent for dynamic graph re-evaluation and mid-execution planning.
 """
+
 from __future__ import annotations
 
 import json
@@ -38,6 +39,7 @@ JSON Schema:
 ]
 """
 
+
 class CommanderAgent(BaseAgent):
     agent_type = "commander"
 
@@ -45,11 +47,16 @@ class CommanderAgent(BaseAgent):
         intel = await self.mcp.call("query_project_intel", {}, conversation_id=conversation_id)
         progress = task.get("progress_summary", "")
         error = task.get("current_error", "")
-        
-        system = await self.build_system_prompt(conversation_id, COMMANDER_SYSTEM.format(intel=intel, progress=progress, error=error))
+
+        system = await self.build_system_prompt(
+            conversation_id, COMMANDER_SYSTEM.format(intel=intel, progress=progress, error=error)
+        )
         messages = [
             {"role": "system", "content": system},
-            {"role": "user",   "content": "The current plan is stalled. Re-evaluate and provide the remaining tasks to complete the original objective."}
+            {
+                "role": "user",
+                "content": "The current plan is stalled. Re-evaluate and provide the remaining tasks to complete the original objective.",
+            },
         ]
 
         full_text = ""
@@ -66,13 +73,13 @@ class CommanderAgent(BaseAgent):
                     end = full_text.rfind("]") + 1
                     if start != -1 and end != -1:
                         tasks = json.loads(full_text[start:end])
-                        
+
                         # Record the pivot decision
                         await self.record_decision(
-                            conversation_id, 
-                            "graph_rewrite", 
+                            conversation_id,
+                            "graph_rewrite",
                             f"Rewrote plan with {len(tasks)} new tasks. Reason: Previous strategy stalled at iteration limit.",
-                            task_id=task.get("id")
+                            task_id=task.get("id"),
                         )
 
                         yield {"type": "result", "result": f"REWRITTEN_PLAN:{json.dumps(tasks)}"}

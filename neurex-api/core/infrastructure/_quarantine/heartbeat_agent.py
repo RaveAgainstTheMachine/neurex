@@ -9,6 +9,7 @@ The Master's MeshRouter uses this data for weighted-load routing.
 Usage (via docker-compose.node.yml):
     python -m core.infrastructure.heartbeat_agent
 """
+
 import asyncio
 import os
 import socket
@@ -20,12 +21,12 @@ import structlog
 log = structlog.get_logger()
 
 # ── Config from environment ────────────────────────────────────────────────────
-MASTER_URL   = os.getenv("MASTER_URL", "http://localhost:8080")
+MASTER_URL = os.getenv("MASTER_URL", "http://localhost:8080")
 MASTER_TOKEN = os.getenv("MASTER_TOKEN", "")
-NODE_NAME    = os.getenv("NODE_NAME", socket.gethostname())
-BIND_IP      = os.getenv("BIND_IP", "0.0.0.0")
-RPC_PORT     = int(os.getenv("RPC_PORT", "50051"))
-INTERVAL_S   = 15  # heartbeat cadence in seconds
+NODE_NAME = os.getenv("NODE_NAME", socket.gethostname())
+BIND_IP = os.getenv("BIND_IP", "0.0.0.0")
+RPC_PORT = int(os.getenv("RPC_PORT", "50051"))
+INTERVAL_S = 15  # heartbeat cadence in seconds
 
 
 def get_local_ip() -> str:
@@ -45,17 +46,19 @@ def get_system_metrics() -> dict:
     mem = psutil.virtual_memory()
     metrics = {
         "cpu_percent": psutil.cpu_percent(interval=1),
-        "ram_total_gb": round(mem.total / (1024 ** 3), 2),
-        "ram_used_gb":  round(mem.used  / (1024 ** 3), 2),
+        "ram_total_gb": round(mem.total / (1024**3), 2),
+        "ram_used_gb": round(mem.used / (1024**3), 2),
         "vram_gb": 0.0,
     }
 
     # Attempt NVIDIA VRAM detection
     try:
         import subprocess
+
         result = subprocess.check_output(
             ["nvidia-smi", "--query-gpu=memory.free", "--format=csv,noheader,nounits"],
-            timeout=3, text=True
+            timeout=3,
+            text=True,
         ).strip()
         free_mib = sum(int(x) for x in result.splitlines() if x.strip().isdigit())
         metrics["vram_gb"] = round(free_mib / 1024, 2)

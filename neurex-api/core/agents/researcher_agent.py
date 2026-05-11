@@ -2,6 +2,7 @@
 core/agents/researcher_agent.py
 Researcher agent. Uses web search to find documentation, libraries, and solutions.
 """
+
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator
@@ -23,7 +24,10 @@ RESEARCHER_TOOLS = [
                 "type": "object",
                 "properties": {
                     "query": {"type": "string", "description": "The search query"},
-                    "max_results": {"type": "integer", "description": "Number of results to return, default 5"}
+                    "max_results": {
+                        "type": "integer",
+                        "description": "Number of results to return, default 5",
+                    },
                 },
                 "required": ["query"],
             },
@@ -41,25 +45,24 @@ When searching:
 3. Provide links to original sources.
 """
 
+
 class ResearcherAgent(BaseAgent):
     """Agent specialized in external research and documentation retrieval."""
-    
+
     system_prompt: str = RESEARCHER_SYSTEM
     agent_type: str = "researcher"
 
-    async def execute(
-        self, task: dict, conversation_id: str
-    ) -> AsyncGenerator[dict, None]:
+    async def execute(self, task: dict, conversation_id: str) -> AsyncGenerator[dict, None]:
         description = task.get("description", "")
-        
+
         # Rule 76: Call rag_context at start of execute
         rag = await self.rag_context(description, n=3)
         # Rule 77: Pass RAG to build_system_prompt
         system = await self.build_system_prompt(conversation_id, rag)
 
         messages = [
-            {"role": "system",  "content": system},
-            {"role": "user",    "content": f"Find information related to: {description}"},
+            {"role": "system", "content": system},
+            {"role": "user", "content": f"Find information related to: {description}"},
         ]
 
         yield {"type": "status", "status": TaskStatus.THINKING}
@@ -75,19 +78,23 @@ class ResearcherAgent(BaseAgent):
 
                 elif chunk["type"] == "tool_call":
                     yield {"type": "tool_call", "call": chunk["call"]}
-                    
+
                     tool_result = await self.dispatch_tool(chunk["call"], conversation_id)
 
                     # Rule 72: Append both assistant and tool messages
-                    messages.append({
-                        "role": "assistant",
-                        "content": None,
-                        "tool_calls": [chunk["call"]],
-                    })
-                    messages.append({
-                        "role": "tool",
-                        "content": tool_result,
-                    })
+                    messages.append(
+                        {
+                            "role": "assistant",
+                            "content": None,
+                            "tool_calls": [chunk["call"]],
+                        }
+                    )
+                    messages.append(
+                        {
+                            "role": "tool",
+                            "content": tool_result,
+                        }
+                    )
 
                 elif chunk["type"] == "done":
                     # If no tool calls in last round, we're done

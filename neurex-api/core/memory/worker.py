@@ -3,6 +3,7 @@ core/memory/worker.py
 Background worker that indexes the workspace into ChromaDB.
 Gracefully degrades if ChromaDB is unavailable — logs once and disables indexing.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -14,18 +15,38 @@ import structlog
 log = structlog.get_logger()
 
 WORKSPACE_PATH = Path(os.getenv("WORKSPACE_PATH", "/workspace"))
-CHROMA_DB_DIR  = os.getenv("CHROMA_DB_DIR", "/games/AI/chroma_db")
-COLLECTION     = "neurex_codebase"
+CHROMA_DB_DIR = os.getenv("CHROMA_DB_DIR", "/games/AI/chroma_db")
+COLLECTION = "neurex_codebase"
 
 INDEXABLE_EXTENSIONS = {
-    ".py", ".ts", ".tsx", ".js", ".jsx",
-    ".go", ".rs", ".java", ".cpp", ".c", ".h",
-    ".md", ".txt", ".yaml", ".yml", ".toml", ".json",
+    ".py",
+    ".ts",
+    ".tsx",
+    ".js",
+    ".jsx",
+    ".go",
+    ".rs",
+    ".java",
+    ".cpp",
+    ".c",
+    ".h",
+    ".md",
+    ".txt",
+    ".yaml",
+    ".yml",
+    ".toml",
+    ".json",
 }
 
 IGNORED_DIRS = {
-    ".git", "node_modules", "__pycache__", ".neurex_trash",
-    "dist", "build", ".venv", "venv",
+    ".git",
+    "node_modules",
+    "__pycache__",
+    ".neurex_trash",
+    "dist",
+    "build",
+    ".venv",
+    "venv",
 }
 
 
@@ -61,6 +82,7 @@ class MemoryWorker:
             self._chroma, self._collection = await asyncio.to_thread(init_sync)
             self.embedder = Embedder()
             from core.memory.summarizer import Summarizer
+
             self.summarizer = Summarizer()
             self._enabled = True
             log.info("memory_worker.chroma_connected")
@@ -96,11 +118,11 @@ class MemoryWorker:
         """Phase 44.12: Sema-Throttled Parallel Indexing."""
         if not self._enabled:
             return
-        
+
         log.info("memory_worker.full_index.start")
         # Throttle to avoid CPU/API exhaustion
         semaphore = asyncio.Semaphore(10)
-        
+
         async def indexed_task(path):
             async with semaphore:
                 await self._index_file(path)
@@ -108,7 +130,7 @@ class MemoryWorker:
         all_paths = [p for p in WORKSPACE_PATH.rglob("*") if self._should_index(p)]
         if all_paths:
             await asyncio.gather(*[indexed_task(p) for p in all_paths])
-            
+
         log.info("memory_worker.full_index.done", files=len(all_paths))
 
     async def _process_queue(self):
@@ -123,6 +145,7 @@ class MemoryWorker:
             return
         try:
             from core.memory.chunker import chunk_file
+
             chunks = chunk_file(path)
             if not chunks:
                 return
@@ -143,7 +166,7 @@ class MemoryWorker:
                 log.warning("memory_worker.skip_file", file=str(path), reason="Embedding failed")
                 return
 
-            ids       = [f"{path}::{c['id']}" for c in chunks]
+            ids = [f"{path}::{c['id']}" for c in chunks]
             metadatas = [c["metadata"] for c in chunks]
 
             def upsert_sync():
@@ -179,6 +202,7 @@ try:
 
     class _ChangeHandler(FileSystemEventHandler):
         """Watchdog event handler that enqueues changed files for re-indexing."""
+
         def __init__(self, queue: asyncio.Queue, loop: asyncio.AbstractEventLoop):
             self._queue = queue
             self._loop = loop

@@ -3,6 +3,7 @@ core/context/compression.py
 Implements Neural Context Compression to maximize the effective context window.
 Uses LLM-based summarization for mature modules and semantic pruning for irrelevant chunks.
 """
+
 from __future__ import annotations
 
 import structlog
@@ -10,6 +11,7 @@ import structlog
 from core.context.manager import ContextManager
 
 log = structlog.get_logger()
+
 
 class ContextCompressor:
     def __init__(self, context_manager: ContextManager):
@@ -25,10 +27,10 @@ class ContextCompressor:
             return original_context
 
         log.info("context.compression_triggered", original_size=len(original_context))
-        
+
         # 1. semantic Pruning: Remove imports and excessive whitespace
         pruned = self._prune_boilerplate(original_context)
-        
+
         if len(pruned) < (target_tokens * 4):
             return pruned
 
@@ -53,7 +55,7 @@ class ContextCompressor:
         summary_lines = []
         in_docstring = False
         in_skip = False
-        
+
         for line in lines:
             stripped = line.strip()
             # Docstring detection
@@ -61,7 +63,7 @@ class ContextCompressor:
                 in_docstring = not in_docstring
                 summary_lines.append(line)
                 continue
-            
+
             if in_docstring:
                 summary_lines.append(line)
                 continue
@@ -76,9 +78,10 @@ class ContextCompressor:
             elif not in_skip:
                 summary_lines.append(line)
             elif in_skip and not summary_lines[-1].endswith("..."):
-                 summary_lines.append(f"{line[:line.find(stripped)]}# ... [body compressed] ...")
-                 
+                summary_lines.append(f"{line[: line.find(stripped)]}# ... [body compressed] ...")
+
         return "\n".join(summary_lines)
+
 
 # Singleton instance placeholder
 # ContextCompressor requires ContextManager which is initialized in the Orchestrator.

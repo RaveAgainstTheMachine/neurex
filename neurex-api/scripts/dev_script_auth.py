@@ -1,4 +1,3 @@
-
 from jose import jwt
 
 from api.routes.auth import ALGORITHM, SECRET_KEY

@@ -3,6 +3,7 @@ core/agents/genetic_agent.py
 Neural Architecture Evolution: Self-Optimizing Codebase.
 Clones, mutates, and benchmarks modules to find superior implementations.
 """
+
 from __future__ import annotations
 
 import os
@@ -19,6 +20,7 @@ from core.observability.flight_recorder import record_decision
 
 log = structlog.get_logger()
 
+
 class GeneticAgent:
     def __init__(self, agent: BaseAgent):
         self.agent = agent
@@ -34,7 +36,7 @@ class GeneticAgent:
         5. Swarm Consensus
         """
         log.info("genetic.evolution_start", path=file_path)
-        
+
         if not os.path.exists(file_path):
             return False
 
@@ -53,30 +55,37 @@ class GeneticAgent:
         hp = HyperPlan(self.agent)
         plan_query = f"Verify this mutation for {file_path}. Ensure it maintains all functional requirements and enhances performance.\n\nMUTATION:\n{mutation}"
         blueprint = await hp.generate_blueprint(plan_query)
-        
+
         # 4. Swarm Consensus (Phase 36)
         log.info("genetic.consensus_round")
         proposal = {
             "path": file_path,
             "content": mutation,
             "rationale": "Autonomous Genetic Optimization: Suggested performance and logic refinement.",
-            "requester": "genetic_agent_v1"
+            "requester": "genetic_agent_v1",
         }
-        
+
         # Spawn reviewers
         reviewers = [
             BaseAgent(None, ContextManager(), model="qwen2.5-coder:32b"),
-            BaseAgent(None, ContextManager(), model="qwen2.5-coder:14b")
+            BaseAgent(None, ContextManager(), model="qwen2.5-coder:14b"),
         ]
-        
-        passed = await consensus_manager.evaluate_mutation(proposal, reviewers, "genetic_evolution_loop")
-        
+
+        passed = await consensus_manager.evaluate_mutation(
+            proposal, reviewers, "genetic_evolution_loop"
+        )
+
         if passed:
             # 5. Apply superior implementation
             log.info("genetic.evolution_passed", path=file_path)
             with open(file_path, "w") as f:
                 f.write(mutation)
-            await record_decision("genetic_evolution", "mutation_applied", file_path, "Quorum reached for genetic optimization.")
+            await record_decision(
+                "genetic_evolution",
+                "mutation_applied",
+                file_path,
+                "Quorum reached for genetic optimization.",
+            )
             return True
         else:
             log.info("genetic.evolution_rejected", path=file_path)
@@ -103,14 +112,15 @@ class GeneticAgent:
         async for chunk in self.agent.stream(messages, model="Neurex Brain (Logic)"):
             if chunk["type"] == "token":
                 full_text += chunk["text"]
-        
+
         # Clean markdown code blocks
         clean_text = full_text.strip()
         if "```python" in clean_text:
             clean_text = clean_text.split("```python")[1].split("```")[0].strip()
         elif "```" in clean_text:
-             clean_text = clean_text.split("```")[1].split("```")[0].strip()
-             
+            clean_text = clean_text.split("```")[1].split("```")[0].strip()
+
         return clean_text
+
 
 # Integrated into MCP

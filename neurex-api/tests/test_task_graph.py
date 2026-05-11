@@ -2,6 +2,7 @@
 tests/test_task_graph.py
 Tests for the SQLite-backed task graph engine.
 """
+
 from __future__ import annotations
 
 import pytest
@@ -13,9 +14,9 @@ from core.task_graph import (
     TaskNode,
     TaskStatus,
     create_task,
+    engine,
     get_graph,
     update_task,
-    engine,
 )
 
 
@@ -58,7 +59,7 @@ async def test_update_task_status(tg_session):
         description="Implement feature",
     )
     await update_task(tg_session, node.id, TaskStatus.THINKING)
-    
+
     refreshed = await tg_session.get(TaskNode, node.id)
     assert refreshed.status == TaskStatus.THINKING
 
@@ -74,7 +75,7 @@ async def test_update_task_with_result(tg_session):
         description="Implement feature",
     )
     await update_task(tg_session, node.id, TaskStatus.DONE, result="Created file.py")
-    
+
     refreshed = await tg_session.get(TaskNode, node.id)
     assert refreshed.status == TaskStatus.DONE
     assert refreshed.result == "Created file.py"
@@ -84,10 +85,20 @@ async def test_update_task_with_result(tg_session):
 async def test_get_graph_returns_all_nodes(tg_session):
     """get_graph must return all nodes for a given graph_id."""
     graph_id = "test-graph-4"
-    await create_task(tg_session, graph_id=graph_id, agent_type="planner", title="Plan", description="Plan it")
-    await create_task(tg_session, graph_id=graph_id, agent_type="coder", title="Code", description="Code it")
-    await create_task(tg_session, graph_id=graph_id, agent_type="reviewer", title="Review", description="Review it")
-    
+    await create_task(
+        tg_session, graph_id=graph_id, agent_type="planner", title="Plan", description="Plan it"
+    )
+    await create_task(
+        tg_session, graph_id=graph_id, agent_type="coder", title="Code", description="Code it"
+    )
+    await create_task(
+        tg_session,
+        graph_id=graph_id,
+        agent_type="reviewer",
+        title="Review",
+        description="Review it",
+    )
+
     graph = await get_graph(tg_session, graph_id)
     assert len(graph) == 3
     agent_types = {n.agent_type for n in graph}
@@ -97,9 +108,13 @@ async def test_get_graph_returns_all_nodes(tg_session):
 @pytest.mark.asyncio
 async def test_get_graph_isolates_by_id(tg_session):
     """get_graph must NOT return nodes from a different graph."""
-    await create_task(tg_session, graph_id="graph-A", agent_type="planner", title="A", description="Graph A")
-    await create_task(tg_session, graph_id="graph-B", agent_type="coder", title="B", description="Graph B")
-    
+    await create_task(
+        tg_session, graph_id="graph-A", agent_type="planner", title="A", description="Graph A"
+    )
+    await create_task(
+        tg_session, graph_id="graph-B", agent_type="coder", title="B", description="Graph B"
+    )
+
     graph_a = await get_graph(tg_session, "graph-A")
     assert len(graph_a) == 1
     assert graph_a[0].title == "A"
@@ -116,7 +131,7 @@ async def test_task_failure_stores_error(tg_session):
         description="Will fail",
     )
     await update_task(tg_session, node.id, TaskStatus.FAILED, error="Connection refused")
-    
+
     refreshed = await tg_session.get(TaskNode, node.id)
     assert refreshed.status == TaskStatus.FAILED
     assert "Connection refused" in (refreshed.error or "")

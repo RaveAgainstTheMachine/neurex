@@ -3,6 +3,7 @@ core/context/rules_parser.py
 Loads and merges .neurexrules files.
 Robust parser that supports [section] headers without INI strictness.
 """
+
 from __future__ import annotations
 
 import os
@@ -15,18 +16,19 @@ log = structlog.get_logger()
 
 # Workspace path from environment (loaded via dotenv in main.py)
 WORKSPACE_PATH = Path(os.getenv("WORKSPACE_PATH", "/workspace"))
-GLOBAL_RULES   = Path.home() / ".neurexrules"
-PROJECT_RULES  = WORKSPACE_PATH / ".neurexrules"
+GLOBAL_RULES = Path.home() / ".neurexrules"
+PROJECT_RULES = WORKSPACE_PATH / ".neurexrules"
+
 
 class RulesParser:
     def __init__(self):
         self._rules: dict[str, list[str]] = {
-            "always":  [],
-            "coder":   [],
-            "tester":  [],
+            "always": [],
+            "coder": [],
+            "tester": [],
             "planner": [],
             "researcher": [],
-            "reviewer":   [],
+            "reviewer": [],
         }
         self._load()
 
@@ -46,12 +48,12 @@ class RulesParser:
         """
         current_section = "always"
         raw = path.read_text(errors="replace")
-        
+
         for line in raw.splitlines():
             line = line.strip()
             if not line or line.startswith("#"):
                 continue
-            
+
             # Check for section header: [section]
             match = re.match(r"^\[(\w+)\]$", line)
             if match:
@@ -59,7 +61,7 @@ class RulesParser:
                 if current_section not in self._rules:
                     self._rules[current_section] = []
                 continue
-            
+
             # Add line to current section
             if current_section in self._rules:
                 self._rules[current_section].append(line)
@@ -70,14 +72,14 @@ class RulesParser:
         """Returns merged rules for injection into system prompt."""
         # Always start with 'always' rules
         rules_set = set(self._rules["always"])
-        
+
         # Add agent-specific rules
         if agent_type and agent_type in self._rules:
             rules_set.update(self._rules[agent_type])
-            
+
         if not rules_set:
             return ""
-            
+
         # Return as sorted list for determinism
         lines = sorted(list(rules_set))
         return "\n".join(f"- {line}" for line in lines)

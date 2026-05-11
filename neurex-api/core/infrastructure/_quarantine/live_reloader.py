@@ -4,6 +4,7 @@ Phase 45: Sentient IDE (Runtime Evolution)
 Enables zero-restart logic reloading for core Neurex modules.
 Allows the Mesh to update its own soul without terminating the process.
 """
+
 import importlib
 import sys
 
@@ -11,9 +12,10 @@ import structlog
 
 log = structlog.get_logger()
 
+
 class LiveReloader:
     def __init__(self):
-        self.registry = {} # module_name -> module_object
+        self.registry = {}  # module_name -> module_object
 
     def reload_module(self, file_path: str) -> bool:
         """
@@ -23,13 +25,13 @@ class LiveReloader:
         try:
             if not file_path.endswith(".py"):
                 return False
-                
+
             # Normalize path to module name
             module_name = file_path.replace(".py", "").replace("/", ".")
             # Handle neurex-api prefix if present in absolute paths
             if "neurex-api." in module_name:
                 module_name = module_name.split("neurex-api.")[-1]
-            
+
             if module_name in sys.modules:
                 log.info("runtime.reloading_module", module=module_name)
                 importlib.reload(sys.modules[module_name])
@@ -53,5 +55,6 @@ class LiveReloader:
         """
         # TODO: Implement deep class swapping for long-lived agent instances
         pass
+
 
 live_reloader = LiveReloader()

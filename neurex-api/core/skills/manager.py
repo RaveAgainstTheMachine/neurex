@@ -3,6 +3,7 @@ core/skills/manager.py
 Manages external skill sets (MCP tool collections).
 Supports downloading, validating, and dynamic registration.
 """
+
 from __future__ import annotations
 
 import json
@@ -15,6 +16,7 @@ from typing import Any
 import structlog
 
 log = structlog.get_logger()
+
 
 class SkillSet:
     def __init__(self, name: str, path: Path):
@@ -33,6 +35,7 @@ class SkillSet:
     def tools(self) -> list[dict[str, Any]]:
         return self.manifest.get("tools", [])
 
+
 class SkillManager:
     def __init__(self):
         self.SKILLS_DIR = Path(os.getenv("NEUREX_SKILLS_PATH", "./skills")).absolute()
@@ -42,22 +45,26 @@ class SkillManager:
         """Clone a skill repository into the local skills store, supporting subdirectories."""
         # SECURITY: Use urlparse to validate domain to prevent SSRF
         from urllib.parse import urlparse
+
         parsed = urlparse(url)
         if parsed.netloc == "skillsmp.com":
             try:
                 import httpx
+
                 # Reconstruct URL from validated parts to satisfy CodeQL (breaks taint flow)
                 safe_url = f"https://skillsmp.com{parsed.path}"
                 if parsed.query:
                     safe_url += f"?{parsed.query}"
-                    
+
                 log.info("skill.resolve_marketplace", url=safe_url)
                 resp = httpx.get(safe_url, timeout=10, follow_redirects=False)
                 if resp.status_code == 200:
                     import re
+
                     match = re.search(r"githubUrl=([^&\"' >]+)", resp.text)
                     if match:
                         from urllib.parse import unquote
+
                         url = unquote(match.group(1))
                         log.info("skill.resolved_from_marketplace", git_url=url)
                     else:
@@ -72,28 +79,31 @@ class SkillManager:
         sub_path = None
         if "github.com" in url and "/tree/" in url:
             import re
+
             # Extract Repo URL and Path: https://github.com/USER/REPO/tree/BRANCH/PATH
             match = re.match(r"(https://github\.com/[^/]+/[^/]+)/tree/([^/]+)/(.*)", url)
             if match:
                 base_repo = match.group(1)
                 branch = match.group(2)
                 sub_path = match.group(3)
-                
+
                 # SECURITY: Sanitize sub_path to prevent path traversal
                 # Ensure it's not absolute and doesn't contain parent directory references
                 if os.path.isabs(sub_path) or ".." in sub_path:
                     log.error("security.path_traversal_attempt", path=sub_path)
-                    raise Exception(f"Invalid sub-path in URL: {sub_path}. Absolute paths and '..' are forbidden.")
-                
+                    raise Exception(
+                        f"Invalid sub-path in URL: {sub_path}. Absolute paths and '..' are forbidden."
+                    )
+
                 url = base_repo
                 log.info("skill.detected_github_tree", repo=base_repo, branch=branch, path=sub_path)
 
         name = url.split("/")[-1].replace(".git", "")
         if sub_path:
             name = sub_path.split("/")[-1]
-            
+
         target_path = self.SKILLS_DIR / name
-        
+
         if target_path.exists():
             log.info("skill.update", name=name)
             if not sub_path:
@@ -105,6 +115,7 @@ class SkillManager:
         else:
             if sub_path:
                 import tempfile
+
                 with tempfile.TemporaryDirectory() as tmpdir:
                     log.info("skill.install_subpath", repo=url, path=sub_path)
                     # SECURITY: Use '--' to prevent parameter injection
@@ -118,21 +129,22 @@ class SkillManager:
                 log.info("skill.install", name=name, url=url)
                 # SECURITY: Use '--' to prevent parameter injection
                 subprocess.run(["git", "clone", "--", url, str(target_path)], check=True)
-        
+
         return name
 
     def _load_metadata(self, skill_path: Path) -> dict[str, Any]:
         """Load metadata from manifest.json or markdown frontmatter."""
         m = {}
-        
+
         # 1. Try manifest.json (Primary)
         manifest_path = skill_path / "manifest.json"
         if manifest_path.exists():
             try:
                 with open(manifest_path) as f:
                     m = json.load(f)
-            except (json.JSONDecodeError, OSError): pass
-            
+            except (json.JSONDecodeError, OSError):
+                pass
+
         # 2. Try Markdown Frontmatter (Fallback & Instructions)
         for fname in ["SKILL.md", "README.md", "readme.md"]:
             fpath = skill_path / fname
@@ -141,6 +153,7 @@ class SkillManager:
                     content = fpath.read_text()
                     if content.startswith("---"):
                         import yaml
+
                         parts = content.split("---")
                         if len(parts) >= 3:
                             front = yaml.safe_load(parts[1])
@@ -150,19 +163,24 @@ class SkillManager:
                                 m["description"] = m.get("description") or front.get("description")
                                 # Handle nested metadata object
                                 meta = front.get("metadata", {})
-                                m["author"] = m.get("author") or meta.get("author") or front.get("author")
-                                m["version"] = m.get("version") or meta.get("version") or front.get("version")
-                    
+                                m["author"] = (
+                                    m.get("author") or meta.get("author") or front.get("author")
+                                )
+                                m["version"] = (
+                                    m.get("version") or meta.get("version") or front.get("version")
+                                )
+
                     # Always extract instructions from markdown body if not already in m
                     if not m.get("instructions"):
                         body = content.split("---")[-1].strip()
                         m["instructions"] = body
-                    
+
                     # Use body for description only if still missing
                     if not m.get("description"):
                         m["description"] = "\n".join(m.get("instructions", "").split("\n")[:5])
                     break
-                except (Exception, yaml.YAMLError): pass
+                except (Exception, yaml.YAMLError):
+                    pass
         return m
 
     def list_available(self) -> list[dict[str, Any]]:
@@ -173,18 +191,20 @@ class SkillManager:
         for d in self.SKILLS_DIR.iterdir():
             if d.is_dir() and not d.name.startswith("."):
                 m = self._load_metadata(d)
-                
-                skills.append({
-                    "id": d.name,
-                    "name": m.get("name", d.name),
-                    "description": m.get("description", "No description available."),
-                    "version": m.get("version", "0.1.0"),
-                    "author": m.get("author") or "local",
-                    "tools_count": len(m.get("tools", [])),
-                    "type": "functional" if m.get("tools") else "instructional",
-                    "enabled": True,
-                    "source_repo": m.get("repository", "")
-                })
+
+                skills.append(
+                    {
+                        "id": d.name,
+                        "name": m.get("name", d.name),
+                        "description": m.get("description", "No description available."),
+                        "version": m.get("version", "0.1.0"),
+                        "author": m.get("author") or "local",
+                        "tools_count": len(m.get("tools", [])),
+                        "type": "functional" if m.get("tools") else "instructional",
+                        "enabled": True,
+                        "source_repo": m.get("repository", ""),
+                    }
+                )
         return skills
 
     def get_skill_details(self, name: str) -> dict[str, Any]:
@@ -192,18 +212,19 @@ class SkillManager:
         skill_path = self.SKILLS_DIR / name
         if not skill_path.exists() or not skill_path.is_dir():
             return {}
-            
+
         m = self._load_metadata(skill_path)
         author = m.get("author", "")
         repo_url = m.get("repository", "")
-        
+
         # GitHub Author Extraction fallback
         if not author and "github.com" in repo_url:
             import re
+
             match = re.search(r"github\.com/([^/]+)/", repo_url)
             if match:
                 author = match.group(1)
-            
+
         return {
             "id": name,
             "name": m.get("name", name),
@@ -214,14 +235,14 @@ class SkillManager:
             "repository": repo_url,
             "tools": m.get("tools", []),
             "type": "functional" if m.get("tools") else "instructional",
-            "installed_at": os.path.getctime(skill_path) if os.path.exists(skill_path) else 0
+            "installed_at": os.path.getctime(skill_path) if os.path.exists(skill_path) else 0,
         }
 
     def get_enabled_tools(self) -> list[dict[str, Any]]:
         """Scan skills directory and return all tool definitions."""
         all_tools = []
-        self._tool_to_skill = {} # Map tool_name -> skill_name for dispatch
-        
+        self._tool_to_skill = {}  # Map tool_name -> skill_name for dispatch
+
         if not self.SKILLS_DIR.exists():
             return []
 
@@ -243,12 +264,12 @@ class SkillManager:
         # Ensure we've scanned
         if not hasattr(self, "_tool_to_skill"):
             self.get_enabled_tools()
-            
+
         # Hot-rescan if tool is missing (allows immediate use of newly published skills)
         if tool_name not in self._tool_to_skill:
             log.info("skill.hot_rescan", tool=tool_name)
             self.get_enabled_tools()
-            
+
         return self._tool_to_skill.get(tool_name)
 
     def fetch_curated_list(self) -> list[dict[str, Any]]:
@@ -264,7 +285,7 @@ class SkillManager:
                 "author": "Neurex Authors",
                 "version": "1.0.0",
                 "stars": 1240,
-                "enabled": True
+                "enabled": True,
             },
             {
                 "id": "code-reviewer",
@@ -275,7 +296,7 @@ class SkillManager:
                 "author": "Shubham Saboo",
                 "version": "1.1.0",
                 "stars": 850,
-                "enabled": True
+                "enabled": True,
             },
             {
                 "id": "fs-elite",
@@ -286,7 +307,7 @@ class SkillManager:
                 "author": "Neurex Authors",
                 "version": "1.2.0",
                 "stars": 500,
-                "enabled": True
+                "enabled": True,
             },
             {
                 "id": "python-exec",
@@ -297,7 +318,7 @@ class SkillManager:
                 "author": "Neurex Authors",
                 "version": "1.0.5",
                 "stars": 2100,
-                "enabled": True
+                "enabled": True,
             },
             {
                 "id": "sqlite-master",
@@ -308,7 +329,7 @@ class SkillManager:
                 "author": "Neurex Authors",
                 "version": "1.0.0",
                 "stars": 320,
-                "enabled": True
+                "enabled": True,
             },
             {
                 "id": "browser-automation",
@@ -319,7 +340,7 @@ class SkillManager:
                 "author": "Neurex Authors",
                 "version": "0.8.5",
                 "stars": 1500,
-                "enabled": True
+                "enabled": True,
             },
             {
                 "id": "caveman",
@@ -330,11 +351,12 @@ class SkillManager:
                 "author": "Julius Brussee",
                 "version": "1.1.0",
                 "stars": 95,
-                "enabled": False
-            }
+                "enabled": False,
+            },
         ]
-        
+
         import httpx
+
         try:
             url = "https://skills.mp/api/v1/registry.json"
             resp = httpx.get(url, timeout=5)
@@ -360,13 +382,16 @@ class SkillManager:
         log.warning("skill.delete_not_found", name=name, path=str(target_path))
         return False
 
-    async def execute_skill_tool(self, skill_name: str, tool_name: str, args: dict[str, Any]) -> str:
+    async def execute_skill_tool(
+        self, skill_name: str, tool_name: str, args: dict[str, Any]
+    ) -> str:
         skill_path = self.SKILLS_DIR / skill_name
         handler_path = skill_path / "handler.py"
         if not handler_path.exists():
             return f"Error: Skill '{skill_name}' does not have a handler.py"
         import importlib.util
         import sys
+
         try:
             module_name = f"neurex_skill_{skill_name}"
             spec = importlib.util.spec_from_file_location(module_name, str(handler_path))
@@ -382,5 +407,6 @@ class SkillManager:
         except Exception as e:
             log.error("skill.execution_failed", skill=skill_name, tool=tool_name, error=str(e))
             return f"Skill execution error: {str(e)}"
+
 
 skill_manager = SkillManager()

@@ -8,6 +8,7 @@ from core.observability.flight_recorder import record_decision
 
 log = structlog.get_logger()
 
+
 class GovernanceManager:
     def __init__(self):
         # Maps task_id -> set of temporarily allowed paths
@@ -18,15 +19,17 @@ class GovernanceManager:
     async def request_escalation(self, agent_id: str, task_id: str, required_path: str) -> bool:
         """
         Evaluates a request for dynamic path access.
-        Bypasses traditional RBAC if the agent's integrity score is high and 
+        Bypasses traditional RBAC if the agent's integrity score is high and
         the request is linked to an active, consensus-approved task.
         """
         score = self.integrity_scores.get(agent_id, 0.5)
-        log.info("governance.escalation_request", 
-                 agent=agent_id, 
-                 task=task_id, 
-                 path=required_path, 
-                 integrity=score)
+        log.info(
+            "governance.escalation_request",
+            agent=agent_id,
+            task=task_id,
+            path=required_path,
+            integrity=score,
+        )
 
         # 1. Basic integrity check
         if score < 0.3:
@@ -36,9 +39,14 @@ class GovernanceManager:
         # 2. Grant temporary access (Caveman style: grant for this task session)
         if task_id not in self.dynamic_grants:
             self.dynamic_grants[task_id] = set()
-        
+
         self.dynamic_grants[task_id].add(required_path)
-        await record_decision("governance_escalation", "access_granted", required_path, f"Agent {agent_id} granted dynamic access for task {task_id}")
+        await record_decision(
+            "governance_escalation",
+            "access_granted",
+            required_path,
+            f"Agent {agent_id} granted dynamic access for task {task_id}",
+        )
         return True
 
     def is_authorized(self, task_id: str, path: str) -> bool:
@@ -46,8 +54,8 @@ class GovernanceManager:
         # Check global safe paths (e.g. within current project root)
         cwd = os.getcwd()
         if path.startswith(cwd):
-             return True
-             
+            return True
+
         # Check dynamic grants
         grants = self.dynamic_grants.get(task_id, set())
         for granted_path in grants:
@@ -60,9 +68,10 @@ class GovernanceManager:
         current = self.integrity_scores.get(agent_id, 0.5)
         delta = 0.1 if success else -0.2
         self.integrity_scores[agent_id] = max(0.0, min(1.0, current + delta))
-        
+
         # Clean up grants
         if task_id in self.dynamic_grants:
             del self.dynamic_grants[task_id]
+
 
 governance_manager = GovernanceManager()

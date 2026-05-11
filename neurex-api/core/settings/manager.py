@@ -3,6 +3,7 @@ core/settings/manager.py
 Manages dynamic platform configurations.
 Settings are hot-reloadable and stored in a persistent JSON registry.
 """
+
 import json
 import os
 from pathlib import Path
@@ -10,57 +11,50 @@ from typing import Any
 
 DEFAULT_SETTINGS = {
     # Agent Models (Default assignments)
-    "planner_model":   "qwen2.5-coder:14b",
-    "coder_model":     "qwen2.5-coder:14b",
+    "planner_model": "qwen2.5-coder:14b",
+    "coder_model": "qwen2.5-coder:14b",
     "researcher_model": "qwen2.5-coder:14b",
-    "reviewer_model":   "qwen2.5-coder:14b",
-    "tester_model":     "qwen2.5-coder:14b",
-
+    "reviewer_model": "qwen2.5-coder:14b",
+    "tester_model": "qwen2.5-coder:14b",
     # Model Routing (Phase 60: Cognitive Orchestration)
     "model_routes": {
-        "Planning":    "deepseek-r1:32b",
-        "Coding":      "qwen2.5-coder:32b",
-        "Testing":     "qwen2.5-coder:14b",
+        "Planning": "deepseek-r1:32b",
+        "Coding": "qwen2.5-coder:32b",
+        "Testing": "qwen2.5-coder:14b",
         "Researching": "qwen2.5-coder:14b",
-        "Reviewing":   "qwen2.5-coder:14b",
-        "Vision":      "llama3.2-vision:11b",
-        "Media":       "llama3.2-vision:11b",
-        "Audio":       "whisper-large-v3-turbo",
-        "Chat":        "qwen2.5-coder:14b"
+        "Reviewing": "qwen2.5-coder:14b",
+        "Vision": "llama3.2-vision:11b",
+        "Media": "llama3.2-vision:11b",
+        "Audio": "whisper-large-v3-turbo",
+        "Chat": "qwen2.5-coder:14b",
     },
-
     # Agent Behavior
     "autonomy_level": "limited",
     "enable_agent_internet": False,
     "system_prompt_addition": "",
-
     # Mesh & Infrastructure
     "enable_mesh_routing": True,
     "enable_distributed_pooling": False,
     "ollama_base_url": "http://localhost:11434",
-
     # Network Ports
-    "api_port":        8000,
-    "web_port":        3000,
-    "chromadb_port":   8001,
-    "ollama_port":     11434,
-    "vllm_port":       8002,
-    "llama_cpp_port":  8080,
-    "rpc_port":        50051,
-    "listen_address":  "0.0.0.0",
-    "fqdn":            "",
-    "enable_https":    True,
-    "ssl_cert_path":   "",
-    "ssl_key_path":    "",
-
+    "api_port": 8000,
+    "web_port": 3000,
+    "chromadb_port": 8001,
+    "ollama_port": 11434,
+    "vllm_port": 8002,
+    "llama_cpp_port": 8080,
+    "rpc_port": 50051,
+    "listen_address": "0.0.0.0",
+    "fqdn": "",
+    "enable_https": True,
+    "ssl_cert_path": "",
+    "ssl_key_path": "",
     # Firewall
     "firewall_enabled": True,
     "firewall_lan_only": True,
-
     # Security & Filesystem
     "neurex_trash_path": ".neurex/trash",
     "enable_push_notifications": True,
-
     # Appearance
     "enable_glassmorphism": True,
     "enable_animations": True,
@@ -68,24 +62,19 @@ DEFAULT_SETTINGS = {
     "accent_color": "#9c6fff",
     "glow_color": "#9c6fff66",
     "enable_swarm_glow": True,
-
     # LLM Advanced
     "llm_temperature": 0.7,
     "llm_context_length": 8192,
-
     # Workspace
     "auto_save_files": True,
     "show_hidden_files": False,
-
     # System Lifecycle
     "enable_insomnia": True,
-    
     # Storage & Paths
     "neurex_install_dir": str(Path.home() / ".neurex"),
     "models_dir": str(Path.home() / ".ollama" / "models"),
-    "storage_paths": [str(Path.home())], # Primary storage paths for disk telemetry
+    "storage_paths": [str(Path.home())],  # Primary storage paths for disk telemetry
     "validate_path_permissions": True,
-
     # UI Layout
     "menu_mode": "horizontal",
     "terminal_line_height": 1.2,
@@ -93,6 +82,7 @@ DEFAULT_SETTINGS = {
     "terminal_font_family": "'JetBrains Mono', 'Fira Code', monospace",
     "terminal_cursor_style": "block",
 }
+
 
 class SettingsManager:
     def __init__(self):
@@ -163,7 +153,7 @@ class SettingsManager:
         env_val = os.getenv(key.upper())
         if env_val is not None:
             return env_val
-        
+
         # Then Workspace -> Global -> Default
         if key in self.workspace_settings:
             return self.workspace_settings[key]
@@ -181,5 +171,6 @@ class SettingsManager:
             self.global_settings[key] = value
             self._save_global()
             return True
+
 
 settings_manager = SettingsManager()

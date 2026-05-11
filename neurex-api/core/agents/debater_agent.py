@@ -2,6 +2,7 @@
 core/agents/debater_agent.py
 Specialized agent for architectural peer-review and strategy refinement.
 """
+
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator
@@ -35,17 +36,20 @@ Rules:
 Output your argument as a concise technical critique (max 300 words).
 """
 
+
 class DebaterAgent(BaseAgent):
     agent_type = "debater"
 
     async def execute(self, task: dict, conversation_id: str) -> AsyncGenerator[dict, None]:
         persona = task.get("persona", "skeptic")
         intel = await self.mcp.call("query_project_intel", {}, conversation_id=conversation_id)
-        
-        system = await self.build_system_prompt(conversation_id, DEBATER_SYSTEM.format(persona=persona, intel=intel))
+
+        system = await self.build_system_prompt(
+            conversation_id, DEBATER_SYSTEM.format(persona=persona, intel=intel)
+        )
         messages = [
             {"role": "system", "content": system},
-            {"role": "user",   "content": f"Critique this plan: {task['description']}"}
+            {"role": "user", "content": f"Critique this plan: {task['description']}"},
         ]
 
         full_text = ""

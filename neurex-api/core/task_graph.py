@@ -3,6 +3,7 @@ core/task_graph.py
 SQLite-backed task graph. Relationships removed to ensure database stability.
 The UI can still build the tree view using parent_id.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -18,13 +19,9 @@ DATABASE_URL = "sqlite+aiosqlite:///./neurex.db"
 
 # Phase 44.4: High-Performance SQLite Tuning
 engine = create_async_engine(
-    DATABASE_URL, 
-    echo=False,
-    connect_args={
-        "check_same_thread": False,
-        "timeout": 30
-    }
+    DATABASE_URL, echo=False, connect_args={"check_same_thread": False, "timeout": 30}
 )
+
 
 # Mandatory PRAGMAs for Concurrency & Speed
 @event.listens_for(engine.sync_engine, "connect")
@@ -32,15 +29,17 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
     cursor = dbapi_connection.cursor()
     cursor.execute("PRAGMA journal_mode=WAL")
     cursor.execute("PRAGMA synchronous=NORMAL")
-    cursor.execute("PRAGMA cache_size=-64000") # 64MB Cache
+    cursor.execute("PRAGMA cache_size=-64000")  # 64MB Cache
     cursor.execute("PRAGMA temp_store=MEMORY")
-    cursor.execute("PRAGMA mmap_size=30000000000") # Enable memory mapping
+    cursor.execute("PRAGMA mmap_size=30000000000")  # Enable memory mapping
     cursor.close()
 
+
 class UserRole(str, Enum):
-    ADMIN     = "admin"      # Full control over Mesh and Settings
+    ADMIN = "admin"  # Full control over Mesh and Settings
     DEVELOPER = "developer"  # Can run agents, edit files, but not change system infra
-    VIEWER    = "viewer"     # Read-only access to terminal and editor
+    VIEWER = "viewer"  # Read-only access to terminal and editor
+
 
 class User(SQLModel, table=True):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
@@ -51,31 +50,35 @@ class User(SQLModel, table=True):
     is_active: bool = Field(default=True)
     otp_secret: str | None = None
     otp_enabled: bool = Field(default=False)
-    otp_backup_codes: str | None = None # JSON-serialized list of hashed codes
+    otp_backup_codes: str | None = None  # JSON-serialized list of hashed codes
     force_password_change: bool = Field(default=False)
+
 
 class InviteCode(SQLModel, table=True):
     code: str = Field(primary_key=True)
     role: UserRole = UserRole.DEVELOPER
     expires_at: datetime
     is_used: bool = Field(default=False)
-    created_by: str # username of admin who created it
+    created_by: str  # username of admin who created it
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
+
 class AutonomyLevel(str, Enum):
-    RESTRICTED = "restricted" # Everything needs approval
-    LIMITED    = "limited"    # Safe commands are auto, unsafe need approval
-    FULL       = "full"       # Autonomous execution
+    RESTRICTED = "restricted"  # Everything needs approval
+    LIMITED = "limited"  # Safe commands are auto, unsafe need approval
+    FULL = "full"  # Autonomous execution
+
 
 class TaskStatus(str, Enum):
-    PENDING   = "pending"
-    THINKING  = "thinking"
+    PENDING = "pending"
+    THINKING = "thinking"
     AWAITING_APPROVAL = "awaiting_approval"
-    WRITING   = "writing"
-    TESTING   = "testing"
-    DONE      = "done"
-    FAILED    = "failed"
+    WRITING = "writing"
+    TESTING = "testing"
+    DONE = "done"
+    FAILED = "failed"
     CANCELLED = "cancelled"
+
 
 class TaskNode(SQLModel, table=True):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
@@ -85,7 +88,7 @@ class TaskNode(SQLModel, table=True):
     title: str
     description: str
     status: TaskStatus = TaskStatus.PENDING
-    approval_reason: str | None = None # Why are we waiting?
+    approval_reason: str | None = None  # Why are we waiting?
     result: str | None = None
     error: str | None = None
     iteration: int = 0
@@ -94,39 +97,48 @@ class TaskNode(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     is_checkpoint: bool = Field(default=False)
 
+
 class FileLock(SQLModel, table=True):
     path: str = Field(primary_key=True)
-    locked_by: str # user_id or agent_id
-    owner_node: str # Which node instance holds the lock
+    locked_by: str  # user_id or agent_id
+    owner_node: str  # Which node instance holds the lock
     expires_at: datetime
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
+
 # DecisionEvent moved to core.observability.flight_recorder
+
 
 async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
 
+
 async def get_session() -> AsyncSession:
     async with AsyncSession(engine, expire_on_commit=False) as session:
         yield session
+
 
 async def create_task(session: AsyncSession, **kwargs) -> TaskNode:
     node = TaskNode(**kwargs)
     session.add(node)
     await session.commit()
     await session.refresh(node)
-    
+
     # Audit Logging
     import structlog
+
     log = structlog.get_logger()
-    log.info("agent.task_created", 
-             agent_type=node.agent_type, 
-             task_id=node.id, 
-             title=node.title, 
-             user_id=f"agent:{node.agent_type}")
-    
+    log.info(
+        "agent.task_created",
+        agent_type=node.agent_type,
+        task_id=node.id,
+        title=node.title,
+        user_id=f"agent:{node.agent_type}",
+    )
+
     return node
+
 
 async def update_task(
     session: AsyncSession,
@@ -151,24 +163,27 @@ async def update_task(
     session.add(node)
     await session.commit()
     await session.refresh(node)
-    
+
     # Audit Logging
     import structlog
+
     log = structlog.get_logger()
-    log.info("agent.task_updated", 
-             agent_type=node.agent_type, 
-             task_id=node.id, 
-             status=node.status,
-             user_id=f"agent:{node.agent_type}",
-             error=node.error if node.error else None)
-             
+    log.info(
+        "agent.task_updated",
+        agent_type=node.agent_type,
+        task_id=node.id,
+        status=node.status,
+        user_id=f"agent:{node.agent_type}",
+        error=node.error if node.error else None,
+    )
+
     return node
 
+
 async def get_graph(session: AsyncSession, graph_id: str) -> list[TaskNode]:
-    result = await session.exec(
-        select(TaskNode).where(TaskNode.graph_id == graph_id)
-    )
+    result = await session.exec(select(TaskNode).where(TaskNode.graph_id == graph_id))
     return result.all()
+
 
 def is_stalled(node: TaskNode, last_tool_call: dict | None, current_tool_call: dict | None) -> bool:
     if node.iteration >= node.max_iterations:

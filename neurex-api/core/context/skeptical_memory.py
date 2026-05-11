@@ -4,6 +4,7 @@ Implements "Skeptical Memory Management" inspired by state-of-the-art agentic ha
 Forces agents to verify state via grep/read before acting and maintains a
 lightweight sticky-note memory for high-speed context restoration.
 """
+
 from __future__ import annotations
 
 import os
@@ -11,6 +12,7 @@ import os
 import structlog
 
 log = structlog.get_logger()
+
 
 class SkepticalMemory:
     def __init__(self, workspace_path: str):
@@ -22,7 +24,9 @@ class SkepticalMemory:
         """Updates the high-speed pointer file."""
         try:
             with open(self.memory_file, "w") as f:
-                f.write(f"## NEUREX AGENT MEMORY\nLast Update: {os.popen('date').read()}\n\n{sticky_note}")
+                f.write(
+                    f"## NEUREX AGENT MEMORY\nLast Update: {os.popen('date').read()}\n\n{sticky_note}"
+                )
             log.info("memory.updated", path=self.memory_file)
         except Exception as e:
             log.error("memory.update_failed", error=str(e))
@@ -46,5 +50,6 @@ class SkepticalMemory:
         - If a file has changed since your last read, re-read it before acting.
         - Document your current progress in the .neurex/MEMORY.md sticky note after every major step.
         """
+
 
 # Integrated into BaseAgent and Orchestrator

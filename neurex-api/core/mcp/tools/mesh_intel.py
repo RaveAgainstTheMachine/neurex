@@ -2,11 +2,13 @@
 core/mcp/tools/mesh_intel.py
 Mesh-awareness tools for agentic swarm intelligence.
 """
+
 import structlog
 
 from core.infrastructure.mesh import mesh_router
 
 log = structlog.get_logger()
+
 
 async def get_mesh_topology() -> str:
     """
@@ -17,7 +19,7 @@ async def get_mesh_topology() -> str:
     peers = mesh_router.peers
     if not peers:
         return "Local Node Only: No remote peers connected to the mesh."
-        
+
     summary = ["Active Neurex Swarm:"]
     for url, peer in peers.items():
         status_icon = "🟢" if peer.status == "online" else "🔴"
@@ -27,8 +29,9 @@ async def get_mesh_topology() -> str:
             f"Latency: {peer.latency_ms}ms | "
             f"Queue: {peer.queue_depth}"
         )
-        
+
     return "\n".join(summary)
+
 
 async def check_peer_suitability(model_name: str) -> str:
     """

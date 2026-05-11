@@ -4,6 +4,7 @@ REST endpoints for conversation history.
 The primary interaction path is WebSocket (/ws/{id}), but these endpoints
 let the frontend hydrate history on reconnect and fetch past conversations.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -21,10 +22,11 @@ router = APIRouter()
 
 # ── Models ────────────────────────────────────────────────────────────────────
 
+
 class ChatMessage(SQLModel, table=True):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
     conversation_id: str = Field(index=True)
-    role: str                    # "user" | "assistant"
+    role: str  # "user" | "assistant"
     content: str
     graph_id: str | None = None  # links to the TaskGraph that produced this reply
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
@@ -39,12 +41,14 @@ class SendMessageRequest(BaseModel):
 
 # ── Ensure table exists ────────────────────────────────────────────────────────
 
+
 async def _init_chat_table():
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
+
 
 @router.get("/conversations")
 async def list_conversations(session: AsyncSession = Depends(get_session)):
@@ -109,6 +113,7 @@ async def clear_conversation(
     await session.commit()
     # Also clear the shared scratchpad for this conversation
     from core.context.scratchpad import clear_scratchpad
+
     await clear_scratchpad(conversation_id)
-    
+
     return {"deleted": True, "conversation_id": conversation_id}

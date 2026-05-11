@@ -2,6 +2,7 @@
 core/agents/coder_agent.py
 Writes, edits, and refactors code files using MCP filesystem tools.
 """
+
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator
@@ -36,7 +37,7 @@ CODER_TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "path":    {"type": "string"},
+                    "path": {"type": "string"},
                     "content": {"type": "string"},
                 },
                 "required": ["path", "content"],
@@ -65,7 +66,11 @@ CODER_TOOLS = [
                 "type": "object",
                 "properties": {
                     "query": {"type": "string", "description": "Search term"},
-                    "include_globs": {"type": "array", "items": {"type": "string"}, "description": "Optional file globs to include"}
+                    "include_globs": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "Optional file globs to include",
+                    },
                 },
                 "required": ["query"],
             },
@@ -78,9 +83,7 @@ CODER_TOOLS = [
             "description": "Move a file to the workspace trash.",
             "parameters": {
                 "type": "object",
-                "properties": {
-                    "path": {"type": "string"}
-                },
+                "properties": {"path": {"type": "string"}},
                 "required": ["path"],
             },
         },
@@ -88,14 +91,13 @@ CODER_TOOLS = [
     {
         "type": "function",
         "function": {
-
             "name": "run_command",
             "description": "Execute a shell command in the workspace sandbox.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "command": {"type": "string", "description": "The shell command to run"},
-                    "cwd":     {"type": "string", "description": "Working directory, default '.'"}
+                    "cwd": {"type": "string", "description": "Working directory, default '.'"},
                 },
                 "required": ["command"],
             },
@@ -116,20 +118,18 @@ class CoderAgent(BaseAgent):
     system_prompt = CODER_SYSTEM
     agent_type = "coder"
 
-    async def execute(
-        self, task: dict, conversation_id: str
-    ) -> AsyncGenerator[dict, None]:
+    async def execute(self, task: dict, conversation_id: str) -> AsyncGenerator[dict, None]:
         description = task.get("description", "")
         rag = await self.rag_context(description, n=5)
         system = await self.build_system_prompt(conversation_id, rag)
 
         messages = [
-            {"role": "system",  "content": system},
-            {"role": "user",    "content": description},
+            {"role": "system", "content": system},
+            {"role": "user", "content": description},
         ]
 
         yield {"type": "status", "status": TaskStatus.THINKING}
-        
+
         params = task.get("params")
 
         # Phase 45: Autonomous Self-Repair Loop
@@ -152,15 +152,19 @@ class CoderAgent(BaseAgent):
                         # The tool_result contains the architectural reason; the agent will read it in the next loop
 
                     # Append tool exchange to history
-                    messages.append({
-                        "role": "assistant",
-                        "content": None,
-                        "tool_calls": [chunk["call"]],
-                    })
-                    messages.append({
-                        "role": "tool",
-                        "content": tool_result,
-                    })
+                    messages.append(
+                        {
+                            "role": "assistant",
+                            "content": None,
+                            "tool_calls": [chunk["call"]],
+                        }
+                    )
+                    messages.append(
+                        {
+                            "role": "tool",
+                            "content": tool_result,
+                        }
+                    )
 
                     if "APPROVAL_REQUIRED" in tool_result:
                         yield {"type": "result", "result": tool_result}
@@ -171,10 +175,14 @@ class CoderAgent(BaseAgent):
                     if not any(m.get("role") == "tool" for m in messages[-2:]):
                         # Phase 48: Record Success for Neural Evolution
                         from core.infrastructure.evolution import evolution_coordinator
+
                         domain = task.get("domain", "generic-coding")
                         await evolution_coordinator.record_success(domain, {"quality_score": 1.0})
-                        
+
                         yield {"type": "result", "result": chunk["full_text"]}
                         return
 
-        yield {"type": "result", "result": "Max tool rounds reached. Autonomous repair failed to reach consensus."}
+        yield {
+            "type": "result",
+            "result": "Max tool rounds reached. Autonomous repair failed to reach consensus.",
+        }

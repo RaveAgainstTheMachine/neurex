@@ -4,6 +4,7 @@ AST-aware code chunking using tree-sitter.
 For code files: chunks at function/class boundaries.
 For prose files (md, txt): sliding window with sentence awareness.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -15,22 +16,22 @@ log = structlog.get_logger()
 
 # tree-sitter language map
 LANG_MAP = {
-    ".py":   "python",
-    ".ts":   "typescript",
-    ".tsx":  "tsx",
-    ".js":   "javascript",
-    ".jsx":  "javascript",
-    ".go":   "go",
-    ".rs":   "rust",
+    ".py": "python",
+    ".ts": "typescript",
+    ".tsx": "tsx",
+    ".js": "javascript",
+    ".jsx": "javascript",
+    ".go": "go",
+    ".rs": "rust",
     ".java": "java",
-    ".cpp":  "cpp",
-    ".c":    "c",
+    ".cpp": "cpp",
+    ".c": "c",
 }
 
 PROSE_EXTENSIONS = {".md", ".txt", ".yaml", ".yml", ".toml", ".json"}
 
 MAX_CHUNK_CHARS = 1500
-OVERLAP_CHARS   = 200
+OVERLAP_CHARS = 200
 
 
 def chunk_file(path: Path) -> list[dict]:
@@ -61,34 +62,44 @@ def _ast_chunks(source: str, path: Path, language: str) -> list[dict]:
     """Chunk at function/class/method boundaries using tree-sitter."""
     try:
         from tree_sitter_languages import get_language, get_parser
-        lang   = get_language(language)
+
+        lang = get_language(language)
         parser = get_parser(language)
     except Exception as e:
         log.warning("chunker.ts_unavailable", lang=language, error=str(e))
         return _sliding_window_chunks(source, path)
 
-    tree  = parser.parse(source.encode())
+    tree = parser.parse(source.encode())
     lines = source.splitlines(keepends=True)
     chunks = []
 
     # Node types that represent top-level declarations
     TOP_LEVEL_TYPES = {
-        "function_definition", "class_definition",       # Python
-        "function_declaration", "class_declaration",     # JS/TS
-        "method_definition", "arrow_function",           # JS/TS
-        "impl_item", "fn_item", "struct_item",           # Rust
-        "function_declaration",                          # Go
+        "function_definition",
+        "class_definition",  # Python
+        "function_declaration",
+        "class_declaration",  # JS/TS
+        "method_definition",
+        "arrow_function",  # JS/TS
+        "impl_item",
+        "fn_item",
+        "struct_item",  # Rust
+        "function_declaration",  # Go
     }
 
     def walk(node):
         if node.type in TOP_LEVEL_TYPES:
             start = node.start_point[0]
-            end   = node.end_point[0]
-            text  = "".join(lines[start : end + 1])
+            end = node.end_point[0]
+            text = "".join(lines[start : end + 1])
 
             # Split oversized nodes
             for sub_text, sub_start in _split_long(text, start):
-                chunks.append(_make_chunk(sub_text, path, language, sub_start, sub_start + sub_text.count("\n")))
+                chunks.append(
+                    _make_chunk(
+                        sub_text, path, language, sub_start, sub_start + sub_text.count("\n")
+                    )
+                )
         else:
             for child in node.children:
                 walk(child)
@@ -124,17 +135,19 @@ def _sliding_window_chunks(source: str, path: Path) -> list[dict]:
     return chunks
 
 
-def _make_chunk(text: str, path: Path, language: str, start_line: int, end_line: int, symbol: str = "") -> dict:
+def _make_chunk(
+    text: str, path: Path, language: str, start_line: int, end_line: int, symbol: str = ""
+) -> dict:
     chunk_id = hashlib.md5(f"{path}:{start_line}:{text[:50]}".encode()).hexdigest()[:12]
     return {
-        "id":   chunk_id,
+        "id": chunk_id,
         "text": text.strip(),
         "metadata": {
-            "file":       str(path),
-            "language":   language,
+            "file": str(path),
+            "language": language,
             "start_line": start_line,
-            "end_line":   end_line,
-            "symbol":     symbol,
+            "end_line": end_line,
+            "symbol": symbol,
         },
     }
 

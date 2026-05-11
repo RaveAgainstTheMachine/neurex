@@ -2,6 +2,7 @@
 core/memory/embedder.py
 Embedding via Ollama (nomic-embed-text) + optional cross-encoder reranking.
 """
+
 from __future__ import annotations
 
 import os
@@ -11,12 +12,13 @@ import structlog
 
 log = structlog.get_logger()
 
+
 def get_ollama_base():
     return os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 
+
 def get_embed_model():
     return os.getenv("EMBED_MODEL", "nomic-embed-text")
-
 
 
 class Embedder:
@@ -47,6 +49,7 @@ class Reranker:
     Cross-encoder reranker using sentence-transformers.
     Falls back gracefully if the model isn't available.
     """
+
     _model = None
 
     def _load(self):
@@ -54,6 +57,7 @@ class Reranker:
             try:
                 import torch
                 from sentence_transformers import CrossEncoder
+
                 device = "cuda" if torch.cuda.is_available() else "cpu"
                 log.info("reranker.loading", device=device)
                 self._model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2", device=device)
@@ -61,9 +65,7 @@ class Reranker:
                 log.warning("reranker.load_failed", error=str(e))
         return self._model
 
-    def rerank(
-        self, query: str, candidates: list[dict], top_k: int = 5
-    ) -> list[dict]:
+    def rerank(self, query: str, candidates: list[dict], top_k: int = 5) -> list[dict]:
         """
         Rerank ChromaDB results by relevance.
         candidates: list of {"document": str, "metadata": dict, ...}

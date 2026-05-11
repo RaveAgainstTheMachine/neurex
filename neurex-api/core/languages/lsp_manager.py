@@ -12,6 +12,7 @@ API_ROOT = Path(__file__).parent.parent.parent
 MANAGED_LSP_DIR = API_ROOT / ".neurex" / "bin" / "lsp"
 WORKSPACE_ROOT = Path(os.getenv("WORKSPACE_PATH", "."))
 
+
 class DiagnosticTracker:
     def __init__(self):
         # path -> list of diagnostics
@@ -20,19 +21,22 @@ class DiagnosticTracker:
     def update(self, uri: str, items: list[dict]):
         # Convert URI to relative path
         from urllib.parse import unquote
+
         path = unquote(uri.replace("file://", ""))
-        
+
         try:
             from api.routes.files import get_workspace
+
             WORKSPACE = get_workspace()
             abs_path = Path(path).resolve()
             if str(abs_path).startswith(str(WORKSPACE)):
                 rel_path = str(abs_path.relative_to(WORKSPACE))
-                if rel_path == ".": rel_path = ""
+                if rel_path == ".":
+                    rel_path = ""
                 path = rel_path
         except Exception:
             pass
-        
+
         if not items:
             self.diagnostics.pop(path, None)
         else:
@@ -40,10 +44,12 @@ class DiagnosticTracker:
 
         # Trigger global broadcast for UI refresh
         from core.collaboration.presence import presence_manager
-        asyncio.create_task(presence_manager.broadcast_global({
-            "event": "diagnostics_updated",
-            "data": {"path": path, "diagnostics": items}
-        }))
+
+        asyncio.create_task(
+            presence_manager.broadcast_global(
+                {"event": "diagnostics_updated", "data": {"path": path, "diagnostics": items}}
+            )
+        )
 
     def get_for_path(self, path: str) -> list[dict]:
         return self.diagnostics.get(path, [])
@@ -56,7 +62,7 @@ class DiagnosticTracker:
             match_prefix = prefix + "/"
         else:
             match_prefix = prefix
-            
+
         for path, items in self.diagnostics.items():
             if path == prefix or path.startswith(match_prefix):
                 count += len(items)
@@ -64,6 +70,7 @@ class DiagnosticTracker:
 
     def get_all(self) -> dict[str, list[dict]]:
         return self.diagnostics
+
 
 diagnostic_tracker = DiagnosticTracker()
 
@@ -88,7 +95,6 @@ LSP_COMMANDS = {
     "pascal": ["pascal-language-server"],
     "fortran": ["fortls"],
     "cobol": ["cobol-lsp"],
-    
     # Web & Frameworks
     "html": ["vscode-html-language-server", "--stdio"],
     "css": ["vscode-css-language-server", "--stdio"],
@@ -103,7 +109,6 @@ LSP_COMMANDS = {
     "astro": ["astro-ls", "--stdio"],
     "graphql": ["graphql-lsp", "server", "-m", "stream"],
     "tailwindcss": ["tailwindcss-language-server", "--stdio"],
-    
     # Functional & Niche
     "elixir": ["elixir-ls"],
     "erlang": ["erlang_ls"],
@@ -115,7 +120,6 @@ LSP_COMMANDS = {
     "ocaml": ["ocamllsp"],
     "fsharp": ["fsautocomplete"],
     "racket": ["racket", "-l", "racket-langserver"],
-    
     # Data & Ops
     "terraform": ["terraform-ls", "serve"],
     "nix": ["nil"],
@@ -123,9 +127,21 @@ LSP_COMMANDS = {
     "latex": ["texlab"],
     "markdown": ["marksman", "server"],
     "r": ["R", "--slave", "-e", "languageserver::run()"],
-    "julia": ["julia", "--startup-file=no", "--history-file=no", "-e", "using LanguageServer; runserver()"],
+    "julia": [
+        "julia",
+        "--startup-file=no",
+        "--history-file=no",
+        "-e",
+        "using LanguageServer; runserver()",
+    ],
     "perl": ["perl", "-MPerl::LanguageServer", "-e", "Perl::LanguageServer::run()"],
-    "powershell": ["pwsh", "-NoProfile", "-NonInteractive", "-Command", "PowerShellEditorServices.Start.ps1"],
+    "powershell": [
+        "pwsh",
+        "-NoProfile",
+        "-NonInteractive",
+        "-Command",
+        "PowerShellEditorServices.Start.ps1",
+    ],
 }
 
 # Installation recipes (shell commands)
@@ -152,6 +168,7 @@ LSP_RECIPES = {
     "zig": "curl -L https://github.com/zigtools/zls/releases/latest/download/zls-x86_64-linux.tar.xz | tar -xJ",
 }
 
+
 class LSPSession:
     def __init__(self, lang: str, workspace_path: str):
         self.lang = lang
@@ -166,16 +183,16 @@ class LSPSession:
         """Persistent background reader for LSP stdout with proper protocol parsing."""
         if not self.process or not self.process.stdout:
             return
-            
+
         buffer = b""
         try:
             while self._running:
                 chunk = await self.process.stdout.read(65536)
                 if not chunk:
                     break
-                
+
                 buffer += chunk
-                
+
                 # Push raw chunk to queue for any active websocket listeners
                 await self._output_queue.put(chunk)
 
@@ -184,23 +201,28 @@ class LSPSession:
                     try:
                         header_start = buffer.find(b"Content-Length:")
                         header_end = buffer.find(b"\r\n\r\n", header_start)
-                        if header_end == -1: break
-                        
+                        if header_end == -1:
+                            break
+
                         length_line = buffer[header_start:header_end].split(b"\r\n")[0]
                         content_length = int(length_line.split(b":")[1].strip())
-                        
+
                         body_start = header_end + 4
                         if len(buffer) < body_start + content_length:
-                            break # Wait for more data
-                        
+                            break  # Wait for more data
+
                         body_raw = buffer[body_start : body_start + content_length]
-                        buffer = buffer[body_start + content_length:]
-                        
+                        buffer = buffer[body_start + content_length :]
+
                         self.handle_json(body_raw)
                     except Exception as e:
                         logger.error(f"LSP header parse error: {e}")
                         # Move past current header to avoid stuck loop
-                        buffer = buffer[buffer.find(b"Content-Length:", 1):] if b"Content-Length:" in buffer[1:] else b""
+                        buffer = (
+                            buffer[buffer.find(b"Content-Length:", 1) :]
+                            if b"Content-Length:" in buffer[1:]
+                            else b""
+                        )
                         break
 
         except Exception as e:
@@ -218,14 +240,14 @@ class LSPSession:
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                cwd=self.workspace_path
+                cwd=self.workspace_path,
             )
             self._running = True
             logger.info(f"Started LSP for {self.lang} (PID: {self.process.pid})")
         except Exception as e:
             logger.error(f"Failed to start LSP for {self.lang}: {e}")
             raise
-        
+
         self._reader_task = asyncio.create_task(self._read_loop())
 
     async def stop(self):
@@ -267,11 +289,12 @@ class LSPManager:
         self.sessions: dict[str, LSPSession] = {}
         self.failed_installs: set[str] = set()
         self.installing_langs: set[str] = set()
+
     def _find_executable(self, name: str) -> str | None:
         # Check managed dir first (both root and node_modules/.bin)
         managed_root = str(MANAGED_LSP_DIR)
         managed_bin = str(MANAGED_LSP_DIR / "node_modules" / ".bin")
-        
+
         search_path = f"{managed_root}:{managed_bin}:{os.environ.get('PATH', '')}"
         return shutil.which(name, path=search_path)
 
@@ -279,10 +302,10 @@ class LSPManager:
         """Scans workspace for extensions and starts LSPs for found languages."""
         logger.info("lsp.initialize_workspace", workspace_path=workspace_path)
         root = Path(workspace_path)
-        if not root.exists(): 
+        if not root.exists():
             logger.warning("lsp.workspace_missing", workspace_path=workspace_path)
             return
-        
+
         found_langs = set()
         ext_map = {
             ".py": "python",
@@ -293,14 +316,16 @@ class LSPManager:
             ".rs": "rust",
             ".go": "go",
             ".c": "c",
-            ".cpp": "cpp"
+            ".cpp": "cpp",
         }
-        
+
         # Efficient scan with depth limit
         IGNORED = {".git", "node_modules", "__pycache__", ".neurex_trash", "venv", ".venv"}
         try:
+
             def scan_dir(path: Path, depth: int):
-                if depth <= 0: return
+                if depth <= 0:
+                    return
                 try:
                     for item in path.iterdir():
                         if item.is_dir():
@@ -308,16 +333,18 @@ class LSPManager:
                                 scan_dir(item, depth - 1)
                         elif item.suffix in ext_map:
                             found_langs.add(ext_map[item.suffix])
-                        if len(found_langs) > 5: break
-                except Exception: pass
-            
+                        if len(found_langs) > 5:
+                            break
+                except Exception:
+                    pass
+
             scan_dir(root, 3)
             supported = self.get_supported_languages()
             logger.info("lsp.scan_results", found=list(found_langs), supported=supported)
-        except Exception as e: 
+        except Exception as e:
             logger.error(f"workspace_init_scan_error: {e}")
             pass
-        
+
         for lang in found_langs:
             if lang in self.failed_installs:
                 continue
@@ -325,7 +352,8 @@ class LSPManager:
                 logger.info(f"auto_starting_lsp: {lang} for workspace {workspace_path}")
                 try:
                     await self.get_session(lang, workspace_path)
-                except Exception: pass
+                except Exception:
+                    pass
             elif lang in LSP_RECIPES:
                 # Autopilot: Auto-install if recipe exists but binary not found
                 logger.info(f"autopilot_installing_lsp: {lang} for workspace {workspace_path}")
@@ -347,27 +375,27 @@ class LSPManager:
         if lang in self.installing_langs:
             logger.info(f"lsp_install_already_in_progress: {lang}")
             return
-            
+
         if lang not in LSP_RECIPES:
             raise ValueError(f"No installation recipe for {lang}")
-            
+
         self.installing_langs.add(lang)
         recipe = LSP_RECIPES[lang]
         MANAGED_LSP_DIR.mkdir(parents=True, exist_ok=True)
-        
+
         logger.info(f"installing_lsp: {lang} with recipe: {recipe}")
-        
+
         try:
             # Run installation in managed directory
             process = await asyncio.create_subprocess_shell(
                 recipe,
                 cwd=str(MANAGED_LSP_DIR),
                 stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                stderr=asyncio.subprocess.PIPE,
             )
-            
+
             stdout, stderr = await process.communicate()
-            
+
             if process.returncode == 0:
                 logger.info(f"lsp_installed_successfully: {lang}")
                 if lang in self.failed_installs:
@@ -392,22 +420,26 @@ class LSPManager:
         curr = start_path.resolve()
         while curr != curr.parent:
             # Check for git or common project markers
-            if (curr / ".git").is_dir() or (curr / "pyproject.toml").exists() or (curr / "package.json").exists():
+            if (
+                (curr / ".git").is_dir()
+                or (curr / "pyproject.toml").exists()
+                or (curr / "package.json").exists()
+            ):
                 return curr
             curr = curr.parent
-        
+
         # If not found in parent, check if there is a project root in a direct subdirectory
         for item in start_path.iterdir():
             if item.is_dir() and ((item / ".git").is_dir() or (item / "pyproject.toml").exists()):
                 return item
-                
+
         return start_path
 
     async def get_session(self, lang: str, workspace_path: str) -> LSPSession:
         # Adjust workspace_path to the nearest project root
         actual_root = self._find_project_root(Path(workspace_path))
         root_str = str(actual_root)
-        
+
         session_key = f"{lang}:{root_str}"
         if session_key not in self.sessions:
             # Check for custom override in .neurex/lsp.json
@@ -426,7 +458,7 @@ class LSPManager:
             exe_path = self._find_executable(cmd[0])
             if exe_path:
                 cmd[0] = exe_path
-            
+
             session = LSPSession(lang, root_str)
             await session.start()
             self.sessions[session_key] = session
@@ -439,7 +471,7 @@ class LSPManager:
             f"{lang}-languageserver",
             f"{lang}-lsp",
             f"lsp-{lang}",
-            f"{lang}ls"
+            f"{lang}ls",
         ]
         for p in patterns:
             exe = self._find_executable(p)
@@ -463,6 +495,7 @@ class LSPManager:
         for session in self.sessions.values():
             await session.stop()
         self.sessions.clear()
+
 
 # Global instance
 lsp_manager = LSPManager()

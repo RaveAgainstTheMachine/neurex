@@ -2,6 +2,7 @@
 neurex-api — main.py
 Entry point: mounts routers, starts background workers, manages lifespan.
 """
+
 import asyncio
 from contextlib import asynccontextmanager
 
@@ -58,40 +59,49 @@ async def lifespan(app: FastAPI):
 
     # Initialise PTY Manager
     from core.terminal.pty_manager import PTYManager
+
     pty_manager = PTYManager()
     app.state.pty_manager = pty_manager
 
     # Start Presence Manager tasks
     from core.collaboration.presence import presence_manager
+
     presence_manager.start()
 
     # Start Insomnia Service
     from core.infrastructure.insomnia import insomnia_service
+
     insomnia_service.sync()
 
     # Start File Watcher
     from core.infrastructure.watcher import watcher_service
+
     watcher_service.start()
 
     # Start Distributed RPC Server
     from core.infrastructure.distributed import distributed_manager
+
     await distributed_manager.start_rpc_server()
 
     # Firewall Integrity Check + Sentinel (Auto-Healing)
     from core.infrastructure.firewall import firewall_manager
+
     await firewall_manager.check_startup()
     asyncio.create_task(firewall_manager.start_sentinel())
 
     # Start Mesh Monitoring
     from core.infrastructure.mesh import mesh_router
+
     asyncio.create_task(mesh_router.start_monitoring())
 
     # Start Service Sentinel (Self-Healing)
     from core.observability.service_sentinel import sentinel as service_sentinel
+
     await service_sentinel.start()
 
     # Phase 55: Proactive LLM Health Check
     from core.infrastructure.manager import infrastructure_manager
+
     ollama_running = await infrastructure_manager._is_process_running("ollama")
     if not ollama_running:
         log.info("neurex.infra_startup", engine="ollama", msg="Attempting to start Ollama...")
@@ -102,21 +112,25 @@ async def lifespan(app: FastAPI):
 
     # Start CI/CD Healer (External Self-Healing)
     from core.observability.ci_healer import ci_healer
+
     asyncio.create_task(ci_healer.check_pipeline_health())
 
     # Trigger initial hardware benchmark
-    
+
     # Phase 44.9: Start Flight Recorder Batch Worker
     from core.observability.flight_recorder import flush_decisions
+
     asyncio.create_task(flush_decisions())
-    
+
     log.info("lsp.init_start")
     # Initialise LSP Manager
     from core.languages.lsp_manager import lsp_manager
+
     app.state.lsp_manager = lsp_manager
-    
+
     # Pre-emptively start LSPs for workspace languages
     from api.routes.files import get_workspace
+
     workspace_path = str(get_workspace())
     log.info("lsp.workspace_sync", path=workspace_path)
     asyncio.create_task(lsp_manager.initialize_workspace(workspace_path))
@@ -150,7 +164,7 @@ app = FastAPI(
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",
     lifespan=lifespan,
-    default_response_class=ORJSONResponse
+    default_response_class=ORJSONResponse,
 )
 
 app.add_middleware(DebugLoggingMiddleware)
@@ -184,6 +198,7 @@ app.include_router(ws_router, tags=["websocket"])
 @app.get("/health")
 async def health():
     from version import VERSION
+
     return {"status": "ok", "version": VERSION}
 
 

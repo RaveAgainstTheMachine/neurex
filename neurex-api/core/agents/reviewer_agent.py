@@ -2,6 +2,7 @@
 core/agents/reviewer_agent.py
 Reviewer agent. Critiques code for quality, security, and adherence to rules.
 """
+
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator
@@ -27,23 +28,22 @@ If the code is acceptable, start your response with 'APPROVE'.
 Otherwise, provide specific feedback on what needs fixing.
 """
 
+
 class ReviewerAgent(BaseAgent):
     """Agent specialized in code review and quality assurance."""
-    
+
     system_prompt: str = REVIEWER_SYSTEM
     agent_type: str = "reviewer"
 
-    async def execute(
-        self, task: dict, conversation_id: str
-    ) -> AsyncGenerator[dict, None]:
+    async def execute(self, task: dict, conversation_id: str) -> AsyncGenerator[dict, None]:
         description = task.get("description", "")
         # Reviewer needs heavy context of what was just written
         rag = await self.rag_context(description, n=10)
         system = await self.build_system_prompt(conversation_id, rag)
 
         messages = [
-            {"role": "system",  "content": system},
-            {"role": "user",    "content": f"Review the following task implementation: {description}"},
+            {"role": "system", "content": system},
+            {"role": "user", "content": f"Review the following task implementation: {description}"},
         ]
 
         yield {"type": "status", "status": TaskStatus.TESTING}

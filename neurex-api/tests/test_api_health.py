@@ -2,6 +2,7 @@
 tests/test_api_health.py
 Tests for core API endpoints: health, files tree, settings.
 """
+
 import pytest
 
 

@@ -3,6 +3,7 @@ core/context/global_memory.py
 Mesh-Wide Memory (Persistent Global State).
 Synchronizes 'Global Sticky Notes' and experience patterns across the Mesh.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -15,6 +16,7 @@ from core.infrastructure.mesh import mesh_router
 from core.observability.flight_recorder import record_decision
 
 log = structlog.get_logger()
+
 
 class GlobalMemory:
     def __init__(self):
@@ -29,14 +31,10 @@ class GlobalMemory:
     async def add_pointer(self, key: str, content: str, node_id: str = "local"):
         """Adds a local memory pointer and broadcasts the delta."""
         log.info("memory.add_pointer", key=key, node=node_id)
-        pointer = {
-            "content": content,
-            "source_node": node_id,
-            "timestamp": "2026-05-01T07:15:00Z"
-        }
+        pointer = {"content": content, "source_node": node_id, "timestamp": "2026-05-01T07:15:00Z"}
         self.pointers[key] = pointer
         await record_decision("global_memory", "pointer_added", key, content[:50])
-        
+
         # Phase 41.1: Optimized Delta Broadcast
         asyncio.create_task(self.broadcast_delta(key, pointer))
 
@@ -47,7 +45,9 @@ class GlobalMemory:
             return
 
         payload = {"key": key, "pointer": pointer}
-        tasks = [self._client.post(f"{peer.url}/api/memory/sync_delta", json=payload) for peer in peers]
+        tasks = [
+            self._client.post(f"{peer.url}/api/memory/sync_delta", json=payload) for peer in peers
+        ]
         await asyncio.gather(*tasks, return_exceptions=True)
         log.info("memory.delta_broadcast_complete", peers=len(peers))
 
@@ -58,7 +58,7 @@ class GlobalMemory:
         for key, val in self.pointers.items():
             if query.lower() in key.lower() or query.lower() in val["content"].lower():
                 matches.append(f"[{val['source_node']}] {key}: {val['content']}")
-        
+
         return "\n".join(matches) if matches else "No matching global memory found."
 
     async def broadcast_memory(self):
@@ -69,7 +69,7 @@ class GlobalMemory:
 
         payload = {"pointers": self.pointers}
         tasks = [self._client.post(f"{peer.url}/api/memory/sync", json=payload) for peer in peers]
-        
+
         await asyncio.gather(*tasks, return_exceptions=True)
         log.info("memory.broadcast_complete", peers=len(peers))
 
@@ -80,5 +80,6 @@ class GlobalMemory:
             # Basic conflict resolution: Source node priority or timestamps
             if key not in self.pointers:
                 self.pointers[key] = val
+
 
 global_memory = GlobalMemory()

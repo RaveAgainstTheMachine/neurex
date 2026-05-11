@@ -3,6 +3,7 @@ core/harness/hyperplan.py
 HYPERPLAN: Deep Thinking & Multi-Pass Architecture Planning.
 Offloads complex design tasks to a high-compute reasoning loop.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -15,6 +16,7 @@ if TYPE_CHECKING:
 
 log = structlog.get_logger()
 
+
 class HyperPlan:
     def __init__(self, agent: BaseAgent):
         self.agent = agent
@@ -25,27 +27,29 @@ class HyperPlan:
         Executes the 4-pass HYPERPLAN cycle with predictive prefetching.
         """
         log.info("hyperplan.start", task=task_description[:50])
-        
+
         # Phase 44.8: Predictive Context Prefetching
         # Start RAG search in background while Pass 1 generates decomposition
-        context_task = asyncio.create_task(self.ctx.explorer.hybrid_search(task_description, limit=15))
-        
+        context_task = asyncio.create_task(
+            self.ctx.explorer.hybrid_search(task_description, limit=15)
+        )
+
         # Pass 1: Decomposition
         decomp = await self._pass_decomposition(task_description)
-        
+
         # Ensure context is ready for Pass 2
         retrieved_context = await context_task
         log.info("hyperplan.context_primed", results=len(retrieved_context))
-        
+
         # Pass 2: Symbolic Trace (Context-aware)
         trace = await self._pass_symbolic_trace(decomp, retrieved_context)
-        
+
         # Pass 3: Optimization & Security
         optimized = await self._pass_optimization(trace)
-        
+
         # Pass 4: Final Blueprint Synthesis
         blueprint = await self._pass_synthesis(optimized)
-        
+
         log.info("hyperplan.complete")
         return blueprint
 
@@ -67,6 +71,7 @@ class HyperPlan:
         raw_json = await self._ask_brain(prompt, "Neurex Brain (Logic)")
         try:
             import json
+
             return json.loads(raw_json)
         except (json.JSONDecodeError, ValueError):
             return {"raw_blueprint": raw_json}
@@ -79,5 +84,6 @@ class HyperPlan:
             if chunk["type"] == "token":
                 full_text += chunk["text"]
         return full_text
+
 
 # Integrated into MCP

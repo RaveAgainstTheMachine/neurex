@@ -3,6 +3,7 @@ api/websocket.py
 WebSocket endpoint. Each connection maps to one conversation.
 Streams Orchestrator events as newline-delimited JSON.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -48,10 +49,13 @@ async def _authenticate(websocket: WebSocket) -> bool:
         return False
 
 
-async def _persist_message(conversation_id: str, role: str, content: str, graph_id: str | None = None):
+async def _persist_message(
+    conversation_id: str, role: str, content: str, graph_id: str | None = None
+):
     """Persist a chat message to SQLite so history survives reconnects. Uses its own session for isolation."""
     from api.routes.chat import ChatMessage
     from core.task_graph import AsyncSession, engine
+
     try:
         async with AsyncSession(engine, expire_on_commit=False) as session:
             msg = ChatMessage(
@@ -80,6 +84,7 @@ async def websocket_endpoint(
     log.info("ws.connected", conversation_id=conversation_id)
 
     from core.task_graph import engine
+
     async with AsyncSession(engine, expire_on_commit=False) as session:
         rules = RulesParser()
         ctx = ContextManager()
@@ -89,15 +94,18 @@ async def websocket_endpoint(
         pty_manager = websocket.app.state.pty_manager
 
         from core.collaboration.presence import presence_manager
+
         user_id = websocket.query_params.get("user_id", "Anonymous")
         await presence_manager.connect(conversation_id, websocket, user_id)
 
         # Define output callback for terminals
         attached_sessions = set()
-        
+
         async def on_terminal_output(sid: str, data: str):
             try:
-                await websocket.send_json({"event": "terminal_output", "sessionId": sid, "data": data})
+                await websocket.send_json(
+                    {"event": "terminal_output", "sessionId": sid, "data": data}
+                )
             except Exception:
                 pass
 
@@ -106,8 +114,7 @@ async def websocket_endpoint(
 
         # Initial default session
         default_pty = pty_manager.get_or_create_session(
-            conversation_id, 
-            get_output_handler(conversation_id)
+            conversation_id, get_output_handler(conversation_id)
         )
         attached_sessions.add(conversation_id)
 
@@ -126,7 +133,9 @@ async def websocket_endpoint(
                     continue
 
                 if msg_type == "presence_update":
-                    await presence_manager.update_presence(conversation_id, user_id, msg.get("data", {}))
+                    await presence_manager.update_presence(
+                        conversation_id, user_id, msg.get("data", {})
+                    )
                     continue
 
                 if msg_type == "cancel":
@@ -135,7 +144,9 @@ async def websocket_endpoint(
 
                 if msg_type == "terminal_input":
                     if requested_sid not in attached_sessions:
-                        s = pty_manager.get_or_create_session(pty_sid, get_output_handler(requested_sid))
+                        s = pty_manager.get_or_create_session(
+                            pty_sid, get_output_handler(requested_sid)
+                        )
                         attached_sessions.add(requested_sid)
                     else:
                         s = pty_manager.get_or_create_session(pty_sid)
@@ -144,7 +155,9 @@ async def websocket_endpoint(
 
                 if msg_type == "terminal_resize":
                     if requested_sid not in attached_sessions:
-                        s = pty_manager.get_or_create_session(pty_sid, get_output_handler(requested_sid))
+                        s = pty_manager.get_or_create_session(
+                            pty_sid, get_output_handler(requested_sid)
+                        )
                         attached_sessions.add(requested_sid)
                     else:
                         s = pty_manager.get_or_create_session(pty_sid)
@@ -153,7 +166,9 @@ async def websocket_endpoint(
 
                 if msg_type == "terminal_sync":
                     cwd = msg.get("cwd")
-                    s = pty_manager.get_or_create_session(pty_sid, get_output_handler(requested_sid), cwd=cwd)
+                    s = pty_manager.get_or_create_session(
+                        pty_sid, get_output_handler(requested_sid), cwd=cwd
+                    )
                     if requested_sid not in attached_sessions:
                         attached_sessions.add(requested_sid)
                     if s.history:
@@ -189,7 +204,9 @@ async def websocket_endpoint(
                     assistant_tokens = []
                     last_graph_id = None
                     try:
-                        async for event in orch.run(content, conversation_id, model=requested_model):
+                        async for event in orch.run(
+                            content, conversation_id, model=requested_model
+                        ):
                             await websocket.send_json(event)
                             if event.get("event") == "token":
                                 assistant_tokens.append(event["data"])
@@ -200,13 +217,14 @@ async def websocket_endpoint(
                         log.error("ws.orch_run_error", error=str(e))
                         await websocket.send_json({"event": "error", "data": str(e)})
                     finally:
-                        # Persist assistant response if any tokens were produced, 
+                        # Persist assistant response if any tokens were produced,
                         # or if a graph was started (to link history to graph)
                         if assistant_tokens or last_graph_id:
-                            text_content = "".join(assistant_tokens) if assistant_tokens else "Plan generated."
+                            text_content = (
+                                "".join(assistant_tokens) if assistant_tokens else "Plan generated."
+                            )
                             await _persist_message(
-                                conversation_id, "assistant",
-                                text_content, last_graph_id
+                                conversation_id, "assistant", text_content, last_graph_id
                             )
 
                 if msg_type == "approve_plan":
@@ -224,8 +242,7 @@ async def websocket_endpoint(
                     finally:
                         if assistant_tokens:
                             await _persist_message(
-                                conversation_id, "assistant",
-                                "".join(assistant_tokens), graph_id
+                                conversation_id, "assistant", "".join(assistant_tokens), graph_id
                             )
 
                 if msg_type == "approve_shell":
@@ -253,16 +270,18 @@ async def websocket_endpoint(
                 s = pty_manager.get_session(sid)
                 if s:
                     s.detach(get_output_handler(sid))
+
+
 @router.websocket("/ws/lsp/{lang}")
 async def lsp_websocket_endpoint(websocket: WebSocket, lang: str):
     await websocket.accept()
-    
+
     if not await _authenticate(websocket):
         return
 
     workspace_path = websocket.query_params.get("workspace", os.getcwd())
     lsp_manager = websocket.app.state.lsp_manager
-    
+
     try:
         session = await lsp_manager.get_session(lang, workspace_path)
     except Exception as e:

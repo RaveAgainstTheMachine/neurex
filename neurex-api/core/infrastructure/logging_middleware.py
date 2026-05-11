@@ -5,6 +5,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 logger = logging.getLogger("neurex.api.debug")
 
+
 class DebugLoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         logger.info(f"Incoming Request: {request.method} {request.url}")

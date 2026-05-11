@@ -2,6 +2,7 @@
 api/routes/evolution.py
 Exposes Phase 48 Neural Evolution telemetry for the frontend dashboard.
 """
+
 from fastapi import APIRouter
 
 from core.infrastructure.arch_mutator import arch_mutator
@@ -9,22 +10,26 @@ from core.infrastructure.evolution import evolution_coordinator
 
 router = APIRouter(prefix="/api/evolution", tags=["Evolution"])
 
+
 @router.get("/status")
 async def get_evolution_status():
     """Returns the current state of all neural adapters and their architectural specs."""
     status = []
     for domain, adapter in evolution_coordinator.adapters.items():
         spec = arch_mutator.specs.get(domain)
-        status.append({
-            "domain": domain,
-            "adapter_id": adapter.id,
-            "version": adapter.version,
-            "fitness": round(adapter.fitness_score, 2),
-            "rank": spec.rank if spec else 8,
-            "alpha": spec.alpha if spec else 16,
-            "modules": spec.target_modules if spec else ["q_proj", "v_proj"]
-        })
+        status.append(
+            {
+                "domain": domain,
+                "adapter_id": adapter.id,
+                "version": adapter.version,
+                "fitness": round(adapter.fitness_score, 2),
+                "rank": spec.rank if spec else 8,
+                "alpha": spec.alpha if spec else 16,
+                "modules": spec.target_modules if spec else ["q_proj", "v_proj"],
+            }
+        )
     return {"adapters": status}
+
 
 @router.post("/reset/{domain}")
 async def reset_adapter(domain: str):

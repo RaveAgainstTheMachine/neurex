@@ -2,6 +2,7 @@
 core/mcp/tools/security.py
 Security auditing tools for Neurex.
 """
+
 import asyncio
 import os
 from pathlib import Path
@@ -12,6 +13,7 @@ log = structlog.get_logger()
 
 WORKSPACE_PATH = os.getenv("WORKSPACE_PATH", "/workspace")
 
+
 async def security_scan() -> str:
     """
     Perform a security audit of the workspace.
@@ -21,14 +23,18 @@ async def security_scan() -> str:
     """
     ws = Path(WORKSPACE_PATH)
     issues = []
-    
+
     # 1. Bandit Scan
     try:
         proc = await asyncio.create_subprocess_exec(
-            "bandit", "-r", ".", "-f", "txt",
+            "bandit",
+            "-r",
+            ".",
+            "-f",
+            "txt",
             cwd=ws,
             stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
+            stderr=asyncio.subprocess.PIPE,
         )
         stdout, _ = await proc.communicate()
         if b"Issue:" in stdout:
@@ -39,10 +45,11 @@ async def security_scan() -> str:
     # 2. Safety Check
     try:
         proc = await asyncio.create_subprocess_exec(
-            "safety", "check",
+            "safety",
+            "check",
             cwd=ws,
             stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
+            stderr=asyncio.subprocess.PIPE,
         )
         stdout, _ = await proc.communicate()
         if b"vulnerabilities" in stdout.lower():
@@ -54,19 +61,25 @@ async def security_scan() -> str:
     try:
         # Check for unencrypted private keys or env files tracked in git
         proc = await asyncio.create_subprocess_exec(
-            "git", "ls-files", "*.pem", ".env", "*.key",
+            "git",
+            "ls-files",
+            "*.pem",
+            ".env",
+            "*.key",
             cwd=ws,
             stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
+            stderr=asyncio.subprocess.PIPE,
         )
         stdout, _ = await proc.communicate()
         if stdout:
             leaks = stdout.decode().strip().split("\n")
-            issues.append("WARNING: Sensitive files are being tracked in Git:\n- " + "\n- ".join(leaks))
+            issues.append(
+                "WARNING: Sensitive files are being tracked in Git:\n- " + "\n- ".join(leaks)
+            )
     except Exception:
         pass
 
     if not issues:
         return "✅ Security Scan Complete: No immediate threats detected."
-        
+
     return "🚨 Security Scan Results:\n\n" + "\n\n".join(issues)

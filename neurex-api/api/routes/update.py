@@ -6,6 +6,7 @@ Checks GitHub Releases for new versions and triggers a Docker image pull
 in the background. The frontend polls /api/update/status to show the
 notification badge, then reloads to activate the new version.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -21,13 +22,13 @@ router = APIRouter(prefix="/api/update", tags=["update"])
 log = structlog.get_logger()
 
 CURRENT_VERSION = os.getenv("NEUREX_VERSION", "0.5.2")
-GITHUB_REPO     = os.getenv("NEUREX_GITHUB_REPO", "RaveAgainstTheMachine/neurex")
+GITHUB_REPO = os.getenv("NEUREX_GITHUB_REPO", "RaveAgainstTheMachine/neurex")
 
 # In-memory state (reset on process restart)
 _update_state: dict = {
     "latest_version": None,
     "update_available": False,
-    "update_ready": False,      # True once images are pulled
+    "update_ready": False,  # True once images are pulled
     "pulling": False,
     "error": None,
 }
@@ -41,6 +42,7 @@ def _parse_semver(v: str) -> tuple[int, ...]:
 async def _fetch_latest_version() -> str | None:
     """Hit the GitHub Releases API and return the latest tag name."""
     import httpx
+
     try:
         async with httpx.AsyncClient(timeout=5) as client:
             resp = await client.get(
@@ -57,8 +59,8 @@ async def _fetch_latest_version() -> str | None:
 async def _pull_images():
     """Pull updated Docker images in the background after creating a snapshot."""
     _update_state["pulling"] = True
-    _update_state["error"]   = None
-    
+    _update_state["error"] = None
+
     # 1. Create Safety Snapshot
     try:
         log.info("update.creating_snapshot", version=CURRENT_VERSION)
@@ -71,7 +73,9 @@ async def _pull_images():
     log.info("update.pulling_images")
     try:
         proc = await asyncio.create_subprocess_exec(
-            "docker", "compose", "pull",
+            "docker",
+            "compose",
+            "pull",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.STDOUT,
         )
@@ -99,18 +103,18 @@ async def check_for_updates():
     if latest:
         _update_state["latest_version"] = latest
         try:
-            _update_state["update_available"] = (
-                _parse_semver(latest) > _parse_semver(CURRENT_VERSION)
+            _update_state["update_available"] = _parse_semver(latest) > _parse_semver(
+                CURRENT_VERSION
             )
         except ValueError:
             _update_state["update_available"] = False
 
     return {
         "current_version": CURRENT_VERSION,
-        "latest_version":  _update_state["latest_version"],
+        "latest_version": _update_state["latest_version"],
         "update_available": _update_state["update_available"],
-        "update_ready":    _update_state["update_ready"],
-        "pulling":         _update_state["pulling"],
+        "update_ready": _update_state["update_ready"],
+        "pulling": _update_state["pulling"],
     }
 
 

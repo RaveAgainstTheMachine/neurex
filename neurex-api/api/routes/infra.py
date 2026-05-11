@@ -2,6 +2,7 @@
 api/routes/infra.py
 Endpoints for managing AI infrastructure (engines, VRAM, performance).
 """
+
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -16,10 +17,12 @@ router = APIRouter()
 infra_manager = InfrastructureManager()
 skill_manager = SkillManager()
 
+
 @router.get("/skills")
 async def list_skills():
     """List all available and pre-baked skills."""
     return skill_manager.list_available()
+
 
 @router.post("/skills/{skill_id}/toggle", dependencies=[Depends(require_role(UserRole.ADMIN))])
 async def toggle_skill(skill_id: str, enable: bool):
@@ -29,24 +32,33 @@ async def toggle_skill(skill_id: str, enable: bool):
         raise HTTPException(status_code=404, detail="Skill not found")
     return {"status": "success", "enabled": enable}
 
+
 @router.delete("/skills/{skill_id}", dependencies=[Depends(require_role(UserRole.ADMIN))])
 async def delete_skill(skill_id: str):
     """Purge a community skill from the node."""
     from core.logger import log
+
     log.info("infra.skill_delete_request", skill_id=skill_id)
     if skill_manager.delete_skill(skill_id):
         log.info("infra.skill_deleted", skill_id=skill_id)
         return {"status": "deleted"}
-    log.warning("infra.skill_delete_failed", skill_id=skill_id, reason="not_found", path=str(skill_manager.SKILLS_DIR / skill_id))
-    raise HTTPException(
-        status_code=404, 
-        detail=f"Skill '{skill_id}' not found at {skill_manager.SKILLS_DIR / skill_id}"
+    log.warning(
+        "infra.skill_delete_failed",
+        skill_id=skill_id,
+        reason="not_found",
+        path=str(skill_manager.SKILLS_DIR / skill_id),
     )
+    raise HTTPException(
+        status_code=404,
+        detail=f"Skill '{skill_id}' not found at {skill_manager.SKILLS_DIR / skill_id}",
+    )
+
 
 @router.post("/benchmark/{model}", dependencies=[Depends(require_role(UserRole.DEVELOPER))])
 async def run_benchmark(model: str):
     """Run a performance benchmark against a specific model."""
     return await benchmarker.run_benchmark(model)
+
 
 @router.get("/status")
 async def get_infra_status():
@@ -54,13 +66,14 @@ async def get_infra_status():
     engines = await infra_manager.get_status()
     metrics = infra_manager.get_system_metrics()
     local_models = await infra_manager.get_installed_models("ollama")
-    
+
     # Include latest benchmark if available
     metrics["benchmarks"] = benchmarker.last_results
 
     # Include project intelligence if available
     import json
     import os
+
     ws = os.getenv("WORKSPACE_PATH", "/workspace")
     intel_path = os.path.join(ws, ".neurex", "intel.json")
     if os.path.exists(intel_path):
@@ -69,17 +82,19 @@ async def get_infra_status():
                 metrics["intel"] = json.load(f)
         except Exception:
             pass
-    
+
     # Include distributed info
     from core.infrastructure.distributed import distributed_manager
+
     distributed = distributed_manager.get_status()
-    
+
     return {
         "engines": engines,
         "metrics": metrics,
         "local_models": local_models,
-        "distributed": distributed
+        "distributed": distributed,
     }
+
 
 @router.post("/engine/{name}/start", dependencies=[Depends(require_role(UserRole.ADMIN))])
 async def start_engine(name: str):
@@ -90,11 +105,13 @@ async def start_engine(name: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @router.post("/engine/{name}/stop", dependencies=[Depends(require_role(UserRole.ADMIN))])
 async def stop_engine(name: str):
     """Stop a specific AI engine."""
     success = await infra_manager.stop_engine(name)
     return {"success": success}
+
 
 @router.post("/engine/{name}/install", dependencies=[Depends(require_role(UserRole.ADMIN))])
 async def install_engine(name: str):
@@ -104,6 +121,7 @@ async def install_engine(name: str):
         return {"success": success}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.get("/recommend")
 async def recommend_model(task: str):
@@ -119,15 +137,15 @@ async def recommend_model(task: str):
 async def get_model_registry():
     """List only the models actually available on this node."""
     local_models = await infra_manager.get_installed_models("ollama")
-    
+
     # Group local models by base name (e.g. qwen2.5-coder)
     grouped: dict[str, dict[str, Any]] = {}
-    
+
     for lm in local_models:
         if not isinstance(lm, dict):
             continue
-        
-        base_name = lm["name"].split(':')[0]
+
+        base_name = lm["name"].split(":")[0]
         if base_name not in grouped:
             grouped[base_name] = {
                 "name": base_name,
@@ -141,21 +159,24 @@ async def get_model_registry():
                 "is_community": False,
                 "is_active": lm.get("is_active", False),
                 "origin": "LOCAL",
-                "variants": []
+                "variants": [],
             }
-        
+
         # Add this specific tag as a variant
-        grouped[base_name]["variants"].append({
-            "name": lm["name"],
-            "size_gb": lm.get("size_gb", 0),
-            "params": lm.get("params", "Local")
-        })
-        
+        grouped[base_name]["variants"].append(
+            {
+                "name": lm["name"],
+                "size_gb": lm.get("size_gb", 0),
+                "params": lm.get("params", "Local"),
+            }
+        )
+
         # Update aggregate active state
         if lm.get("is_active"):
             grouped[base_name]["is_active"] = True
 
     return list(grouped.values())
+
 
 @router.post("/model/pull", dependencies=[Depends(require_role(UserRole.ADMIN))])
 async def pull_model(engine: str, model: str):
@@ -165,6 +186,7 @@ async def pull_model(engine: str, model: str):
         return {"success": success}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 # ── Mesh Federation ──
 import httpx
@@ -180,10 +202,12 @@ class PeerRequest(BaseModel):
     token: str
     name: str
 
+
 @router.get("/engines")
 async def get_engines():
     """Returns status of all inference engines."""
     return await infra_manager.get_status()
+
 
 @router.get("/metrics")
 async def get_metrics():
@@ -192,14 +216,17 @@ async def get_metrics():
     metrics["benchmarks"] = benchmarker.last_results
     return metrics
 
+
 @router.get("/peers")
 async def get_peers_simple():
     """Direct peer list for the frontend store."""
     return [p.to_dict() for p in mesh_router.peers.values()]
 
+
 @router.get("/mesh/peers", dependencies=[Depends(require_role(UserRole.DEVELOPER))])
 async def list_peers():
     return [p.to_dict() for p in mesh_router.peers.values()]
+
 
 @router.post("/mesh/peers", dependencies=[Depends(require_role(UserRole.ADMIN))])
 async def add_peer(req: PeerRequest):
@@ -208,45 +235,52 @@ async def add_peer(req: PeerRequest):
         raise HTTPException(status_code=400, detail="Peer already exists")
     return {"status": "success"}
 
+
 @router.delete("/mesh/peers", dependencies=[Depends(require_role(UserRole.ADMIN))])
 async def remove_peer(url: str):
     mesh_router.remove_peer(url)
     return {"status": "deleted"}
 
+
 @router.post("/ollama_proxy/{path:path}", dependencies=[Depends(require_role(UserRole.DEVELOPER))])
 async def ollama_proxy(path: str, request: Request):
     """
-    Reverse proxy for Ollama inference. Allows authorized peer nodes 
+    Reverse proxy for Ollama inference. Allows authorized peer nodes
     to use this node's GPU for generation.
     """
     import os
+
     ollama_base = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     target_url = f"{ollama_base}/{path}"
-    
+
     client = httpx.AsyncClient()
-    
+
     async def stream_generator():
         async with client.stream(
             method=request.method,
             url=target_url,
-            headers={k: v for k, v in request.headers.items() if k.lower() != 'host'},
-            content=request.stream()
+            headers={k: v for k, v in request.headers.items() if k.lower() != "host"},
+            content=request.stream(),
         ) as resp:
             async for chunk in resp.aiter_bytes():
                 yield chunk
 
     return StreamingResponse(stream_generator(), media_type="application/json")
 
+
 @router.get("/logs", dependencies=[Depends(require_role(UserRole.ADMIN))])
 async def get_system_logs():
     """Retrieve the latest system audit logs."""
     from core.logger import get_audit_logs
+
     return get_audit_logs(limit=100)
+
 
 @router.get("/registry/search")
 async def search_registry(query: str):
     """Search Hugging Face for GGUF models."""
     return await search_huggingface(query)
+
 
 # ── Neurex Somnus (autoDream) ──
 import os
@@ -261,11 +295,13 @@ async def start_somnus():
     somnus_daemon.start(ws)
     return {"status": "started", "workspace": ws}
 
+
 @router.post("/somnus/stop", dependencies=[Depends(require_role(UserRole.ADMIN))])
 async def stop_somnus():
     """Stop the Somnus background architectural monitor."""
     somnus_daemon.stop()
     return {"status": "stopped"}
+
 
 @router.get("/somnus/status")
 async def get_somnus_status():

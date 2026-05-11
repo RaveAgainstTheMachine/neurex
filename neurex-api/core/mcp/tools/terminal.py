@@ -9,6 +9,7 @@ Security model:
   - Hard timeout (60s) prevents runaway processes
   - Command allowlist enforced before exec
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -20,21 +21,47 @@ import structlog
 log = structlog.get_logger()
 
 WORKSPACE_PATH = os.getenv("WORKSPACE_PATH", "/workspace")
-SANDBOX_IMAGE  = os.getenv("SANDBOX_IMAGE", "neurex-sandbox:latest")
-TIMEOUT        = 60  # seconds
+SANDBOX_IMAGE = os.getenv("SANDBOX_IMAGE", "neurex-sandbox:latest")
+TIMEOUT = 60  # seconds
 
 # Only these top-level commands are permitted in the sandbox
 ALLOWED_COMMANDS = {
-    "pytest", "python", "python3", "ruff", "mypy", "black",
-    "eslint", "prettier", "tsc", "jest", "vitest", "npm",
-    "pnpm", "yarn", "cargo", "go", "rustfmt", "cat", "ls",
-    "find", "grep", "wc", "echo",
+    "pytest",
+    "python",
+    "python3",
+    "ruff",
+    "mypy",
+    "black",
+    "eslint",
+    "prettier",
+    "tsc",
+    "jest",
+    "vitest",
+    "npm",
+    "pnpm",
+    "yarn",
+    "cargo",
+    "go",
+    "rustfmt",
+    "cat",
+    "ls",
+    "find",
+    "grep",
+    "wc",
+    "echo",
 }
 
 
 SAFE_COMMANDS = {
-    "ls", "cat", "pwd", "git status", "git diff", "pytest", "npm test",
+    "ls",
+    "cat",
+    "pwd",
+    "git status",
+    "git diff",
+    "pytest",
+    "npm test",
 }
+
 
 def _check_allowlist(command: str) -> None:
     parts = shlex.split(command)
@@ -47,25 +74,33 @@ def _check_allowlist(command: str) -> None:
             f"Allowed: {', '.join(sorted(ALLOWED_COMMANDS))}"
         )
 
-def _check_safety(command: str) -> bool:
 
+def _check_safety(command: str) -> bool:
     """Returns True if the command is completely safe and doesn't need approval."""
     parts = shlex.split(command)
-    if not parts: return True
+    if not parts:
+        return True
     binary = os.path.basename(parts[0])
     # Very restrictive safe-list
     return binary in {"ls", "pwd", "git"} and "rm" not in command and "mv" not in command
 
-async def run_command(command: str, cwd: str = ".", approved: bool = False, autonomy_level: str = "limited", mutation_allowed: bool = False) -> str:
+
+async def run_command(
+    command: str,
+    cwd: str = ".",
+    approved: bool = False,
+    autonomy_level: str = "limited",
+    mutation_allowed: bool = False,
+) -> str:
     """
     Execute `command` inside a Docker sandbox container.
     If the command is unsafe and not pre-approved, returns an approval request.
     """
     level = autonomy_level.lower()
     trash_path = os.getenv("NEUREX_TRASH_PATH", ".neurex/trash")
-    
+
     if trash_path in command:
-         return f"ERROR: Access denied. Shell commands are not permitted to target the protected Trash directory: {trash_path}"
+        return f"ERROR: Access denied. Shell commands are not permitted to target the protected Trash directory: {trash_path}"
 
     if not approved:
         reason = None
@@ -74,25 +109,38 @@ async def run_command(command: str, cwd: str = ".", approved: bool = False, auto
         elif level == "limited" and not _check_safety(command):
             reason = f"Limited mode: Command '{command}' is potentially unsafe."
         elif mutation_allowed and level != "full":
-            reason = "Mutation mode: Command requires write access to the workspace. Approval required."
-            
+            reason = (
+                "Mutation mode: Command requires write access to the workspace. Approval required."
+            )
+
         if reason:
             return f"APPROVAL_REQUIRED: {reason}"
 
     _check_allowlist(command)
 
-    network_mode = "bridge" if os.getenv("ENABLE_AGENT_INTERNET", "false").lower() == "true" else "none"
+    network_mode = (
+        "bridge" if os.getenv("ENABLE_AGENT_INTERNET", "false").lower() == "true" else "none"
+    )
     mount_mode = "rw" if mutation_allowed else "ro"
 
     docker_cmd = [
-        "docker", "run", "--rm",
-        "--network", network_mode,          # controlled internet access
-        "--memory", "512m",
-        "--cpus", "1",
-        "-v", f"{WORKSPACE_PATH}:/workspace:{mount_mode}",
-        "-w", f"/workspace/{cwd.lstrip('/')}",
+        "docker",
+        "run",
+        "--rm",
+        "--network",
+        network_mode,  # controlled internet access
+        "--memory",
+        "512m",
+        "--cpus",
+        "1",
+        "-v",
+        f"{WORKSPACE_PATH}:/workspace:{mount_mode}",
+        "-w",
+        f"/workspace/{cwd.lstrip('/')}",
         SANDBOX_IMAGE,
-        "sh", "-c", command,
+        "sh",
+        "-c",
+        command,
     ]
 
     log.info("terminal.exec", command=command, cwd=cwd, mode=mount_mode)
@@ -121,7 +169,10 @@ async def run_command(command: str, cwd: str = ".", approved: bool = False, auto
 
     except FileNotFoundError:
         # Docker not available, try WASM fallback
-        log.warning("terminal.docker_not_found", error="Docker not detected. Attempting WASM/WASI fallback...")
+        log.warning(
+            "terminal.docker_not_found",
+            error="Docker not detected. Attempting WASM/WASI fallback...",
+        )
         try:
             return await _wasm_exec_fallback(command, cwd)
         except Exception as e:
@@ -129,21 +180,20 @@ async def run_command(command: str, cwd: str = ".", approved: bool = False, auto
             if os.getenv("NEUREX_ALLOW_HOST_FALLBACK", "false").lower() == "true":
                 log.warning("terminal.host_fallback_active", warning="UNSAFE: Running on host!")
                 return await _host_exec_fallback(command, cwd)
-            
+
             return f"Error: Docker not found and WASM fallback failed ({e}). Sandboxed execution is mandatory. Please start Docker or ensure neurex-cli is running."
+
 
 async def _wasm_exec_fallback(command: str, cwd: str) -> str:
     """Securely execute via the Rust CLI's Sandbox Engine (WASM or Native Fallback)."""
     import httpx
-    
+
     cli_url = os.getenv("NEUREX_CLI_URL", "http://localhost:3000")
     wasm_path = os.path.expanduser("~/.neurex/bin/coreutils.wasm")
-    
+
     # Payload always includes args, wasm_path is optional
-    payload = {
-        "args": ["sh", "-c", command] if os.path.exists(wasm_path) else command.split()
-    }
-    
+    payload = {"args": ["sh", "-c", command] if os.path.exists(wasm_path) else command.split()}
+
     if os.path.exists(wasm_path):
         payload["wasm_path"] = wasm_path
         log.info("terminal.wasm_exec", command=command)
@@ -154,7 +204,7 @@ async def _wasm_exec_fallback(command: str, cwd: str) -> str:
         resp = await client.post(f"{cli_url}/api/sandbox/exec", json=payload)
         if resp.status_code != 200:
             raise Exception(f"Sandbox Host error: {resp.text}")
-        
+
         data = resp.json()
         stdout = data.get("stdout", "")
         stderr = data.get("stderr", "")
@@ -169,10 +219,11 @@ async def _wasm_exec_fallback(command: str, cwd: str) -> str:
         prefix = "[WASM]" if "wasm_path" in payload else "[NATIVE]"
         return f"{prefix} {status}\n{output}"
 
+
 async def _host_exec_fallback(command: str, cwd: str) -> str:
     """UNSAFE: Directly execute on host. Requires NEUREX_ALLOW_HOST_FALLBACK=true"""
     workspace = os.getenv("WORKSPACE_PATH", "/workspace")
-    work_dir  = os.path.join(workspace, cwd.lstrip("/"))
+    work_dir = os.path.join(workspace, cwd.lstrip("/"))
 
     proc = await asyncio.create_subprocess_shell(
         command,

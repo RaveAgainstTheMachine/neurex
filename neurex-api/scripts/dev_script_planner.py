@@ -12,7 +12,7 @@ async def test_planner():
     rules = RulesParser()
     ctx = ContextManager()
     planner = PlannerAgent(rules, ctx)
-    
+
     print("Asking Planner to think...")
     async for chunk in planner.plan("Implement shell approval", "test-conv"):
         if chunk["type"] == "token":
@@ -20,7 +20,9 @@ async def test_planner():
         elif chunk["type"] == "result":
             print("\nPlan received!")
             import json
+
             print(json.dumps(chunk["plan"], indent=2))
+
 
 if __name__ == "__main__":
     asyncio.run(test_planner())

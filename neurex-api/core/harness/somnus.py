@@ -4,6 +4,7 @@ The "Somnus" Background Daemon (autoDream).
 Continuously monitors the repository and updates architectural intelligence.
 Replaces the 'Kairos' protocol with a native Neurex persistent observer.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -17,19 +18,20 @@ from core.mcp.tools.intel import synthesize_project_intel
 
 log = structlog.get_logger()
 
+
 class SomnusHandler(FileSystemEventHandler):
     def __init__(self, loop, workspace_path):
         self.loop = loop
         self.ws = workspace_path
         self.last_run = 0
-        self.cooldown = 30 # Seconds between summarizations
+        self.cooldown = 30  # Seconds between summarizations
 
     def on_modified(self, event):
         if event.is_directory:
             return
         if ".git" in event.src_path or ".neurex" in event.src_path:
             return
-            
+
         current_time = time.time()
         if current_time - self.last_run > self.cooldown:
             log.info("somnus.change_detected", path=event.src_path)
@@ -43,20 +45,25 @@ class SomnusHandler(FileSystemEventHandler):
         try:
             # 1. Update project intel (AST-aware)
             await synthesize_project_intel()
-            
+
             # 2. Update MEMORY.md (Skeptical Memory)
             from core.context.skeptical_memory import SkepticalMemory
+
             memory = SkepticalMemory(self.ws)
-            summary = f"Somnus autoDream completed at {time.ctime()}. Codebase structure synchronized."
+            summary = (
+                f"Somnus autoDream completed at {time.ctime()}. Codebase structure synchronized."
+            )
             memory.update_memory(summary)
 
             # 3. Harvest Mesh Skills (Phase 35)
             from core.skills.harvester import harvester
+
             await harvester.harvest_from_mesh()
-            
+
             log.info("somnus.auto_dream_complete")
         except Exception as e:
             log.error("somnus.dream_failed", error=str(e))
+
 
 class SomnusDaemon:
     _instance = None
@@ -71,7 +78,7 @@ class SomnusDaemon:
     def start(self, workspace_path: str):
         if self.is_running:
             return
-        
+
         log.info("somnus.daemon_starting", path=workspace_path)
         loop = asyncio.get_event_loop()
         handler = SomnusHandler(loop, workspace_path)
@@ -87,5 +94,6 @@ class SomnusDaemon:
         self.observer.stop()
         self.observer.join()
         self.is_running = False
+
 
 somnus_daemon = SomnusDaemon()

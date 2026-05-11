@@ -4,6 +4,7 @@ Phase 46: Deep Neural Integration (Predictive Neural Prefetching)
 Proactively loads model weights and context into VRAM based on agent trajectory.
 Reduces first-token latency during complex multi-stage swarms.
 """
+
 import asyncio
 from typing import Any
 
@@ -14,6 +15,7 @@ from core.infrastructure.mesh import mesh_router
 
 log = structlog.get_logger()
 
+
 class NeuralPrefetcher:
     def __init__(self):
         self._client = httpx.AsyncClient(timeout=2)
@@ -23,10 +25,10 @@ class NeuralPrefetcher:
         Analyzes a swarm plan and warms up potential inference nodes.
         """
         log.info("prefetcher.start_warmup", tasks=len(plan))
-        
+
         # 1. Identify required models and contexts
         required_models = {sub.get("model", "qwen2.5-coder:14b") for sub in plan}
-        
+
         # 2. Find optimal nodes for these models
         peers = list(mesh_router.peers.values())
         if not peers:
@@ -40,7 +42,7 @@ class NeuralPrefetcher:
             if intersect:
                 log.debug("prefetcher.dispatch_warmup", node=peer.name, models=list(intersect))
                 tasks.append(self._warmup_node(peer.url, list(intersect)))
-        
+
         if tasks:
             await asyncio.gather(*tasks, return_exceptions=True)
             log.info("prefetcher.warmup_complete", nodes=len(tasks))
@@ -53,5 +55,6 @@ class NeuralPrefetcher:
         except Exception:
             # Silent fail for prefetch
             pass
+
 
 neural_prefetcher = NeuralPrefetcher()

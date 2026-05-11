@@ -3,6 +3,7 @@ core/terminal/pty_manager.py
 Manages pseudo-terminal (PTY) sessions for the interactive IDE terminal.
 Uses ptyprocess for robust PTY management without forking the main process.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -14,17 +15,23 @@ from ptyprocess import PtyProcessUnicode
 
 log = structlog.get_logger()
 
+
 class PTYManager:
     def __init__(self):
         self.sessions: dict[str, PTYSession] = {}
 
-    def get_or_create_session(self, session_id: str, on_output: Callable[[str], None] | None = None, cwd: str | None = None) -> PTYSession:
+    def get_or_create_session(
+        self,
+        session_id: str,
+        on_output: Callable[[str], None] | None = None,
+        cwd: str | None = None,
+    ) -> PTYSession:
         if session_id not in self.sessions:
             log.info("pty.create_session", session_id=session_id, cwd=cwd)
             session = PTYSession(session_id, cwd=cwd)
             self.sessions[session_id] = session
             session.start()
-        
+
         session = self.sessions[session_id]
         if on_output:
             session.attach(on_output)
@@ -43,6 +50,7 @@ class PTYManager:
             self.sessions[session_id].close()
             del self.sessions[session_id]
 
+
 class PTYSession:
     def __init__(self, session_id: str, cwd: str | None = None):
         self.session_id = session_id
@@ -55,9 +63,14 @@ class PTYSession:
         else:
             self.workspace = os.getenv("WORKSPACE_PATH", os.getcwd())
             if requested_workspace:
-                log.warning("pty.invalid_cwd", session=session_id, requested=requested_workspace, falling_back=self.workspace)
+                log.warning(
+                    "pty.invalid_cwd",
+                    session=session_id,
+                    requested=requested_workspace,
+                    falling_back=self.workspace,
+                )
         self.history = ""
-        self.max_history = 50000 # Keep last 50k chars
+        self.max_history = 50000  # Keep last 50k chars
 
     def attach(self, on_output: Callable[[str], None]):
         self.listeners.add(on_output)
@@ -70,19 +83,24 @@ class PTYSession:
     def _broadcast(self, data: str):
         self.history += data
         if len(self.history) > self.max_history:
-            self.history = self.history[-self.max_history:]
+            self.history = self.history[-self.max_history :]
         for listener in list(self.listeners):
             listener(data)
 
     def start(self):
         try:
-            shell_candidates = [os.environ.get("SHELL", "/bin/bash"), "/bin/bash", "/bin/sh", "/usr/bin/bash"]
-            shell = "/bin/bash" # Default
+            shell_candidates = [
+                os.environ.get("SHELL", "/bin/bash"),
+                "/bin/bash",
+                "/bin/sh",
+                "/usr/bin/bash",
+            ]
+            shell = "/bin/bash"  # Default
             for c in shell_candidates:
                 if os.path.exists(c):
                     shell = c
                     break
-            
+
             # Enhance environment for modern shells
             env = {
                 **os.environ,
@@ -90,13 +108,9 @@ class PTYSession:
                 "COLORTERM": "truecolor",
                 "LANG": "en_US.UTF-8",
                 "LC_ALL": "en_US.UTF-8",
-                "PS1": "neurex> "
+                "PS1": "neurex> ",
             }
-            self.proc = PtyProcessUnicode.spawn(
-                [shell],
-                cwd=self.workspace,
-                env=env
-            )
+            self.proc = PtyProcessUnicode.spawn([shell], cwd=self.workspace, env=env)
             log.info("pty.started", session=self.session_id, pid=self.proc.pid)
             self.task = asyncio.create_task(self._read_loop())
         except Exception as e:
@@ -110,14 +124,14 @@ class PTYSession:
         """
         buffer = []
         last_broadcast = asyncio.get_event_loop().time()
-        
+
         try:
             while self.proc and self.proc.isalive():
                 # Non-blocking read (short timeout representation via to_thread)
                 data = await asyncio.to_thread(self.proc.read, 4096)
                 if data:
                     buffer.append(data)
-                
+
                 now = asyncio.get_event_loop().time()
                 # Broadcast if buffer is large or 20ms have passed
                 if buffer and (now - last_broadcast > 0.02 or len(buffer) > 10):
@@ -125,10 +139,10 @@ class PTYSession:
                     self._broadcast(aggregated)
                     buffer = []
                     last_broadcast = now
-                
+
                 # Tiny yield to allow event loop to breathe during floods
                 await asyncio.sleep(0.005)
-                
+
         except EOFError:
             log.info("pty.eof", session=self.session_id)
         except Exception as e:
@@ -141,7 +155,7 @@ class PTYSession:
         if not self.proc or not self.proc.isalive():
             log.warning("pty.dead_on_write", session=self.session_id, msg="Restarting PTY session")
             self.start()
-        
+
         if self.proc and self.proc.isalive():
             try:
                 self.proc.write(data)
@@ -175,9 +189,9 @@ class PTYSession:
             except OSError:
                 pass
             self.proc = None
-        
+
         if self.task:
             self.task.cancel()
             self.task = None
-        
+
         log.info("pty.closed", session=self.session_id)

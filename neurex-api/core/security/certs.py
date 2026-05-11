@@ -23,39 +23,45 @@ def generate_self_signed_cert(cert_dir: Path):
     )
 
     # Generate a self-signed certificate
-    subject = issuer = x509.Name([
-        x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-        x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "California"),
-        x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
-        x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Neurex AI"),
-        x509.NameAttribute(NameOID.COMMON_NAME, "neurex.local"),
-    ])
-    
-    cert = x509.CertificateBuilder().subject_name(
-        subject
-    ).issuer_name(
-        issuer
-    ).public_key(
-        key.public_key()
-    ).serial_number(
-        x509.random_serial_number()
-    ).not_valid_before(
-        datetime.datetime.now(datetime.UTC)
-    ).not_valid_after(
-        # Our certificate will be valid for 10 years
-        datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=3650)
-    ).add_extension(
-        x509.SubjectAlternativeName([x509.DNSName("localhost"), x509.IPAddress(ipaddress.IPv4Address("10.10.10.48"))]),
-        critical=False,
-    ).sign(key, hashes.SHA256())
+    subject = issuer = x509.Name(
+        [
+            x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+            x509.NameAttribute(NameOID.STATE_OR_PROVINCE_NAME, "California"),
+            x509.NameAttribute(NameOID.LOCALITY_NAME, "San Francisco"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Neurex AI"),
+            x509.NameAttribute(NameOID.COMMON_NAME, "neurex.local"),
+        ]
+    )
+
+    cert = (
+        x509.CertificateBuilder()
+        .subject_name(subject)
+        .issuer_name(issuer)
+        .public_key(key.public_key())
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(datetime.datetime.now(datetime.UTC))
+        .not_valid_after(
+            # Our certificate will be valid for 10 years
+            datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=3650)
+        )
+        .add_extension(
+            x509.SubjectAlternativeName(
+                [x509.DNSName("localhost"), x509.IPAddress(ipaddress.IPv4Address("10.10.10.48"))]
+            ),
+            critical=False,
+        )
+        .sign(key, hashes.SHA256())
+    )
 
     # Write key
     with open(key_path, "wb") as f:
-        f.write(key.private_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PrivateFormat.TraditionalOpenSSL,
-            encryption_algorithm=serialization.NoEncryption(),
-        ))
+        f.write(
+            key.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.TraditionalOpenSSL,
+                encryption_algorithm=serialization.NoEncryption(),
+            )
+        )
 
     # Write cert
     with open(cert_path, "wb") as f:
@@ -63,10 +69,13 @@ def generate_self_signed_cert(cert_dir: Path):
 
     return cert_path, key_path
 
+
 if __name__ == "__main__":
     import sys
+
     d = Path(sys.argv[1]) if len(sys.argv) > 1 else Path.home() / ".neurex" / "certs"
     cert, key = generate_self_signed_cert(d)
     import structlog
+
     log = structlog.get_logger()
     log.info("certs.generated", cert=str(cert), key=str(key))

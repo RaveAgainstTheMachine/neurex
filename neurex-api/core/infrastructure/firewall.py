@@ -13,6 +13,7 @@ Port ownership philosophy:
   - When a user changes ports in Settings, old rules are removed and new
     ones are applied atomically.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -31,6 +32,7 @@ NEUREX_TAG = "neurex"  # Used to identify and clean our rules across platforms
 @dataclass
 class PortSet:
     """Describes the set of ports Neurex needs open for a given role."""
+
     # port → description
     ports: dict[int, str] = field(default_factory=dict)
     # Source CIDR allowed to reach these ports ("0.0.0.0/0" = any)
@@ -45,20 +47,24 @@ def get_master_ports(
     chromadb_port: int = 8001,
     ollama_port: int = 11434,
 ) -> PortSet:
-    return PortSet(ports={
-        api_port:      "Neurex API (FastAPI)",
-        web_port:      "Neurex Web UI",
-        chromadb_port: "ChromaDB (Hive Mind)",
-        ollama_port:   "Ollama inference server",
-        80:            "HTTP (Caddy)",
-        443:           "HTTPS (Caddy)",
-    })
+    return PortSet(
+        ports={
+            api_port: "Neurex API (FastAPI)",
+            web_port: "Neurex Web UI",
+            chromadb_port: "ChromaDB (Hive Mind)",
+            ollama_port: "Ollama inference server",
+            80: "HTTP (Caddy)",
+            443: "HTTPS (Caddy)",
+        }
+    )
 
 
 def get_node_ports(rpc_port: int = 50051) -> PortSet:
-    return PortSet(ports={
-        rpc_port: "llama-rpc-server (tensor offload)",
-    })
+    return PortSet(
+        ports={
+            rpc_port: "llama-rpc-server (tensor offload)",
+        }
+    )
 
 
 def _local_subnet(bind_ip: str) -> str:
@@ -80,11 +86,11 @@ def _local_subnet(bind_ip: str) -> str:
 # Linux — ufw
 # ──────────────────────────────────────────────────────────────────────────────
 
+
 async def _ufw_available() -> bool:
     try:
         r = await asyncio.create_subprocess_exec(
-            "ufw", "version",
-            stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL
+            "ufw", "version", stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL
         )
         await r.communicate()
         return r.returncode == 0
@@ -143,10 +149,18 @@ async def _linux_apply(port_set: PortSet, bind_ip: str) -> list[str]:
     for port, desc in port_set.ports.items():
         # Allow from source subnet to this port; append tag as comment
         cmd = [
-            "ufw", "allow", "from", source,
-            "to", "any", "port", str(port),
-            "proto", port_set.proto,
-            "comment", f"{NEUREX_TAG}: {desc}"
+            "ufw",
+            "allow",
+            "from",
+            source,
+            "to",
+            "any",
+            "port",
+            str(port),
+            "proto",
+            port_set.proto,
+            "comment",
+            f"{NEUREX_TAG}: {desc}",
         ]
         rc, out = await _run(cmd)
         if rc == 0:
@@ -165,9 +179,9 @@ async def _linux_apply(port_set: PortSet, bind_ip: str) -> list[str]:
 # ──────────────────────────────────────────────────────────────────────────────
 
 PF_ANCHOR_FILE = "/etc/pf.anchors/neurex"
-PF_CONF_FILE   = "/etc/pf.conf"
-PF_ANCHOR_REF  = f'anchor "{NEUREX_TAG}"'
-PF_LOAD_REF    = f'load anchor "{NEUREX_TAG}" from "{PF_ANCHOR_FILE}"'
+PF_CONF_FILE = "/etc/pf.conf"
+PF_ANCHOR_REF = f'anchor "{NEUREX_TAG}"'
+PF_LOAD_REF = f'load anchor "{NEUREX_TAG}" from "{PF_ANCHOR_FILE}"'
 
 
 async def _macos_remove_rules() -> None:
@@ -178,8 +192,11 @@ async def _macos_remove_rules() -> None:
 
 async def _macos_apply(port_set: PortSet, bind_ip: str) -> list[str]:
     """Write a pf anchor file and load it."""
-    source = "any" if port_set.allow_from == "0.0.0.0/0" or bind_ip == "0.0.0.0" \
-             else _local_subnet(bind_ip)
+    source = (
+        "any"
+        if port_set.allow_from == "0.0.0.0/0" or bind_ip == "0.0.0.0"
+        else _local_subnet(bind_ip)
+    )
     src_expr = "any" if source == "any" else f"from {source}"
 
     rules = [
@@ -232,10 +249,7 @@ def _find_docker_exe() -> str | None:
 
 async def _windows_remove_rules() -> None:
     """Delete all firewall rules with our tag name prefix."""
-    await _run([
-        "netsh", "advfirewall", "firewall", "delete", "rule",
-        f"name={NEUREX_TAG}"
-    ])
+    await _run(["netsh", "advfirewall", "firewall", "delete", "rule", f"name={NEUREX_TAG}"])
     log.info("firewall.netsh_rules_deleted")
 
 
@@ -249,7 +263,11 @@ async def _windows_apply(port_set: PortSet, bind_ip: str) -> list[str]:
     for port, desc in port_set.ports.items():
         rule_name = f"{NEUREX_TAG} — {desc} ({port})"
         cmd = [
-            "netsh", "advfirewall", "firewall", "add", "rule",
+            "netsh",
+            "advfirewall",
+            "firewall",
+            "add",
+            "rule",
             f"name={rule_name}",
             "dir=in",
             "action=allow",
@@ -282,6 +300,7 @@ async def _windows_apply(port_set: PortSet, bind_ip: str) -> list[str]:
 # ──────────────────────────────────────────────────────────────────────────────
 # Public API
 # ──────────────────────────────────────────────────────────────────────────────
+
 
 class FirewallManager:
     """
@@ -369,7 +388,8 @@ class FirewallManager:
 
     async def _linux_check(self, port_set: PortSet, bind_ip: str) -> bool:
         rc, output = await _run(["ufw", "status"])
-        if rc != 0: return False
+        if rc != 0:
+            return False
         source = port_set.allow_from if bind_ip == "0.0.0.0" else _local_subnet(bind_ip)
         for port in port_set.ports:
             if f"{port}/{port_set.proto}" not in output or source not in output:
@@ -378,23 +398,28 @@ class FirewallManager:
 
     async def _macos_check(self, port_set: PortSet, bind_ip: str) -> bool:
         rc, output = await _run(["pfctl", "-a", NEUREX_TAG, "-s", "rules"])
-        if rc != 0: return False
+        if rc != 0:
+            return False
         for port in port_set.ports:
-            if f"port {port}" not in output: return False
+            if f"port {port}" not in output:
+                return False
         return True
 
     async def _windows_check(self, port_set: PortSet, bind_ip: str) -> bool:
         rc, output = await _run(["netsh", "advfirewall", "firewall", "show", "rule", "name=all"])
-        if rc != 0: return False
+        if rc != 0:
+            return False
         for port in port_set.ports:
-            if f"({port})" not in output or NEUREX_TAG not in output: return False
+            if f"({port})" not in output or NEUREX_TAG not in output:
+                return False
         return True
 
     async def start_sentinel(self, interval_hours: int = 1):
         """Background task to periodically verify and heal firewall rules."""
         from core.settings.manager import settings_manager
+
         log.info("firewall.sentinel_started", interval_hours=interval_hours)
-        
+
         while True:
             await asyncio.sleep(interval_hours * 3600)
             if not settings_manager.get("firewall_enabled"):
@@ -402,20 +427,22 @@ class FirewallManager:
 
             role = os.getenv("NODE_ROLE", "master")
             bind_ip = os.getenv("BIND_IP", "0.0.0.0")
-            
+
             # Fetch expected ports
             if role == "master":
                 ports = get_master_ports(
                     settings_manager.get("api_port"),
                     settings_manager.get("web_port"),
                     settings_manager.get("chromadb_port"),
-                    settings_manager.get("ollama_port")
+                    settings_manager.get("ollama_port"),
                 )
             else:
                 ports = get_node_ports(settings_manager.get("rpc_port"))
 
             if not await self.check_integrity(role, bind_ip, ports):
-                log.warning("firewall.integrity_failure", reason="Rules tampered or missing. Healing...")
+                log.warning(
+                    "firewall.integrity_failure", reason="Rules tampered or missing. Healing..."
+                )
                 await self.apply_rules(
                     role=role,
                     bind_ip=bind_ip,
@@ -424,18 +451,19 @@ class FirewallManager:
                     chromadb_port=settings_manager.get("chromadb_port"),
                     ollama_port=settings_manager.get("ollama_port"),
                     rpc_port=settings_manager.get("rpc_port"),
-                    lan_only=settings_manager.get("firewall_lan_only")
+                    lan_only=settings_manager.get("firewall_lan_only"),
                 )
 
     async def check_startup(self):
         """Verify firewall on startup. If missing, apply immediately."""
         from core.settings.manager import settings_manager
+
         if not settings_manager.get("firewall_enabled"):
             return
 
         role = os.getenv("NODE_ROLE", "master")
         bind_ip = os.getenv("BIND_IP", "0.0.0.0")
-        
+
         # Apply immediately to be safe on startup
         await self.apply_rules(
             role=role,
@@ -445,7 +473,7 @@ class FirewallManager:
             chromadb_port=settings_manager.get("chromadb_port"),
             ollama_port=settings_manager.get("ollama_port"),
             rpc_port=settings_manager.get("rpc_port"),
-            lan_only=settings_manager.get("firewall_lan_only")
+            lan_only=settings_manager.get("firewall_lan_only"),
         )
         log.info("firewall.startup_check_complete")
 

@@ -1,11 +1,12 @@
 """
 Shared pytest fixtures for Neurex API tests.
 """
+
 from __future__ import annotations
 
 import asyncio
 import os
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 import pytest_asyncio
@@ -53,17 +54,32 @@ async def test_client():
     # Patch heavy lifespan dependencies
     with (
         patch("core.memory.worker.MemoryWorker.start", new_callable=AsyncMock),
-        patch("core.infrastructure.distributed.distributed_manager.start_rpc_server", new_callable=AsyncMock),
-        patch("core.infrastructure.firewall.firewall_manager.check_startup", new_callable=AsyncMock),
-        patch("core.infrastructure.firewall.firewall_manager.start_sentinel", new_callable=AsyncMock),
+        patch(
+            "core.infrastructure.distributed.distributed_manager.start_rpc_server",
+            new_callable=AsyncMock,
+        ),
+        patch(
+            "core.infrastructure.firewall.firewall_manager.check_startup", new_callable=AsyncMock
+        ),
+        patch(
+            "core.infrastructure.firewall.firewall_manager.start_sentinel", new_callable=AsyncMock
+        ),
         patch("core.infrastructure.mesh.mesh_router.start_monitoring", new_callable=AsyncMock),
         patch("core.observability.service_sentinel.sentinel.start", new_callable=AsyncMock),
-        patch("core.observability.ci_healer.ci_healer.check_pipeline_health", new_callable=AsyncMock),
+        patch(
+            "core.observability.ci_healer.ci_healer.check_pipeline_health", new_callable=AsyncMock
+        ),
         patch("core.observability.flight_recorder.flush_decisions", new_callable=AsyncMock),
-        patch("core.languages.lsp_manager.lsp_manager.initialize_workspace", new_callable=AsyncMock),
-        patch("core.infrastructure.manager.InfrastructureManager._is_process_running", return_value=True),
+        patch(
+            "core.languages.lsp_manager.lsp_manager.initialize_workspace", new_callable=AsyncMock
+        ),
+        patch(
+            "core.infrastructure.manager.InfrastructureManager._is_process_running",
+            return_value=True,
+        ),
     ):
         from main import app
+
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             yield client
@@ -72,10 +88,12 @@ async def test_client():
 @pytest.fixture
 def mock_ollama_stream():
     """Return a mock that simulates Ollama streaming responses."""
+
     async def _mock_stream(*args, **kwargs):
         yield {"type": "token", "text": "Hello "}
         yield {"type": "token", "text": "world!"}
         yield {"type": "done", "full_text": "Hello world!"}
+
     return _mock_stream
 
 

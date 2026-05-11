@@ -2,6 +2,7 @@
 core/memory/summarizer.py
 Lightweight summarization service for semantic enrichment of codebase indexing.
 """
+
 import os
 
 import httpx
@@ -11,6 +12,7 @@ log = structlog.get_logger()
 
 OLLAMA_BASE = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
 SUMMARIZER_MODEL = os.getenv("SUMMARIZER_MODEL", "qwen2.5-coder:1.5b")
+
 
 class Summarizer:
     def __init__(self):
@@ -30,8 +32,8 @@ class Summarizer:
                     "model": SUMMARIZER_MODEL,
                     "prompt": prompt,
                     "stream": False,
-                    "options": {"num_predict": 100, "temperature": 0.1}
-                }
+                    "options": {"num_predict": 100, "temperature": 0.1},
+                },
             )
             if resp.status_code == 200:
                 summary = resp.json().get("response", "").strip()

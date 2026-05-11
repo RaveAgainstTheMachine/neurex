@@ -4,6 +4,7 @@ Phase 45: Sentient IDE (Predictive Maintenance)
 Monitors telemetry and filesystem churn to proactively trigger workspace re-indexing.
 Ensures that the Mesh intelligence (RAG/Memory) remains synchronized with the physical state of the codebase.
 """
+
 import asyncio
 from datetime import UTC, datetime
 
@@ -11,12 +12,13 @@ import structlog
 
 log = structlog.get_logger()
 
+
 class PredictiveMaintenance:
     def __init__(self):
         self.churn_buffer: set[str] = set()
         self.last_index_time = datetime.now(UTC)
-        self.churn_threshold = 50 # Trigger re-index after 50 distinct file changes
-        self.index_interval = 3600 # Force re-index every hour regardless of churn
+        self.churn_threshold = 50  # Trigger re-index after 50 distinct file changes
+        self.index_interval = 3600  # Force re-index every hour regardless of churn
         self._lock = asyncio.Lock()
         self._indexing_active = False
 
@@ -28,20 +30,24 @@ class PredictiveMaintenance:
         async with self._lock:
             for p in paths:
                 self.churn_buffer.add(p)
-            
+
             log.debug("maintenance.churn_tracked", current_churn=len(self.churn_buffer))
-            
+
             if len(self.churn_buffer) >= self.churn_threshold:
-                log.info("maintenance.proactive_index_triggered", reason="high_churn", count=len(self.churn_buffer))
+                log.info(
+                    "maintenance.proactive_index_triggered",
+                    reason="high_churn",
+                    count=len(self.churn_buffer),
+                )
                 asyncio.create_task(self.trigger_maintenance_task())
 
     async def start_background_monitor(self):
         """Periodically checks for stale indices."""
         while True:
-            await asyncio.sleep(300) # Check every 5 minutes
+            await asyncio.sleep(300)  # Check every 5 minutes
             now = datetime.now(UTC)
             delta = (now - self.last_index_time).total_seconds()
-            
+
             if delta >= self.index_interval:
                 log.info("maintenance.proactive_index_triggered", reason="stale_index")
                 asyncio.create_task(self.trigger_maintenance_task())
@@ -53,25 +59,26 @@ class PredictiveMaintenance:
         """
         if self._indexing_active:
             return
-            
+
         async with self._lock:
             self._indexing_active = True
-            
+
         try:
             # We would normally trigger the MemoryWorker or ContextManager indexer here
             # For Phase 45, we simulate the logic as a placeholder for the actual indexer integration
             log.info("maintenance.indexing_started")
-            
+
             # Reset churn after successful trigger
             self.churn_buffer.clear()
             self.last_index_time = datetime.now(UTC)
-            
+
             # Simulate indexing work
-            await asyncio.sleep(10) 
-            
+            await asyncio.sleep(10)
+
             log.info("maintenance.indexing_complete")
         finally:
             async with self._lock:
                 self._indexing_active = False
+
 
 maintenance_service = PredictiveMaintenance()

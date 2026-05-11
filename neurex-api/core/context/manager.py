@@ -3,6 +3,7 @@ core/context/manager.py
 Dynamic context manager. Handles RAG retrieval and token budgets.
 Gracefully degrades if ChromaDB or embedder is unavailable.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -12,8 +13,9 @@ import structlog
 
 log = structlog.get_logger()
 
-CHROMA_DB_DIR  = os.getenv("CHROMA_DB_DIR", "/games/AI/chroma_db")
-COLLECTION     = "neurex_codebase"
+CHROMA_DB_DIR = os.getenv("CHROMA_DB_DIR", "/games/AI/chroma_db")
+COLLECTION = "neurex_codebase"
+
 
 class ContextManager:
     def __init__(self):
@@ -23,15 +25,17 @@ class ContextManager:
         self._reranker = None
         self._enc = None
         self._available = False
-        
+
         try:
             import tiktoken
+
             self._enc = tiktoken.get_encoding("cl100k_base")
         except Exception:
             log.warning("context.tiktoken_unavailable", hint="Token counting disabled")
 
         try:
             from core.memory.embedder import Embedder, Reranker
+
             self._embedder = Embedder()
             self._reranker = Reranker()
         except Exception as e:
@@ -42,6 +46,7 @@ class ContextManager:
         if self._chroma is None:
             try:
                 import chromadb
+
                 self._chroma = chromadb.PersistentClient(path=CHROMA_DB_DIR)
                 self._collection = self._chroma.get_or_create_collection(COLLECTION)
                 self._available = True
@@ -54,31 +59,34 @@ class ContextManager:
         cw = 8192
         if model_name:
             from core.infrastructure.manager import infrastructure_manager
+
             registry = infrastructure_manager.get_merged_registry()
             for m in registry:
                 name = m.get("name", "")
                 if name == model_name or name.split(":")[0] == model_name.split(":")[0]:
                     cw = m.get("context_window", cw)
                     break
-        
+
         sys = min(2000, int(cw * 0.15))
         rag = min(8000, int(cw * 0.25))
         tool = min(2000, int(cw * 0.1))
         hist = max(1000, cw - sys - rag - 512)
-        
+
         return {
             "CONTEXT_WINDOW": cw,
             "SYSTEM_BUDGET": sys,
             "RAG_BUDGET": rag,
             "TOOL_OUTPUT_MAX": tool,
-            "HISTORY_BUDGET": hist
+            "HISTORY_BUDGET": hist,
         }
 
-    async def retrieve(self, query: str, n_results: int = 20, model_name: str | None = None) -> list[dict]:
+    async def retrieve(
+        self, query: str, n_results: int = 20, model_name: str | None = None
+    ) -> list[dict]:
         """Embed → ANN search → rerank → return top-k within budget."""
         if not self._embedder:
             return []
-            
+
         rag_budget = self.get_budgets(model_name)["RAG_BUDGET"]
 
         try:
@@ -116,7 +124,9 @@ class ContextManager:
             log.error("context.retrieve_error", error=str(e))
             return []
 
-    def trim_history(self, messages: list[dict], reserved_tokens: int = 0, model_name: str | None = None) -> list[dict]:
+    def trim_history(
+        self, messages: list[dict], reserved_tokens: int = 0, model_name: str | None = None
+    ) -> list[dict]:
         budget = self.get_budgets(model_name)["HISTORY_BUDGET"] - reserved_tokens
         system = [m for m in messages if m["role"] == "system"]
         history = [m for m in messages if m["role"] != "system"]
@@ -127,13 +137,16 @@ class ContextManager:
                 history = []
         return system + history
 
-    async def trim_with_summary(self, messages: list[dict], reserved_tokens: int = 0, model_name: str | None = None) -> list[dict]:
+    async def trim_with_summary(
+        self, messages: list[dict], reserved_tokens: int = 0, model_name: str | None = None
+    ) -> list[dict]:
         trimmed = self.trim_history(messages, reserved_tokens, model_name)
         budget = self.get_budgets(model_name)["HISTORY_BUDGET"] - reserved_tokens
         if self._count_tokens(trimmed) <= budget:
             return trimmed
         from core.agents.summarizer_agent import SummarizerAgent
         from core.context.rules_parser import RulesParser
+
         summarizer = SummarizerAgent(RulesParser(), self)
         system = [m for m in trimmed if m.get("role") == "system"]
         history = [m for m in trimmed if m.get("role") != "system"]
@@ -149,7 +162,7 @@ class ContextManager:
         tokens = self._count_tokens([{"role": "tool", "content": output}])
         if tokens <= max_tool:
             return output
-        return output[:max_tool * 4] + "\n... [truncated]"
+        return output[: max_tool * 4] + "\n... [truncated]"
 
     def _count_tokens(self, messages: list[dict]) -> int:
         if not self._enc:
