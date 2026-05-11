@@ -264,205 +264,217 @@ class Orchestrator:
         graph_id: str,
         conversation_id: str,
     ) -> AsyncGenerator[dict, None]:
-        """Phase 2: Execution after approval."""
+        """Phase 4: Execution after approval using Queue isolation."""
         log.info("orchestrator.resume", graph_id=graph_id)
+        queue = asyncio.Queue()
 
-        active_node_id = None
-
-        try:
-            while True:
-                # 0. Check if graph has been cancelled
-                cancel_stmt = select(TaskNode).where(
-                    TaskNode.graph_id == graph_id, TaskNode.status == TaskStatus.CANCELLED
-                )
-                cancel_result = await self.session.exec(cancel_stmt)
-                if cancel_result.first():
-                    log.info("orchestrator.halted", graph_id=graph_id, reason="cancelled")
-                    yield {"event": "graph_cancelled", "data": {"graph_id": graph_id}}
-                    break
-
-                # 1. Re-fetch tasks that are PENDING and belong to this graph
-                stmt = (
-                    select(TaskNode)
-                    .where(
-                        TaskNode.graph_id == graph_id,
-                        TaskNode.agent_type != "planner",
-                        TaskNode.status == TaskStatus.PENDING,
-                    )
-                    .order_by(TaskNode.created_at)
-                )
-
-                result = await self.session.exec(stmt)
-                tasks = result.all()
-
-                if not tasks:
-                    log.info("orchestrator.graph_complete", graph_id=graph_id)
-                    yield {"event": "graph_complete", "data": {"graph_id": graph_id}}
-                    break
-
-                for node in tasks:
-                    try:
-                        active_node_id = node.id
-                        log.info("orchestrator.executing_task", task_id=node.id, title=node.title)
-                        await update_task(self.session, node.id, TaskStatus.THINKING)
-                        yield {
-                            "event": "task_updated",
-                            "data": {"id": node.id, "status": TaskStatus.THINKING},
-                        }
-
-                        from core.settings.manager import settings_manager
-
-                        # Phase 60: Resolve model via Route Map
-                        role_map = {
-                            "planner": "Planning",
-                            "coder": "Coding",
-                            "tester": "Testing",
-                            "researcher": "Researching",
-                            "reviewer": "Reviewing",
-                            "debater": "Reviewing",  # Shared route
-                            "commander": "Planning",  # Shared route
-                            "swarm": "Coding",  # Shared route
-                        }
-
-                        routes = settings_manager.get("model_routes") or {}
-                        target_role = role_map.get(node.agent_type, "Coding")
-                        route_config = routes.get(target_role) or settings_manager.get(
-                            f"{node.agent_type}_model"
+        async def _worker():
+            active_node_id = None
+            try:
+                async with async_session() as session:
+                    while True:
+                        # 0. Check if graph has been cancelled
+                        cancel_stmt = select(TaskNode).where(
+                            TaskNode.graph_id == graph_id, TaskNode.status == TaskStatus.CANCELLED
                         )
+                        cancel_result = await session.exec(cancel_stmt)
+                        if cancel_result.first():
+                            log.info("orchestrator.halted", graph_id=graph_id, reason="cancelled")
+                            await queue.put({"event": "graph_cancelled", "data": {"graph_id": graph_id}})
+                            break
 
-                        # Phase 61: Structured Route Resolution (Model + Params)
-                        if isinstance(route_config, dict):
-                            model_name = route_config.get("model")
-                            model_params = route_config.get("params")
-                        else:
-                            model_name = route_config
-                            model_params = None
-
-                        # Phase 61.1: Derive params if missing
-                        if not model_params and model_name:
-                            model_params = await self.infra.resolve_model_params(model_name)
-                            if model_params == "Unknown":
-                                model_params = None
-
-                        log.info(
-                            "orchestrator.using_model",
-                            agent=node.agent_type,
-                            role=target_role,
-                            model=model_name,
-                            params=model_params,
-                            task=node.title,
-                        )
-
-                        AgentClass = AGENT_MAP.get(node.agent_type, CoderAgent)
-                        agent = AgentClass(self.rules, self.ctx, model=model_name)
-
-                        # Gather and summarize history context
-                        history_stmt = (
+                        # 1. Re-fetch tasks that are PENDING and belong to this graph
+                        stmt = (
                             select(TaskNode)
                             .where(
-                                TaskNode.graph_id == graph_id, TaskNode.status == TaskStatus.DONE
+                                TaskNode.graph_id == graph_id,
+                                TaskNode.agent_type != "planner",
+                                TaskNode.status == TaskStatus.PENDING,
                             )
                             .order_by(TaskNode.created_at)
                         )
-                        history_result = await self.session.exec(history_stmt)
-                        done_tasks = history_result.all()
 
-                        history_context = await self._summarize_history(done_tasks, model_name)
+                        result = await session.exec(stmt)
+                        tasks = result.all()
 
-                        task_payload = {
-                            "id": node.id,
-                            "title": node.title,
-                            "description": node.description,
-                            "history": history_context,
-                            "model": model_name,
-                            "params": model_params,
-                            "last_tool_call": self.last_tool_calls.get(node.id),
-                        }
+                        if not tasks:
+                            log.info("orchestrator.graph_complete", graph_id=graph_id)
+                            await queue.put({"event": "graph_complete", "data": {"graph_id": graph_id}})
+                            break
 
-                        node_result = ""
-                        async for chunk in agent.execute(task_payload, conversation_id):
-                            if chunk["type"] == "token":
-                                yield {"event": "token", "data": chunk["text"], "task_id": node.id}
-                            elif chunk["type"] == "status":
-                                yield {
-                                    "event": "task_status",
-                                    "data": {"id": node.id, "status": chunk["status"]},
-                                }
-                            elif chunk["type"] == "tool_call":
-                                if self.autonomy_level == "limited" and chunk["tool"] in [
-                                    "shell",
-                                    "filesystem",
-                                ]:
-                                    log.info("orchestrator.hitl_required", tool=chunk["tool"])
-                                    await update_task(
-                                        self.session, node.id, TaskStatus.AWAITING_APPROVAL
-                                    )
-                                    yield {
-                                        "event": "approval_required",
-                                        "data": {
-                                            "id": node.id,
-                                            "tool": chunk["tool"],
-                                            "args": chunk["args"],
-                                        },
+                        for node in tasks:
+                            try:
+                                active_node_id = node.id
+                                log.info("orchestrator.executing_task", task_id=node.id, title=node.title)
+                                await update_task(session, node.id, TaskStatus.THINKING)
+                                await queue.put(
+                                    {
+                                        "event": "task_updated",
+                                        "data": {"id": node.id, "status": TaskStatus.THINKING},
                                     }
-                                    self.last_tool_calls[node.id] = chunk
-                                    return
+                                )
 
-                            elif chunk["type"] == "result":
-                                node_result = chunk["result"]
+                                from core.settings.manager import settings_manager
 
-                        # Mark as DONE
-                        await update_task(
-                            self.session, node.id, TaskStatus.DONE, result=node_result
-                        )
-                        yield {
-                            "event": "task_updated",
-                            "data": {"id": node.id, "status": TaskStatus.DONE},
-                        }
+                                # Phase 60: Resolve model via Route Map
+                                role_map = {
+                                    "planner": "Planning",
+                                    "coder": "Coding",
+                                    "tester": "Testing",
+                                    "researcher": "Researching",
+                                    "reviewer": "Reviewing",
+                                    "debater": "Reviewing",
+                                    "commander": "Planning",
+                                    "swarm": "Coding",
+                                }
 
-                        hive_mind.remember(
-                            content=f"Completed task '{node.title}' in graph {graph_id}. Result: {node_result}",
-                            metadata={
-                                "graph_id": graph_id,
-                                "agent_type": node.agent_type,
-                                "type": "task_result",
-                            },
-                            doc_id=node.id,
-                        )
-                        active_node_id = None
+                                routes = settings_manager.get("model_routes") or {}
+                                target_role = role_map.get(node.agent_type, "Coding")
+                                route_config = routes.get(target_role) or settings_manager.get(
+                                    f"{node.agent_type}_model"
+                                )
 
-                    except Exception as e:
-                        log.error("orchestrator.task_failed", task_id=node.id, error=str(e))
-                        await update_task(self.session, node.id, TaskStatus.FAILED, error=str(e))
-                        yield {
-                            "event": "task_updated",
-                            "data": {"id": node.id, "status": TaskStatus.FAILED},
-                        }
-                        active_node_id = None
-                        continue
-        except Exception as e:
-            log.critical(
-                "orchestrator.resume_crashed", graph_id=graph_id, error=str(e), exc_info=True
-            )
-            if active_node_id:
-                try:
-                    await update_task(
-                        self.session,
-                        active_node_id,
-                        TaskStatus.FAILED,
-                        error=f"Orchestrator crash: {str(e)}",
-                    )
-                except Exception as update_err:
-                    log.error("orchestrator.crash_update_failed", error=str(update_err))
-                    pass
-            yield {"event": "error", "data": {"message": f"Critical execution failure: {str(e)}"}}
+                                if isinstance(route_config, dict):
+                                    model_name = route_config.get("model")
+                                    model_params = route_config.get("params")
+                                else:
+                                    model_name = route_config
+                                    model_params = None
 
-        # Final cleanup
-        graph = await get_graph(self.session, graph_id)
-        yield {
-            "event": "done",
-            "data": {"graph_id": graph_id, "tasks": [jsonable_encoder(n) for n in graph]},
-        }
+                                if not model_params and model_name:
+                                    model_params = await self.infra.resolve_model_params(model_name)
+                                    if model_params == "Unknown":
+                                        model_params = None
+
+                                AgentClass = AGENT_MAP.get(node.agent_type, CoderAgent)
+                                agent = AgentClass(self.rules, self.ctx, model=model_name)
+
+                                # Gather and summarize history context
+                                history_stmt = (
+                                    select(TaskNode)
+                                    .where(
+                                        TaskNode.graph_id == graph_id, TaskNode.status == TaskStatus.DONE
+                                    )
+                                    .order_by(TaskNode.created_at)
+                                )
+                                history_result = await session.exec(history_stmt)
+                                done_tasks = history_result.all()
+
+                                history_context = await self._summarize_history(done_tasks, model_name)
+
+                                task_payload = {
+                                    "id": node.id,
+                                    "title": node.title,
+                                    "description": node.description,
+                                    "history": history_context,
+                                    "model": model_name,
+                                    "params": model_params,
+                                    "last_tool_call": self.last_tool_calls.get(node.id),
+                                }
+
+                                node_result = ""
+                                async for chunk in agent.execute(task_payload, conversation_id):
+                                    if chunk["type"] == "token":
+                                        await queue.put({"event": "token", "data": chunk["text"], "task_id": node.id})
+                                    elif chunk["type"] == "status":
+                                        await queue.put(
+                                            {
+                                                "event": "task_status",
+                                                "data": {"id": node.id, "status": chunk["status"]},
+                                            }
+                                        )
+                                    elif chunk["type"] == "tool_call":
+                                        if self.autonomy_level == "limited" and chunk["tool"] in [
+                                            "shell",
+                                            "filesystem",
+                                        ]:
+                                            log.info("orchestrator.hitl_required", tool=chunk["tool"])
+                                            await update_task(
+                                                session, node.id, TaskStatus.AWAITING_APPROVAL
+                                            )
+                                            await queue.put(
+                                                {
+                                                    "event": "approval_required",
+                                                    "data": {
+                                                        "id": node.id,
+                                                        "tool": chunk["tool"],
+                                                        "args": chunk["args"],
+                                                    },
+                                                }
+                                            )
+                                            self.last_tool_calls[node.id] = chunk
+                                            return
+
+                                    elif chunk["type"] == "result":
+                                        node_result = chunk["result"]
+
+                                # Mark as DONE
+                                await update_task(
+                                    session, node.id, TaskStatus.DONE, result=node_result
+                                )
+                                await queue.put(
+                                    {
+                                        "event": "task_updated",
+                                        "data": {"id": node.id, "status": TaskStatus.DONE},
+                                    }
+                                )
+
+                                hive_mind.remember(
+                                    content=f"Completed task '{node.title}' in graph {graph_id}. Result: {node_result}",
+                                    metadata={
+                                        "graph_id": graph_id,
+                                        "agent_type": node.agent_type,
+                                        "type": "task_result",
+                                    },
+                                    doc_id=node.id,
+                                )
+                                active_node_id = None
+
+                            except Exception as e:
+                                log.error("orchestrator.task_failed", task_id=node.id, error=str(e))
+                                await update_task(session, node.id, TaskStatus.FAILED, error=str(e))
+                                await queue.put(
+                                    {
+                                        "event": "task_updated",
+                                        "data": {"id": node.id, "status": TaskStatus.FAILED},
+                                    }
+                                )
+                                active_node_id = None
+                                continue
+
+                # Final cleanup
+                graph = await get_graph(session, graph_id)
+                await queue.put({
+                    "event": "done",
+                    "data": {"graph_id": graph_id, "tasks": [jsonable_encoder(n) for n in graph]},
+                })
+
+            except Exception as e:
+                log.critical(
+                    "orchestrator.resume_worker_crashed", graph_id=graph_id, error=str(e), exc_info=True
+                )
+                if active_node_id:
+                    try:
+                        async with async_session() as session:
+                            await update_task(
+                                session,
+                                active_node_id,
+                                TaskStatus.FAILED,
+                                error=f"Orchestrator crash: {str(e)}",
+                            )
+                    except Exception as update_err:
+                        log.error("orchestrator.crash_update_failed", error=str(update_err))
+                await queue.put({"event": "error", "data": {"message": f"Execution failure: {str(e)}"}})
+            finally:
+                await queue.put(None)
+
+        asyncio.create_task(_worker())
+
+        while True:
+            event = await queue.get()
+            if event is None:
+                break
+            yield event
 
     async def resume_shell(
         self,
@@ -470,74 +482,112 @@ class Orchestrator:
         approved: bool,
         conversation_id: str,
     ) -> AsyncGenerator[dict, None]:
-        """Phase 3: Resuming a task after a shell approval."""
-        async with async_session() as session:
+        """Phase 4: Resuming a task after a shell approval using Queue isolation."""
+        queue = asyncio.Queue()
+
+        async def _worker():
             try:
-                stmt = select(TaskNode).where(TaskNode.id == task_id)
-                res = await session.exec(stmt)
-                node = res.first()
-                if not node:
-                    return
+                async with async_session() as session:
+                    stmt = select(TaskNode).where(TaskNode.id == task_id)
+                    res = await session.exec(stmt)
+                    node = res.first()
+                    if not node:
+                        return
 
-                log.info("orchestrator.resume_shell", task_id=task_id, approved=approved)
+                    log.info("orchestrator.resume_shell_worker", task_id=task_id, approved=approved)
 
-                if not approved:
-                    await update_task(
-                        session, node.id, TaskStatus.FAILED, error="User denied shell command"
-                    )
-                    yield {
-                        "event": "task_updated",
-                        "data": {"id": node.id, "status": TaskStatus.FAILED},
-                    }
-                    return
-
-                node.result = ""
-                session.add(node)
-                await session.commit()
-
-                from core.settings.manager import settings_manager
-
-                settings_key = f"{node.agent_type}_model"
-                model_name = settings_manager.get(settings_key)
-
-                # Resolve params
-                model_params = await self.infra.resolve_model_params(model_name)
-                if model_params == "Unknown":
-                    model_params = None
-
-                AgentClass = AGENT_MAP.get(node.agent_type, CoderAgent)
-                agent = AgentClass(self.rules, self.ctx, model=model_name)
-
-                step = {
-                    "id": node.id,
-                    "description": f"{node.description}\n[USER APPROVED SHELL EXECUTION]",
-                    "title": node.title,
-                    "params": model_params,
-                    "last_tool_call": self.last_tool_calls.get(node.id),
-                }
-
-                async for chunk in agent.execute(step, conversation_id):
-                    if chunk["type"] == "status":
-                        await update_task(session, node.id, chunk["status"])
-                        yield {
-                            "event": "task_updated",
-                            "data": {"id": node.id, "status": chunk["status"]},
-                        }
-                    elif chunk["type"] == "token":
-                        yield {"event": "token", "data": chunk["text"]}
-                    elif chunk["type"] == "result":
+                    if not approved:
                         await update_task(
-                            session, node.id, TaskStatus.DONE, result=chunk.get("result", "")
+                            session, node.id, TaskStatus.FAILED, error="User denied shell command"
                         )
-                        yield {
-                            "event": "task_updated",
-                            "data": {"id": node.id, "status": TaskStatus.DONE},
-                        }
-                        # Resume the rest of the graph
-                        async for follow_up in self.resume(node.graph_id, conversation_id):
-                            yield follow_up
+                        await queue.put(
+                            {
+                                "event": "task_updated",
+                                "data": {"id": node.id, "status": TaskStatus.FAILED},
+                            }
+                        )
+                        return
+
+                    node.result = ""
+                    session.add(node)
+                    await session.commit()
+
+                    from core.settings.manager import settings_manager
+
+                    settings_key = f"{node.agent_type}_model"
+                    model_name = settings_manager.get(settings_key)
+
+                    model_params = await self.infra.resolve_model_params(model_name)
+                    if model_params == "Unknown":
+                        model_params = None
+
+                    AgentClass = AGENT_MAP.get(node.agent_type, CoderAgent)
+                    agent = AgentClass(self.rules, self.ctx, model=model_name)
+
+                    step = {
+                        "id": node.id,
+                        "description": f"{node.description}\n[USER APPROVED SHELL EXECUTION]",
+                        "title": node.title,
+                        "params": model_params,
+                        "last_tool_call": self.last_tool_calls.get(node.id),
+                    }
+
+                    async for chunk in agent.execute(step, conversation_id):
+                        if chunk["type"] == "status":
+                            await update_task(session, node.id, chunk["status"])
+                            await queue.put(
+                                {
+                                    "event": "task_updated",
+                                    "data": {"id": node.id, "status": chunk["status"]},
+                                }
+                            )
+                        elif chunk["type"] == "token":
+                            await queue.put({"event": "token", "data": chunk["text"]})
+                        elif chunk["type"] == "tool_call":
+                            # Re-capture tool calls if agent emits them again
+                            await queue.put(
+                                {
+                                    "event": "tool_call",
+                                    "data": {
+                                        "id": node.id,
+                                        "call": chunk["call"],
+                                        "tool": chunk["tool"],
+                                        "args": chunk["args"],
+                                    },
+                                }
+                            )
+                            self.last_tool_calls[node.id] = chunk
+                            return # Pause for next approval
+
+                        elif chunk["type"] == "result":
+                            await update_task(
+                                session, node.id, TaskStatus.DONE, result=chunk.get("result", "")
+                            )
+                            await queue.put(
+                                {
+                                    "event": "task_updated",
+                                    "data": {"id": node.id, "status": TaskStatus.DONE},
+                                }
+                            )
+                            # Resume the rest of the graph
+                            async for follow_up in self.resume(node.graph_id, conversation_id):
+                                await queue.put(follow_up)
+
             except Exception as e:
                 log.critical(
-                    "orchestrator.resume_shell_crashed", task_id=task_id, error=str(e), exc_info=True
+                    "orchestrator.resume_shell_worker_crashed",
+                    task_id=task_id,
+                    error=str(e),
+                    exc_info=True,
                 )
-                yield {"event": "error", "data": {"message": f"Critical resume failure: {str(e)}"}}
+                await queue.put({"event": "error", "data": {"message": f"Resume failure: {str(e)}"}})
+            finally:
+                await queue.put(None)  # End of stream
+
+        asyncio.create_task(_worker())
+
+        while True:
+            event = await queue.get()
+            if event is None:
+                break
+            yield event
