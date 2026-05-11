@@ -29,7 +29,10 @@ class FederatedRAG:
         log.info("rag.global_search_start", query=query[:50])
 
         # 1. Local Search (AST-aware)
-        local_task = self.local_ctx.explorer.hybrid_search(query, limit=limit)
+        if self.local_ctx.explorer:
+            local_task = self.local_ctx.explorer.hybrid_search(query, limit=limit)
+        else:
+            local_task = self.local_ctx.retrieve(query, n_results=limit)
 
         # 2. Mesh Peer Search (Phase 44.6: Fail-Fast Concurrency)
         peers = list(mesh_router.peers.values())

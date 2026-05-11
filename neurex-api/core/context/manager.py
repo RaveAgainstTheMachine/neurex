@@ -35,11 +35,14 @@ class ContextManager:
 
         try:
             from core.memory.embedder import Embedder, Reranker
+            from core.context.neural_explorer import NeuralExplorer
 
             self._embedder = Embedder()
             self._reranker = Reranker()
+            self.explorer = NeuralExplorer(self)
         except Exception as e:
             log.warning("context.embedder_unavailable", error=str(e))
+            self.explorer = None  # Fallback
 
     def _get_collection(self):
         """Synchronous retrieval of collection from PersistentClient."""
