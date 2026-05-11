@@ -26,6 +26,9 @@ class NeuralLinter:
         Validates a file mutation against architectural standards.
         Returns: (is_valid, reason)
         """
+        # Phase 2.1: Bypass in Mock Mode
+        if os.getenv("NEUREX_MOCK_LLM") == "true":
+            return True, "Mock mode bypass"
         # 1. Extraction of the proposed change
         target_file = args.get("path") or args.get("TargetFile") or args.get("target_file")
         content = args.get("content") or args.get("ReplacementContent") or args.get("CodeContent")
