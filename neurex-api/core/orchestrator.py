@@ -61,6 +61,7 @@ class Orchestrator:
         self.infra = InfrastructureManager()
         self.workspace = Path(os.getenv("WORKSPACE_PATH", "/workspace"))
         self.autonomy_level = os.getenv("AUTONOMY_CEILING", "limited")
+        self.last_tool_calls: dict[str, dict] = {}
 
     def set_autonomy_level(self, level: str):
         """Override the session-specific autonomy level."""
@@ -266,7 +267,6 @@ class Orchestrator:
         """Phase 2: Execution after approval."""
         log.info("orchestrator.resume", graph_id=graph_id)
 
-        last_tool_calls: dict[str, dict | None] = {}
         active_node_id = None
 
         try:
@@ -376,7 +376,7 @@ class Orchestrator:
                             "history": history_context,
                             "model": model_name,
                             "params": model_params,
-                            "last_tool_call": last_tool_calls.get(node.id),
+                            "last_tool_call": self.last_tool_calls.get(node.id),
                         }
 
                         node_result = ""
@@ -405,7 +405,7 @@ class Orchestrator:
                                             "args": chunk["args"],
                                         },
                                     }
-                                    last_tool_calls[node.id] = chunk
+                                    self.last_tool_calls[node.id] = chunk
                                     return
 
                             elif chunk["type"] == "result":
@@ -510,6 +510,7 @@ class Orchestrator:
                 "description": f"{node.description}\n[USER APPROVED SHELL EXECUTION]",
                 "title": node.title,
                 "params": model_params,
+                "last_tool_call": self.last_tool_calls.get(node.id),
             }
 
             async for chunk in agent.execute(step, conversation_id):

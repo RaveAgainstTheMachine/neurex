@@ -266,6 +266,11 @@ class BaseAgent(ABC):
 
         name = tool_call.get("function", {}).get("name", "")
         args = tool_call.get("function", {}).get("arguments", {})
+        if isinstance(args, str):
+            try:
+                args = json.loads(args)
+            except json.JSONDecodeError:
+                args = {}
 
         mutation_tools = [
             "write_file",
