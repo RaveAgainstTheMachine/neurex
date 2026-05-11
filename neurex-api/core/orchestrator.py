@@ -31,7 +31,7 @@ from core.context.manager import ContextManager
 from core.context.rules_parser import RulesParser
 from core.infrastructure.manager import InfrastructureManager
 from core.memory.hive import hive_mind
-from core.task_graph import TaskNode, TaskStatus, create_task, get_graph, update_task
+from core.task_graph import TaskNode, TaskStatus, create_task, engine, get_graph, update_task
 
 log = structlog.get_logger()
 
