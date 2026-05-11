@@ -191,7 +191,7 @@ async def run_case(case: dict, model: str | None) -> dict:
             tree_r = await client.get(f"{API_BASE}/api/files/tree")
             if tree_r.is_success:
                 tree = tree_r.json()
-                written_files = _flatten_tree(tree)
+                written_files = await _flatten_tree(client, tree)
 
         # Score
         corpus = full_output + "\n" + "\n".join(written_files.keys()) + "\n" + "\n".join(written_files.values())
@@ -216,13 +216,21 @@ async def run_case(case: dict, model: str | None) -> dict:
     return result
 
 
-def _flatten_tree(node: dict, acc: dict | None = None) -> dict[str, str]:
+async def _flatten_tree(client: httpx.AsyncClient, node: dict, acc: dict | None = None) -> dict[str, str]:
     if acc is None:
         acc = {}
     if node.get("type") == "file":
-        acc[node.get("path", "")] = ""  # content fetching omitted for speed
+        path = node.get("path", "")
+        if path:
+            try:
+                # Fetch actual file content
+                r = await client.get(f"{API_BASE}/api/files/content?path={path}")
+                if r.is_success:
+                    acc[path] = r.text
+            except Exception:
+                acc[path] = ""
     for child in node.get("children", []):
-        _flatten_tree(child, acc)
+        await _flatten_tree(client, child, acc)
     return acc
 
 

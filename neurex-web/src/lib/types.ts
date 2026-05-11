@@ -314,8 +314,7 @@ export interface NeurexStore {
   // Modals
   modalOpen: boolean;
   setModalOpen: (val: boolean | ((v: boolean) => boolean)) => void;
-  // Hive
-  hiveStats: { total_nodes: number; memory_count: number };
+
   // Theme
   theme: { 
     accent_color: string; 
@@ -346,8 +345,7 @@ export interface NeurexStore {
   setShowAIPanel: (val: boolean | ((v: boolean) => boolean)) => void;
   showSettings: boolean;
   setShowSettings: (val: boolean | ((v: boolean) => boolean)) => void;
-  showHiveMind: boolean;
-  setShowHiveMind: (val: boolean | ((v: boolean) => boolean)) => void;
+
   showAbout: boolean;
   setShowAbout: (val: boolean | ((v: boolean) => boolean)) => void;
 }

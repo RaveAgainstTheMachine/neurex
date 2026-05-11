@@ -18,18 +18,11 @@ import { AgentPanel } from "./components/AgentPanel/AgentPanel";
 import { SkillsPanel } from "./components/SkillsPanel/SkillsPanel";
 import { GitTimeline } from "./components/GitTimeline/GitTimeline";
 import { SettingsPanel } from "./components/SettingsPanel/SettingsPanel";
-import { HiveMindPanel } from "./components/HiveMindPanel/HiveMindPanel";
-import { EvolutionPanel } from "./components/EvolutionPanel/EvolutionPanel";
 import { AboutPanel } from "./components/AboutPanel/AboutPanel";
-import { SingularityDashboard } from "./components/SingularityDashboard/SingularityDashboard";
-import { SynthesisDashboard } from "./components/SynthesisDashboard/SynthesisDashboard";
-import { ConsensusDashboard } from "./components/ConsensusDashboard/ConsensusDashboard";
-import { TemporalDashboard } from "./components/TemporalDashboard/TemporalDashboard";
 import { PresenceBar } from "./components/PresenceBar/PresenceBar";
 import { AuthOverlay } from "./components/AuthOverlay/AuthOverlay";
 import { TitleBar } from "./components/TitleBar/TitleBar";
 import { CommandPalette } from "./components/CommandPalette/CommandPalette";
-import { SubstrateDashboard } from "./components/SubstrateDashboard/SubstrateDashboard";
 import { API_BASE } from "./lib/config";
 import { useWebSocket } from "./hooks/useWebSocket";
 import { useNotifications } from "./hooks/useNotifications";
@@ -69,7 +62,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
-type SidebarTab = "explorer" | "search" | "git" | "agent" | "skills" | "history" | "timeline" | "infra" | "system" | "substrate";
+type SidebarTab = "explorer" | "search" | "git" | "agent" | "skills" | "history" | "timeline" | "infra" | "system";
 
 export default function App() {
   const [blueprint, setBlueprint] = useState<UIBlueprint | null>(null);
@@ -130,8 +123,6 @@ function AppContent() {
   const setShowAIPanel = useStore(s => s.setShowAIPanel);
   const showSettings = useStore(s => s.showSettings);
   const setShowSettings = useStore(s => s.setShowSettings);
-  const showHiveMind = useStore(s => s.showHiveMind);
-  const setShowHiveMind = useStore(s => s.setShowHiveMind);
   const showAbout = useStore(s => s.showAbout);
   const setShowAbout = useStore(s => s.setShowAbout);
   const settings = useStore(s => s.settings);
@@ -336,19 +327,13 @@ function AppContent() {
                     {sidebarTab === "timeline" && <GitTimeline />}
                     {sidebarTab === "skills"   && <SkillsPanel />}
                     {sidebarTab === "agent"    && <AgentPanel />}
-                    {sidebarTab === "evolution" && <EvolutionPanel />}
-                    {sidebarTab === "singularity" && <SingularityDashboard />}
-                    {sidebarTab === "synthesis" && <SynthesisDashboard />}
-                    {sidebarTab === "consensus" && <ConsensusDashboard />}
-                    {sidebarTab === "temporal" && <TemporalDashboard />}
-                    {sidebarTab === "substrate" && <SubstrateDashboard />}
                   </Panel>
                   <ResizeHandle />
                   <Panel minSize={30} className="app__main-content">
                     <PanelGroup direction="vertical" className="app__v-panels" storage={localStorage} autoSaveId="neurex-v-layout">
                       <Panel minSize={20} className="app__editor-wrapper">
                         <PresenceBar />
-                        {showSettings ? <SettingsPanel /> : showHiveMind ? <HiveMindPanel /> : (
+                        {showSettings ? <SettingsPanel /> : (
                           <PanelGroup direction="horizontal" storage={localStorage} autoSaveId="neurex-h-layout">
                             {editorPanes.map((pane: any, idx: number) => (
                               <React.Fragment key={pane.id}>

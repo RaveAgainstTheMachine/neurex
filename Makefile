@@ -112,6 +112,30 @@ nuke:
 	docker volume rm $$(docker volume ls -q | grep neurex) 2>/dev/null || true
 	@echo "⚠️  All Neurex data removed. Model weights will re-download on next start."
 
+# ── Testing & Quality ─────────────────────────────────────────────────────────
+
+## Run all API tests
+test:
+	cd neurex-api && ./.venv/bin/python -m pytest tests/ -v --tb=short
+
+## Run API tests with coverage
+test-cov:
+	cd neurex-api && ./.venv/bin/python -m pytest tests/ -v --tb=short --cov=core --cov=api --cov-report=term-missing
+
+## Lint Python (ruff) and TypeScript (eslint)
+lint:
+	cd neurex-api && ./.venv/bin/ruff check .
+	cd neurex-web && npx eslint . --max-warnings 0
+
+## Type check Python (pyright) and TypeScript (tsc)
+typecheck:
+	cd neurex-api && ./.venv/bin/pyright
+	cd neurex-web && npx tsc --noEmit
+
+## Run evals against a live API
+eval:
+	cd eval && python run_evals.py
+
 # ── Automation ────────────────────────────────────────────────────────────────
 
 ## Update LOC badges in README.md

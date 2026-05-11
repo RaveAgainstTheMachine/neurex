@@ -62,8 +62,14 @@ class ConsensusManager:
             
         return False
 
-    def get_proposal(self, path: str) -> ConsensusProposal:
+    def get_proposal(self, path: str) -> ConsensusProposal | None:
         return self.proposals.get(path)
+
+    def clear_proposal(self, path: str):
+        """Clears a proposal after consensus reached."""
+        if path in self.proposals:
+            del self.proposals[path]
+            log.info("consensus.proposal_cleared", path=path)
 
     async def evaluate_mutation(self, proposal_data: dict[str, Any], reviewers: list[Any], conversation_id: str) -> bool:
         """
@@ -74,8 +80,9 @@ class ConsensusManager:
         content = proposal_data.get("content")
         requester = proposal_data.get("requester")
         
-        if not path:
-            return True
+        if not path or not isinstance(content, str) or not isinstance(requester, str):
+            log.warning("consensus.invalid_proposal_data", path=path)
+            return False
 
         # Ensure a proposal exists
         await self.submit_proposal(path, content, requester)

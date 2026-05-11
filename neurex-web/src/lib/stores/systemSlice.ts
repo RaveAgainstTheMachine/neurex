@@ -52,15 +52,13 @@ export const createSystemSlice: StoreSlice<NeurexStore> = (set, get) => ({
       // ── UI Panels ────────────────────────────────────────────────
 
     sidebarTab: localStorage.getItem("neurex_sidebar_tab") || "explorer",
-    setSidebarTab: (tab) => set((s) => { s.sidebarTab = tab; s.showSettings = false; s.showHiveMind = false; localStorage.setItem("neurex_sidebar_tab", tab); }),
+    setSidebarTab: (tab) => set((s) => { s.sidebarTab = tab; s.showSettings = false; localStorage.setItem("neurex_sidebar_tab", tab); }),
     sidebarOrder: JSON.parse(localStorage.getItem("neurex_sidebar_order") || '["explorer", "search", "git", "history", "agent", "infra", "substrate", "skills", "system", "timeline"]'),
     setSidebarOrder: (order) => set((s) => { s.sidebarOrder = order; localStorage.setItem("neurex_sidebar_order", JSON.stringify(order)); }),
     showAIPanel: localStorage.getItem("neurex_show_ai") !== "false",
     setShowAIPanel: (val) => set((s) => { const next = typeof val === 'function' ? val(s.showAIPanel) : val; s.showAIPanel = next; localStorage.setItem("neurex_show_ai", String(next)); }),
     showSettings: false,
-    setShowSettings: (val) => set((s) => { const next = typeof val === 'function' ? val(s.showSettings) : val; s.showSettings = next; if (next) { s.showHiveMind = false; s.showAbout = false; } }),
-    showHiveMind: false,
-    setShowHiveMind: (val) => set((s) => { const next = typeof val === 'function' ? val(s.showHiveMind) : val; s.showHiveMind = next; if (next) { s.showSettings = false; s.showAbout = false; } }),
+    setShowSettings: (val) => set((s) => { const next = typeof val === 'function' ? val(s.showSettings) : val; s.showSettings = next; if (next) { s.showAbout = false; } }),
     showAbout: false,
-    setShowAbout: (val) => set((s) => { const next = typeof val === 'function' ? val(s.showAbout) : val; s.showAbout = next; if (next) { s.showSettings = false; s.showHiveMind = false; } }),
+    setShowAbout: (val) => set((s) => { const next = typeof val === 'function' ? val(s.showAbout) : val; s.showAbout = next; if (next) { s.showSettings = false; } }),
   } as unknown as NeurexStore);

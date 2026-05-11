@@ -1,7 +1,7 @@
 import React from "react";
 import { 
   Files, Search, GitBranch, Clock, MessageSquare, 
-  Cpu, Shield, ShieldCheck, Puzzle, Bot, BrainCircuit, Settings, Sparkles, Activity, Globe, Timer
+  Cpu, Shield, Puzzle, Bot, Settings, Sparkles, Activity, Globe, Timer
 } from "lucide-react";
 import { 
   DndContext, 
@@ -31,15 +31,9 @@ const SIDEBAR_ITEMS: { id: string; icon: React.FC<any>; label: string }[] = [
   { id: "timeline", icon: Clock,          label: "File Timeline" },
   { id: "history",  icon: MessageSquare,  label: "Chat History" },
   { id: "infra",    icon: Cpu,            label: "AI Infrastructure" },
-  { id: "substrate", icon: ShieldCheck,    label: "Hermetic Substrate" },
   { id: "system",   icon: Shield,         label: "System Logs" },
   { id: "skills",   icon: Puzzle,         label: "Skills & Extensions" },
   { id: "agent",    icon: Bot,            label: "Agents" },
-  { id: "evolution", icon: BrainCircuit, label: "Neural Evolution" },
-  { id: "singularity", icon: Sparkles,    label: "Sentient Singularity" },
-  { id: "synthesis",   icon: Activity,    label: "Neural Self-Synthesis" },
-  { id: "consensus",   icon: Globe,       label: "Universal Consensus" },
-  { id: "temporal",    icon: Timer,       label: "Neural Temporal Synthesis" },
 ];
 
 function SortableActivityItem({ id, active, onClick, icon: Icon, label, badge }: { id: string; active: boolean; onClick: () => void; icon: React.FC<any>; label: string; badge?: number | string }) {
@@ -71,8 +65,6 @@ export function ActivityBar() {
   const setSidebarOrder = useStore(s => s.setSidebarOrder);
   const showSettings = useStore(s => s.showSettings);
   const setShowSettings = useStore(s => s.setShowSettings);
-  const showHiveMind = useStore(s => s.showHiveMind);
-  const setShowHiveMind = useStore(s => s.setShowHiveMind);
   
   // Phase 44.22: Derived Selector (Re-render only when count changes)
   const activeTaskCount = useStore(s => 
@@ -108,7 +100,7 @@ export function ActivityBar() {
               return (
                 <SortableActivityItem
                   key={id} id={id} icon={item.icon} label={item.label}
-                  active={sidebarTab === id && !showSettings && !showHiveMind}
+                  active={sidebarTab === id && !showSettings}
                   onClick={() => setSidebarTab(id)}
                   badge={badge}
                 />
@@ -118,9 +110,7 @@ export function ActivityBar() {
         </DndContext>
       </div>
       <div className="activity-bar__bottom">
-        <button className={`activity-btn ${showHiveMind ? "active" : ""}`} onClick={() => setShowHiveMind(!showHiveMind)} title="Accounts">
-          <BrainCircuit size={24} />
-        </button>
+
         <button className={`activity-btn ${showSettings ? "active" : ""}`} onClick={() => setShowSettings(!showSettings)} title="Manage">
           <Settings size={24} />
           {showSettings && <div className="activity-indicator" />}

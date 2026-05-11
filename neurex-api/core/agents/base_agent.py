@@ -88,13 +88,7 @@ class BaseAgent(ABC):
         except Exception:
             pass
             
-        # 4. Swarm Collective Intelligence Injection (Phase 49)
-        from core.infrastructure.knowledge_base import swarm_kb
-        domain = "generic-coding" # Default domain
-        lessons = swarm_kb.query_lessons(domain)
-        if lessons:
-            best_lessons = "\n".join([f"- {lsn.pattern_id} (Fitness: {lsn.success_delta})" for lsn in lessons[:3]])
-            parts.append(f"\n\n<global_collective_intelligence>\nDomain: {domain}\nTop Patterns:\n{best_lessons}\n</global_collective_intelligence>")
+
 
         if extra:
             parts.append(f"\n\n{extra}")
@@ -123,7 +117,12 @@ class BaseAgent(ABC):
         """Stream from Mesh/Local with high-speed token chunking."""
         options = {"temperature": 0.2}
         if params:
-            options["params"] = params
+            try:
+                extra_options = json.loads(params)
+                if isinstance(extra_options, dict):
+                    options.update(extra_options)
+            except json.JSONDecodeError:
+                pass
 
         payload: dict[str, Any] = {
             "model": model or self.model or get_default_model(),
@@ -137,17 +136,7 @@ class BaseAgent(ABC):
         if final_tools:
             payload["tools"] = final_tools
 
-        from core.infrastructure.adapter_orchestrator import adapter_orchestrator
         from core.infrastructure.mesh import mesh_router
-
-        # Phase 48: Neural Evolution (Specialized Adapter Loading)
-        # We determine the domain from the current task context if possible
-        domain = "generic-coding" 
-        session_id = f"inf-{asyncio.get_event_loop().time()}"
-        adapter_id = await adapter_orchestrator.prepare_inference_session(session_id, domain)
-        if adapter_id:
-            payload["adapter"] = adapter_id
-
         ollama_url = await mesh_router.get_best_inference_node(payload["model"])
         full_text = ""
         token_buffer = []
@@ -191,21 +180,25 @@ class BaseAgent(ABC):
                         if token_buffer:
                             yield {"type": "token", "text": "".join(token_buffer)}
                         yield {"type": "done", "full_text": full_text}
-        finally:
-            adapter_orchestrator.release_session(session_id)
-
+        except httpx.HTTPStatusError as e:
+            log.error("stream.http_error", status=e.response.status_code, url=target_url)
+            yield {"type": "error", "text": f"Inference error: HTTP {e.response.status_code}"}
+        except httpx.ConnectError as e:
+            log.error("stream.connect_error", url=target_url, error=str(e))
+            yield {"type": "error", "text": f"Cannot connect to inference server at {target_url}"}
     async def dispatch_tool(self, tool_call: dict, conversation_id: str) -> str:
         """Route a tool_call with Federated Governance and Neural Linting."""
         name = tool_call.get("function", {}).get("name", "")
         args = tool_call.get("function", {}).get("arguments", {})
         
         mutation_tools = ["write_file", "delete_file", "replace_file_content", "multi_replace_file_content"]
+        requester = f"agent:{self.agent_type}"
         if name in mutation_tools:
             path = args.get("path") or args.get("TargetFile")
             
             # 1. Collaboration Lock (Phase 44)
             if path:
-                requester = f"agent:{self.agent_type}"
+
                 locked = await collaboration_manager.acquire_lock(path, requester, conversation_id=conversation_id)
                 if not locked:
                     return f"MUTATION_BLOCKED: The file '{path}' is locked by another entity."
@@ -240,14 +233,4 @@ class BaseAgent(ABC):
 
         log.info("tool_dispatch", tool=name, args=args)
         result = await self.mcp.call(name, args, autonomy_level=self.autonomy_level, conversation_id=conversation_id)
-        
-        # Phase 45: Zero-Restart Runtime Evolution
-        if name in mutation_tools and ".py" in str(args.get("path") or args.get("TargetFile")):
-            from core.infrastructure.live_reloader import live_reloader
-            path = args.get("path") or args.get("TargetFile")
-            if path:
-                reloaded = live_reloader.reload_module(path)
-                if reloaded:
-                    log.info("runtime.module_evolved", file=path)
-        
         return result

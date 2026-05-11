@@ -1,0 +1,4 @@
+16:dependabot/npm_and_yarn/neurex-landing/globals-17.6.0
+11:dependabot/github_actions/softprops/action-gh-release-3
+10:dependabot/github_actions/docker/login-action-4
+9:dependabot/github_actions/actions/download-artifact-8

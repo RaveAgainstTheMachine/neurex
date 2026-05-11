@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { 
-  AlertCircle, AlertTriangle, GitGraph, Activity, Braces, 
-  Bell, BellOff, X, CheckCircle 
+  AlertCircle, AlertTriangle, GitGraph, Activity, 
+  X, CheckCircle, Bell, BellOff 
 } from "lucide-react";
 import { useStore } from "../../lib/store";
 import "./StatusBar.css";
@@ -15,7 +15,6 @@ interface StatusBarProps {
 
 export function StatusBar({ wsStatus, setPaletteMode, setSidebarTab, isAIActive }: StatusBarProps) {
   // Phase 44.20: Strict State Selection (Prevent Status churn)
-  const hiveStats = useStore(s => s.hiveStats);
   const diagnostics = useStore(s => s.diagnostics);
   const gitBranch = useStore(s => s.gitBranch);
   const gitChanges = useStore(s => s.gitChanges);
@@ -66,7 +65,7 @@ export function StatusBar({ wsStatus, setPaletteMode, setSidebarTab, isAIActive 
           </button>
           <div className="status-segment status-segment--mesh" title="Mesh Network Status">
              <Activity size={12} />
-             <span>{hiveStats.total_nodes} NODES</span>
+             <span>MESH ACTIVE</span>
           </div>
           <button 
             className={`status-segment status-segment--interactive status-segment--notification ${showNotifications ? "active" : ""}`}

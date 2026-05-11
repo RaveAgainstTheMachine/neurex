@@ -17,8 +17,6 @@ load_dotenv()
 from api.routes import (
     auth,
     chat,
-    consensus,
-    evolution,
     files,
     git,
     infra,
@@ -27,13 +25,9 @@ from api.routes import (
     notifications,
     observability,
     settings,
-    singularity,
     skills,
-    synthesis,
     tasks,
-    temporal,
     update,
-    voice,
 )
 from api.websocket import router as ws_router
 from core.context.rules_parser import RulesParser
@@ -144,14 +138,14 @@ async def lifespan(app: FastAPI):
     log.info("neurex.shutdown")
 
 
-from fastapi.responses import ORJSONResponse
+from fastapi.responses import JSONResponse as ORJSONResponse
 
 from core.infrastructure.logging_middleware import DebugLoggingMiddleware
 
 app = FastAPI(
     title="Neurex API",
-    description="The Sentient IDE Control Plane",
-    version="0.5.2",
+    description="Local-First AI Engineering Workspace",
+    version="0.5.4",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",
@@ -183,12 +177,7 @@ app.include_router(update.router, prefix="/api/update", tags=["update"])
 app.include_router(observability.router, prefix="/api/observability", tags=["observability"])
 app.include_router(languages.router, prefix="/api/languages", tags=["languages"])
 app.include_router(git.router, prefix="/api/git", tags=["git"])
-app.include_router(evolution.router)
-app.include_router(singularity.router)
-app.include_router(synthesis.router)
-app.include_router(consensus.router)
-app.include_router(temporal.router)
-app.include_router(voice.router)
+
 app.include_router(ws_router, tags=["websocket"])
 
 

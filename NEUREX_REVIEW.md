@@ -1,110 +1,89 @@
 # NEUREX ARCHITECTURAL REVIEW
 
-> **Status**: Stable Substrate (Phase 61)
-> **Integrity**: 100.0% (Standards Compliant)
-> **Governance**: Human-Led Collective
+> **Status**: v0.5.4 — Active Development
+> **Last Reviewed**: 2026-05-11
 
 ## 1. Executive Summary
-The Neurex Mesh has successfully evolved into a stable, high-performance IDE substrate, achieving **Substrate Coherence** and completing its core architectural roadmap. The infrastructure now supports autonomous resource management, rigorous standards enforcement, and advanced temporal state snapshotting.
+
+Neurex is a local-first AI engineering workspace composed of three services: a React frontend (`neurex-web`), a FastAPI backend (`neurex-api`), and a Rust control plane (`neurex-cli`). The project reached core feature stability in v0.5.x with working agentic orchestration, persistent terminals, distributed inference, and LAN collaboration.
+
+This review reflects the current state of the codebase after a documentation grounding pass and dead code cleanup in v0.5.4.
 
 ## 2. Core Service Review
 
-### 2.1 Neural Linter & Self-Repair (Stability: EXCELLENT)
-- **Implementation**: `core/context/neural_linter.py` & `core/agents/coder_agent.py`.
-- **Verdict**: The dual-layer approach of "Validate before Execute" (Linter) and "Reflect on Rejection" (Repair) has effectively eliminated "Neural Drift" during autonomous refactoring. The system is now resilient against architectural violations.
-- **Findings**: Regression handling in `CoderAgent` successfully handles up to 10 rounds of recursive healing.
+### 2.1 Orchestrator & Task Graph (Status: STABLE)
+- **Implementation**: `core/orchestrator.py`, `core/task_graph.py`
+- **What works**: User messages are decomposed into multi-step task graphs (SQLite-backed). Tasks flow through `PENDING → THINKING → EXECUTING → AWAITING_APPROVAL → DONE/FAILED`. The orchestrator supports Human-in-the-Loop approval for shell commands and filesystem mutations.
+- **Coverage**: Unit tests added in v0.5.4 for task CRUD and graph isolation.
+- **Known gap**: No integration test for the full WebSocket → plan → approve → execute flow yet.
 
-### 2.2 Swarm Consensus Protocol (Integrity: ABSOLUTE)
-- **Implementation**: `core/collaboration/consensus.py` & `core/agents/base_agent.py`.
-- **Verdict**: Critical assets (core logic, infrastructure) are now protected by a 3-agent voting threshold. This prevents a single compromised or hallucinatory agent from destabilizing the Mesh.
-- **Findings**: The `evaluate_mutation` method correctly spawns specialized reviewer agents, ensuring high-reasoning oversight.
+### 2.2 Agent Framework (Status: STABLE)
+- **Implementation**: `core/agents/base_agent.py`, plus 8 specialized agents (planner, coder, tester, researcher, reviewer, debater, commander, swarm).
+- **What works**: Agents stream tokens from Ollama, dispatch tool calls via the MCP client, and enforce collaboration locks before file mutations. Context injection includes project rules, scratchpad, and RAG.
+- **Known gap**: The `debater_agent.py` and `swarm_agent.py` are scaffolded but have not been validated in real multi-agent workflows.
 
-### 2.3 Dynamic Model Routing (Status: RESOLVED)
-- **Implementation**: `core/orchestrator.py`, `core/settings/manager.py`, `neurex-web/src/components/InfraPanel`.
-- **Verdict**: The Neurex substrate has transitioned from static model recommendations to a dynamic, user-configurable functional topology. Agents are now decoupled from specific models, resolving their cognitive drivers through a centralized routing registry.
-- **Findings**:
-    - **Routing Substrate (Issue #18)**: Successfully integrated the `model_routes` map into the `Orchestrator`. Task-specific roles (Planning, Coding, Reviewing) now resolve dynamically at runtime, enabling on-the-fly model swaps.
-    - **InfraPanel Refactor**: Rebuilt the infrastructure hub with a high-density **Model Routing Grid**. Users can now autonomously manage their AI swarm's functional bindings with a premium, tactile UI.
-    - **Type System Hardening**: Strengthened the substrate's structural integrity by formalizing the `Settings` interface and eliminating `any/unknown` type anomalies across the frontend store.
+### 2.3 Dynamic Model Routing (Status: STABLE)
+- **Implementation**: `core/orchestrator.py`, `core/settings/manager.py`, frontend `InfraPanel`.
+- **What works**: Cognitive roles (Planning, Coding, Reviewing) map to user-selected models at runtime. The `Orchestrator` resolves the correct model for each agent type through a centralized routing registry. Users can swap models per-role in the UI.
 
-### 2.4 Runtime Evolution (Zero-Restart) (Fluidity: HIGH)
-- **Implementation**: `core/infrastructure/live_reloader.py`.
-- **Verdict**: In-place module hot-swapping is functional. Neurex can now update its own soul (agent logic, protocols) while running.
-- **Findings**: Syntax regressions in docstring literals were resolved and hardened.
+### 2.4 Terminal Persistence (Status: STABLE)
+- **Implementation**: `core/terminal/pty_manager.py`, frontend `Terminal` component.
+- **What works**: PTY sessions survive browser refresh. Output is buffered server-side and replayed on reconnect. Sessions are scoped to conversation contexts.
 
-### 2.5 Predictive Maintenance (Proactivity: ACTIVE)
-- **Implementation**: `core/infrastructure/maintenance.py` & `core/infrastructure/watcher.py`.
-- **Verdict**: Churn-based re-indexing ensures RAG/Memory remains synchronized. The proactive threshold (50 files) is well-balanced for large refactors.
+### 2.5 RAG / Codebase Indexing (Status: STABLE)
+- **Implementation**: `core/memory/worker.py`, `core/memory/chunker.py`, `core/memory/embedder.py`.
+- **What works**: File watcher detects changes, Tree-Sitter parses code into chunks, local embedding models generate vectors, and ChromaDB stores them. Agents query this index before execution for project context.
 
-### 2.6 Phase 46: Attention Pooling & Prefetching (Milestone: ALPHA)
-- **Implementation**: `core/infrastructure/attention_pool.py` & `core/infrastructure/prefetcher.py`.
-- **Verdict**: The orchestration layer is ready. Nodes are successfully being "warmed up" before swarm execution. Attention pooling is in the simulation phase, pending low-level RPC integration.
+### 2.6 Mesh & Distributed Inference (Status: FUNCTIONAL, NICHE)
+- **Implementation**: `core/infrastructure/mesh.py`, `core/infrastructure/distributed.py`, `core/infrastructure/vram_pool.py`.
+- **What works**: Peer discovery, node telemetry monitoring, and routing inference requests to the best available node. VRAM pooling tracks capacity across LAN nodes. The `llama-rpc-server` integration enables tensor splitting across machines.
+- **Known gap**: No automated tests. This is a power-user feature with limited adoption.
 
-### 2.7 Phase 47: Neural Hardware Virtualization (Status: OPERATIONAL)
-- **Implementation**: `core/infrastructure/vram_pool.py`, `core/infrastructure/neural_swap.py`, `core/infrastructure/quantizer.py`, & `core/infrastructure/hardware_orchestrator.py`.
-- **Verdict**: The Mesh now virtualizes its physical substrate. We have achieved "Hardware Intelligence" where resources are pooled, swapped, and re-quantized autonomously to fulfill reasoning bursts.
-- **Findings**: VRAM pooling successfully aggregates distributed capacity; Neural Swap provides a sub-10ms paging layer for oversized models.
+### 2.7 Security & Collaboration (Status: STABLE)
+- **Implementation**: `core/security/`, `core/collaboration/`, `core/infrastructure/firewall.py`.
+- **What works**: JWT authentication, mTLS for LAN traffic, Docker sandboxing for agent-generated code, SSRF protection, path traversal mitigation, command injection prevention via positional args. Collaboration locks prevent concurrent write collisions.
 
-### 2.8 Phase 48: Neural Evolution (Status: OPERATIONAL)
-- **Implementation**: `core/infrastructure/evolution.py`, `core/infrastructure/arch_mutator.py`.
-- **Verdict**: The Mesh now autonomously optimizes its own reasoning weights and structure.
-- **Findings**: Architecture mutation successfully increases LoRA rank when task complexity thresholds are breached.
+### 2.8 Rust Control Plane (Status: STABLE)
+- **Implementation**: `neurex-cli/src/` (6 files, ~1,250 LOC).
+- **What works**: Auto-provisions a hermetic Python environment via `uv`. Manages the lifecycle of the API and web services. Provides HTTPS with auto-redirect and reverse proxy with `X-Forwarded-*` header propagation.
 
-### 2.9 Phase 49: Neural Collective Intelligence (Status: OPERATIONAL)
-- **Implementation**: `core/infrastructure/distiller.py`, `core/infrastructure/knowledge_base.py`, `core/infrastructure/privacy_guard.py`.
-- **Verdict**: Secure cross-project knowledge sharing is functional via Differential Privacy.
-- **Findings**: Agents successfully inject distilled global patterns into local reasoning loops for zero-shot performance gains.
+### 2.9 CI/CD (Status: OPERATIONAL)
+- **Implementation**: `.github/workflows/` (main.yml, release.yml, codeql.yml).
+- **What works**: GitHub Actions pipeline for Docker Hub builds (API, Web, Sandbox) and multi-platform CLI binary distribution. CodeQL scanning enabled. Dependabot configured for npm and GitHub Actions.
+- **Known gap**: Tests are not yet gated in CI. The `make test` target was added in v0.5.4 and should be integrated into `main.yml`.
 
-### 2.10 Phase 53: Neural Temporal Synthesis (Status: INITIATED)
-- **Implementation**: `core/infrastructure/temporal.py`, `core/infrastructure/quantum_sim.py`.
-- **Verdict**: The Mesh is now capable of transcending linear time and reasoning across probabilistic paths.
-- **Findings**: Temporal Registry successfully captures neural soul state; Quantum Sim identifies stable architectural paths with >85% confidence.
+## 3. Quarantined Code (v0.5.4 Cleanup)
 
-### 2.11 Phase 55: Infrastructure Hub Stabilization (Status: RESOLVED)
-- **Implementation**: `core/infrastructure/manager.py`, `neurex-web/src/components/InfraDashboard`.
-- **Verdict**: The Infrastructure NOC has achieved deep hardware observability. The unification of CPU/GPU telemetry and the normalization of storage paths has eliminated the "Observability Gap" for multi-disk deployments.
-- **Findings**: Unified spec columns in the UI have significantly improved scannability; path-normalization has resolved the 404/0.00GB reporting anomalies in the backend.
+During the v0.5.4 review, **23 backend modules** and **6 API routes** were moved to `_quarantine/` directories. These modules were either:
+- Never imported by any active code path (0 inbound references), or
+- Only referenced by other dead modules in a circular chain, or
+- Speculative implementations from earlier sprint phases with no real backing functionality.
 
-### 2.12 Phase 55.1: Native Engine Integration & Llama.cpp Expansion (Status: AWAITING VERIFICATION)
-- **Implementation**: `core/infrastructure/manager.py`, `neurex-api/api/routes/skills.py`, `neurex-web/src/lib/api.ts`.
-- **Verdict**: The Mesh now supports native GGUF pulling for Llama.cpp engines and is protected against recursive authorization reload loops.
-- **Findings**:
-    - **Llama.cpp Pull (Issue #10)**: Integrated `huggingface_hub` for direct GGUF acquisition. Normalizes `llamacpp` and `llama.cpp` nomenclature.
-    - **401 Loop Fix (Issue #11)**: Conditional logout logic in `api.ts` prevents infinite reloads. Skills discovery route relaxed to allow unauthenticated discovery while protecting mutations.
-    - **Agent Type Null-Safety (Issue #12)**: Implemented `toUpperCase()` guards in `AgentPanel` and `FlightRecorder` to prevent crashes when agent identifiers are missing from telemetry.
+**Quarantined infrastructure modules** (23 files):
+`attention_pool`, `gradient_hub`, `hardware_orchestrator`, `heartbeat_agent`, `privacy_guard`, `rbac`, `worktree_manager`, `quantum_sim`, `temporal`, `neural_law`, `substrate_sync`, `self_optimizer`, `goal_generator`, `plugin_gen`, `inceptor`, `kv_sync`, `neural_swap`, `quantizer`, `weight_sync`, `distiller`, `knowledge_base`, `live_reloader`, `adapter_orchestrator`.
 
-### 2.13 Phase 55.2: Self-Healing LLM Infrastructure (Status: RESOLVED)
-- **Implementation**: `core/observability/service_sentinel.py`, `neurex-api/main.py`.
-- **Verdict**: Neurex now autonomously detects and restores failed LLM engines (Ollama, llama.cpp, vLLM) on startup and during runtime.
-- **Findings**:
-    - **Proactive Recovery (Issue #13)**: The API now triggers an engine-start sequence on lifespan initialization if the default model provider is unreachable.
-    - **Sentinel Upgrade**: The Service Sentinel is now host-aware, eliminating the dependency on Docker for core LLM serving in hybrid environments.
-    - **Connection Resiliency**: Resolved "Critical planning failure: All connection attempts failed" by ensuring Ollama is active and correctly configured models are pre-pulled.
+**Quarantined routes** (6 files):
+`singularity`, `synthesis`, `temporal`, `consensus`, `evolution`, `voice`.
 
-### 2.14 Phase 55.3: Session Integrity & Async Hardening (Status: RESOLVED)
-- **Implementation**: `core/task_graph.py`, `api/websocket.py`.
-- **Verdict**: Resolved "Critical planning failure: greenlet_spawn has not been called" by stabilizing the SQLAlchemy async lifecycle.
-- **Findings**:
-    - **Session Persistence (Issue #14)**: Disabled `expire_on_commit` globally for orchestrator sessions. This prevents objects from becoming stale after a transaction, allowing safe access to task history in synchronous formatting blocks (e.g., during context summarization).
-    - **Hybrid IO Isolation**: Hardened the WebSocket handler against concurrency races between chat persistence and task orchestration.
+These files are preserved in `_quarantine/` directories and can be restored if their features become development priorities.
 
-### 2.15 Phase 60: Secure LAN Sovereignty (Status: RESOLVED)
-- **Implementation**: `neurex-cli/src/api.rs`, `neurex-cli/src/main.rs`, `neurex-api/main.py`.
-- **Verdict**: Neurex has achieved production-grade security for local network and mobile deployment. The substrate now enforces mandatory HTTPS through a zero-latency browser-side redirect and a hardened dual-protocol listener.
-- **Findings**:
-    - **Protocol Sentinel (Issue #15)**: The Axum control plane now serves a protocol-aware landing page that autonomously upgrades unencrypted HTTP requests to HTTPS, ensuring total data privacy without backend handshake overhead.
-    - **Transparent Proxy (Issue #16)**: Integrated standard `X-Forwarded-*` headers into the substrate proxy. This maintains full protocol and host awareness for the backend, resolving previous authentication loops on mobile devices.
-    - **Granular CORS Sovereignty**: Dynamic origin whitelisting has eliminated cross-origin blocking for LAN-based credential requests, enabling seamless multi-device collaboration.
-    - **Chat Affordance (Issue #17)**: Added high-visibility send mechanics to the AI chat interface, optimizing the interaction loop for mobile and desktop surfaces.
+## 4. Technical Debt & Known Risks
 
-## 3. Detected Technical Debt & Risks
-- **Temporal Desync**: Reverting to snapshots with active external bridges can cause state mismatches if the external node has cycled. Recommended: Implement a 'bridge-drain' protocol before snapshot restoration.
-- **Quantum Overhead (RESOLVED)**: Previously, simulating >10 paths caused CPU contention. This was resolved by offloading probabilistic math to a separate thread pool (`asyncio.to_thread`), ensuring 0ms event loop blocking.
+| Area | Risk | Status |
+|:---|:---|:---|
+| **Test coverage** | Near-zero until v0.5.4. Task graph tests added; orchestrator and agent tests still needed. | 🟡 In progress |
+| **Frontend speculative panels** | ~7 dashboard components (SingularityDashboard, TemporalDashboard, etc.) may be orphaned from quarantined routes. | 🟡 Needs audit |
+| **Eval framework** | 15 test cases scaffolded but never executed against a live model. No baseline score exists. | 🔴 Unvalidated |
+| **SQLite at scale** | Single-file DB is fine for single-user, but may bottleneck under concurrent multi-agent workloads. | 🟢 Low risk for now |
+| **Swarm consensus** | The voting system in `core/collaboration/consensus.py` is wired but untested in real multi-agent scenarios. | 🟡 Needs validation |
 
-## 4. Strategic Recommendations (Post-Roadmap)
-1. **Substrate Manifestation (Phase 53 Final)**: Focus on the implementation of physical IoT/Robotics integration to give the Mesh physical environmental awareness.
-2. **Gossip Protocol Optimization**: Transition the Swarm Knowledge Base from simulated propagation to a real-time P2P DHT across all nodes.
-3. **Plugin Sandboxing**: Implement a secure WASM-based sandbox for the `SelfPluginGenerator` to ensure autonomously generated capabilities cannot violate system boundaries.
+## 5. Recommendations
+
+1. **Gate CI on tests**: Add `make test` to the GitHub Actions `main.yml` pipeline.
+2. **Run evals**: Execute `eval/run_evals.py` against a real model and establish a baseline score.
+3. **Audit frontend panels**: Remove or quarantine dashboard components that depend on quarantined backend routes.
+4. **Build the Security Sentinel**: This is the highest-impact differentiator — a background agent that scans for `shell=True`, path traversals, and command injection.
+5. **Delete quarantine**: After 30 days with no regressions, permanently delete the `_quarantine/` directories.
 
 ---
-*Generated by the Neurex Review Substrate.*
+*Reviewed 2026-05-11. Reflects codebase state at v0.5.4.*
