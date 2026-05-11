@@ -43,6 +43,11 @@ class WatcherHandler(FileSystemEventHandler):
 
         asyncio.run_coroutine_threadsafe(maintenance_service.report_churn(paths), self.loop)
 
+        # Phase 5: Hot Reloading
+        from core.infrastructure.hot_reload import hot_reload_manager
+        for p in paths:
+            hot_reload_manager.handle_file_change(p)
+
         asyncio.run_coroutine_threadsafe(
             presence_manager.broadcast_global(
                 {"event": "file_system_changed", "data": {"paths": paths}}

@@ -19,14 +19,7 @@ from fastapi.encoders import jsonable_encoder
 from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from core.agents.coder_agent import CoderAgent
-from core.agents.commander_agent import CommanderAgent
-from core.agents.debater_agent import DebaterAgent
-from core.agents.dependency_agent import DependencyAgent
-from core.agents.planner_agent import PlannerAgent
-from core.agents.researcher_agent import ResearcherAgent
-from core.agents.reviewer_agent import ReviewerAgent
-from core.agents.tester_agent import TesterAgent
+from core.agents.registry import AGENT_REGISTRY
 from core.context.manager import ContextManager
 from core.context.rules_parser import RulesParser
 from core.infrastructure.manager import InfrastructureManager
@@ -41,17 +34,6 @@ from core.task_graph import (
 )
 
 log = structlog.get_logger()
-
-AGENT_MAP = {
-    "planner": PlannerAgent,
-    "coder": CoderAgent,
-    "tester": TesterAgent,
-    "researcher": ResearcherAgent,
-    "reviewer": ReviewerAgent,
-    "debater": DebaterAgent,
-    "commander": CommanderAgent,
-    "dependency": DependencyAgent,
-}
 
 
 class Orchestrator:
@@ -153,7 +135,8 @@ class Orchestrator:
             log.info("orchestrator.plan", graph_id=graph_id)
 
             # Rogue Agent Safeguard: Create a git snapshot before starting
-            await self._create_git_snapshot(graph_id)
+            if os.getenv("NEUREX_MOCK_LLM") != "true":
+                await self._create_git_snapshot(graph_id)
 
             planner_node = await create_task(
                 self.session,
@@ -193,7 +176,7 @@ class Orchestrator:
                 else "No relevant memories found."
             )
 
-            planner = PlannerAgent(self.rules, self.ctx, model=model_name)
+            planner = AGENT_REGISTRY["planner"](self.rules, self.ctx, model=model_name)
             # Inject memories into the planning context
             augmented_message = (
                 f"Relevant project history:\n{hive_context}\n\nUser request: {user_message}"
@@ -267,8 +250,6 @@ class Orchestrator:
 
     async def trigger_swarm_review(self, path: str, conversation_id: str):
         """Phase 45: Automated Swarm Review for Protected Paths."""
-        from core.agents.planner_agent import PlannerAgent
-        from core.agents.reviewer_agent import ReviewerAgent
         from core.collaboration.consensus import consensus_manager
 
         paths_to_review = [path] if path else list(consensus_manager.proposals.keys())
@@ -283,8 +264,8 @@ class Orchestrator:
             log.info("orchestrator.swarm_review_init", path=p, model=model)
 
             # 1. Spawn Reviewers
-            reviewer = ReviewerAgent(self.rules, self.ctx, model=model)
-            planner = PlannerAgent(self.rules, self.ctx, model=model)
+            reviewer = AGENT_REGISTRY["reviewer"](self.rules, self.ctx, model=model)
+            planner = AGENT_REGISTRY["planner"](self.rules, self.ctx, model=model)
 
             # Automate evaluation
             await consensus_manager.evaluate_mutation(
@@ -381,7 +362,7 @@ class Orchestrator:
                                     if model_params == "Unknown":
                                         model_params = None
 
-                                AgentClass = AGENT_MAP.get(node.agent_type, CoderAgent)
+                                AgentClass = AGENT_REGISTRY.get(node.agent_type, AGENT_REGISTRY["coder"])
                                 agent = AgentClass(self.rules, self.ctx, model=model_name)
 
                                 # Gather and summarize history context
@@ -481,7 +462,8 @@ class Orchestrator:
                                     }
                                 )
                                 active_node_id = None
-                                continue
+                                # In Phase 5, we stop the graph on any failure
+                                return
 
                 # Final cleanup
                 graph = await get_graph(session, graph_id)
@@ -562,7 +544,7 @@ class Orchestrator:
                     if model_params == "Unknown":
                         model_params = None
 
-                    AgentClass = AGENT_MAP.get(node.agent_type, CoderAgent)
+                    AgentClass = AGENT_REGISTRY.get(node.agent_type, AGENT_REGISTRY["coder"])
                     agent = AgentClass(self.rules, self.ctx, model=model_name)
 
                     step = {

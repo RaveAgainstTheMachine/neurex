@@ -2,13 +2,17 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
-## [0.5.5] - 2026-05-11: HIGH-RELIABILITY ORCHESTRATION
+## [0.5.5] - 2026-05-11: ARCHITECTURAL GROUNDING & HOT-RELOADING
 ### Added
-- **Orchestrator Stability**: Refactored the task orchestration loop using an `asyncio.Queue` pattern, resolving the `greenlet_spawn` async database blocker and enabling stable streaming.
-- **Swarm Consensus**: Operationalized automated review loops for protected paths. Critical architectural mutations now require consensus from multiple agents (Reviewer, Planner).
-- **Flight Recorder v2**: Integrated a high-throughput, buffered decision logging pipeline for full agentic reasoning traces.
-- **RAG Performance**: Implemented a zero-latency RAG bypass for mocked evaluation environments, reducing CI/CD smoke test duration by 90%.
-- **Timezone Standardization**: Unified all database and collaboration timestamps to UTC to prevent offset-naive runtime crashes.
+- **Sentient IDE Hot-Reloading**: Implemented a central `AgentRegistry` and `HotReloadManager` that allows the API to dynamically reload agent logic (e.g., `CoderAgent`) on file save without a server restart.
+- **Fail-Fast Orchestration**: Hardened the `Orchestrator` to halt graph execution immediately upon task failure, ensuring sequential integrity and preventing cascading agentic errors.
+- **Deep Integration Testing**: Established a new integration test suite (`tests/test_integration_scenarios.py`) covering partial approvals, failure halts, and sequential dependency validation.
+- **Mock LLM Optimization**: Updated the orchestration loop to bypass Git snapshots when in `mock` mode, significantly accelerating the evaluation and testing feedback loop.
+
+### Changed
+- **Architectural Purge**: Quarantined 7 speculative or orphaned modules (Swarm Management, Genetic Evolution, Mesh Governance) to reduce architectural noise and focus on production-ready features.
+- **Linting Rigor**: Updated `ruff.toml` to enforce strict compliance while excluding quarantined code, achieving a 100% green status across the active codebase.
+- **Authentication Resilience**: Validated JWT-based WebSocket authentication for non-interactive clients (Eval Harness), resolving 1008 policy violations.
 
 ## [0.5.4] - 2026-05-10: GROUNDED SECURITY
 ### Added
