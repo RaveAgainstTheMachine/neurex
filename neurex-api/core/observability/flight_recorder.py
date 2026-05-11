@@ -10,7 +10,7 @@ import structlog
 from sqlmodel import Field, SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from core.task_graph import UTC, engine
+from core.task_graph import UTC, async_session, engine
 
 log = structlog.get_logger()
 
@@ -79,7 +79,7 @@ async def flush_decisions():
             _DECISION_BUFFER.clear()
 
         try:
-            async with AsyncSession(engine) as session:
+            async with async_session() as session:
                 for event in to_flush:
                     session.add(event)
                 await session.commit()

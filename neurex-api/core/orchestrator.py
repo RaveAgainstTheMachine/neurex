@@ -31,7 +31,7 @@ from core.context.manager import ContextManager
 from core.context.rules_parser import RulesParser
 from core.infrastructure.manager import InfrastructureManager
 from core.memory.hive import hive_mind
-from core.task_graph import TaskNode, TaskStatus, create_task, engine, get_graph, update_task
+from core.task_graph import TaskNode, TaskStatus, async_session, create_task, engine, get_graph, update_task
 
 log = structlog.get_logger()
 
@@ -471,7 +471,7 @@ class Orchestrator:
         conversation_id: str,
     ) -> AsyncGenerator[dict, None]:
         """Phase 3: Resuming a task after a shell approval."""
-        async with AsyncSession(engine, expire_on_commit=False) as session:
+        async with async_session() as session:
             try:
                 stmt = select(TaskNode).where(TaskNode.id == task_id)
                 res = await session.exec(stmt)
@@ -482,24 +482,62 @@ class Orchestrator:
                 log.info("orchestrator.resume_shell", task_id=task_id, approved=approved)
 
                 if not approved:
+                    await update_task(
+                        session, node.id, TaskStatus.FAILED, error="User denied shell command"
+                    )
+                    yield {
+                        "event": "task_updated",
+                        "data": {"id": node.id, "status": TaskStatus.FAILED},
+                    }
                     return
 
+                node.result = ""
+                session.add(node)
+                await session.commit()
+
+                from core.settings.manager import settings_manager
+
+                settings_key = f"{node.agent_type}_model"
+                model_name = settings_manager.get(settings_key)
+
+                # Resolve params
+                model_params = await self.infra.resolve_model_params(model_name)
+                if model_params == "Unknown":
+                    model_params = None
+
                 AgentClass = AGENT_MAP.get(node.agent_type, CoderAgent)
-                agent = AgentClass(self.rules, self.ctx, model="mock")
+                agent = AgentClass(self.rules, self.ctx, model=model_name)
 
                 step = {
                     "id": node.id,
-                    "description": node.description,
+                    "description": f"{node.description}\n[USER APPROVED SHELL EXECUTION]",
                     "title": node.title,
+                    "params": model_params,
                     "last_tool_call": self.last_tool_calls.get(node.id),
                 }
 
                 async for chunk in agent.execute(step, conversation_id):
-                    if chunk["type"] == "token":
+                    if chunk["type"] == "status":
+                        await update_task(session, node.id, chunk["status"])
+                        yield {
+                            "event": "task_updated",
+                            "data": {"id": node.id, "status": chunk["status"]},
+                        }
+                    elif chunk["type"] == "token":
                         yield {"event": "token", "data": chunk["text"]}
                     elif chunk["type"] == "result":
-                        yield {"event": "task_updated", "data": {"id": node.id, "status": TaskStatus.DONE}}
-                        break
+                        await update_task(
+                            session, node.id, TaskStatus.DONE, result=chunk.get("result", "")
+                        )
+                        yield {
+                            "event": "task_updated",
+                            "data": {"id": node.id, "status": TaskStatus.DONE},
+                        }
+                        # Resume the rest of the graph
+                        async for follow_up in self.resume(node.graph_id, conversation_id):
+                            yield follow_up
             except Exception as e:
-                log.critical("DEBUG_RESUME_CRASH", error=str(e))
-                yield {"event": "error", "data": {"message": f"Debug failure: {str(e)}"}}
+                log.critical(
+                    "orchestrator.resume_shell_crashed", task_id=task_id, error=str(e), exc_info=True
+                )
+                yield {"event": "error", "data": {"message": f"Critical resume failure: {str(e)}"}}

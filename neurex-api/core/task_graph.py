@@ -18,9 +18,12 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 DATABASE_URL = "sqlite+aiosqlite:///./neurex.db"
 
 # Phase 44.4: High-Performance SQLite Tuning
+from sqlalchemy.orm import sessionmaker
+
 engine = create_async_engine(
     DATABASE_URL, echo=False, connect_args={"check_same_thread": False, "timeout": 30}
 )
+async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
 # Mandatory PRAGMAs for Concurrency & Speed
