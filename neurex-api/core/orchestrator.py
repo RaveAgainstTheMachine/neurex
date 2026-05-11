@@ -26,7 +26,6 @@ from core.agents.dependency_agent import DependencyAgent
 from core.agents.planner_agent import PlannerAgent
 from core.agents.researcher_agent import ResearcherAgent
 from core.agents.reviewer_agent import ReviewerAgent
-from core.agents.swarm_agent import SwarmAgent
 from core.agents.tester_agent import TesterAgent
 from core.context.manager import ContextManager
 from core.context.rules_parser import RulesParser
@@ -51,7 +50,6 @@ AGENT_MAP = {
     "reviewer": ReviewerAgent,
     "debater": DebaterAgent,
     "commander": CommanderAgent,
-    "swarm": SwarmAgent,
     "dependency": DependencyAgent,
 }
 
@@ -363,7 +361,6 @@ class Orchestrator:
                                     "reviewer": "Reviewing",
                                     "debater": "Reviewing",
                                     "commander": "Planning",
-                                    "swarm": "Coding",
                                 }
 
                                 routes = settings_manager.get("model_routes") or {}

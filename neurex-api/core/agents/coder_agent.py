@@ -183,12 +183,6 @@ class CoderAgent(BaseAgent):
                 elif chunk["type"] == "done":
                     # If no tool calls in last round, we're done
                     if not any(m.get("role") == "tool" for m in messages[-2:]):
-                        # Phase 48: Record Success for Neural Evolution
-                        from core.infrastructure.evolution import evolution_coordinator
-
-                        domain = task.get("domain", "generic-coding")
-                        await evolution_coordinator.record_success(domain, {"quality_score": 1.0})
-
                         yield {"type": "result", "result": chunk["full_text"]}
                         return
 

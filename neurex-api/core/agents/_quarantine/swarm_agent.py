@@ -9,9 +9,9 @@ from __future__ import annotations
 from collections.abc import AsyncGenerator
 
 import structlog
+from core.agents.swarm_manager import swarm_manager
 
 from core.agents.base_agent import BaseAgent
-from core.agents.swarm_manager import swarm_manager
 from core.task_graph import TaskNode
 
 log = structlog.get_logger()
