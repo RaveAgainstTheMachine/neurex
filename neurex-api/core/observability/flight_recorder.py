@@ -92,7 +92,7 @@ async def flush_decisions():
 async def get_flight_log(conversation_id: str, limit: int = 50) -> list[dict]:
     """Retrieve the reasoning trace, including pending buffer items."""
     # 1. Fetch from DB
-    async with AsyncSession(engine) as session:
+    async with async_session() as session:
         statement = (
             select(DecisionEvent)
             .where(DecisionEvent.conversation_id == conversation_id)

@@ -260,6 +260,34 @@ class Orchestrator:
             log.critical("orchestrator.run_crashed", graph_id=graph_id, error=str(e), exc_info=True)
             yield {"event": "error", "data": {"message": f"Critical planning failure: {str(e)}"}}
 
+    async def trigger_swarm_review(self, path: str, conversation_id: str):
+        """Phase 45: Automated Swarm Review for Protected Paths."""
+        from core.collaboration.consensus import consensus_manager
+        from core.agents.reviewer_agent import ReviewerAgent
+        from core.agents.planner_agent import PlannerAgent
+
+        paths_to_review = [path] if path else list(consensus_manager.proposals.keys())
+        
+        for p in paths_to_review:
+            proposal = consensus_manager.get_proposal(p)
+            if not proposal:
+                continue
+
+            log.info("orchestrator.swarm_review_init", path=p)
+
+            # 1. Spawn Reviewers
+            reviewer = ReviewerAgent(self.rules, self.ctx)
+            planner = PlannerAgent(self.rules, self.ctx)
+
+            # Automate evaluation
+            await consensus_manager.evaluate_mutation(
+                {"path": p, "content": proposal.content, "requester": proposal.requester},
+                [reviewer, planner],
+                conversation_id,
+            )
+
+            log.info("orchestrator.swarm_review_complete", path=p, reached=consensus_manager.get_proposal(p) is None)
+
     async def resume(
         self,
         graph_id: str,
@@ -408,6 +436,12 @@ class Orchestrator:
 
                                     elif chunk["type"] == "result":
                                         node_result = chunk["result"]
+                                        if isinstance(node_result, str) and "CONSENSUS_REQUIRED" in node_result:
+                                            # Extract path if possible (this is a bit hacky, better to have it in metadata)
+                                            # But for now, we trigger a broad review check
+                                            log.info("orchestrator.triggering_swarm_review", task_id=node.id)
+                                            # Background task to not block the current loop
+                                            asyncio.create_task(self.trigger_swarm_review("", conversation_id))
 
                                 # Mark as DONE
                                 await update_task(
@@ -565,8 +599,13 @@ class Orchestrator:
                             await queue.put({"event": "tool_call", "data": chunk})
 
                         elif chunk["type"] == "result":
+                            node_result = chunk.get("result", "")
+                            if isinstance(node_result, str) and "CONSENSUS_REQUIRED" in node_result:
+                                log.info("orchestrator.resume_shell.triggering_swarm_review", task_id=node.id)
+                                asyncio.create_task(self.trigger_swarm_review("", conversation_id))
+
                             await update_task(
-                                session, node.id, TaskStatus.DONE, result=chunk.get("result", "")
+                                session, node.id, TaskStatus.DONE, result=node_result
                             )
                             await queue.put(
                                 {
