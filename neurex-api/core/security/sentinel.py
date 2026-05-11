@@ -7,6 +7,7 @@ injection vectors in agent-generated code.
 
 from __future__ import annotations
 
+import asyncio
 import ast
 import os
 from pathlib import Path
@@ -136,6 +137,24 @@ class SecuritySentinel:
                 "vulnerable_files": len(all_issues),
             },
         }
+
+
+    async def start_background_scan(self, interval_seconds: int = 300):
+        """Periodically scans the workspace for security violations."""
+        log.info("sentinel.background_task_started", interval=interval_seconds)
+        while True:
+            try:
+                report = await self.audit_workspace()
+                if report["issues"]:
+                    log.warning("sentinel.security_audit_findings", 
+                                issues_found=len(report["issues"]),
+                                vulnerable_files=list(report["issues"].keys()))
+                    
+                    # Phase 2.2: Future - Generate Task Graph nodes for auto-patching
+            except Exception as e:
+                log.error("sentinel.background_scan_error", error=str(e))
+            
+            await asyncio.sleep(interval_seconds)
 
 
 # Global singleton

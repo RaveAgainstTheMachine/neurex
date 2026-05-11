@@ -124,6 +124,31 @@ class BaseAgent(ABC):
         params: str | None = None,
     ) -> AsyncGenerator[dict, None]:
         """Stream from Mesh/Local with high-speed token chunking."""
+        
+        # Phase 2.1: Mock LLM for Evals/Baselines
+        if os.getenv("NEUREX_MOCK_LLM") == "true":
+            yield {"type": "token", "text": "Mock response: I will execute the task as requested."}
+            # Detect if a tool call is needed based on prompt keywords (very basic for evals)
+            last_msg = messages[-1]["content"].lower()
+            if "create" in last_msg or "write" in last_msg or "save" in last_msg:
+                # Mock a write_file call if we can guess the path
+                import re
+                path_match = re.search(r'([a-zA-Z0-9_/.-]+\.py|[a-zA-Z0-9_/.-]+\.md|[a-zA-Z0-9_/.-]+\.ts)', last_msg)
+                if path_match:
+                    path = path_match.group(1)
+                    yield {
+                        "type": "tool_call", 
+                        "call": {
+                            "function": {
+                                "name": "write_file",
+                                "arguments": json.dumps({"path": path, "content": "# Mock content\nprint('Hello from Mock')"})
+                            },
+                            "id": "mock_call_1"
+                        }
+                    }
+            yield {"type": "done", "full_text": "Mock execution complete."}
+            return
+
         options = {"temperature": 0.2}
         if params:
             try:

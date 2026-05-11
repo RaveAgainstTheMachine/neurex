@@ -115,6 +115,11 @@ async def lifespan(app: FastAPI):
 
     asyncio.create_task(ci_healer.check_pipeline_health())
 
+    # Start Security Sentinel (Phase 2.2)
+    from core.security.sentinel import security_sentinel
+
+    asyncio.create_task(security_sentinel.start_background_scan())
+
     # Trigger initial hardware benchmark
 
     # Phase 44.9: Start Flight Recorder Batch Worker
