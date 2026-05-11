@@ -21,6 +21,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from core.agents.coder_agent import CoderAgent
 from core.agents.commander_agent import CommanderAgent
 from core.agents.debater_agent import DebaterAgent
+from core.agents.dependency_agent import DependencyAgent
 from core.agents.planner_agent import PlannerAgent
 from core.agents.researcher_agent import ResearcherAgent
 from core.agents.reviewer_agent import ReviewerAgent
@@ -43,6 +44,7 @@ AGENT_MAP = {
     "debater": DebaterAgent,
     "commander": CommanderAgent,
     "swarm": SwarmAgent,
+    "dependency": DependencyAgent,
 }
 
 

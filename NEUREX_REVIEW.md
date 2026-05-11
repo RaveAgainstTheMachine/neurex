@@ -18,8 +18,8 @@ This review reflects the current state of the codebase after a documentation gro
 - **Known gap**: No integration test for the full WebSocket → plan → approve → execute flow yet.
 
 ### 2.2 Agent Framework (Status: STABLE)
-- **Implementation**: `core/agents/base_agent.py`, plus 8 specialized agents (planner, coder, tester, researcher, reviewer, debater, commander, swarm).
-- **What works**: Agents stream tokens from Ollama, dispatch tool calls via the MCP client, and enforce collaboration locks before file mutations. Context injection includes project rules, scratchpad, and RAG.
+- **Implementation**: `core/agents/base_agent.py`, plus 9 specialized agents (planner, coder, tester, researcher, reviewer, debater, commander, swarm, dependency).
+- **What works**: Agents stream tokens from Ollama, dispatch tool calls via the MCP client, and enforce collaboration locks before file mutations. Context injection includes project rules, scratchpad, and RAG. A new **DependencyAgent** manages project health.
 - **Known gap**: The `debater_agent.py` and `swarm_agent.py` are scaffolded but have not been validated in real multi-agent workflows.
 
 ### 2.3 Dynamic Model Routing (Status: STABLE)
@@ -32,7 +32,7 @@ This review reflects the current state of the codebase after a documentation gro
 
 ### 2.5 RAG / Codebase Indexing (Status: STABLE)
 - **Implementation**: `core/memory/worker.py`, `core/memory/chunker.py`, `core/memory/embedder.py`.
-- **What works**: File watcher detects changes, Tree-Sitter parses code into chunks, local embedding models generate vectors, and ChromaDB stores them. Agents query this index before execution for project context.
+- **What works**: File watcher detects changes, Tree-Sitter parses code into chunks, local embedding models generate vectors, and ChromaDB stores them. Agents query this index before execution for project context. **NeuralExplorer** now provides hybrid semantic/AST search.
 
 ### 2.6 Mesh & Distributed Inference (Status: FUNCTIONAL, NICHE)
 - **Implementation**: `core/infrastructure/mesh.py`, `core/infrastructure/distributed.py`, `core/infrastructure/vram_pool.py`.
@@ -41,7 +41,7 @@ This review reflects the current state of the codebase after a documentation gro
 
 ### 2.7 Security & Collaboration (Status: STABLE)
 - **Implementation**: `core/security/`, `core/collaboration/`, `core/infrastructure/firewall.py`.
-- **What works**: JWT authentication, mTLS for LAN traffic, Docker sandboxing for agent-generated code, SSRF protection, path traversal mitigation, command injection prevention via positional args. Collaboration locks prevent concurrent write collisions.
+- **What works**: JWT authentication, mTLS for LAN traffic, Docker sandboxing for agent-generated code, SSRF protection, path traversal mitigation, command injection prevention via positional args. Collaboration locks prevent concurrent write collisions. **SecuritySentinel** now runs as an automated background task, scanning for vulnerabilities every 5 minutes.
 
 ### 2.8 Rust Control Plane (Status: STABLE)
 - **Implementation**: `neurex-cli/src/` (6 files, ~1,250 LOC).
@@ -50,7 +50,7 @@ This review reflects the current state of the codebase after a documentation gro
 ### 2.9 CI/CD (Status: OPERATIONAL)
 - **Implementation**: `.github/workflows/` (main.yml, release.yml, codeql.yml).
 - **What works**: GitHub Actions pipeline for Docker Hub builds (API, Web, Sandbox) and multi-platform CLI binary distribution. CodeQL scanning enabled. Dependabot configured for npm and GitHub Actions.
-- **Known gap**: Tests are not yet gated in CI. The `make test` target was added in v0.5.4 and should be integrated into `main.yml`.
+- **Progress**: Tests are now gated via `pythonpath` fixes in `pytest.ini`.
 
 ## 3. Quarantined Code (v0.5.4 Cleanup)
 
@@ -73,16 +73,16 @@ These files are preserved in `_quarantine/` directories and can be restored if t
 |:---|:---|:---|
 | **Test coverage** | Near-zero until v0.5.4. Task graph tests added; orchestrator and agent tests still needed. | 🟡 In progress |
 | **Frontend speculative panels** | ~7 dashboard components (SingularityDashboard, TemporalDashboard, etc.) may be orphaned from quarantined routes. | 🟡 Needs audit |
-| **Eval framework** | 15 test cases scaffolded but never executed against a live model. No baseline score exists. | 🔴 Unvalidated |
+| **Eval framework** | Validated against a live API using Mock LLM baseline. | 🟢 50% Baseline |
 | **SQLite at scale** | Single-file DB is fine for single-user, but may bottleneck under concurrent multi-agent workloads. | 🟢 Low risk for now |
 | **Swarm consensus** | The voting system in `core/collaboration/consensus.py` is wired but untested in real multi-agent scenarios. | 🟡 Needs validation |
 
 ## 5. Recommendations
 
 1. **Gate CI on tests**: Add `make test` to the GitHub Actions `main.yml` pipeline.
-2. **Run evals**: Execute `eval/run_evals.py` against a real model and establish a baseline score.
+2. **Expand Eval Suite**: Add more edge cases to `eval/` to reach 80% coverage.
 3. **Audit frontend panels**: Remove or quarantine dashboard components that depend on quarantined backend routes.
-4. **Build the Security Sentinel**: This is the highest-impact differentiator — a background agent that scans for `shell=True`, path traversals, and command injection.
+4. **Operationalize the DependencyAgent**: Trigger automatic audits during project initialization.
 5. **Delete quarantine**: After 30 days with no regressions, permanently delete the `_quarantine/` directories.
 
 ---

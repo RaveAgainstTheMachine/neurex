@@ -177,6 +177,12 @@ async def run_case(case: dict, model: str | None) -> dict:
                 event = json.loads(raw)
                 if event["event"] == "token":
                     output_tokens.append(event["data"])
+                elif event["event"] == "plan_ready":
+                    graph_id = event["data"]["graph_id"]
+                    await ws.send(json.dumps({"type": "approve_plan", "graph_id": graph_id}))
+                elif event["event"] == "approval_required":
+                    task_id = event["data"]["id"]
+                    await ws.send(json.dumps({"type": "approve_shell", "task_id": task_id, "approved": True}))
                 elif event["event"] == "done":
                     break
                 elif event["event"] == "error":
