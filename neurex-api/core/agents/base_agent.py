@@ -127,12 +127,30 @@ class BaseAgent(ABC):
         
         # Phase 2.1: Mock LLM for Evals/Baselines
         if os.getenv("NEUREX_MOCK_LLM") == "true":
-            yield {"type": "token", "text": "Mock response: I will execute the task as requested."}
-            # Detect if a tool call is needed based on prompt keywords (very basic for evals)
-            last_msg = messages[-1]["content"].lower()
-            if "create" in last_msg or "write" in last_msg or "save" in last_msg:
+            # Detect if it's a planning request or an execution request
+            if any("exact shape" in m["content"] for m in messages if m["role"] == "system"):
+                # Planning request
+                import re
+                last_msg = messages[-1]["content"].lower()
+                path_match = re.search(r'([a-zA-Z0-9_/.-]+\.py|[a-zA-Z0-9_/.-]+\.md|[a-zA-Z0-9_/.-]+\.ts)', last_msg)
+                path = path_match.group(1) if path_match else "output.txt"
+                
+                plan = [
+                    {
+                        "agent": "coder",
+                        "title": f"Create {path}",
+                        "description": f"Create a file named {path} with appropriate content."
+                    }
+                ]
+                yield {"type": "token", "text": json.dumps(plan)}
+                yield {"type": "result", "plan": plan}
+                yield {"type": "done", "full_text": json.dumps(plan)}
+            else:
+                # Execution request
+                yield {"type": "token", "text": "Executing task..."}
                 # Mock a write_file call if we can guess the path
                 import re
+                last_msg = messages[-1]["content"].lower()
                 path_match = re.search(r'([a-zA-Z0-9_/.-]+\.py|[a-zA-Z0-9_/.-]+\.md|[a-zA-Z0-9_/.-]+\.ts)', last_msg)
                 if path_match:
                     path = path_match.group(1)
@@ -141,12 +159,12 @@ class BaseAgent(ABC):
                         "call": {
                             "function": {
                                 "name": "write_file",
-                                "arguments": json.dumps({"path": path, "content": "# Mock content\nprint('Hello from Mock')"})
+                                "arguments": json.dumps({"path": path, "content": f"# Content for {path}\n# Hello from Mock"})
                             },
                             "id": "mock_call_1"
                         }
                     }
-            yield {"type": "done", "full_text": "Mock execution complete."}
+                yield {"type": "done", "full_text": "Mock execution complete."}
             return
 
         options = {"temperature": 0.2}
