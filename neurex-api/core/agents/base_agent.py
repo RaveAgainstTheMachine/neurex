@@ -288,12 +288,12 @@ class BaseAgent(ABC):
                     path, requester, conversation_id=conversation_id
                 )
                 if not locked:
-                    await record_decision(
-                        conversation_id=conversation_id,
-                        agent_type=self.agent_type,
-                        decision=f"block_mutation:{name}",
-                        rationale=f"The file '{path}' is currently locked by another entity.",
-                    )
+                    # await record_decision(
+                    #     conversation_id=conversation_id,
+                    #     agent_type=self.agent_type,
+                    #     decision=f"block_mutation:{name}",
+                    #     rationale=f"The file '{path}' is currently locked by another entity.",
+                    # )
                     return f"MUTATION_BLOCKED: The file '{path}' is locked by another entity."
 
             # 2. Neural Linting (Phase 45: Sentient IDE)
@@ -303,12 +303,12 @@ class BaseAgent(ABC):
             is_valid, reason = await linter.verify_mutation(name, args, conversation_id)
             if not is_valid:
                 log.warning("mutation_lint_failure", file=path, reason=reason)
-                await record_decision(
-                    conversation_id=conversation_id,
-                    agent_type=self.agent_type,
-                    decision=f"reject_mutation:{name}",
-                    rationale=f"Violation of architectural standards: {reason}",
-                )
+                # await record_decision(
+                #     conversation_id=conversation_id,
+                #     agent_type=self.agent_type,
+                #     decision=f"reject_mutation:{name}",
+                #     rationale=f"Violation of architectural standards: {reason}",
+                # )
                 return f"MUTATION_REJECTED: Your proposed change violates project architectural standards. Reason: {reason}"
 
             # 3. Swarm Consensus (Phase 45: Runtime Evolution)
@@ -321,12 +321,12 @@ class BaseAgent(ABC):
                     res = await consensus_manager.submit_proposal(
                         path, args.get("content") or "", requester
                     )
-                    await record_decision(
-                        conversation_id=conversation_id,
-                        agent_type=self.agent_type,
-                        decision=f"propose_mutation:{name}",
-                        rationale=f"File '{path}' is protected. Initiating swarm consensus.",
-                    )
+                    # await record_decision(
+                    #     conversation_id=conversation_id,
+                    #     agent_type=self.agent_type,
+                    #     decision=f"propose_mutation:{name}",
+                    #     rationale=f"File '{path}' is protected. Initiating swarm consensus.",
+                    # )
                     return res
 
                 # If we're here, a proposal exists. Check if consensus reached.
@@ -334,31 +334,31 @@ class BaseAgent(ABC):
                 # Other agents (Reviewer, Planner) will cast votes during their execution loops.
                 yes_votes = sum(1 for v in proposal.votes.values() if v)
                 if yes_votes < 3:
-                    await record_decision(
-                        conversation_id=conversation_id,
-                        agent_type=self.agent_type,
-                        decision=f"wait_consensus:{name}",
-                        rationale=f"Waiting for more votes on '{path}'. Current: {yes_votes}/3",
-                    )
+                    # await record_decision(
+                    #     conversation_id=conversation_id,
+                    #     agent_type=self.agent_type,
+                    #     decision=f"wait_consensus:{name}",
+                    #     rationale=f"Waiting for more votes on '{path}'. Current: {yes_votes}/3",
+                    # )
                     return f"CONSENSUS_REQUIRED: Waiting for swarm agreement on '{path}'. Current votes: {yes_votes}/3"
 
                 # Consensus reached! Clear proposal and allow mutation
                 consensus_manager.clear_proposal(path)
                 log.info("mutation_approved_by_consensus", file=path)
-                await record_decision(
-                    conversation_id=conversation_id,
-                    agent_type=self.agent_type,
-                    decision=f"approve_mutation:{name}",
-                    rationale=f"Swarm consensus reached for '{path}'.",
-                )
+                # await record_decision(
+                #     conversation_id=conversation_id,
+                #     agent_type=self.agent_type,
+                #     decision=f"approve_mutation:{name}",
+                #     rationale=f"Swarm consensus reached for '{path}'.",
+                # )
 
         log.info("tool_dispatch", tool=name, args=args)
-        await record_decision(
-            conversation_id=conversation_id,
-            agent_type=self.agent_type,
-            decision=f"dispatch_tool:{name}",
-            rationale=f"Executing tool {name} with arguments {json.dumps(args)[:200]}...",
-        )
+        # await record_decision(
+        #     conversation_id=conversation_id,
+        #     agent_type=self.agent_type,
+        #     decision=f"dispatch_tool:{name}",
+        #     rationale=f"Executing tool {name} with arguments {json.dumps(args)[:200]}...",
+        # )
         result = await self.mcp.call(
             name, args, autonomy_level=self.autonomy_level, conversation_id=conversation_id
         )
