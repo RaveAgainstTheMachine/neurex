@@ -545,20 +545,24 @@ class Orchestrator:
                         elif chunk["type"] == "token":
                             await queue.put({"event": "token", "data": chunk["text"]})
                         elif chunk["type"] == "tool_call":
-                            # Re-capture tool calls if agent emits them again
-                            await queue.put(
-                                {
-                                    "event": "tool_call",
-                                    "data": {
-                                        "id": node.id,
-                                        "call": chunk["call"],
-                                        "tool": chunk["tool"],
-                                        "args": chunk["args"],
-                                    },
-                                }
-                            )
-                            self.last_tool_calls[node.id] = chunk
-                            return # Pause for next approval
+                            if self.autonomy_level == "limited" and chunk["tool"] in ["shell", "filesystem"]:
+                                log.info("orchestrator.resume_shell.hitl_required", tool=chunk["tool"])
+                                await update_task(session, node.id, TaskStatus.AWAITING_APPROVAL)
+                                await queue.put(
+                                    {
+                                        "event": "approval_required",
+                                        "data": {
+                                            "id": node.id,
+                                            "tool": chunk["tool"],
+                                            "args": chunk["args"],
+                                        },
+                                    }
+                                )
+                                self.last_tool_calls[node.id] = chunk
+                                return  # Pause worker for approval
+
+                            # For non-sensitive tools, just log observability event
+                            await queue.put({"event": "tool_call", "data": chunk})
 
                         elif chunk["type"] == "result":
                             await update_task(
