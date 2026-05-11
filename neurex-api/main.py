@@ -127,6 +127,11 @@ async def lifespan(app: FastAPI):
 
     asyncio.create_task(flush_decisions())
 
+    # Start Dependency Watch (Phase 3)
+    from core.observability.dependency_watch import dependency_watch
+
+    asyncio.create_task(dependency_watch.start_background_watch())
+
     log.info("lsp.init_start")
     # Initialise LSP Manager
     from core.languages.lsp_manager import lsp_manager
