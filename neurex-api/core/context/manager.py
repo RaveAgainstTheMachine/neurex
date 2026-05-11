@@ -34,8 +34,8 @@ class ContextManager:
             log.warning("context.tiktoken_unavailable", hint="Token counting disabled")
 
         try:
-            from core.memory.embedder import Embedder, Reranker
             from core.context.neural_explorer import NeuralExplorer
+            from core.memory.embedder import Embedder, Reranker
 
             self._embedder = Embedder()
             self._reranker = Reranker()
