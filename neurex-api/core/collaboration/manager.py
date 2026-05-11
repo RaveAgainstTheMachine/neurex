@@ -42,7 +42,11 @@ class CollaborationManager:
 
             # If lock exists and hasn't expired, and it's not the requester's
             if current_lock:
-                if current_lock.expires_at > now and current_lock.locked_by != requester_id:
+                expires_at = current_lock.expires_at
+                if expires_at.tzinfo is None:
+                    expires_at = expires_at.replace(tzinfo=UTC)
+
+                if expires_at > now and current_lock.locked_by != requester_id:
                     log.warn(
                         "collaboration.lock_denied",
                         path=path,

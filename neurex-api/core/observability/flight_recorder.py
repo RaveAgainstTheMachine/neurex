@@ -10,7 +10,7 @@ import structlog
 from sqlmodel import Field, SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from core.task_graph import engine
+from core.task_graph import UTC, engine
 
 log = structlog.get_logger()
 
@@ -24,7 +24,7 @@ class DecisionEvent(SQLModel, table=True):
     decision: str
     rationale: str
     context_keys: str | None = None  # JSON string of keys used in decision
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
 async def _init_recorder_table():
