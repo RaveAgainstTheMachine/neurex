@@ -23,7 +23,7 @@ from pathlib import Path
 import httpx
 
 API_BASE   = os.getenv("EVAL_API_URL", "http://localhost:8000")
-API_TOKEN  = os.getenv("API_TOKEN", "neurex-dev-token")
+API_TOKEN  = os.getenv("EVAL_TOKEN", "neurex-dev-token")
 WS_BASE    = os.getenv("EVAL_WS_URL", "ws://localhost:8000")
 RESULTS_DIR = Path(__file__).parent / "results"
 
