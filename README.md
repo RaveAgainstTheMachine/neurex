@@ -142,5 +142,5 @@ See [LICENSE](./LICENSE) for full details.
 ---
 
 <div align="center">
-  <sub>Built by the Neurex Collective. v0.5.4.</sub>
+  <sub>Built by the Neurex Collective. v0.5.5.</sub>
 </div>

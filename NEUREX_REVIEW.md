@@ -1,13 +1,13 @@
-# NEUREX ARCHITECTURAL REVIEW
+# Neurex Codebase Review (v0.5.5)
 
-> **Status**: v0.5.4 — Active Development
+> **Status**: v0.5.5 — Active Development
 > **Last Reviewed**: 2026-05-11
 
 ## 1. Executive Summary
 
 Neurex is a local-first AI engineering workspace composed of three services: a React frontend (`neurex-web`), a FastAPI backend (`neurex-api`), and a Rust control plane (`neurex-cli`). The project reached core feature stability in v0.5.x with working agentic orchestration, persistent terminals, distributed inference, and LAN collaboration.
 
-This review reflects the current state of the codebase after a documentation grounding pass and dead code cleanup in v0.5.4.
+This review reflects the current state of the codebase after the High-Reliability Orchestration refactor in v0.5.5.
 
 ## 2. Core Service Review
 
@@ -52,7 +52,7 @@ This review reflects the current state of the codebase after a documentation gro
 - **What works**: GitHub Actions pipeline for Docker Hub builds (API, Web, Sandbox) and multi-platform CLI binary distribution. CodeQL scanning enabled. Dependabot configured for npm and GitHub Actions.
 - **Progress**: Tests are now gated via `pythonpath` fixes in `pytest.ini`.
 
-## 3. Quarantined Code (v0.5.4 Cleanup)
+## 3. Quarantined Code (v0.5.5 Cleanup)
 
 During the v0.5.4 review, **23 backend modules** and **6 API routes** were moved to `_quarantine/` directories. These modules were either:
 - Never imported by any active code path (0 inbound references), or
@@ -86,4 +86,4 @@ These files are preserved in `_quarantine/` directories and can be restored if t
 5. **Delete quarantine**: After 30 days with no regressions, permanently delete the `_quarantine/` directories.
 
 ---
-*Reviewed 2026-05-11. Reflects codebase state at v0.5.4.*
+*Reviewed 2026-05-11. Reflects codebase state at v0.5.5.*
