@@ -12,7 +12,7 @@
 
   <p>
     <a href="./LICENSE"><img src="https://img.shields.io/badge/License-BSL%201.1-purple.svg?style=for-the-badge" alt="License"></a>
-    <a href="#"><img src="https://img.shields.io/badge/Version-v0.5.4-blueviolet.svg?style=for-the-badge" alt="Version"></a>
+    <a href="#"><img src="https://img.shields.io/badge/Version-v0.5.5-blueviolet.svg?style=for-the-badge" alt="Version"></a>
     <a href="#"><img src="https://img.shields.io/badge/Status-Active%20Development-success.svg?style=for-the-badge" alt="Status"></a>
   </p>
 

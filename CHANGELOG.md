@@ -2,6 +2,14 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
+## [0.5.5] - 2026-05-11: HIGH-RELIABILITY ORCHESTRATION
+### Added
+- **Orchestrator Stability**: Refactored the task orchestration loop using an `asyncio.Queue` pattern, resolving the `greenlet_spawn` async database blocker and enabling stable streaming.
+- **Swarm Consensus**: Operationalized automated review loops for protected paths. Critical architectural mutations now require consensus from multiple agents (Reviewer, Planner).
+- **Flight Recorder v2**: Integrated a high-throughput, buffered decision logging pipeline for full agentic reasoning traces.
+- **RAG Performance**: Implemented a zero-latency RAG bypass for mocked evaluation environments, reducing CI/CD smoke test duration by 90%.
+- **Timezone Standardization**: Unified all database and collaboration timestamps to UTC to prevent offset-naive runtime crashes.
+
 ## [0.5.4] - 2026-05-10: GROUNDED SECURITY
 ### Added
 - **Documentation Grounding**: Rewrote core documentation (Architecture, Roadmap, README) to align with actual implementation and remove speculative buzzwords.

@@ -1,1 +1,1 @@
-VERSION = "0.5.4"  # Security Hardening & Documentation Grounding
+VERSION = "0.5.5"  # High-Reliability Orchestration & Swarm Consensus

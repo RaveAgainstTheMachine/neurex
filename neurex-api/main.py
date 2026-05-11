@@ -169,7 +169,7 @@ from core.infrastructure.logging_middleware import DebugLoggingMiddleware
 app = FastAPI(
     title="Neurex API",
     description="Local-First AI Engineering Workspace",
-    version="0.5.4",
+    version="0.5.5",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",
