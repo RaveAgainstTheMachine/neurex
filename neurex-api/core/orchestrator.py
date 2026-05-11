@@ -473,7 +473,9 @@ class Orchestrator:
         """Phase 3: Resuming a task after a shell approval."""
         async with AsyncSession(engine, expire_on_commit=False) as session:
             try:
-                node = await session.get(TaskNode, task_id)
+                stmt = select(TaskNode).where(TaskNode.id == task_id)
+                res = await session.exec(stmt)
+                node = res.first()
                 if not node:
                     return
 
