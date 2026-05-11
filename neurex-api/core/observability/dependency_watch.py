@@ -4,8 +4,9 @@ Periodic dependency health monitoring.
 """
 
 import asyncio
-import os
+
 import structlog
+
 from core.agents.dependency_agent import DependencyAgent
 from core.context.manager import ContextManager
 from core.context.rules_parser import RulesParser

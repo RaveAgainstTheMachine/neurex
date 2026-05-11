@@ -32,7 +32,14 @@ from core.context.manager import ContextManager
 from core.context.rules_parser import RulesParser
 from core.infrastructure.manager import InfrastructureManager
 from core.memory.hive import hive_mind
-from core.task_graph import TaskNode, TaskStatus, async_session, create_task, engine, get_graph, update_task
+from core.task_graph import (
+    TaskNode,
+    TaskStatus,
+    async_session,
+    create_task,
+    get_graph,
+    update_task,
+)
 
 log = structlog.get_logger()
 
@@ -262,9 +269,9 @@ class Orchestrator:
 
     async def trigger_swarm_review(self, path: str, conversation_id: str):
         """Phase 45: Automated Swarm Review for Protected Paths."""
-        from core.collaboration.consensus import consensus_manager
-        from core.agents.reviewer_agent import ReviewerAgent
         from core.agents.planner_agent import PlannerAgent
+        from core.agents.reviewer_agent import ReviewerAgent
+        from core.collaboration.consensus import consensus_manager
 
         paths_to_review = [path] if path else list(consensus_manager.proposals.keys())
         

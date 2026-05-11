@@ -8,7 +8,6 @@ from datetime import datetime
 
 import structlog
 from sqlmodel import Field, SQLModel, select
-from sqlmodel.ext.asyncio.session import AsyncSession
 
 from core.task_graph import UTC, async_session, engine
 
