@@ -140,7 +140,17 @@ class CoderAgent(BaseAgent):
                     yield {"type": "token", "text": chunk["text"]}
 
                 elif chunk["type"] == "tool_call":
-                    yield {"type": "tool_call", "call": chunk["call"]}
+                    tool_name = chunk["call"].get("function", {}).get("name", "")
+                    tool_cat = "filesystem" if tool_name in ["write_file", "delete_file"] else "generic"
+                    if tool_name == "run_command":
+                        tool_cat = "shell"
+
+                    yield {
+                        "type": "tool_call",
+                        "call": chunk["call"],
+                        "tool": tool_cat,
+                        "args": chunk["call"].get("function", {}).get("arguments", {}),
+                    }
                     yield {"type": "status", "status": TaskStatus.WRITING}
 
                     tool_result = await self.dispatch_tool(chunk["call"], conversation_id)
