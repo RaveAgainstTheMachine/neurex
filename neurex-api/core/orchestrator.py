@@ -268,16 +268,18 @@ class Orchestrator:
 
         paths_to_review = [path] if path else list(consensus_manager.proposals.keys())
         
+        model = "mock" if os.getenv("NEUREX_MOCK_LLM") == "true" else None
+
         for p in paths_to_review:
             proposal = consensus_manager.get_proposal(p)
             if not proposal:
                 continue
 
-            log.info("orchestrator.swarm_review_init", path=p)
+            log.info("orchestrator.swarm_review_init", path=p, model=model)
 
             # 1. Spawn Reviewers
-            reviewer = ReviewerAgent(self.rules, self.ctx)
-            planner = PlannerAgent(self.rules, self.ctx)
+            reviewer = ReviewerAgent(self.rules, self.ctx, model=model)
+            planner = PlannerAgent(self.rules, self.ctx, model=model)
 
             # Automate evaluation
             await consensus_manager.evaluate_mutation(
