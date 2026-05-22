@@ -2,6 +2,13 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
+## [0.6.0] - 2026-05-22: THE INTERACTIVE AGENTIC PIVOT
+### Added
+- **Pillar 1: Visual Agent Task Graph Editor**: Designed and built an interactive node-based designer canvas using SVG edges and glassmorphism styling. Supports on-graph rewiring of dependencies, inline node editing, manual step insertions, parent-child deletion auto-rewiring, and full-screen visualization overlays.
+- **Pillar 2: Multi-Cursor AI Pair Programming**: Implemented real-time streaming cursor telemetry at 60Hz. Decorates Monaco Editor with neon gradient agent cursors (`[Neurex Coder]`) and pulsing micro-animations.
+- **Pillar 3: Bidirectional LSP Context Router**: Developed an LSP multiplexer supporting Definition lookup, Reference searching, Hover signatures, and Diagnostic tracking. Registered these capabilities as native tools inside the dynamic agent tool capability loop.
+- **Pillar 4: Visual MCP Tool Sandbox & Manager**: Built a dedicated permissions panel displaying connected Model Context Protocol servers and schemas. Enables granular permissions override (Always Allow, Always Ask, Deny) and manual execution playgrounds.
+
 ## [0.5.6] - 2026-05-22: MONACO INLINE AI EDITING
 ### Added
 - **Monaco Inline AI Edit (`Ctrl+K`) Loop**: Implemented a near-instant interactive inline refactoring loop. Captures `neurex_inline_edit` custom events from Monaco and routes them directly to a fast-path streaming agent execution, bypassing standard multi-step planner graphs.

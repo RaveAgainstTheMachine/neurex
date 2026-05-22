@@ -1,1 +1,1 @@
-VERSION = "0.5.5"  # High-Reliability Orchestration & Swarm Consensus
+VERSION = "0.6.0"  # The Interactive Agentic Pivot

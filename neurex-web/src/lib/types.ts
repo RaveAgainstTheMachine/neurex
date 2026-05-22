@@ -24,6 +24,7 @@ export interface TaskNode {
   result: string | null;
   error: string | null;
   iteration: number;
+  is_checkpoint?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -271,6 +272,17 @@ export interface NeurexStore {
   tasks: Record<string, TaskNode>;
   upsertTask: (task: TaskNode) => void;
   clearTasks: () => void;
+  mutateGraph: (graphId: string, payload: {
+    action: "rewire" | "insert" | "delete";
+    task_id?: string;
+    parent_id?: string | null;
+    child_id?: string | null;
+    title?: string;
+    description?: string;
+    agent_type?: AgentType;
+  }) => Promise<any>;
+  toggleBreakpoint: (taskId: string) => Promise<void>;
+  approveTask: (taskId: string) => Promise<void>;
 
   // Editor
   setFileLanguage: (path: string, language: string) => void;

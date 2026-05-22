@@ -653,7 +653,7 @@ export function EditorPane({ paneId = "pane-main" }: { paneId?: string }) {
                       newDecorations.push({
                         range: new monaco.Range(p.cursor.line, p.cursor.ch, p.cursor.line, p.cursor.ch + 1),
                         options: {
-                          className: `remote-cursor remote-cursor--${(p.user_id || '').toLowerCase().includes('agent') ? 'agent' : 'user'}`,
+                          className: `remote-cursor remote-cursor--${(p.user_id || '').toLowerCase().match(/agent|coder|neurex/) ? 'agent' : 'user'}`,
                           hoverMessage: { value: p.user_id || 'Unknown' }
                         }
                       });

@@ -4,7 +4,7 @@
 > **Internal API**: `http://localhost:8000`  
 > **Auth**: Bearer JWT (obtain via `POST /api/auth/token`)  
 > **WebSocket**: `wss://localhost:3000/ws/{conversation_id}` (Internal: `ws://localhost:8000/ws/...`)  
-> **Version**: 0.5.2 (THE STABLE SUBSTRATE)
+> **Version**: 0.6.0 (THE INTERACTIVE AGENTIC PIVOT)
 
 ---
 
@@ -20,6 +20,7 @@
 - [Language Intelligence & LSP](#language-intelligence--lsp)
 - [Git & Version Control](#git--version-control)
 - [Skills & Extensions](#skills--extensions)
+- [Model Context Protocol & MCP](#model-context-protocol-mcp--sandbox)
 - [Settings](#settings)
 - [Notifications](#notifications)
 - [Self-Update](#self-update)
@@ -555,6 +556,124 @@ You can override or add LSP configurations by creating a `.neurex/lsp.json` file
 ```
 If a language is defined here, it takes precedence over both the native registry and system discovery.
 
+### `GET /api/intelligence/ast-bounds`
+Computes class, method, or function boundaries for target coordinates using the Tree-Sitter AST parser.
+
+**Query params**:
+| Param | Type | Description |
+|:---|:---|:---|
+| `path` | string | Relative path to the file |
+| `line` | integer | 1-indexed line number |
+| `column` | integer | 1-indexed column number |
+
+**Response `200`**:
+```json
+{
+  "start_line": 10,
+  "end_line": 25
+}
+```
+
+---
+
+## Model Context Protocol (MCP) & Sandbox
+
+Provides complete transparency and customization over the agent's active toolbox, allowing the visual configuration of execution rules per tool and manual payload playground runs.
+
+### `GET /api/mcp/servers`
+Lists core virtual servers and dynamic skill-based servers along with tools, input schemas, and granular permissions.
+
+**Auth**: `developer`
+
+**Response `200`**:
+```json
+[
+  {
+    "id": "filesystem-substrate",
+    "name": "Filesystem Substrate",
+    "status": "connected",
+    "type": "core",
+    "tools": [
+      {
+        "name": "read_file",
+        "description": "Read the contents of a file",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "path": { "type": "string", "description": "Parameter path (string)" }
+          },
+          "required": ["path"]
+        },
+        "rule": "allow"
+      }
+    ]
+  }
+]
+```
+
+### `POST /api/mcp/permissions`
+Updates the granular permission rule (`allow`, `ask`, `deny`) for a specific tool.
+
+**Auth**: `developer`
+
+**Body**:
+```json
+{
+  "tool_name": "write_file",
+  "rule": "allow"
+}
+```
+
+**Response `200`**:
+```json
+{
+  "status": "success",
+  "tool_name": "write_file",
+  "rule": "allow"
+}
+```
+
+### `POST /api/mcp/playground/run`
+Executes a tool manually within the user-steered playground, bypassing limited autonomy ceilings.
+
+**Auth**: `developer`
+
+**Body**:
+```json
+{
+  "tool_name": "list_directory",
+  "arguments": { "path": "." }
+}
+```
+
+**Response `200`**:
+```json
+{
+  "status": "success",
+  "result": "..."
+}
+```
+
+### `POST /api/mcp/servers/import`
+Clones and registers a new MCP server from a Git repository or local subdirectory.
+
+**Auth**: `admin`
+
+**Body**:
+```json
+{
+  "url": "https://github.com/example/mcp-server"
+}
+```
+
+**Response `200`**:
+```json
+{
+  "status": "success",
+  "server_name": "mcp-server"
+}
+```
+
 ---
 
 ## Git & Version Control
@@ -766,6 +885,6 @@ The WebSocket is the primary channel for all real-time agent interaction, termin
 
 ### `GET /health`
 ```json
-{ "status": "ok", "version": "0.5.2" }
+{ "status": "ok", "version": "0.6.0" }
 ```
 No authentication required.

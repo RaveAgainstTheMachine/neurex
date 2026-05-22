@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { 
   Files, Search, GitBranch, Clock, MessageSquare, 
-  Cpu, Shield, Puzzle, Bot, Settings, Sparkles, Activity, Globe, Timer
+  Cpu, Shield, Puzzle, Bot, Settings, Sparkles, Activity, Globe, Timer, Sliders
 } from "lucide-react";
 import { 
   DndContext, 
@@ -30,6 +30,7 @@ const SIDEBAR_ITEMS: { id: string; icon: React.FC<any>; label: string }[] = [
   { id: "git",      icon: GitBranch,      label: "Source Control" },
   { id: "swarm",    icon: Sparkles,       label: "Swarm Changes" },
   { id: "debate",   icon: Globe,          label: "Agent Debate" },
+  { id: "mcp",      icon: Sliders,        label: "MCP Sandbox" },
   { id: "timeline", icon: Clock,          label: "File Timeline" },
   { id: "history",  icon: MessageSquare,  label: "Chat History" },
   { id: "infra",    icon: Cpu,            label: "AI Infrastructure" },
@@ -68,6 +69,7 @@ export function ActivityBar() {
     const list = [...rawSidebarOrder];
     if (!list.includes("swarm")) list.push("swarm");
     if (!list.includes("debate")) list.push("debate");
+    if (!list.includes("mcp")) list.push("mcp");
     return list;
   }, [rawSidebarOrder]);
   const setSidebarOrder = useStore(s => s.setSidebarOrder);

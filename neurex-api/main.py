@@ -23,6 +23,7 @@ from api.routes import (
     infra,
     intelligence,
     languages,
+    mcp,
     memory,
     notifications,
     observability,
@@ -170,7 +171,7 @@ from core.infrastructure.logging_middleware import DebugLoggingMiddleware
 app = FastAPI(
     title="Neurex API",
     description="Local-First AI Engineering Workspace",
-    version="0.5.5",
+    version="0.6.0",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",
@@ -203,6 +204,7 @@ app.include_router(observability.router, prefix="/api/observability", tags=["obs
 app.include_router(languages.router, prefix="/api/languages", tags=["languages"])
 app.include_router(git.router, prefix="/api/git", tags=["git"])
 app.include_router(intelligence.router, prefix="/api/intelligence", tags=["intelligence"])
+app.include_router(mcp.router, prefix="/api/mcp", tags=["mcp"])
 
 app.include_router(ws_router, tags=["websocket"])
 

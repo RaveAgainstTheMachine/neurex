@@ -1,12 +1,14 @@
 import { useStore } from "../../lib/store";
-import { Bot, ChevronDown, ChevronRight, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Bot, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { useState, useMemo } from "react";
+import { TaskGraphEditor } from "../TaskGraph/TaskGraphEditor";
 import "./AgentPanel.css";
 
 export function AgentPanel() {
   const tasksObj = useStore((s) => s.tasks);
   const tasks = useMemo(() => Object.values(tasksObj), [tasksObj]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"list" | "graph">("graph");
 
   // Sort tasks by updated_at
   const sortedTasks = useMemo(() => [...tasks].sort((a, b) => 
@@ -17,63 +19,86 @@ export function AgentPanel() {
     switch (status) {
       case "DONE": return <CheckCircle size={14} className="text-green" />;
       case "FAILED": return <XCircle size={14} className="text-red" />;
-      case "AWAITING_APPROVAL": return <Bot size={14} className="text-purple" />;
+      case "AWAITING_APPROVAL": return <Bot size={14} className="text-purple" fill="rgba(168, 85, 247, 0.2)" />;
       default: return <Loader2 size={14} className="animate-spin text-cyan" />;
     }
   };
 
   return (
     <div className="agent-panel">
-      <div className="agent-panel__header">
-        <Bot size={16} />
-        Active Agent Intelligence
+      <div className="agent-panel__header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <Bot size={16} />
+          <span>Active Agent Intelligence</span>
+        </div>
+        <div className="view-toggle" style={{ display: "flex", background: "rgba(0,0,0,0.3)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)", padding: "2px" }}>
+          <button 
+            className={`btn btn--xs ${viewMode === "graph" ? "btn--purple" : "btn--secondary"}`}
+            style={{ padding: "3px 8px", fontSize: 9, textTransform: "none", border: "none", margin: 0 }}
+            onClick={() => setViewMode("graph")}
+          >
+            Canvas
+          </button>
+          <button 
+            className={`btn btn--xs ${viewMode === "list" ? "btn--purple" : "btn--secondary"}`}
+            style={{ padding: "3px 8px", fontSize: 9, textTransform: "none", border: "none", margin: 0 }}
+            onClick={() => setViewMode("list")}
+          >
+            List
+          </button>
+        </div>
       </div>
-      <div className="agent-panel__list">
-        {sortedTasks.map(task => {
-          const isExpanded = selectedId === task.id;
-          return (
-            <div 
-              key={task.id} 
-              className={`agent-task-item agent-task-item--${task.status.toLowerCase()} ${isExpanded ? 'active' : ''}`}
-              onClick={() => setSelectedId(isExpanded ? null : task.id)}
-            >
-              <div className="task-item__header">
-                <span className="task-item__status">{getStatusIcon(task.status)}</span>
-                <span className="task-item__agent">[{ (task.agent_type || "UNKNOWN").toUpperCase() }]</span>
-                <span className="task-item__title">{task.title}</span>
-              </div>
-              
-              <div className="task-item__meta">
-                <span>Status: {task.status}</span> • <span>{new Date(task.updated_at).toLocaleTimeString()}</span>
-              </div>
 
-              {isExpanded && (
-                <div className="task-item__details">
-                  <div className="detail-section">
-                    <strong>Objective:</strong>
-                    <p>{task.description}</p>
-                  </div>
-                  {task.result && (
-                    <div className="detail-section result">
-                      <strong>Outcome:</strong>
-                      <pre>{task.result}</pre>
-                    </div>
-                  )}
-                  {task.error && (
-                    <div className="detail-section error">
-                      <strong>Failure Reason:</strong>
-                      <pre>{task.error}</pre>
-                    </div>
-                  )}
+      {viewMode === "graph" ? (
+        <TaskGraphEditor />
+      ) : (
+        <div className="agent-panel__list">
+          {sortedTasks.map(task => {
+            const isExpanded = selectedId === task.id;
+            return (
+              <div 
+                key={task.id} 
+                className={`agent-task-item agent-task-item--${task.status.toLowerCase()} ${isExpanded ? 'active' : ''}`}
+                onClick={() => setSelectedId(isExpanded ? null : task.id)}
+              >
+                <div className="task-item__header">
+                  <span className="task-item__status">{getStatusIcon(task.status)}</span>
+                  <span className="task-item__agent">[{ (task.agent_type || "UNKNOWN").toUpperCase() }]</span>
+                  <span className="task-item__title">{task.title}</span>
                 </div>
-              )}
-            </div>
-          );
-        })}
-        {tasks.length === 0 && (
-          <div className="agent-panel__empty">No active agent tasks.</div>
-        )}
-      </div>
+                
+                <div className="task-item__meta">
+                  <span>Status: {task.status}</span> • <span>{new Date(task.updated_at).toLocaleTimeString()}</span>
+                </div>
+
+                {isExpanded && (
+                  <div className="task-item__details">
+                    <div className="detail-section">
+                      <strong>Objective:</strong>
+                      <p>{task.description}</p>
+                    </div>
+                    {task.result && (
+                      <div className="detail-section result">
+                        <strong>Outcome:</strong>
+                        <pre>{task.result}</pre>
+                      </div>
+                    )}
+                    {task.error && (
+                      <div className="detail-section error">
+                        <strong>Failure Reason:</strong>
+                        <pre>{task.error}</pre>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          {tasks.length === 0 && (
+            <div className="agent-panel__empty">No active agent tasks.</div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

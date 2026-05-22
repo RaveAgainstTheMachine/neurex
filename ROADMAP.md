@@ -3,7 +3,7 @@
 This document outlines the development trajectory of Neurex, focusing on building a stable, local-first AI engineering workspace.
 
 ## 🛰️ Current Operational Status
-- **Current Version**: `v0.5.3-STABLE`
+- **Current Version**: `v0.6.0-STABLE`
 - **Core Engine**: NeuralHarness v2.1
 - **Status**: Stable for local and LAN-based multi-device collaboration.
 
@@ -41,10 +41,10 @@ Neurex focuses on three pillars:
 Our current focus is elevating Neurex from a background task sandbox into a premier, high-fidelity **Interactive Agentic IDE** where developers and AI agents collaborate visually as true equal peers.
 
 ### 🎨 Core Interactive IDE Workflows
-- [ ] **Visual Agent Task Graph Editor**: A node-based designer canvas where users can visually rewire task dependencies, insert manual/agent steps, and set active execution breakpoints.
-- [ ] **Multi-Cursor AI Pair Programming**: Real-time collaborative typing in Monaco with visual AI cursors (`[Neurex Coder]`), selection highlights, and 60Hz telemetry sync.
-- [ ] **Bidirectional LSP Context Router**: Exposing language server operations (`find references`, `go to definition`, `diagnostics`) directly to agents to query semantic codebase relations.
-- [ ] **Visual MCP Tool Sandbox & Manager**: A dashboard listing connected Model Context Protocol servers with a granular permission matrix (Always Allow, Always Ask, Deny) and manual tool playgrounds.
+- [x] **Visual Agent Task Graph Editor**: A node-based designer canvas where users can visually rewire task dependencies, insert manual/agent steps, and set active execution breakpoints.
+- [x] **Multi-Cursor AI Pair Programming**: Real-time collaborative typing in Monaco with visual AI cursors (`[Neurex Coder]`), selection highlights, and 60Hz telemetry sync.
+- [x] **Bidirectional LSP Context Router**: Exposing language server operations (`find references`, `go to definition`, `diagnostics`) directly to agents to query semantic codebase relations.
+- [x] **Visual MCP Tool Sandbox & Manager**: A dashboard listing connected Model Context Protocol servers with a granular permission matrix (Always Allow, Always Ask, Deny) and manual tool playgrounds.
 
 ### 🧪 Reliability, Evals & Controls
 - [ ] **Interactive Simulation Benchmarks**: Real-time evaluation runs designed to test agent responsiveness and cooperation in live visual environments.

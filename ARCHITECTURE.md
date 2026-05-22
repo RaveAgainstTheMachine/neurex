@@ -82,8 +82,8 @@ Real-time state (active users, agent cursors) is synchronized via WebSockets to 
 ## 7. Multi-Root Workspace Model
 Neurex supports managing multiple projects simultaneously through a root-aware filesystem abstraction. API endpoints and terminals are scoped to specific project roots, preventing cross-project path traversal.
 
-## 8. Language Intelligence (LSP Hub)
-A native LSP Hub orchestrates language server subprocesses on the host. It provides diagnostics (Neural Lens), formatting, and symbol navigation via standard JSON-RPC over WebSockets.
+## 8. Language Intelligence (LSP Hub & Bidirectional Router)
+Neurex coordinates language server subprocesses on the host. The **Bidirectional LSP Context Router** (`lsp_router.py`) multiplexes semantic requests (go-to-definition, find-references, hovers, diagnostics) directly to active language server sessions (e.g., Pyright, TypeScript-language-server). These semantic operations are bound as first-class tools directly to the agent capability registry. This enables agents to navigate the symbol hierarchy organically during execution rather than relying on raw-text regex keywords. Renders compiler diagnostics visually via the inline Neural Lens.
 
 ## 9. Performance & Scaling
 
@@ -103,6 +103,12 @@ The system implements mandatory SSL/TLS for LAN traffic, utilizes transparent pr
 
 ## 12. Attributions & Citations
 Neurex is built upon the foundational work of the global AI and Open Source research community, including `llama.cpp`, `Tree-Sitter`, `FastAPI`, `React`, and various open-weight model architectures (Qwen, Llama, Mistral).
+
+## 13. Model Context Protocol (MCP) Sandbox & Manager
+The **MCP Tool Sandbox & Manager** provides complete visual transparency and security boundaries over the agent's active toolbox. 
+- **Registry & Permission Matrix**: Active tools are listed dynamically alongside their JSON schemas. The user can visually configure execution policies per-tool: `Always Allow` (run automatically), `Always Ask` (triggers a visual HITL approval banner), or `Deny` (completely blocks execution).
+- **Security Gates**: Re-evaluates tool invocations against a granular database-backed rule mapping (`mcp_client.py`) and a system-level path-authorization sentinel.
+- **Dynamic Skill Imports**: Allows hot-importing new MCP tools and pipelines directly from Git repositories or local directories on-the-fly, generating dynamic tool schemas via Python signature inspection.
 
 ---
 © 2026 Neurex Collective. All rights reserved.

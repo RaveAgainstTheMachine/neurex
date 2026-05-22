@@ -29,6 +29,12 @@ from core.mcp.tools.intel import (
     query_project_intel,
     synthesize_project_intel,
 )
+from core.mcp.tools.lsp import (
+    lsp_find_references,
+    lsp_get_diagnostics,
+    lsp_get_hover,
+    lsp_go_to_definition,
+)
 from core.mcp.tools.mesh_intel import check_peer_suitability, get_mesh_topology
 from core.mcp.tools.researcher import web_search
 from core.mcp.tools.search import grep_search
@@ -133,7 +139,65 @@ TOOL_REGISTRY: dict[str, callable] = {
     "add_global_memory": run_add_global_memory,
     "query_global_memory": run_query_global_memory,
     "hardware_benchmark": run_hardware_benchmark,
+    "lsp_go_to_definition": lsp_go_to_definition,
+    "lsp_find_references": lsp_find_references,
+    "lsp_get_hover": lsp_get_hover,
+    "lsp_get_diagnostics": lsp_get_diagnostics,
 }
+
+
+async def get_tool_permission(tool_name: str) -> str:
+    """Returns the permission rule for a given tool: 'allow', 'ask', 'deny'."""
+    from sqlmodel import select
+
+    from core.task_graph import MCPToolPermission, async_session
+
+    # Default safe tools are auto-approved ("allow")
+    safe_tools = [
+        "read_file",
+        "list_directory",
+        "grep_search",
+        "web_search",
+        "query_project_intel",
+        "get_flight_log",
+        "lsp_go_to_definition",
+        "lsp_find_references",
+        "lsp_get_hover",
+        "lsp_get_diagnostics",
+    ]
+
+    try:
+        async with async_session() as session:
+            result = await session.exec(
+                select(MCPToolPermission).where(MCPToolPermission.tool_name == tool_name)
+            )
+            perm = result.first()
+            if perm:
+                return perm.rule
+    except Exception as e:
+        log.warning("mcp.get_permission_failed", tool=tool_name, error=str(e))
+
+    # Default fallback rules
+    if tool_name in safe_tools:
+        return "allow"
+    return "ask"
+
+
+async def set_tool_permission(tool_name: str, rule: str):
+    """Sets the permission rule for a given tool: 'allow', 'ask', 'deny'."""
+    from datetime import UTC, datetime
+
+    from core.task_graph import MCPToolPermission, async_session
+
+    async with async_session() as session:
+        perm = await session.get(MCPToolPermission, tool_name)
+        if perm:
+            perm.rule = rule
+            perm.updated_at = datetime.now(UTC)
+        else:
+            perm = MCPToolPermission(tool_name=tool_name, rule=rule)
+        session.add(perm)
+        await session.commit()
 
 
 class MCPClient:
@@ -157,6 +221,12 @@ class MCPClient:
         """
         Executes a tool call. Enforces YOLO classification and Swarm Self-Governance (Phase 40).
         """
+        # Granular Permission Check
+        rule = await get_tool_permission(tool_name)
+        if rule == "deny":
+            log.warning("mcp.tool_denied", tool=tool_name)
+            return f"Permission denied: Tool '{tool_name}' has been DENIED by the user."
+
         # Phase 40: Swarm Self-Governance Check
         from core.security.governance import governance_manager
 
@@ -173,6 +243,10 @@ class MCPClient:
             "web_search",
             "query_project_intel",
             "get_flight_log",
+            "lsp_go_to_definition",
+            "lsp_find_references",
+            "lsp_get_hover",
+            "lsp_get_diagnostics",
         ]
         is_yolo = tool_name in safe_tools
 

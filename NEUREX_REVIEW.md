@@ -1,13 +1,13 @@
-# Neurex Codebase Review (v0.5.6)
+# Neurex Codebase Review (v0.6.0)
 
-> **Status**: v0.5.6 — Active Development
+> **Status**: v0.6.0 — Stable Release
 > **Last Reviewed**: 2026-05-22
 
 ## 1. Executive Summary
 
 Neurex is a local-first AI engineering workspace composed of three services: a React frontend (`neurex-web`), a FastAPI backend (`neurex-api`), and a Rust control plane (`neurex-cli`). The project reached core feature stability in v0.5.x with working agentic orchestration, persistent terminals, distributed inference, and LAN collaboration.
 
-This review reflects the current state of the codebase after the Monaco Inline AI Edit integration in v0.5.6.
+This review reflects the current state of the codebase after the Interactive Agentic Pivot (v0.6.0) integration.
 
 ## 2. Core Service Review
 
@@ -85,5 +85,13 @@ These files are preserved in `_quarantine/` directories and can be restored if t
 4. **Operationalize the DependencyAgent**: Trigger automatic audits during project initialization.
 5. **Delete quarantine**: After 30 days with no regressions, permanently delete the `_quarantine/` directories.
 
+## 6. Phase 2 & v0.6.0 Architectural Milestone Review (2026-05-22)
+
+We have successfully completed all four high-fidelity pillars turning Neurex into a fully cooperative, visually transparent Agentic IDE:
+1. **Pillar 1 (Visual Agent Task Graph Editor)**: Replaced a background orchestration task runner with a custom, high-fidelity flowchart node designer canvas. This supports breakpoints, edge mutations, and node edits inline with zero heavy rendering libraries.
+2. **Pillar 2 (Multi-Cursor AI Pair Programming)**: Created a 60Hz telemetry loop broadcast over WebSockets, displaying the agent's real-time workspace focus and Monaco decorations seamlessly.
+3. **Pillar 3 (Bidirectional LSP Context Router)**: Bypassed coarse-grained filesystem search constraints by binding a multiplexed backend Language Server Protocol client (`lsp_router.py`) as functional tools in the agent's reasoning loop.
+4. **Pillar 4 (Visual MCP Tool Sandbox & Manager)**: Established dynamic import channels and a highly-visible user governance permission control matrix (`mcp.py` routes and `MCPSandbox.tsx` UI) to ensure clean security oversight.
+
 ---
-*Reviewed 2026-05-22. Reflects codebase state at v0.5.6.*
+*Reviewed 2026-05-22. Reflects codebase state at v0.6.0.*

@@ -109,6 +109,12 @@ class FileLock(SQLModel, table=True):
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
+class MCPToolPermission(SQLModel, table=True):
+    tool_name: str = Field(primary_key=True)
+    rule: str = Field(default="ask")  # "allow", "ask", "deny"
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
 # DecisionEvent moved to core.observability.flight_recorder
 
 

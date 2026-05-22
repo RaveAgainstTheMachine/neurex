@@ -38,6 +38,72 @@ def get_default_model():
     return os.getenv("DEFAULT_MODEL", "qwen2.5-coder:14b")
 
 
+LSP_TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "lsp_go_to_definition",
+            "description": "Find the coordinates (file, line, column) and code snippet of a symbol's definition.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "file_path": {"type": "string", "description": "Relative path to the file from workspace root"},
+                    "line": {"type": "integer", "description": "1-indexed line number"},
+                    "col": {"type": "integer", "description": "1-indexed column number"}
+                },
+                "required": ["file_path", "line", "col"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "lsp_find_references",
+            "description": "Find all reference coordinates and line snippets for a symbol in the workspace.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "file_path": {"type": "string", "description": "Relative path to the file from workspace root"},
+                    "line": {"type": "integer", "description": "1-indexed line number"},
+                    "col": {"type": "integer", "description": "1-indexed column number"}
+                },
+                "required": ["file_path", "line", "col"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "lsp_get_hover",
+            "description": "Retrieve semantic information (signature, docstring, type information) under the cursor.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "file_path": {"type": "string", "description": "Relative path to the file from workspace root"},
+                    "line": {"type": "integer", "description": "1-indexed line number"},
+                    "col": {"type": "integer", "description": "1-indexed column number"}
+                },
+                "required": ["file_path", "line", "col"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "lsp_get_diagnostics",
+            "description": "Query compilation errors and warnings currently reported by the language server for a file.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "file_path": {"type": "string", "description": "Relative path to the file from workspace root"}
+                },
+                "required": ["file_path"],
+            },
+        },
+    },
+]
+
+
 class BaseAgent(ABC):
     """All agents inherit from this."""
 
@@ -195,7 +261,8 @@ class BaseAgent(ABC):
         }
 
         skill_tools = self.skills.get_enabled_tools()
-        final_tools = (tools or []) + skill_tools
+        # Bind semantic LSP tools to all agents for organic navigation
+        final_tools = (tools or []) + skill_tools + LSP_TOOLS
         if final_tools:
             payload["tools"] = final_tools
 

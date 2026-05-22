@@ -178,6 +178,8 @@ class LSPSession:
         self._running = False
         self._output_queue = asyncio.Queue()
         self._reader_task: asyncio.Task | None = None
+        self._pending_requests: dict[int, asyncio.Future] = {}
+        self._request_id_counter = 0
 
     async def _read_loop(self):
         """Persistent background reader for LSP stdout with proper protocol parsing."""
@@ -270,10 +272,46 @@ class LSPSession:
         except Exception:
             return b""
 
-    def handle_json(self, body_raw: bytes):
-        """Parse LSP JSON messages for diagnostic tracking."""
+    async def send_request(self, method: str, params: dict) -> dict:
+        if not self.process or not self._running:
+            raise RuntimeError(f"LSP server for {self.lang} is not running")
+
+        self._request_id_counter += 1
+        req_id = self._request_id_counter
+        payload = {
+            "jsonrpc": "2.0",
+            "id": req_id,
+            "method": method,
+            "params": params
+        }
+        body = json.dumps(payload).encode('utf-8')
+        header = f"Content-Length: {len(body)}\r\n\r\n".encode('ascii')
+        
+        loop = asyncio.get_running_loop()
+        fut = loop.create_future()
+        self._pending_requests[req_id] = fut
+        
+        await self.write(header + body)
+        
         try:
-            body = json.loads(body_raw.decode())
+            response = await asyncio.wait_for(fut, timeout=10.0)
+            return response
+        except TimeoutError:
+            self._pending_requests.pop(req_id, None)
+            raise TimeoutError(f"LSP request '{method}' (id: {req_id}) timed out after 10.0 seconds")
+
+    def handle_json(self, body_raw: bytes):
+        """Parse LSP JSON messages for diagnostic tracking and request resolution."""
+        try:
+            body = json.loads(body_raw.decode('utf-8', errors='ignore'))
+            
+            # Resolve pending requests if it's a response
+            if "id" in body:
+                req_id = body["id"]
+                fut = self._pending_requests.pop(req_id, None)
+                if fut and not fut.done():
+                    fut.set_result(body)
+                    
             if body.get("method") == "textDocument/publishDiagnostics":
                 params = body.get("params", {})
                 uri = params.get("uri")

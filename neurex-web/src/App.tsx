@@ -34,6 +34,7 @@ import { MobileView } from "./components/MobileView/MobileView";
 import { ContextMenu } from "./components/ContextMenu/ContextMenu";
 import { SwarmDiffSidebar } from "./components/SwarmDiff/SwarmDiffSidebar";
 import { DebateArena } from "./components/DebateArena/DebateArena";
+import { MCPSandbox } from "./components/MCPSandbox/MCPSandbox";
 import "./App.css";
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
@@ -331,6 +332,7 @@ function AppContent() {
                     {sidebarTab === "agent"    && <AgentPanel />}
                     {sidebarTab === "swarm"    && <SwarmDiffSidebar />}
                     {sidebarTab === "debate"   && <DebateArena />}
+                    {sidebarTab === "mcp"      && <MCPSandbox />}
                   </Panel>
                   <ResizeHandle />
                   <Panel minSize={30} className="app__main-content">

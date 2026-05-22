@@ -322,6 +322,26 @@ class Orchestrator:
                         for node in tasks:
                             try:
                                 active_node_id = node.id
+                                if node.is_checkpoint:
+                                    log.info("orchestrator.checkpoint_reached", task_id=node.id)
+                                    await update_task(
+                                        session,
+                                        node.id,
+                                        TaskStatus.AWAITING_APPROVAL,
+                                        approval_reason="Breakpoint reached. Click resume to proceed.",
+                                    )
+                                    await queue.put(
+                                        {
+                                            "event": "task_updated",
+                                            "data": {
+                                                "id": node.id,
+                                                "status": TaskStatus.AWAITING_APPROVAL,
+                                                "approval_reason": "Breakpoint reached. Click resume to proceed.",
+                                            },
+                                        }
+                                    )
+                                    return
+
                                 log.info("orchestrator.executing_task", task_id=node.id, title=node.title)
                                 await update_task(session, node.id, TaskStatus.THINKING)
                                 await queue.put(
@@ -400,11 +420,16 @@ class Orchestrator:
                                             }
                                         )
                                     elif chunk["type"] == "tool_call":
-                                        if self.autonomy_level == "limited" and chunk["tool"] in [
-                                            "shell",
-                                            "filesystem",
-                                        ]:
-                                            log.info("orchestrator.hitl_required", tool=chunk["tool"])
+                                        tool_call = chunk.get("call", {})
+                                        tool_name = tool_call.get("function", {}).get("name", "")
+                                        from core.mcp.client import get_tool_permission
+                                        rule = await get_tool_permission(tool_name)
+
+                                        if rule == "ask" or (
+                                            self.autonomy_level == "limited"
+                                            and chunk.get("tool") in ["shell", "filesystem"]
+                                        ):
+                                            log.info("orchestrator.hitl_required", tool=tool_name or chunk.get("tool"))
                                             await update_task(
                                                 session, node.id, TaskStatus.AWAITING_APPROVAL
                                             )
@@ -413,8 +438,8 @@ class Orchestrator:
                                                     "event": "approval_required",
                                                     "data": {
                                                         "id": node.id,
-                                                        "tool": chunk["tool"],
-                                                        "args": chunk["args"],
+                                                        "tool": tool_name or chunk.get("tool", "unknown"),
+                                                        "args": chunk.get("args") or tool_call.get("function", {}).get("arguments", {}),
                                                     },
                                                 }
                                             )
@@ -589,16 +614,24 @@ class Orchestrator:
                         elif chunk["type"] == "token":
                             await queue.put({"event": "token", "data": chunk["text"]})
                         elif chunk["type"] == "tool_call":
-                            if self.autonomy_level == "limited" and chunk["tool"] in ["shell", "filesystem"]:
-                                log.info("orchestrator.resume_shell.hitl_required", tool=chunk["tool"])
+                            tool_call = chunk.get("call", {})
+                            tool_name = tool_call.get("function", {}).get("name", "")
+                            from core.mcp.client import get_tool_permission
+                            rule = await get_tool_permission(tool_name)
+
+                            if rule == "ask" or (
+                                self.autonomy_level == "limited"
+                                and chunk.get("tool") in ["shell", "filesystem"]
+                            ):
+                                log.info("orchestrator.resume_shell.hitl_required", tool=tool_name or chunk.get("tool"))
                                 await update_task(session, node.id, TaskStatus.AWAITING_APPROVAL)
                                 await queue.put(
                                     {
                                         "event": "approval_required",
                                         "data": {
                                             "id": node.id,
-                                            "tool": chunk["tool"],
-                                            "args": chunk["args"],
+                                            "tool": tool_name or chunk.get("tool", "unknown"),
+                                            "args": chunk.get("args") or tool_call.get("function", {}).get("arguments", {}),
                                         },
                                     }
                                 )
@@ -670,125 +703,199 @@ class Orchestrator:
             yield {"event": "error", "data": f"Failed to read file: {str(e)}"}
             return
 
-        # Handle Mock LLM baseline testing
-        if os.getenv("NEUREX_MOCK_LLM") == "true":
-            # Just do a mock replacement in the selected text
-            mock_modified = original_content
-            if selection and selection in original_content:
-                mock_modified = original_content.replace(
-                    selection, f"{selection}\n# Refactored by Mock AI: {prompt}"
-                )
+        import time
+
+        from core.collaboration.presence import presence_manager
+        agent_id = "Agent [Neurex Coder]"
+        
+        # Initialize presence for agent
+        if conversation_id not in presence_manager.presence_state:
+            presence_manager.presence_state[conversation_id] = {}
+        presence_manager.presence_state[conversation_id][agent_id] = {
+            "user_id": agent_id,
+            "cursor": {"line": 1, "ch": 1},
+            "active_file": path,
+            "status": "online",
+            "last_ping": time.time(),
+        }
+        await presence_manager.broadcast(
+            conversation_id,
+            {
+                "event": "presence_update",
+                "data": list(presence_manager.presence_state[conversation_id].values()),
+            }
+        )
+
+        try:
+            # Handle Mock LLM baseline testing
+            if os.getenv("NEUREX_MOCK_LLM") == "true":
+                # Just do a mock replacement in the selected text
+                mock_modified = original_content
+                if selection and selection in original_content:
+                    mock_modified = original_content.replace(
+                        selection, f"{selection}\n# Refactored by Mock AI: {prompt}"
+                    )
+                else:
+                    mock_modified = f"{original_content}\n# Refactored by Mock AI: {prompt}"
+
+                yield {
+                    "event": "task_updated",
+                    "data": {"id": task_id, "status": "THINKING"},
+                }
+                # Simulate smooth, high-frequency typing motion in Mock LLM too!
+                lines = mock_modified.split('\n')
+                for i in range(1, len(lines) + 1):
+                    presence_manager.presence_state[conversation_id][agent_id].update({
+                        "cursor": {"line": i, "ch": len(lines[i-1]) + 1},
+                        "active_file": path,
+                        "last_ping": time.time(),
+                    })
+                    await presence_manager.broadcast(
+                        conversation_id,
+                        {
+                            "event": "presence_update",
+                            "data": list(presence_manager.presence_state[conversation_id].values()),
+                        }
+                    )
+                    await asyncio.sleep(0.016) # ~60Hz typing sleep
+
+                yield {
+                    "event": "task_updated",
+                    "data": {"id": task_id, "status": "DONE"},
+                }
+                yield {
+                    "event": "inline_edit_diff",
+                    "data": {
+                        "path": path,
+                        "original": original_content,
+                        "modified": mock_modified,
+                        "taskId": task_id,
+                    },
+                }
+                return
+
+            # 1. Resolve model via routes
+            from core.settings.manager import settings_manager
+
+            routes = settings_manager.get("model_routes") or {}
+            model_name = routes.get("Coding") or settings_manager.get("coder_model")
+            if isinstance(model_name, dict):
+                model_params = model_name.get("params")
+                model_name = model_name.get("model")
             else:
-                mock_modified = f"{original_content}\n# Refactored by Mock AI: {prompt}"
+                model_params = await self.infra.resolve_model_params(model_name)
+                if model_params == "Unknown":
+                    model_params = None
+
+            # 2. Construct targeted system and user prompts
+            system_prompt = (
+                "You are a precise code refactoring assistant inside Neurex IDE.\n"
+                "You will be given the entire content of a file, the user's selected text in that file, and a prompt instruction.\n"
+                "Your task is to modify the code inside the file based on the instruction.\n"
+                "Return the COMPLETE new contents of the entire file. Do NOT output a diff or partial replacement.\n"
+                "Return ONLY the raw contents of the modified file. Do NOT wrap it in markdown block quotes (such as ```python or ```) or prefix it with any intro or explanation. Just return the raw file content."
+            )
+
+            user_prompt = (
+                f"FILE PATH: {path}\n\n"
+                f"=== CURRENT FULL FILE CONTENT ===\n"
+                f"{original_content}\n"
+                f"=================================\n\n"
+                f"=== SELECTED RANGE TEXT ===\n"
+                f"{selection or ''}\n"
+                f"============================\n\n"
+                f"INSTRUCTION: {prompt}\n\n"
+                f"Apply the instruction and output the complete, raw content of the modified file."
+            )
+
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ]
+
+            from core.agents.base_agent import BaseAgent
+
+            class InlineHelperAgent(BaseAgent):
+                system_prompt = "You are a precise refactoring assistant."
+                agent_type = "inline_helper"
+
+                async def execute(self, task: dict, conversation_id: str) -> AsyncGenerator[dict, None]:
+                    pass
+
+            agent = InlineHelperAgent(self.rules, self.ctx, model=model_name)
 
             yield {
                 "event": "task_updated",
                 "data": {"id": task_id, "status": "THINKING"},
             }
-            await asyncio.sleep(0.1)
+
+            modified_content_chunks = []
+            last_update_time = 0.0
+            async for chunk in agent.stream(messages, params=model_params):
+                if chunk["type"] == "token":
+                    token = chunk["text"]
+                    modified_content_chunks.append(token)
+                    yield {"event": "token", "data": token, "task_id": task_id}
+
+                    # Throttled 60Hz Telemetry Stream
+                    current_time = time.time()
+                    if current_time - last_update_time >= (1.0 / 60.0):
+                        last_update_time = current_time
+                        accumulated = "".join(modified_content_chunks)
+                        lines = accumulated.split('\n')
+                        line_num = len(lines)
+                        col_num = len(lines[-1]) + 1
+
+                        presence_manager.presence_state[conversation_id][agent_id].update({
+                            "cursor": {"line": line_num, "ch": col_num},
+                            "active_file": path,
+                            "last_ping": time.time(),
+                        })
+                        await presence_manager.broadcast(
+                            conversation_id,
+                            {
+                                "event": "presence_update",
+                                "data": list(presence_manager.presence_state[conversation_id].values()),
+                            }
+                        )
+                elif chunk["type"] == "done":
+                    break
+
+            full_modified = "".join(modified_content_chunks)
+
+            # Strip markdown fences if any
+            full_modified = full_modified.strip()
+            if full_modified.startswith("```"):
+                lines = full_modified.splitlines()
+                if len(lines) >= 2:
+                    if lines[0].startswith("```"):
+                        lines = lines[1:]
+                    if lines[-1].strip() == "```":
+                        lines = lines[:-1]
+                    full_modified = "\n".join(lines)
+
             yield {
                 "event": "task_updated",
                 "data": {"id": task_id, "status": "DONE"},
             }
+
             yield {
                 "event": "inline_edit_diff",
                 "data": {
                     "path": path,
                     "original": original_content,
-                    "modified": mock_modified,
+                    "modified": full_modified,
                     "taskId": task_id,
                 },
             }
-            return
-
-        # 1. Resolve model via routes
-        from core.settings.manager import settings_manager
-
-        routes = settings_manager.get("model_routes") or {}
-        model_name = routes.get("Coding") or settings_manager.get("coder_model")
-        if isinstance(model_name, dict):
-            model_params = model_name.get("params")
-            model_name = model_name.get("model")
-        else:
-            model_params = await self.infra.resolve_model_params(model_name)
-            if model_params == "Unknown":
-                model_params = None
-
-        # 2. Construct targeted system and user prompts
-        system_prompt = (
-            "You are a precise code refactoring assistant inside Neurex IDE.\n"
-            "You will be given the entire content of a file, the user's selected text in that file, and a prompt instruction.\n"
-            "Your task is to modify the code inside the file based on the instruction.\n"
-            "Return the COMPLETE new contents of the entire file. Do NOT output a diff or partial replacement.\n"
-            "Return ONLY the raw contents of the modified file. Do NOT wrap it in markdown block quotes (such as ```python or ```) or prefix it with any intro or explanation. Just return the raw file content."
-        )
-
-        user_prompt = (
-            f"FILE PATH: {path}\n\n"
-            f"=== CURRENT FULL FILE CONTENT ===\n"
-            f"{original_content}\n"
-            f"=================================\n\n"
-            f"=== SELECTED RANGE TEXT ===\n"
-            f"{selection or ''}\n"
-            f"============================\n\n"
-            f"INSTRUCTION: {prompt}\n\n"
-            f"Apply the instruction and output the complete, raw content of the modified file."
-        )
-
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ]
-
-        from core.agents.base_agent import BaseAgent
-
-        class InlineHelperAgent(BaseAgent):
-            system_prompt = "You are a precise refactoring assistant."
-            agent_type = "inline_helper"
-
-            async def execute(self, task: dict, conversation_id: str) -> AsyncGenerator[dict, None]:
-                pass
-
-        agent = InlineHelperAgent(self.rules, self.ctx, model=model_name)
-
-        yield {
-            "event": "task_updated",
-            "data": {"id": task_id, "status": "THINKING"},
-        }
-
-        modified_content_chunks = []
-        async for chunk in agent.stream(messages, params=model_params):
-            if chunk["type"] == "token":
-                token = chunk["text"]
-                modified_content_chunks.append(token)
-                yield {"event": "token", "data": token, "task_id": task_id}
-            elif chunk["type"] == "done":
-                break
-
-        full_modified = "".join(modified_content_chunks)
-
-        # Strip markdown fences if any
-        full_modified = full_modified.strip()
-        if full_modified.startswith("```"):
-            lines = full_modified.splitlines()
-            if len(lines) >= 2:
-                if lines[0].startswith("```"):
-                    lines = lines[1:]
-                if lines[-1].strip() == "```":
-                    lines = lines[:-1]
-                full_modified = "\n".join(lines)
-
-        yield {
-            "event": "task_updated",
-            "data": {"id": task_id, "status": "DONE"},
-        }
-
-        yield {
-            "event": "inline_edit_diff",
-            "data": {
-                "path": path,
-                "original": original_content,
-                "modified": full_modified,
-                "taskId": task_id,
-            },
-        }
+        finally:
+            # Clean up the agent's presence cursor update when generation completes or crashes
+            if conversation_id in presence_manager.presence_state and agent_id in presence_manager.presence_state[conversation_id]:
+                del presence_manager.presence_state[conversation_id][agent_id]
+                await presence_manager.broadcast(
+                    conversation_id,
+                    {
+                        "event": "presence_update",
+                        "data": list(presence_manager.presence_state[conversation_id].values()),
+                    }
+                )
