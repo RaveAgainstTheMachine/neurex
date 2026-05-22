@@ -344,6 +344,39 @@ Search for files matching a query (filename substring).
 
 ---
 
+### `GET /api/files/stage`
+Retrieve the list of files currently in the `.neurex/staging` directory, showing their paths and whether they are modified or deleted.
+
+**Response `200`**:
+```json
+[
+  { "path": "src/utils.py", "status": "modified" },
+  { "path": "tests/old_test.py", "status": "deleted" }
+]
+```
+
+---
+
+### `POST /api/files/stage/commit`
+Apply all staged changes from `.neurex/staging` to the actual workspace and clear the staging directory.
+
+**Response `200`**:
+```json
+{ "status": "ok", "committed_count": 2 }
+```
+
+---
+
+### `POST /api/files/stage/clear`
+Clear all staged changes from `.neurex/staging` without applying them.
+
+**Response `200`**:
+```json
+{ "status": "ok", "message": "Staging cleared successfully." }
+```
+
+---
+
 ## Infrastructure & Mesh
 
 ### `GET /api/infra/status`
@@ -833,6 +866,25 @@ Restore the system state from a specific snapshot.
 Retrieve the structured reasoning trace for a specific conversation.
 
 **Auth**: `any`
+
+---
+
+### `GET /api/observability/replay/{conversation_id}`
+Retrieve decision logs formatted as chronological screenplay beats for step-by-step agent telemetry.
+
+**Response `200`**:
+```json
+[
+  {
+    "beat_number": 1,
+    "timestamp": "2026-05-22T13:27:16.123456Z",
+    "agent_type": "planner",
+    "act": "Create Plan",
+    "narrative": "Analyzing workspace structural health",
+    "context_metadata": ["files", "git"]
+  }
+]
+```
 
 ---
 

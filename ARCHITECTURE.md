@@ -110,5 +110,11 @@ The **MCP Tool Sandbox & Manager** provides complete visual transparency and sec
 - **Security Gates**: Re-evaluates tool invocations against a granular database-backed rule mapping (`mcp_client.py`) and a system-level path-authorization sentinel.
 - **Dynamic Skill Imports**: Allows hot-importing new MCP tools and pipelines directly from Git repositories or local directories on-the-fly, generating dynamic tool schemas via Python signature inspection.
 
+## 14. Reliability, Evals & Controls (v0.6.0)
+Neurex integrates a robust execution safety layer, providing full workspace isolation and chronological decision playback.
+- **Zero-Diff Staging Guard**: Enables secure agent sandboxing. When the active `autonomy_level` is set to `staging`, write and surgical diff operations are routed to `.neurex/staging` instead of modifying user workspace files directly. Deletions create `.deleted` marker files to simulate deletions. A dedicated staging API lists, commits, or clears these files.
+- **Flight Recorder Buffering & Playback**: Reasoning traces and agentic decisions are recorded to a thread-safe, high-throughput in-memory buffer before being written to SQLite in periodic batches. The **Teleplay Replay** engine retrieves these logs (including pending buffer items) and compiles them into chronologically ordered screenplay scenes/beats for diagnostic analysis.
+- **Startup Dependency Audits**: The API lifespan initialization automatically triggers an asynchronous, non-blocking pip audit to trace and record local dependency status to the Flight Recorder under the `system-watch` conversation ID.
+
 ---
 © 2026 Neurex Collective. All rights reserved.

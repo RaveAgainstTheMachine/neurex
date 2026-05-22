@@ -100,10 +100,10 @@ async def get_flight_log(conversation_id: str, limit: int = 50) -> list[dict]:
         )
 
         result = await session.exec(statement)
-        db_results = [r.dict() for r in result.all()]
+        db_results = [r.model_dump() for r in result.all()]
 
     # 2. Add pending from buffer
     async with _BUFFER_LOCK:
-        pending = [r.dict() for r in _DECISION_BUFFER if r.conversation_id == conversation_id]
+        pending = [r.model_dump() for r in _DECISION_BUFFER if r.conversation_id == conversation_id]
 
     return (pending + db_results)[:limit]

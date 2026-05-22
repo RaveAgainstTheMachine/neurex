@@ -20,21 +20,22 @@ jobs:
       - name: Install dependencies
         run: |
           cd neurex-api
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
+          python -m venv .venv
+          ./.venv/bin/python -m pip install --upgrade pip
+          ./.venv/bin/pip install -r requirements.txt
+          ./.venv/bin/pip install -r requirements-dev.txt
       - name: Lint with ruff
         run: |
           cd neurex-api
-          ruff check .
+          ./.venv/bin/ruff check .
       - name: Type check with mypy
         run: |
           cd neurex-api
-          mypy . --ignore-missing-imports || echo "Mypy found type issues, unblocking CI for now"
-      - name: Run tests with pytest
+          ./.venv/bin/mypy . --ignore-missing-imports || echo "Mypy found type issues, unblocking CI for now"
+      - name: Run tests with make test
         run: |
-          cd neurex-api
-          pytest .
+          make test
+
 
   frontend:
     name: Frontend (Node.js)

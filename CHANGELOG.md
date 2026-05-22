@@ -8,6 +8,8 @@ All notable changes to the Neurex project will be documented in this file.
 - **Pillar 2: Multi-Cursor AI Pair Programming**: Implemented real-time streaming cursor telemetry at 60Hz. Decorates Monaco Editor with neon gradient agent cursors (`[Neurex Coder]`) and pulsing micro-animations.
 - **Pillar 3: Bidirectional LSP Context Router**: Developed an LSP multiplexer supporting Definition lookup, Reference searching, Hover signatures, and Diagnostic tracking. Registered these capabilities as native tools inside the dynamic agent tool capability loop.
 - **Pillar 4: Visual MCP Tool Sandbox & Manager**: Built a dedicated permissions panel displaying connected Model Context Protocol servers and schemas. Enables granular permissions override (Always Allow, Always Ask, Deny) and manual execution playgrounds.
+- **Pillar 5: Reliability, Evals & Controls**: Implemented a Zero-Diff Staging Guard routing agent writes/diffs safely to `.neurex/staging` under staging mode, tracked deletions via `.deleted` marker files, exposed chronological reasoning traces via Teleplay Replay endpoint, launched async lifespan Startup Dependency Audits, and gated GitHub Actions CI on hermetic `.venv` test runs.
+
 
 ## [0.5.6] - 2026-05-22: MONACO INLINE AI EDITING
 ### Added

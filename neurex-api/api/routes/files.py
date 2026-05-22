@@ -570,3 +570,40 @@ async def browse_directories(path: str = "."):
         }
     except Exception as e:
         return {"dirs": [], "current": path, "error": str(e)}
+
+
+@router.get("/stage")
+async def get_staged_files():
+    """Retrieve the list of files currently in the staging directory."""
+    from core.mcp.tools.filesystem import list_staging
+    try:
+        items = await list_staging()
+        return items
+    except Exception as e:
+        log.error("files.get_stage_failed", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/stage/commit")
+async def commit_staged_files():
+    """Apply all files from .neurex/staging to WORKSPACE_ROOT and clear staging."""
+    from core.mcp.tools.filesystem import commit_staging
+    try:
+        res = await commit_staging()
+        return res
+    except Exception as e:
+        log.error("files.commit_stage_failed", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/stage/clear")
+async def clear_staged_files():
+    """Empty the .neurex/staging directory."""
+    from core.mcp.tools.filesystem import clear_staging
+    try:
+        await clear_staging()
+        return {"status": "ok", "message": "Staging cleared successfully."}
+    except Exception as e:
+        log.error("files.clear_stage_failed", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+

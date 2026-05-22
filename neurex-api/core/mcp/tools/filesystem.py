@@ -61,8 +61,11 @@ async def read_file(path: str) -> str:
     return content
 
 
+STAGING_ROOT = WORKSPACE_ROOT / ".neurex" / "staging"
+
+
 async def write_file(path: str, content: str, autonomy_level: str = "limited") -> str:
-    """Write text content to a file in the workspace."""
+    """Write text content to a file in the workspace, supporting staging mode."""
     resolved = _safe_path(path)
 
     level = autonomy_level.lower()
@@ -71,23 +74,34 @@ async def write_file(path: str, content: str, autonomy_level: str = "limited") -
 
     from api.routes.files import collab_manager
 
-    if not collab_manager.acquire_lock(path, "autonomous_agent_1"):
+    if not await collab_manager.acquire_lock(path, "autonomous_agent_1"):
         return "Error: Collision detected. File is locked by another user. Retry later."
 
     try:
-        resolved.parent.mkdir(parents=True, exist_ok=True)
-        async with aiofiles.open(resolved, "w") as f:
+        target_path = resolved
+        if level == "staging":
+            rel = resolved.relative_to(WORKSPACE_ROOT)
+            target_path = STAGING_ROOT / rel
+            
+            # If the file had a deletion marker, remove it
+            marker_path = STAGING_ROOT / f"{rel}.deleted"
+            if marker_path.exists():
+                marker_path.unlink()
+
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        async with aiofiles.open(target_path, "w") as f:
             await f.write(content)
-        log.info("fs.write", path=path, chars=len(content))
+        log.info("fs.write", path=path, chars=len(content), staged=(level == "staging"))
         return f"OK: wrote {len(content)} chars to {path}"
     finally:
-        collab_manager.release_lock(path, "autonomous_agent_1")
+        await collab_manager.release_lock(path, "autonomous_agent_1")
 
 
 async def delete_file(path: str, autonomy_level: str = "limited") -> str:
     """
     Soft-delete: moves to .neurex/trash/ instead of hard deleting.
     Ensures that misbehaving agents cannot permanently destroy data.
+    Supports staging mode by creating a .deleted marker file.
     """
     level = autonomy_level.lower()
     if level == "restricted":
@@ -95,7 +109,29 @@ async def delete_file(path: str, autonomy_level: str = "limited") -> str:
 
     resolved = _safe_path(path)
     if not resolved.exists():
-        return f"Error: {path} does not exist"
+        if level == "staging":
+            rel = resolved.relative_to(WORKSPACE_ROOT)
+            staged_path = STAGING_ROOT / rel
+            if not staged_path.exists():
+                return f"Error: {path} does not exist"
+        else:
+            return f"Error: {path} does not exist"
+
+    if level == "staging":
+        rel = resolved.relative_to(WORKSPACE_ROOT)
+        target_path = STAGING_ROOT / rel
+        # If it was already written in staging, delete it
+        if target_path.is_file():
+            target_path.unlink()
+        
+        # Write a deletion marker file
+        marker_path = STAGING_ROOT / f"{rel}.deleted"
+        marker_path.parent.mkdir(parents=True, exist_ok=True)
+        async with aiofiles.open(marker_path, "w") as f:
+            await f.write("DELETED")
+        
+        log.info("fs.stage_delete", path=path)
+        return f"OK: staged deletion of {path}."
 
     TRASH_ROOT.mkdir(parents=True, exist_ok=True)
 
@@ -126,16 +162,28 @@ async def apply_diff(path: str, search: str, replace: str, autonomy_level: str =
     """
     Surgical edit: search for specific text and replace it.
     Both blocks must match whitespace exactly.
+    Supports staging mode by writing results to STAGING_ROOT.
     """
     level = autonomy_level.lower()
     if level == "restricted":
         return f"APPROVAL_REQUIRED: Restricted mode: Applying diff to '{path}' requires approval."
 
     safe = _safe_path(path)
-    if not safe.is_file():
-        return f"Error: file not found: {path}"
+    
+    # Read from staging if it exists, otherwise from original
+    source_path = safe
+    if level == "staging":
+        rel = safe.relative_to(WORKSPACE_ROOT)
+        staged_path = STAGING_ROOT / rel
+        if staged_path.is_file():
+            source_path = staged_path
+        elif not safe.is_file():
+            return f"Error: file not found: {path}"
+    else:
+        if not safe.is_file():
+            return f"Error: file not found: {path}"
 
-    async with aiofiles.open(safe, errors="replace") as f:
+    async with aiofiles.open(source_path, errors="replace") as f:
         content = await f.read()
 
     if search not in content:
@@ -153,8 +201,96 @@ async def apply_diff(path: str, search: str, replace: str, autonomy_level: str =
         )
 
     new_content = content.replace(search, replace)
-    async with aiofiles.open(safe, "w") as f:
+    
+    # Write to target
+    target_path = safe
+    if level == "staging":
+        rel = safe.relative_to(WORKSPACE_ROOT)
+        target_path = STAGING_ROOT / rel
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # If the file had a deletion marker, remove it
+        marker_path = STAGING_ROOT / f"{rel}.deleted"
+        if marker_path.exists():
+            marker_path.unlink()
+
+    async with aiofiles.open(target_path, "w") as f:
         await f.write(new_content)
 
-    log.info("fs.diff_applied", path=path, occurrences=count)
+    log.info("fs.diff_applied", path=path, occurrences=count, staged=(level == "staging"))
     return f"OK: applied diff to {path}."
+
+
+async def list_staging() -> list[dict]:
+    """List all files in staging, categorized as modified or deleted."""
+    if not STAGING_ROOT.exists():
+        return []
+    
+    staged = []
+    # Walk staging directory
+    for root, _, files in os.walk(STAGING_ROOT):
+        for f in files:
+            full_path = Path(root) / f
+            rel = full_path.relative_to(STAGING_ROOT)
+            
+            if f.endswith(".deleted"):
+                # It's a deletion marker
+                original_rel = str(rel)[:-8]  # Strip .deleted
+                staged.append({
+                    "path": original_rel,
+                    "status": "deleted"
+                })
+            else:
+                # Check if it was already listed as deleted (e.g. deletion markers exist)
+                staged.append({
+                    "path": str(rel),
+                    "status": "modified"
+                })
+    return staged
+
+
+async def clear_staging():
+    """Clear all staged files."""
+    if STAGING_ROOT.exists():
+        import shutil
+        shutil.rmtree(STAGING_ROOT)
+        log.info("fs.staging_cleared")
+
+
+async def commit_staging() -> dict:
+    """Commit all staged modifications to WORKSPACE_ROOT."""
+    if not STAGING_ROOT.exists():
+        return {"status": "ok", "committed_count": 0}
+        
+    staged_items = await list_staging()
+    committed_count = 0
+    
+    import shutil
+    for item in staged_items:
+        rel_path = item["path"]
+        staged_file = STAGING_ROOT / rel_path
+        original_file = WORKSPACE_ROOT / rel_path
+        
+        if item["status"] == "deleted":
+            # Delete original file
+            if original_file.exists():
+                if original_file.is_dir():
+                    shutil.rmtree(original_file)
+                else:
+                    original_file.unlink()
+                committed_count += 1
+            # Clean up the marker file
+            marker_file = STAGING_ROOT / f"{rel_path}.deleted"
+            if marker_file.exists():
+                marker_file.unlink()
+        else:
+            # Copy modified/new file from staging to original
+            if staged_file.is_file():
+                original_file.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(staged_file, original_file)
+                committed_count += 1
+                
+    # Now clear staging
+    await clear_staging()
+    log.info("fs.staging_committed", count=committed_count)
+    return {"status": "ok", "committed_count": committed_count}
