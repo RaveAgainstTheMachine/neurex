@@ -87,12 +87,13 @@ These files are preserved in `_quarantine/` directories and can be restored if t
 
 ## 6. Phase 2 & v0.6.0 Architectural Milestone Review (2026-05-22)
 
-We have successfully completed all four high-fidelity pillars turning Neurex into a fully cooperative, visually transparent Agentic IDE:
+We have successfully completed all high-fidelity pillars turning Neurex into a fully cooperative, visually transparent Agentic IDE:
 1. **Pillar 1 (Visual Agent Task Graph Editor)**: Replaced a background orchestration task runner with a custom, high-fidelity flowchart node designer canvas. This supports breakpoints, edge mutations, and node edits inline with zero heavy rendering libraries.
 2. **Pillar 2 (Multi-Cursor AI Pair Programming)**: Created a 60Hz telemetry loop broadcast over WebSockets, displaying the agent's real-time workspace focus and Monaco decorations seamlessly.
 3. **Pillar 3 (Bidirectional LSP Context Router)**: Bypassed coarse-grained filesystem search constraints by binding a multiplexed backend Language Server Protocol client (`lsp_router.py`) as functional tools in the agent's reasoning loop.
 4. **Pillar 4 (Visual MCP Tool Sandbox & Manager)**: Established dynamic import channels and a highly-visible user governance permission control matrix (`mcp.py` routes and `MCPSandbox.tsx` UI) to ensure clean security oversight.
 5. **Pillar 5 (Reliability, Evals & Controls)**: Hardened agent execution safety with the **Zero-Diff Staging Guard** (sandboxing writes to `.neurex/staging` under staging mode with `.deleted` metadata markers), built the **Teleplay Replay** engine for high-fidelity chronological reasoning playback (reconstructing screenplay beats from SQLite and live buffers), automated async **Startup Dependency Audits** on server lifespan boot, and enforced hermetic CI/CD gating using a dedicated virtual environment running `make test`.
+6. **Phase 6 (Observability Playback Canvas & Simulation Benchmarks)**: Integrated dynamic background-executing simulation testing channels (`/api/benchmarks/run` and `/status`), a premium cron/pulse-controlled screenplay timeline scrubbing deck (`TelemetryReplayCanvas.tsx`), and a stunning glassmorphic arena scorecard visualizer dashboard (`BenchmarkDashboard.tsx`) with dynamic metrics and stdout logs console.
 
 ---
 *Reviewed 2026-05-22. Reflects codebase state at v0.6.0.*

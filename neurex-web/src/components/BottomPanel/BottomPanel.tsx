@@ -5,7 +5,8 @@ import {
 } from "lucide-react";
 import { useStore } from "../../lib/store";
 import { Terminal } from "../Terminal/Terminal";
-import { FlightRecorder } from "../FlightRecorder/FlightRecorder";
+import { TelemetryReplayCanvas } from "../TelemetryReplay/TelemetryReplayCanvas";
+import { BenchmarkDashboard } from "../Benchmark/BenchmarkDashboard";
 import toast from "react-hot-toast";
 import "./BottomPanel.css";
 
@@ -14,7 +15,7 @@ interface BottomPanelProps {
 }
 
 export function BottomPanel({ send }: BottomPanelProps) {
-  const [activeTab, setActiveTab] = useState<"terminal" | "output" | "flight" | "problems">("terminal");
+  const [activeTab, setActiveTab] = useState<"terminal" | "output" | "flight" | "problems" | "benchmarks">("terminal");
   const { 
     terminalSessions, activeTerminalId, setActiveTerminalId, 
     addTerminalSession, closeTerminalSession, clearActiveTerminal, tasks, activeConversationId,
@@ -44,6 +45,7 @@ export function BottomPanel({ send }: BottomPanelProps) {
             PROBLEMS {diagnostics.length > 0 && <span className="tab-badge">{diagnostics.length}</span>}
           </button>
           <button className={`bottom-tab ${activeTab === "flight" ? "active" : ""}`} onClick={() => setActiveTab("flight")} title="AI Flight Recorder">FLIGHT LOG</button>
+          <button className={`bottom-tab ${activeTab === "benchmarks" ? "active" : ""}`} onClick={() => setActiveTab("benchmarks")} title="Visual Benchmark Arena">BENCHMARK</button>
         </div>
         
         <div className="bottom-panel__actions">
@@ -210,9 +212,15 @@ export function BottomPanel({ send }: BottomPanelProps) {
         </div>
         <div 
           className="bottom-panel__tab-content"
-          style={{ display: activeTab === "flight" ? "block" : "none" }}
+          style={{ display: activeTab === "flight" ? "block" : "none", height: "100%", overflow: "hidden" }}
         >
-          <FlightRecorder conversationId={activeConversationId} />
+          <TelemetryReplayCanvas conversationId={activeConversationId} />
+        </div>
+        <div 
+          className="bottom-panel__tab-content"
+          style={{ display: activeTab === "benchmarks" ? "block" : "none", height: "100%", overflow: "hidden" }}
+        >
+          <BenchmarkDashboard />
         </div>
       </div>
     </div>

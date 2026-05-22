@@ -17,6 +17,7 @@ load_dotenv()
 
 from api.routes import (
     auth,
+    benchmarks,
     chat,
     files,
     git,
@@ -205,6 +206,7 @@ app.include_router(languages.router, prefix="/api/languages", tags=["languages"]
 app.include_router(git.router, prefix="/api/git", tags=["git"])
 app.include_router(intelligence.router, prefix="/api/intelligence", tags=["intelligence"])
 app.include_router(mcp.router, prefix="/api/mcp", tags=["mcp"])
+app.include_router(benchmarks.router, prefix="/api/benchmarks", tags=["benchmarks"])
 
 app.include_router(ws_router, tags=["websocket"])
 
