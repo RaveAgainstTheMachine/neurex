@@ -170,7 +170,7 @@ const FileItem = React.memo(function FileItem({ node, depth, rootPath }: {
 
 export function FileExplorer() {
   const { 
-    fileTree, workspaceFolders, addWorkspaceFolder, __removeWorkspaceFolder, 
+    fileTree, workspaceFolders, addWorkspaceFolder, removeWorkspaceFolder, 
     refreshFileTree, setWorkspace, createFile, createFolder, 
     collapseAllFolders, deleteFile, activeFile, openFiles, setPendingJump 
   } = useStore();

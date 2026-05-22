@@ -17,7 +17,7 @@ interface CommandPaletteProps {
   placeholder?: string;
 }
 
-export function CommandPalette({ isOpen, onClose, _title, items, placeholder }: CommandPaletteProps) {
+export function CommandPalette({ isOpen, onClose, title, items, placeholder }: CommandPaletteProps) {
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const paletteRef = useRef<HTMLDivElement>(null);

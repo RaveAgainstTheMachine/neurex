@@ -39,18 +39,18 @@ export function useWebSocket(conversationId: string) {
       const url = `${WS_BASE}/ws/${conversationId}?token=${token}&user_id=${userId}`;
       socket = new WebSocket(url);
       ws.current = socket;
-      state._setWsStatus("connecting");
+      state.setWsStatus("connecting");
       
       // Wire up the store's send method
       useStore.setState({ send });
 
       socket.onopen = () => {
-        state._setWsStatus("connected");
+        state.setWsStatus("connected");
         backoff = 1000; // Reset backoff on success
       };
 
       socket.onclose = (e) => {
-        state._setWsStatus("disconnected");
+        state.setWsStatus("disconnected");
         // Don't reconnect if closed normally
         if (e.code !== 1000 && e.code !== 1001) {
           reconnectTimeout = setTimeout(() => {
@@ -61,7 +61,7 @@ export function useWebSocket(conversationId: string) {
       };
 
       socket.onerror = () => {
-        state._setWsStatus("disconnected");
+        state.setWsStatus("disconnected");
       };
 
       // Phase 44.22: Token Buffering (Prevent UI thread saturation)
@@ -70,7 +70,7 @@ export function useWebSocket(conversationId: string) {
 
       const flushTokens = () => {
         if (!tokenBuffer) return;
-        useStore.getState()._appendToken(tokenBuffer);
+        useStore.getState().appendToken(tokenBuffer);
         tokenBuffer = "";
         tokenTimer = null;
       };
@@ -83,7 +83,7 @@ export function useWebSocket(conversationId: string) {
 
           switch (event) {
             case "presence_update":
-              s._setPresence(data.filter((p: any) => p.user_id !== userId));
+              s.setPresence(data.filter((p: any) => p.user_id !== userId));
               break;
             case "task_created":
             case "task_updated":
@@ -202,7 +202,7 @@ export function useWebSocket(conversationId: string) {
         socket.onclose = null; // Prevent reconnect on cleanup
         socket.close();
       }
-      useStore.getState()._clearTasks();
+      useStore.getState().clearTasks();
     };
   }, [conversationId, send, sendPresence, token, userId]);
 

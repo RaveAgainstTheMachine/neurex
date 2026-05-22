@@ -89,7 +89,7 @@ export function SearchPanel({ onExpand }: { onExpand?: (s: number) => void }) {
       flattenedResults.forEach(r => { nextExpanded[r.path] = true; });
       setExpandedFiles(nextExpanded);
     } catch (_err) {
-      console.error("Search failed", err);
+      console.error("Search failed", _err);
       toast.error("Search failed");
     } finally {
       setSearching(false);
@@ -138,7 +138,7 @@ export function SearchPanel({ onExpand }: { onExpand?: (s: number) => void }) {
         toast.error("No occurrences replaced");
       }
     } catch (_err) {
-      console.error("Replace failed", err);
+      console.error("Replace failed", _err);
       toast.error("Replace failed");
     } finally {
       setReplacing(false);

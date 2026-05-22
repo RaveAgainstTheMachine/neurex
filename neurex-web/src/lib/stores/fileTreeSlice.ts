@@ -70,7 +70,7 @@ export const createFiletreeSlice: StoreSlice<NeurexStore> = (set, get) => ({
             isRoot: true
           })) as FileNode[];
         });
-      } catch {
+      } catch (err: any) {
         console.error("Failed to sync file tree:", err);
       }
     },
@@ -113,7 +113,7 @@ export const createFiletreeSlice: StoreSlice<NeurexStore> = (set, get) => ({
         localStorage.setItem("neurex_collapsed_folders", "[]");
         await get().refreshFileTree();
         await get().refreshGitStatus();
-      } catch {
+      } catch (err: any) {
         toast.error(err.message || "Switch failed");
       }
     },
@@ -146,7 +146,7 @@ export const createFiletreeSlice: StoreSlice<NeurexStore> = (set, get) => ({
         await api.post("/api/files/save", { path, content: "", root_path });
         toast.success(`File ${path} created`, { id: tid });
         get().refreshFileTree();
-      } catch {
+      } catch (err: any) {
         toast.error(err.message || "Creation failed", { id: tid });
       }
     },
@@ -158,7 +158,7 @@ export const createFiletreeSlice: StoreSlice<NeurexStore> = (set, get) => ({
         await api.post(`/api/files/create-folder?${params.toString()}`);
         toast.success(`Folder ${path} created`, { id: tid });
         get().refreshFileTree();
-      } catch {
+      } catch (err: any) {
         toast.error(err.message || "Creation failed", { id: tid });
       }
     },
@@ -178,7 +178,7 @@ export const createFiletreeSlice: StoreSlice<NeurexStore> = (set, get) => ({
           };
           updateNode(s.fileTree);
         });
-      } catch { console.error("Failed to fetch subtree:", err); }
+      } catch (err: any) { console.error("Failed to fetch subtree:", err); }
     },
 
     } as unknown as NeurexStore);

@@ -17,7 +17,7 @@ import { api } from "../../lib/api";
 import { InfraDashboard } from "../InfraDashboard/InfraDashboard";
 import { AnimatePresence } from "framer-motion";
 
-export function InfraPanel({ onExpand, _currentSize }: { onExpand: (s: number) => void, _currentSize: number }) {
+export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) => void, currentSize: number }) {
   const engines = useStore(s => s.infraEngines);
   const metrics = useStore(s => s.infraMetrics);
   const registry = useStore(s => s.infraRegistry);

@@ -58,7 +58,7 @@ export function SourceControlPanel() {
       setBranch(data.branch || "unknown");
       setChanges(data.changes || []);
     } catch (_err) {
-      console.error("Git status failed", err);
+      console.error("Git status failed", _err);
     } finally {
       setLoading(false);
     }

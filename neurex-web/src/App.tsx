@@ -124,9 +124,7 @@ function AppContent() {
   const showAIPanel = useStore(s => s.showAIPanel);
   const setShowAIPanel = useStore(s => s.setShowAIPanel);
   const showSettings = useStore(s => s.showSettings);
-  const _setShowSettings = useStore(s => s._setShowSettings);
   const showAbout = useStore(s => s.showAbout);
-  const _setShowAbout = useStore(s => s._setShowAbout);
   const settings = useStore(s => s.settings);
   const tasks = useStore(s => s.tasks);
   const activeFile = useStore(s => s.activeFile);
@@ -242,7 +240,7 @@ function AppContent() {
           }
         }
       } catch (_e) {
-        console.error("System status check failed", e);
+        console.error("System status check failed", _e);
         setIsInitialized(true); // Fallback
       }
     };

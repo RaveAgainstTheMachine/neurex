@@ -144,7 +144,7 @@ export function SkillsPanel() {
       const data = await resp.json();
       if (Array.isArray(data)) setSkills(data);
     } catch (_err) {
-      console.error("Failed to fetch skills", err);
+      console.error("Failed to fetch skills", _err);
     } finally {
       setLoading(false);
     }
@@ -173,7 +173,7 @@ export function SkillsPanel() {
       const data = await resp.json();
       if (Array.isArray(data)) setCurated(data);
     } catch (_err) {
-      console.error("Failed to fetch curated list", err);
+      console.error("Failed to fetch curated list", _err);
     } finally {
       setLoading(false);
     }

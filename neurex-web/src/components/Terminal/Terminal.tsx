@@ -44,7 +44,6 @@ export function Terminal({ sessionId, onInput, onResize, isActive }: TerminalPro
   const fitAddonRef = useRef<FitAddon | null>(null);
   const lastSizeRef = useRef({ rows: 0, cols: 0 });
 
-  const _activeConversationId = useStore(s => s._activeConversationId);
   const theme = useStore(s => s.theme);
 
   // Stable refs for callbacks — never stale, never trigger re-renders

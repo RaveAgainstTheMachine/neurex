@@ -8,9 +8,9 @@ export function SwarmDiffSidebar() {
   const swarmDiffsObj = useStore((s) => s.swarmDiffs);
   const swarmDiffs = useMemo(() => Object.values(swarmDiffsObj), [swarmDiffsObj]);
   const activeFile = useStore((s) => s.activeFile);
-  const _openFile = useStore((s) => s._openFile);
-  const _setActiveFile = useStore((s) => s._setActiveFile);
-  const _setDiff = useStore((s) => s._setDiff);
+  const openFile = useStore((s) => s.openFile);
+  const setActiveFile = useStore((s) => s.setActiveFile);
+  const setDiff = useStore((s) => s.setDiff);
   const acceptSwarmDiff = useStore((s) => s.acceptSwarmDiff);
   const discardSwarmDiff = useStore((s) => s.discardSwarmDiff);
   const clearSwarmDiffs = useStore((s) => s.clearSwarmDiffs);
@@ -26,10 +26,10 @@ export function SwarmDiffSidebar() {
     const s = useStore.getState();
     const isAlreadyOpen = s.openFiles.some((f) => f.path === path);
     if (!isAlreadyOpen) {
-      s._openFile(path, original || "", "plaintext");
+      s.openFile(path, original || "", "plaintext");
     }
     s.setDiff(path, original, modified);
-    s._setActiveFile(path);
+    s.setActiveFile(path);
     toast.success(`Comparing: ${path.split("/").pop()}`, { id: "diff-toast" });
   };
 

@@ -20,7 +20,7 @@ export const createEditorSlice: StoreSlice<NeurexStore> = (set, get) => ({
     editorPanes: [{ id: "pane-main", path: null }],
     pendingJump: null,
 
-    openFile: (_path, content, language, isPreview = false, root?: string) => {
+    openFile: (path, content, language, isPreview = false, root?: string) => {
       if (!path) return;
       set((s) => {
         const existingIdx = s.openFiles.findIndex(f => f.path === path && f.root === root);
@@ -30,10 +30,10 @@ export const createEditorSlice: StoreSlice<NeurexStore> = (set, get) => ({
         } else {
           if (isPreview) {
             const previewIdx = s.openFiles.findIndex(f => f.isPreview);
-            if (previewIdx !== -1) s.openFiles[previewIdx] = { _path, content, language, isDirty: false, isPreview: true, root };
-            else s.openFiles.push({ _path, content, language, isDirty: false, isPreview: true, root });
+            if (previewIdx !== -1) s.openFiles[previewIdx] = { path, content, language, isDirty: false, isPreview: true, root };
+            else s.openFiles.push({ path, content, language, isDirty: false, isPreview: true, root });
           } else {
-            s.openFiles.push({ _path, content, language, isDirty: false, isPreview: false, root });
+            s.openFiles.push({ path, content, language, isDirty: false, isPreview: false, root });
           }
           s.activeFile = path;
         }
@@ -97,7 +97,7 @@ export const createEditorSlice: StoreSlice<NeurexStore> = (set, get) => ({
     closePane: (id) => set((s) => {
       if (s.editorPanes.length > 1) s.editorPanes = s.editorPanes.filter(p => p.id !== id);
     }),
-    setFileContent: (_path, content) => set((s) => {
+    setFileContent: (path, content) => set((s) => {
       const f = s.openFiles.find(f => f.path === path);
       if (f) { f.content = content; f.isDirty = true; }
     }),
@@ -118,7 +118,7 @@ export const createEditorSlice: StoreSlice<NeurexStore> = (set, get) => ({
       if (!file) return;
       try {
         await api.post("/api/files/save", { 
-          _path, 
+          path, 
           content: file.content, 
           root_path: file.root 
         });

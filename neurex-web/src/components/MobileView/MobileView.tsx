@@ -18,7 +18,7 @@ interface MobileViewProps {
 
 export function MobileView({ send }: MobileViewProps) {
   const [activeTab, setActiveTab] = useState<"chat" | "files" | "infra" | "terminal" | "settings">("chat");
-  const { activeConversationId, _theme } = useStore();
+  const { activeConversationId, theme } = useStore();
 
   const renderContent = () => {
     switch (activeTab) {
