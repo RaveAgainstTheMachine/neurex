@@ -6,6 +6,7 @@ Determines exact function, method, and class boundary ranges based on file exten
 
 from __future__ import annotations
 
+import ast
 from pathlib import Path
 
 import structlog
@@ -72,21 +73,36 @@ def get_ast_bounds(file_path: Path, line: int, column: int) -> tuple[int, int]:
         log.debug("ast.unsupported_extension", path=str(file_path), ext=ext)
         return line, line
 
-    language = LANG_MAP[ext]
-
     try:
         source = file_path.read_text(encoding="utf-8", errors="replace")
     except Exception as e:
         log.error("ast.read_failed", path=str(file_path), error=str(e))
         return line, line
 
+    # Handle Python files using standard ast module
+    if ext == ".py":
+        try:
+            tree = ast.parse(source)
+            candidate = None
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                    # Check if the line is within this node
+                    if node.lineno <= line <= node.end_lineno:
+                        # If we have no candidate, or this candidate is smaller (tighter)
+                        if candidate is None or (node.lineno >= candidate.lineno and node.end_lineno <= candidate.end_lineno):
+                            candidate = node
+            if candidate:
+                return candidate.lineno, candidate.end_lineno
+        except Exception as e:
+            log.error("ast.python_parse_failed", path=str(file_path), error=str(e))
+        return line, line
+
+    # Fallback to tree-sitter for other languages
+    language = LANG_MAP[ext]
     parser = None
     try:
         from tree_sitter import Language, Parser
-        if language == "python":
-            import tree_sitter_python as tspython
-            parser = Parser(Language(tspython.language()))
-        elif language in ("javascript", "typescript", "tsx"):
+        if language in ("javascript", "typescript", "tsx"):
             import tree_sitter_javascript as tsjs
             parser = Parser(Language(tsjs.language()))
     except Exception as e:
