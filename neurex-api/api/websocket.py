@@ -255,6 +255,26 @@ async def websocket_endpoint(
                         await websocket.send_json(event)
                         await asyncio.sleep(0)
 
+                if msg_type == "inline_edit":
+                    path = msg.get("path")
+                    prompt = msg.get("prompt")
+                    selection = msg.get("selection")
+                    range_coords = msg.get("range")
+                    task_id = msg.get("taskId")
+
+                    if not (path and prompt and task_id):
+                        continue
+
+                    try:
+                        async for event in orch.execute_inline_edit(
+                            path, prompt, selection, range_coords, task_id, conversation_id
+                        ):
+                            await websocket.send_json(event)
+                            await asyncio.sleep(0)
+                    except Exception as e:
+                        log.error("ws.inline_edit_error", error=str(e))
+                        await websocket.send_json({"event": "error", "data": str(e)})
+
         except WebSocketDisconnect:
             log.info("ws.disconnected", conversation_id=conversation_id)
         except Exception as e:

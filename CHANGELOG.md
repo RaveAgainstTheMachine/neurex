@@ -2,6 +2,13 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
+## [0.5.6] - 2026-05-22: MONACO INLINE AI EDITING
+### Added
+- **Monaco Inline AI Edit (`Ctrl+K`) Loop**: Implemented a near-instant interactive inline refactoring loop. Captures `neurex_inline_edit` custom events from Monaco and routes them directly to a fast-path streaming agent execution, bypassing standard multi-step planner graphs.
+- **Fast-Track Stream Generation**: Added `execute_inline_edit` to the `Orchestrator` to stream refactored content, with custom markdown fence filtering to deliver clean code straight to Monaco's side-by-side `<DiffEditor>`.
+- **WebSocket Route Binding**: Wired `inline_edit` messages in `websocket.py` to route requests dynamically to the streaming orchestrator path.
+- **Robust Verification & Testing**: Added diagnostic coverage and unit tests in `test_orchestrator.py` covering mock environments and live-streaming token extraction.
+
 ## [0.5.5] - 2026-05-11: ARCHITECTURAL GROUNDING & HOT-RELOADING
 ### Added
 - **Sentient IDE Hot-Reloading**: Implemented a central `AgentRegistry` and `HotReloadManager` that allows the API to dynamically reload agent logic (e.g., `CoderAgent`) on file save without a server restart.

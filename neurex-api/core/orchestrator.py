@@ -623,3 +623,150 @@ class Orchestrator:
             if event is None:
                 break
             yield event
+
+    async def execute_inline_edit(
+        self,
+        path: str,
+        prompt: str,
+        selection: str,
+        range_coords: dict | None,
+        task_id: str,
+        conversation_id: str,
+    ) -> AsyncGenerator[dict, None]:
+        """Fast-path inline edit execution bypassing the high-level planner graph."""
+        log.info("orchestrator.inline_edit", path=path, task_id=task_id)
+
+        file_abs_path = self.workspace / path
+        if not file_abs_path.exists():
+            yield {"event": "error", "data": f"File does not exist: {path}"}
+            return
+
+        try:
+            with open(file_abs_path, encoding="utf-8") as f:
+                original_content = f.read()
+        except Exception as e:
+            yield {"event": "error", "data": f"Failed to read file: {str(e)}"}
+            return
+
+        # Handle Mock LLM baseline testing
+        if os.getenv("NEUREX_MOCK_LLM") == "true":
+            # Just do a mock replacement in the selected text
+            mock_modified = original_content
+            if selection and selection in original_content:
+                mock_modified = original_content.replace(
+                    selection, f"{selection}\n# Refactored by Mock AI: {prompt}"
+                )
+            else:
+                mock_modified = f"{original_content}\n# Refactored by Mock AI: {prompt}"
+
+            yield {
+                "event": "task_updated",
+                "data": {"id": task_id, "status": "THINKING"},
+            }
+            await asyncio.sleep(0.1)
+            yield {
+                "event": "task_updated",
+                "data": {"id": task_id, "status": "DONE"},
+            }
+            yield {
+                "event": "inline_edit_diff",
+                "data": {
+                    "path": path,
+                    "original": original_content,
+                    "modified": mock_modified,
+                    "taskId": task_id,
+                },
+            }
+            return
+
+        # 1. Resolve model via routes
+        from core.settings.manager import settings_manager
+
+        routes = settings_manager.get("model_routes") or {}
+        model_name = routes.get("Coding") or settings_manager.get("coder_model")
+        if isinstance(model_name, dict):
+            model_params = model_name.get("params")
+            model_name = model_name.get("model")
+        else:
+            model_params = await self.infra.resolve_model_params(model_name)
+            if model_params == "Unknown":
+                model_params = None
+
+        # 2. Construct targeted system and user prompts
+        system_prompt = (
+            "You are a precise code refactoring assistant inside Neurex IDE.\n"
+            "You will be given the entire content of a file, the user's selected text in that file, and a prompt instruction.\n"
+            "Your task is to modify the code inside the file based on the instruction.\n"
+            "Return the COMPLETE new contents of the entire file. Do NOT output a diff or partial replacement.\n"
+            "Return ONLY the raw contents of the modified file. Do NOT wrap it in markdown block quotes (such as ```python or ```) or prefix it with any intro or explanation. Just return the raw file content."
+        )
+
+        user_prompt = (
+            f"FILE PATH: {path}\n\n"
+            f"=== CURRENT FULL FILE CONTENT ===\n"
+            f"{original_content}\n"
+            f"=================================\n\n"
+            f"=== SELECTED RANGE TEXT ===\n"
+            f"{selection or ''}\n"
+            f"============================\n\n"
+            f"INSTRUCTION: {prompt}\n\n"
+            f"Apply the instruction and output the complete, raw content of the modified file."
+        )
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+
+        from core.agents.base_agent import BaseAgent
+
+        class InlineHelperAgent(BaseAgent):
+            system_prompt = "You are a precise refactoring assistant."
+            agent_type = "inline_helper"
+
+            async def execute(self, task: dict, conversation_id: str) -> AsyncGenerator[dict, None]:
+                pass
+
+        agent = InlineHelperAgent(self.rules, self.ctx, model=model_name)
+
+        yield {
+            "event": "task_updated",
+            "data": {"id": task_id, "status": "THINKING"},
+        }
+
+        modified_content_chunks = []
+        async for chunk in agent.stream(messages, params=model_params):
+            if chunk["type"] == "token":
+                token = chunk["text"]
+                modified_content_chunks.append(token)
+                yield {"event": "token", "data": token, "task_id": task_id}
+            elif chunk["type"] == "done":
+                break
+
+        full_modified = "".join(modified_content_chunks)
+
+        # Strip markdown fences if any
+        full_modified = full_modified.strip()
+        if full_modified.startswith("```"):
+            lines = full_modified.splitlines()
+            if len(lines) >= 2:
+                if lines[0].startswith("```"):
+                    lines = lines[1:]
+                if lines[-1].strip() == "```":
+                    lines = lines[:-1]
+                full_modified = "\n".join(lines)
+
+        yield {
+            "event": "task_updated",
+            "data": {"id": task_id, "status": "DONE"},
+        }
+
+        yield {
+            "event": "inline_edit_diff",
+            "data": {
+                "path": path,
+                "original": original_content,
+                "modified": full_modified,
+                "taskId": task_id,
+            },
+        }

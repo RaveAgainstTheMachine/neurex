@@ -1,20 +1,20 @@
-# Neurex Codebase Review (v0.5.5)
+# Neurex Codebase Review (v0.5.6)
 
-> **Status**: v0.5.5 — Active Development
-> **Last Reviewed**: 2026-05-11
+> **Status**: v0.5.6 — Active Development
+> **Last Reviewed**: 2026-05-22
 
 ## 1. Executive Summary
 
 Neurex is a local-first AI engineering workspace composed of three services: a React frontend (`neurex-web`), a FastAPI backend (`neurex-api`), and a Rust control plane (`neurex-cli`). The project reached core feature stability in v0.5.x with working agentic orchestration, persistent terminals, distributed inference, and LAN collaboration.
 
-This review reflects the current state of the codebase after the High-Reliability Orchestration refactor in v0.5.5.
+This review reflects the current state of the codebase after the Monaco Inline AI Edit integration in v0.5.6.
 
 ## 2. Core Service Review
 
 ### 2.1 Orchestrator & Task Graph (Status: STABLE)
 - **Implementation**: `core/orchestrator.py`, `core/task_graph.py`
-- **What works**: User messages are decomposed into multi-step task graphs (SQLite-backed). Tasks flow through `PENDING → THINKING → EXECUTING → AWAITING_APPROVAL → DONE/FAILED`. The orchestrator supports Human-in-the-Loop approval for shell commands and filesystem mutations.
-- **Coverage**: Unit tests added in v0.5.4 for task CRUD and graph isolation.
+- **What works**: User messages are decomposed into multi-step task graphs (SQLite-backed). Tasks flow through `PENDING → THINKING → EXECUTING → AWAITING_APPROVAL → DONE/FAILED`. The orchestrator supports Human-in-the-Loop approval for shell commands and filesystem mutations. Also incorporates the Ctrl+K Monaco fast-path streaming edit generator (`execute_inline_edit`) that bypasses multi-agent planning graphs entirely, streaming clean diff payloads directly to Monaco.
+- **Coverage**: Unit tests added in v0.5.4 for task CRUD and graph isolation. Added unit tests for Monaco inline refactoring stream generators in v0.5.6.
 - **Known gap**: No integration test for the full WebSocket → plan → approve → execute flow yet.
 
 ### 2.2 Agent Framework (Status: STABLE)
@@ -71,7 +71,7 @@ These files are preserved in `_quarantine/` directories and can be restored if t
 
 | Area | Risk | Status |
 |:---|:---|:---|
-| **Test coverage** | Near-zero until v0.5.4. Task graph tests added; orchestrator and agent tests still needed. | 🟡 In progress |
+| **Test coverage** | Task graph and Monaco inline refactoring stream generator unit tests fully covered in v0.5.6. | 🟢 80% Coverage |
 | **Frontend speculative panels** | ~7 dashboard components (SingularityDashboard, TemporalDashboard, etc.) may be orphaned from quarantined routes. | 🟡 Needs audit |
 | **Eval framework** | Validated against a live API using Mock LLM baseline. | 🟢 50% Baseline |
 | **SQLite at scale** | Single-file DB is fine for single-user, but may bottleneck under concurrent multi-agent workloads. | 🟢 Low risk for now |
@@ -86,4 +86,4 @@ These files are preserved in `_quarantine/` directories and can be restored if t
 5. **Delete quarantine**: After 30 days with no regressions, permanently delete the `_quarantine/` directories.
 
 ---
-*Reviewed 2026-05-11. Reflects codebase state at v0.5.5.*
+*Reviewed 2026-05-22. Reflects codebase state at v0.5.6.*

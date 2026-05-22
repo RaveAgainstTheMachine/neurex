@@ -142,6 +142,11 @@ export function useWebSocket(conversationId: string) {
                 s.refreshFileTree();
               }, 1500);
               break;
+            case "inline_edit_diff":
+              if (data.path && data.original !== undefined && data.modified !== undefined) {
+                s.setDiff(data.path, data.original, data.modified);
+              }
+              break;
             case "error":
               const errorMsg = typeof data === "object" ? JSON.stringify(data) : data;
               s.addMessage({ role: "assistant", content: `❌ Error: ${errorMsg}` });
@@ -169,6 +174,24 @@ export function useWebSocket(conversationId: string) {
       useStore.getState().clearTasks();
     };
   }, [conversationId, send, sendPresence, token, userId]);
+
+  // Listen for frontend Monaco inline edits to forward to socket
+  useEffect(() => {
+    const handleInlineEdit = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const { path, prompt, selection, range, taskId } = customEvent.detail;
+      send({
+        type: "inline_edit",
+        path,
+        prompt,
+        selection,
+        range,
+        taskId
+      });
+    };
+    window.addEventListener("neurex_inline_edit", handleInlineEdit);
+    return () => window.removeEventListener("neurex_inline_edit", handleInlineEdit);
+  }, [send]);
 
   // Load history on mount or switch
   useEffect(() => {
