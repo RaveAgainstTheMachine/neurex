@@ -134,11 +134,29 @@ jobs:
           mkdir -p dist
           find artifacts -type f -exec mv {} dist/ \;
 
+      - name: Extract release notes
+        run: |
+          # Extract only the current release section from CHANGELOG.md.
+          # Python is used for robust, warning-free regex handling.
+          VERSION=$(echo "${{ github.ref_name }}" | sed 's/^v//')
+          python3 - "$VERSION" CHANGELOG.md > release_notes.md <<'PYEOF'
+          import re, sys
+          version, path = sys.argv[1], sys.argv[2]
+          text = open(path).read()
+          pattern = rf"(^## \[{re.escape(version)}\].*?)(?=^## \[|\Z)"
+          m = re.search(pattern, text, re.M | re.S)
+          print(m.group(1).rstrip() if m else f"Release {version}")
+          PYEOF
+          # Fallback: if extraction produced nothing, use a minimal note
+          if [ ! -s release_notes.md ]; then
+            echo "Release ${{ github.ref_name }}" > release_notes.md
+          fi
+
       - name: Create Release
         uses: softprops/action-gh-release@v3
         with:
           files: dist/*
-          body_path: CHANGELOG.md
+          body_path: release_notes.md
           draft: false
           prerelease: false
         env:
