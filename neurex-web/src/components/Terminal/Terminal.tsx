@@ -1,7 +1,7 @@
 // src/components/Terminal/Terminal.tsx
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Terminal as XTerm } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { WebLinksAddon } from "@xterm/addon-web-links";
@@ -31,6 +31,13 @@ if (typeof window !== "undefined") {
 }
 
 export function Terminal({ sessionId, onInput, onResize, isActive }: TerminalProps) {
+  const [proposal, setProposal] = useState<{ command: string; taskId: string } | null>(null);
+  const proposalRef = useRef<{ command: string; taskId: string } | null>(null);
+
+  useEffect(() => {
+    proposalRef.current = proposal;
+  }, [proposal]);
+
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef   = useRef<XTerm | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
@@ -47,6 +54,50 @@ export function Terminal({ sessionId, onInput, onResize, isActive }: TerminalPro
 
   // Read line height once via getState — no subscription, no re-renders
   const lineHeightRef = useRef(theme.terminal_line_height ?? 1.2);
+
+  const handleApprove = () => {
+    const activeProposal = proposalRef.current;
+    if (!activeProposal) return;
+    const send = useStore.getState().send;
+    if (send) {
+      send({
+        type: "terminal_command_approval",
+        sessionId,
+        taskId: activeProposal.taskId,
+        approved: true,
+        command: activeProposal.command
+      });
+    }
+    setProposal(null);
+  };
+
+  const handleDecline = () => {
+    const activeProposal = proposalRef.current;
+    if (!activeProposal) return;
+    const send = useStore.getState().send;
+    if (send) {
+      send({
+        type: "terminal_command_approval",
+        sessionId,
+        taskId: activeProposal.taskId,
+        approved: false,
+        command: activeProposal.command
+      });
+    }
+    setProposal(null);
+  };
+
+  useEffect(() => {
+    const handleProposal = (e: any) => {
+      const { sessionId: eventSid, command, taskId } = e.detail;
+      if (eventSid === sessionId) {
+        setProposal({ command, taskId });
+      }
+    };
+
+    window.addEventListener("neurex_command_proposal", handleProposal);
+    return () => window.removeEventListener("neurex_command_proposal", handleProposal);
+  }, [sessionId]);
 
   // Keep lineHeight and accent color in sync without re-rendering
   useEffect(() => {
@@ -199,6 +250,14 @@ export function Terminal({ sessionId, onInput, onResize, isActive }: TerminalPro
     }
 
     term.onData((data) => {
+      if (proposalRef.current) {
+        if (data === "\r") {
+          handleApprove();
+        } else if (data === "\u001b") {
+          handleDecline();
+        }
+        return;
+      }
       const send = useStore.getState().send;
       if (send) {
         send({ type: "terminal_input", sessionId, data });
@@ -234,12 +293,33 @@ export function Terminal({ sessionId, onInput, onResize, isActive }: TerminalPro
 
   return (
     <div
-      ref={terminalRef}
-      className="terminal-container"
-      onClick={() => xtermRef.current?.focus()}
-      style={{ height: "100%", width: "100%", background: "#050507", outline: "none" }}
-      tabIndex={-1}
-    />
+      className={`terminal-wrapper-outer ${proposal ? "has-proposal" : ""}`}
+      style={{ height: "100%", width: "100%", position: "relative" }}
+    >
+      <div
+        ref={terminalRef}
+        className="terminal-container"
+        onClick={() => xtermRef.current?.focus()}
+        style={{ height: "100%", width: "100%", background: "#050507", outline: "none" }}
+        tabIndex={-1}
+      />
+      {proposal && (
+        <div className="terminal-proposal-banner">
+          <div className="proposal-badge">SUGGESTED COMMAND</div>
+          <div className="proposal-command" title={proposal.command}>
+            <code>{proposal.command}</code>
+          </div>
+          <div className="proposal-actions">
+            <button className="btn-approve" onClick={handleApprove}>
+              Approve (Enter)
+            </button>
+            <button className="btn-decline" onClick={handleDecline}>
+              Decline (Esc)
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

@@ -430,6 +430,28 @@ class Orchestrator:
                                             # Background task to not block the current loop
                                             asyncio.create_task(self.trigger_swarm_review("", conversation_id))
 
+                                        if node.agent_type == "debater":
+                                            persona = "skeptic"
+                                            desc_lower = node.description.lower()
+                                            title_lower = node.title.lower()
+                                            if "optimist" in desc_lower or "optimist" in title_lower:
+                                                persona = "optimist"
+                                            
+                                            agent_name = "Optimist Debater" if persona == "optimist" else "Skeptic Critic"
+                                            role = "coder" if persona == "optimist" else "reviewer"
+                                            
+                                            from datetime import datetime
+                                            await queue.put({
+                                                "event": "debate_message",
+                                                "data": {
+                                                    "id": f"debater-{node.id}",
+                                                    "agent": agent_name,
+                                                    "role": role,
+                                                    "content": node_result,
+                                                    "timestamp": datetime.now().strftime("%H:%M:%S")
+                                                }
+                                            })
+
                                 # Mark as DONE
                                 await update_task(
                                     session, node.id, TaskStatus.DONE, result=node_result

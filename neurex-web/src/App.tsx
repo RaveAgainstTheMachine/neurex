@@ -32,6 +32,8 @@ import { Toaster } from "react-hot-toast";
 import { LoadingOverlay } from "./components/LoadingOverlay/LoadingOverlay";
 import { MobileView } from "./components/MobileView/MobileView";
 import { ContextMenu } from "./components/ContextMenu/ContextMenu";
+import { SwarmDiffSidebar } from "./components/SwarmDiff/SwarmDiffSidebar";
+import { DebateArena } from "./components/DebateArena/DebateArena";
 import "./App.css";
 
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
@@ -62,7 +64,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
-type SidebarTab = "explorer" | "search" | "git" | "agent" | "skills" | "history" | "timeline" | "infra" | "system";
+type SidebarTab = "explorer" | "search" | "git" | "agent" | "skills" | "history" | "timeline" | "infra" | "system" | "swarm" | "debate";
 
 export default function App() {
   const [blueprint, setBlueprint] = useState<UIBlueprint | null>(null);
@@ -327,6 +329,8 @@ function AppContent() {
                     {sidebarTab === "timeline" && <GitTimeline />}
                     {sidebarTab === "skills"   && <SkillsPanel />}
                     {sidebarTab === "agent"    && <AgentPanel />}
+                    {sidebarTab === "swarm"    && <SwarmDiffSidebar />}
+                    {sidebarTab === "debate"   && <DebateArena />}
                   </Panel>
                   <ResizeHandle />
                   <Panel minSize={30} className="app__main-content">

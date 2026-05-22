@@ -25,6 +25,7 @@ class ContextManager:
         self._reranker = None
         self._enc = None
         self._available = False
+        self.debate_verdicts: dict[str, str] = {}
 
         try:
             import tiktoken

@@ -21,6 +21,7 @@ from api.routes import (
     files,
     git,
     infra,
+    intelligence,
     languages,
     memory,
     notifications,
@@ -201,6 +202,7 @@ app.include_router(update.router, prefix="/api/update", tags=["update"])
 app.include_router(observability.router, prefix="/api/observability", tags=["observability"])
 app.include_router(languages.router, prefix="/api/languages", tags=["languages"])
 app.include_router(git.router, prefix="/api/git", tags=["git"])
+app.include_router(intelligence.router, prefix="/api/intelligence", tags=["intelligence"])
 
 app.include_router(ws_router, tags=["websocket"])
 

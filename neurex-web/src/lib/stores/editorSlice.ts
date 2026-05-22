@@ -148,6 +148,41 @@ export const createEditorSlice: StoreSlice<NeurexStore> = (set, get) => ({
     setPendingJump: (path, line, root?: string) => set((s) => { s.pendingJump = { path, line, timestamp: Date.now(), root }; }),
     clearPendingJump: () => set((s) => { s.pendingJump = null; }),
 
+    swarmDiffs: {},
+    setSwarmDiffs: (diffs) => set((s) => { s.swarmDiffs = diffs; }),
+    acceptSwarmDiff: (path) => set((s) => {
+      const diff = s.swarmDiffs[path];
+      if (diff) {
+        diff.status = "accepted";
+        const f = s.openFiles.find(x => x.path === path);
+        if (f) {
+          delete f.originalContent;
+          f.isDirty = true;
+        }
+      }
+    }),
+    discardSwarmDiff: (path) => set((s) => {
+      const diff = s.swarmDiffs[path];
+      if (diff) {
+        diff.status = "discarded";
+        const f = s.openFiles.find(x => x.path === path);
+        if (f && f.originalContent !== undefined) {
+          f.content = f.originalContent;
+          delete f.originalContent;
+          f.isDirty = false;
+        }
+      }
+    }),
+    clearSwarmDiffs: () => set((s) => { s.swarmDiffs = {}; }),
+
+    debateMessages: [],
+    addDebateMessage: (msg) => set((s) => {
+      if (!s.debateMessages.some(x => x.id === msg.id)) {
+        s.debateMessages.push(msg);
+      }
+    }),
+    clearDebateMessages: () => set((s) => { s.debateMessages = []; }),
+
       // ── Terminal ────────────────────────────────────────────────
 
     terminalSessions: JSON.parse(localStorage.getItem("neurex_terminal_sessions") || '[{"id":"default","name":"bash"}]'),

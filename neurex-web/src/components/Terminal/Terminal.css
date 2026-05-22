@@ -83,3 +83,121 @@
 .xterm-viewport::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
 }
+
+.terminal-wrapper-outer {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid transparent;
+}
+
+.terminal-wrapper-outer.has-proposal {
+  border: 1px solid rgba(0, 230, 118, 0.4);
+  box-shadow: 0 0 20px rgba(0, 230, 118, 0.15);
+}
+
+.terminal-proposal-banner {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 92%;
+  max-width: 650px;
+  background: rgba(13, 14, 18, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  z-index: 100;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from {
+    transform: translate(-50%, 24px);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
+.proposal-badge {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  color: #00e676;
+  background: rgba(0, 230, 118, 0.08);
+  border: 1px solid rgba(0, 230, 118, 0.2);
+  padding: 4px 10px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 230, 118, 0.05);
+}
+
+.proposal-command {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: 'JetBrains Mono', 'Fira Code', var(--font-mono);
+  font-size: 13px;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.proposal-command code {
+  color: #00e676;
+  text-shadow: 0 0 8px rgba(0, 230, 118, 0.2);
+}
+
+.proposal-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.proposal-actions button {
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+}
+
+.btn-approve {
+  background: #00e676;
+  color: #050507;
+  border: none;
+  box-shadow: 0 0 12px rgba(0, 230, 118, 0.35);
+}
+
+.btn-approve:hover {
+  background: #00ff88;
+  box-shadow: 0 0 20px rgba(0, 230, 118, 0.6);
+  transform: translateY(-1px);
+}
+
+.btn-decline {
+  background: rgba(255, 255, 255, 0.05);
+  color: #a0a0a0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.btn-decline:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+

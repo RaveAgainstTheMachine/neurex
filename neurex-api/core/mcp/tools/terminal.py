@@ -91,17 +91,40 @@ async def run_command(
     approved: bool = False,
     autonomy_level: str = "limited",
     mutation_allowed: bool = False,
+    conversation_id: str | None = None,
 ) -> str:
     """
-    Execute `command` inside a Docker sandbox container.
-    If the command is unsafe and not pre-approved, returns an approval request.
+    Execute `command` inside a Docker sandbox container or in the active interactive PTY session.
+    If running interactively and not approved, intercepts the command via the terminal proposal overlay.
     """
+    import uuid
+
+    from core.terminal.pty_manager import PTYManager
+
     level = autonomy_level.lower()
     trash_path = os.getenv("NEUREX_TRASH_PATH", ".neurex/trash")
 
     if trash_path in command:
         return f"ERROR: Access denied. Shell commands are not permitted to target the protected Trash directory: {trash_path}"
 
+    # Visual Interception Fast-Path
+    if conversation_id and not approved and level != "full":
+        manager = PTYManager()
+        session = manager.get_session(conversation_id)
+        if session:
+            task_id = f"cmd_{uuid.uuid4().hex[:8]}"
+            log.info("terminal.intercept_proposal", command=command, task_id=task_id, session=conversation_id)
+            approved_by_user = await session.propose_and_await_approval(command, task_id)
+            if not approved_by_user:
+                log.info("terminal.intercept_rejected", command=command, task_id=task_id)
+                return "ERROR: Command execution was declined by the user."
+
+            log.info("terminal.intercept_approved", command=command, task_id=task_id)
+            exit_code, output = await session.execute_command_in_pty(command, task_id)
+            status = "✅ exit 0" if exit_code == 0 else f"❌ exit {exit_code}"
+            return f"{status}\n{output}"
+
+    # Sandbox fallback path if no active interactive session is available
     if not approved:
         reason = None
         if level == "restricted":

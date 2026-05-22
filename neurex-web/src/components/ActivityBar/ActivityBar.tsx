@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { 
   Files, Search, GitBranch, Clock, MessageSquare, 
   Cpu, Shield, Puzzle, Bot, Settings, Sparkles, Activity, Globe, Timer
@@ -28,6 +28,8 @@ const SIDEBAR_ITEMS: { id: string; icon: React.FC<any>; label: string }[] = [
   { id: "explorer", icon: Files,          label: "Explorer" },
   { id: "search",   icon: Search,         label: "Search" },
   { id: "git",      icon: GitBranch,      label: "Source Control" },
+  { id: "swarm",    icon: Sparkles,       label: "Swarm Changes" },
+  { id: "debate",   icon: Globe,          label: "Agent Debate" },
   { id: "timeline", icon: Clock,          label: "File Timeline" },
   { id: "history",  icon: MessageSquare,  label: "Chat History" },
   { id: "infra",    icon: Cpu,            label: "AI Infrastructure" },
@@ -61,7 +63,13 @@ export function ActivityBar() {
   // Phase 44.22: Strict State Selection (Prevent Navigation churn)
   const sidebarTab = useStore(s => s.sidebarTab);
   const setSidebarTab = useStore(s => s.setSidebarTab);
-  const sidebarOrder = useStore(s => s.sidebarOrder);
+  const rawSidebarOrder = useStore(s => s.sidebarOrder);
+  const sidebarOrder = useMemo(() => {
+    const list = [...rawSidebarOrder];
+    if (!list.includes("swarm")) list.push("swarm");
+    if (!list.includes("debate")) list.push("debate");
+    return list;
+  }, [rawSidebarOrder]);
   const setSidebarOrder = useStore(s => s.setSidebarOrder);
   const showSettings = useStore(s => s.showSettings);
   const setShowSettings = useStore(s => s.setShowSettings);
@@ -81,7 +89,7 @@ export function ActivityBar() {
     if (over && active.id !== over.id) {
       const oldIndex = sidebarOrder.indexOf(active.id as string);
       const newIndex = sidebarOrder.indexOf(over.id as string);
-      const next = arrayMove(sidebarOrder, oldIndex, newIndex);
+      const next = arrayMove(sidebarOrder, oldIndex, newIndex) as string[];
       setSidebarOrder(next);
     }
   };

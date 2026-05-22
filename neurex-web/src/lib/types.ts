@@ -59,6 +59,21 @@ export interface OpenFile {
   isPinned?: boolean;
 }
 
+export interface SwarmDiff {
+  path: string;
+  original: string;
+  modified: string;
+  status: 'pending' | 'accepted' | 'discarded';
+}
+
+export interface DebateMessage {
+  id: string;
+  agent: string;
+  role: 'planner' | 'coder' | 'reviewer' | 'judge';
+  content: string;
+  timestamp: string;
+}
+
 export interface ModelProfile {
   name: string;
   engine: string;
@@ -288,6 +303,18 @@ export interface NeurexStore {
   pendingJump: { path: string; line: number; timestamp: number; root?: string } | null;
   setPendingJump: (path: string, line: number, root?: string) => void;
   clearPendingJump: () => void;
+
+  // Swarm Diffs
+  swarmDiffs: Record<string, SwarmDiff>;
+  setSwarmDiffs: (diffs: Record<string, SwarmDiff>) => void;
+  acceptSwarmDiff: (path: string) => void;
+  discardSwarmDiff: (path: string) => void;
+  clearSwarmDiffs: () => void;
+
+  // Debate Arena
+  debateMessages: DebateMessage[];
+  addDebateMessage: (msg: DebateMessage) => void;
+  clearDebateMessages: () => void;
 
   // WS
   wsStatus: "connecting" | "connected" | "disconnected";

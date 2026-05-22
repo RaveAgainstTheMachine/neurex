@@ -125,6 +125,82 @@ export function EditorPane({ paneId = "pane-main" }: { paneId?: string }) {
     }
   }, [pendingJump, activeFile, clearPendingJump]);
 
+  const triggerAstAction = async (actionType: 'refactor' | 'document' | 'test') => {
+    if (!active || !editorRef.current) return;
+    const editor = editorRef.current;
+    const pos = editor.getPosition();
+    if (!pos) return;
+
+    const toastId = toast.loading("Analyzing AST structure...");
+    try {
+      const res = await api.get<any>(`/api/intelligence/ast-bounds?path=${encodeURIComponent(active.path)}&line=${pos.lineNumber}&column=${pos.column}`);
+      toast.dismiss(toastId);
+      
+      const { start_line, end_line } = res;
+      if (start_line !== undefined && end_line !== undefined) {
+        editor.setSelection({
+          startLineNumber: start_line,
+          startColumn: 1,
+          endLineNumber: end_line,
+          endColumn: editor.getModel().getLineMaxColumn(end_line)
+        });
+
+        if (actionType === 'refactor') {
+          const coords = editor.getScrolledVisiblePosition({ lineNumber: start_line, column: 1 });
+          if (coords) {
+            setInlineCoords({ 
+              top: coords.top + 30, 
+              left: Math.min(coords.left, (editor.getDomNode()?.clientWidth ?? 800) - 320) 
+            });
+            setIsInlineVisible(true);
+          }
+        } else {
+          const prompt = actionType === 'document' 
+            ? "Write rich, complete docstrings/documentation for this method. Return the updated method."
+            : "Generate complete unit tests for this method/class.";
+          
+          setIsProcessing(true);
+          const selection = editor.getSelection();
+          const selectedText = editor.getModel().getValueInRange(selection);
+          
+          const taskId = Math.random().toString(36).substring(7);
+          upsertTask({
+            id: taskId,
+            graph_id: "inline-edit",
+            parent_id: null,
+            agent_type: "coder",
+            title: actionType === 'document' ? "AST Auto-Document" : "AST Test Generator",
+            description: prompt,
+            status: "THINKING",
+            result: null,
+            error: null,
+            iteration: 1,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+
+          const event = new CustomEvent("neurex_inline_edit", {
+            detail: {
+              path: active.path,
+              prompt,
+              selection: selectedText,
+              range: selection,
+              taskId
+            }
+          });
+          window.dispatchEvent(event);
+          setIsProcessing(false);
+          toast.success(actionType === 'document' ? "Documentation generation queued" : "Unit tests generation queued");
+        }
+      } else {
+        toast.error("Could not resolve AST bounds for the current cursor position.");
+      }
+    } catch (err: any) {
+      toast.dismiss(toastId);
+      toast.error("AST query failed: " + (err.message || "Unknown error"));
+    }
+  };
+
   useEffect(() => {
     if (editorRef.current?._presenceObserver) {
       editorRef.current._presenceObserver();
@@ -380,6 +456,10 @@ export function EditorPane({ paneId = "pane-main" }: { paneId?: string }) {
         <ContextMenu 
           targetSelector=".editor-monaco"
           items={[
+            { label: '✨ Neurex: Refactor Symbol / Block', shortcut: 'Ctrl+K', action: () => triggerAstAction('refactor') },
+            { label: '📝 Neurex: Document Method', action: () => triggerAstAction('document') },
+            { label: '🧪 Neurex: Generate Unit Tests', action: () => triggerAstAction('test') },
+            { type: 'separator' },
             { label: 'Go to Definition', shortcut: 'F12', action: () => editorRef.current?.trigger('any', 'editor.action.revealDefinition') },
             { label: 'Go to References', shortcut: 'Shift+F12', action: () => editorRef.current?.trigger('any', 'editor.action.goToReferences') },
             { type: 'separator' },

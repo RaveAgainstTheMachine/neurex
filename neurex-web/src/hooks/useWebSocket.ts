@@ -113,6 +113,11 @@ export function useWebSocket(conversationId: string) {
                 detail: { sessionId: msg.sessionId || conversationId, data } 
               }));
               break;
+            case "terminal_command_proposal":
+              window.dispatchEvent(new CustomEvent("neurex_command_proposal", {
+                detail: { sessionId: msg.sessionId || conversationId, command: data.command, taskId: data.taskId }
+              }));
+              break;
             case "lock_update":
               s.setLocks({ ...s.locks, [data.path]: data });
               break;
@@ -145,6 +150,33 @@ export function useWebSocket(conversationId: string) {
             case "inline_edit_diff":
               if (data.path && data.original !== undefined && data.modified !== undefined) {
                 s.setDiff(data.path, data.original, data.modified);
+              }
+              break;
+            case "swarm_diff":
+              if (data && Array.isArray(data.changes)) {
+                const diffsObj: Record<string, any> = {};
+                data.changes.forEach((c: any) => {
+                  diffsObj[c.path] = {
+                    path: c.path,
+                    original: c.original,
+                    modified: c.modified,
+                    status: "pending"
+                  };
+                });
+                s.setSwarmDiffs(diffsObj);
+                s.setSidebarTab("swarm");
+              }
+              break;
+            case "debate_message":
+              if (data) {
+                s.addDebateMessage({
+                  id: data.id || Math.random().toString(36).substring(7),
+                  agent: data.agent,
+                  role: data.role,
+                  content: data.content,
+                  timestamp: data.timestamp || new Date().toLocaleTimeString()
+                });
+                s.setSidebarTab("debate");
               }
               break;
             case "error":

@@ -1,0 +1,137 @@
+"""
+core/intelligence/ast_helper.py
+AST-aware coordinate extraction using tree-sitter.
+Determines exact function, method, and class boundary ranges based on file extensions.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+import structlog
+
+log = structlog.get_logger()
+
+# Map file extensions to tree-sitter language keys
+LANG_MAP: dict[str, str] = {
+    ".py": "python",
+    ".ts": "typescript",
+    ".tsx": "tsx",
+    ".js": "javascript",
+    ".jsx": "javascript",
+    ".go": "go",
+    ".rs": "rust",
+    ".java": "java",
+    ".cpp": "cpp",
+    ".c": "c",
+}
+
+# Node types that represent structural containers / declarations
+TOP_LEVEL_TYPES: set[str] = {
+    "function_definition",
+    "class_definition",      # Python
+    "function_declaration",
+    "class_declaration",     # JS/TS
+    "method_definition",
+    "arrow_function",        # JS/TS
+    "impl_item",
+    "fn_item",
+    "struct_item",           # Rust
+    "function_declaration",  # Go
+}
+
+
+def find_node_at_position(node: any, line: int, col: int) -> any:
+    """
+    Finds the deepest (smallest) node containing the 0-indexed position (line, col).
+    """
+    if not (node.start_point <= (line, col) <= node.end_point):
+        return None
+
+    # Recurse into children for more specific nodes
+    for child in node.children:
+        found = find_node_at_position(child, line, col)
+        if found is not None:
+            return found
+
+    return node
+
+
+def get_ast_bounds(file_path: Path, line: int, column: int) -> tuple[int, int]:
+    """
+    Given a file path and a 1-indexed cursor position (line, column),
+    returns the (start_line, end_line) 1-indexed boundaries of the surrounding structural symbol.
+    If no structural boundary can be computed, returns (line, line).
+    """
+    if not file_path.exists():
+        log.warning("ast.file_not_found", path=str(file_path))
+        return line, line
+
+    ext = file_path.suffix.lower()
+    if ext not in LANG_MAP:
+        log.debug("ast.unsupported_extension", path=str(file_path), ext=ext)
+        return line, line
+
+    language = LANG_MAP[ext]
+
+    try:
+        source = file_path.read_text(encoding="utf-8", errors="replace")
+    except Exception as e:
+        log.error("ast.read_failed", path=str(file_path), error=str(e))
+        return line, line
+
+    parser = None
+    try:
+        from tree_sitter import Language, Parser
+        if language == "python":
+            import tree_sitter_python as tspython
+            parser = Parser(Language(tspython.language()))
+        elif language in ("javascript", "typescript", "tsx"):
+            import tree_sitter_javascript as tsjs
+            parser = Parser(Language(tsjs.language()))
+    except Exception as e:
+        log.debug("ast.direct_ts_failed", lang=language, error=str(e))
+
+    if parser is None:
+        try:
+            from tree_sitter_languages import get_parser
+            parser = get_parser(language)
+        except Exception as e:
+            log.warning("ast.ts_setup_failed", lang=language, error=str(e))
+            return line, line
+
+    try:
+        tree = parser.parse(source.encode("utf-8"))
+        root = tree.root_node
+    except Exception as e:
+        log.error("ast.parse_failed", path=str(file_path), error=str(e))
+        return line, line
+
+    # Convert 1-indexed position to 0-indexed position for tree-sitter
+    target_line = max(0, line - 1)
+    target_col = max(0, column - 1)
+
+    node = find_node_at_position(root, target_line, target_col)
+    if node is None:
+        log.debug("ast.no_node_found", path=str(file_path), line=line, col=column)
+        return line, line
+
+    # Traverse upward to find the closest logical structural boundary
+    ancestor = node
+    while ancestor is not None:
+        if ancestor.type in TOP_LEVEL_TYPES:
+            start_line_1 = ancestor.start_point[0] + 1
+            end_line_1 = ancestor.end_point[0] + 1
+            log.info(
+                "ast.bounds_found",
+                path=str(file_path),
+                symbol_type=ancestor.type,
+                start=start_line_1,
+                end=end_line_1,
+            )
+            return start_line_1, end_line_1
+        ancestor = ancestor.parent
+
+    # Default fallback to the original line
+    log.debug("ast.no_boundary_ancestor", path=str(file_path), line=line)
+    return line, line
