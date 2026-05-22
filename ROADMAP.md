@@ -49,7 +49,7 @@ Our current focus is elevating Neurex from a background task sandbox into a prem
 ### 🧪 Reliability, Evals & Controls
 - [ ] **Interactive Simulation Benchmarks**: Real-time evaluation runs designed to test agent responsiveness and cooperation in live visual environments.
 - [ ] **Telemetry Replay Canvas**: An interactive debugger to record, play back, and inspect agent WebSocket events, PTY streams, and cursor selections.
-- [ ] **Zero-Diff Staging Guard**: Sandboxed environment checking before committing swarm mutations, ensuring 100% stable workspace rollbacks.
+- [x] **Zero-Diff Staging Guard**: Sandboxed environment checking before committing swarm mutations, ensuring 100% stable workspace rollbacks.
 
 ### 🔬 Experimental Labs (Lower Priority)
 - **Distributed VRAM Pooling**: Functional but considered a niche power-user feature.

@@ -45,4 +45,7 @@
 - **Multi-Cursor AI Pair Programming**: Real-time collaborative typing in Monaco with visual AI cursors (`[Neurex Coder]`), selection highlights, and 60Hz telemetry sync.
 - **Bidirectional LSP Context Router**: Exposing language server operations (`find references`, `go to definition`, `diagnostics`) directly to agents to query semantic codebase relations.
 - **Visual MCP Tool Sandbox & Manager**: A dashboard listing connected Model Context Protocol servers with a granular permission matrix (Always Allow, Always Ask, Deny) and manual tool playgrounds.
+- **Zero-Diff Staging Guard**: Sandboxes agent writes/diffs under staging mode to `.neurex/staging` with `.deleted` metadata markers, providing a granular staging dashboard endpoint to review, commit, or clear changes.
+- **Flight Recorder & Teleplay Replay**: Buffers structural decision and reasoning traces in a high-performance memory queue before batch SQLite logging, enabling step-by-step chronological screenplay-style telemetry playback.
+- **Startup Dependency Auditing**: Automatically triggers an async local pip audit on system startup, recording outdated dependencies to the flight log for user transparency.
 
