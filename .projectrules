@@ -82,3 +82,16 @@
 - **Origin Authority**: The primary Git repository is the definitive authority for the Neurex substrate.
 - **Automated Sync**: Programmatic tools or direct API calls SHOULD be used to synchronize local state with the origin.
 - **Issue Lifecycle**: Issues must progress through clear states (Open -> In Progress -> Resolved) to ensure mesh-wide development visibility.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 9. BINARY RELEASES & VERSIONING STANDARDS
+# ─────────────────────────────────────────────────────────────────────────────
+- **Semantic Versioning (SemVer)**: All active components (API, Web, CLI) MUST share the exact same version string (e.g., `v0.6.0`). Never mismatch versions across components during releases.
+- **Release Triggering**: Releases MUST be driven strictly by git tags matching `v*` (e.g. `v0.6.0`). Never release by manually uploading assets or overwriting tags.
+- **Changelog Requirement**: Every release tag push MUST have its version details fully documented in `CHANGELOG.md` under a header matching `## [X.Y.Z] - YYYY-MM-DD: DESCRIPTION`.
+- **Pre-Release Verification**: Before pushing a release tag, you MUST run:
+  1. `make test` locally to ensure 100% green backend tests.
+  2. `make typecheck` locally to ensure clean typescript and python signatures.
+  3. `make lint` to ensure zero stylistic issues.
+- **Static Assets Compilation**: The CLI Rust binary statically embeds frontend static assets. Ensure `neurex-web` builds perfectly without errors (`npm run build`) before compiling or packaging the `neurex-cli`.
+- **Gitea & GitHub Sync**: Always push release tags to both the local Gitea remote (`origin`) and external GitHub remote (`github`) simultaneously to trigger CI/CD workflows in parity.
