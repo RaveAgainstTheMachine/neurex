@@ -2,7 +2,7 @@ import { StoreSlice } from "./types";
 import { api } from "../api";
 import toast from "react-hot-toast";
 import { terminalRegistry } from "../../components/Terminal/Terminal";
-import type { NeurexStore, TaskNode, Diagnostic, FileNode } from "../types";
+import type { NeurexStore } from "../types";
 
 export const createEditorSlice: StoreSlice<NeurexStore> = (set, get) => ({
   // ── Editor Actions ────────────────────────────────────────────────
@@ -20,7 +20,7 @@ export const createEditorSlice: StoreSlice<NeurexStore> = (set, get) => ({
     editorPanes: [{ id: "pane-main", path: null }],
     pendingJump: null,
 
-    openFile: (path, content, language, isPreview = false, root?: string) => {
+    openFile: (_path, content, language, isPreview = false, root?: string) => {
       if (!path) return;
       set((s) => {
         const existingIdx = s.openFiles.findIndex(f => f.path === path && f.root === root);
@@ -30,10 +30,10 @@ export const createEditorSlice: StoreSlice<NeurexStore> = (set, get) => ({
         } else {
           if (isPreview) {
             const previewIdx = s.openFiles.findIndex(f => f.isPreview);
-            if (previewIdx !== -1) s.openFiles[previewIdx] = { path, content, language, isDirty: false, isPreview: true, root };
-            else s.openFiles.push({ path, content, language, isDirty: false, isPreview: true, root });
+            if (previewIdx !== -1) s.openFiles[previewIdx] = { _path, content, language, isDirty: false, isPreview: true, root };
+            else s.openFiles.push({ _path, content, language, isDirty: false, isPreview: true, root });
           } else {
-            s.openFiles.push({ path, content, language, isDirty: false, isPreview: false, root });
+            s.openFiles.push({ _path, content, language, isDirty: false, isPreview: false, root });
           }
           s.activeFile = path;
         }
@@ -90,14 +90,14 @@ export const createEditorSlice: StoreSlice<NeurexStore> = (set, get) => ({
       if (pane) pane.path = path;
     }),
     setEditorPanes: (panes) => set((s) => { s.editorPanes = panes; }),
-    splitEditor: (direction) => set((s) => {
+    splitEditor: (_direction) => set((s) => {
       const id = `pane-${Math.random().toString(36).substring(7)}`;
       s.editorPanes.push({ id, path: s.activeFile });
     }),
     closePane: (id) => set((s) => {
       if (s.editorPanes.length > 1) s.editorPanes = s.editorPanes.filter(p => p.id !== id);
     }),
-    setFileContent: (path, content) => set((s) => {
+    setFileContent: (_path, content) => set((s) => {
       const f = s.openFiles.find(f => f.path === path);
       if (f) { f.content = content; f.isDirty = true; }
     }),
@@ -118,7 +118,7 @@ export const createEditorSlice: StoreSlice<NeurexStore> = (set, get) => ({
       if (!file) return;
       try {
         await api.post("/api/files/save", { 
-          path, 
+          _path, 
           content: file.content, 
           root_path: file.root 
         });
@@ -126,7 +126,7 @@ export const createEditorSlice: StoreSlice<NeurexStore> = (set, get) => ({
           const f = s.openFiles.find(f => f.path === path);
           if (f) f.isDirty = false; 
         });
-      } catch (err) { toast.error("Failed to save file"); }
+      } catch { toast.error("Failed to save file"); }
     },
     diffFile: async (path) => { /* placeholder */ },
     renameFile: async (oldPath, newPath, root_path) => {
@@ -134,7 +134,7 @@ export const createEditorSlice: StoreSlice<NeurexStore> = (set, get) => ({
         await api.post("/api/files/rename", { old_path: oldPath, new_path: newPath, root_path });
         toast.success("Renamed");
         get().refreshFileTree();
-      } catch (err) { toast.error("Rename failed"); }
+      } catch { toast.error("Rename failed"); }
     },
     deleteFile: async (path, root_path) => {
       try {
@@ -143,7 +143,7 @@ export const createEditorSlice: StoreSlice<NeurexStore> = (set, get) => ({
         await api.delete(`/api/files/delete?${params.toString()}`);
         toast.success("Deleted");
         get().refreshFileTree();
-      } catch (err) { toast.error("Delete failed"); }
+      } catch { toast.error("Delete failed"); }
     },
     setPendingJump: (path, line, root?: string) => set((s) => { s.pendingJump = { path, line, timestamp: Date.now(), root }; }),
     clearPendingJump: () => set((s) => { s.pendingJump = null; }),
@@ -177,7 +177,10 @@ export const createEditorSlice: StoreSlice<NeurexStore> = (set, get) => ({
 
     debateMessages: [],
     addDebateMessage: (msg) => set((s) => {
-      if (!s.debateMessages.some(x => x.id === msg.id)) {
+      const idx = s.debateMessages.findIndex(x => x.id === msg.id);
+      if (idx !== -1) {
+        s.debateMessages[idx] = msg;
+      } else {
         s.debateMessages.push(msg);
       }
     }),

@@ -17,6 +17,7 @@ interface TerminalProps {
 }
 
 // Phase 1: Centralized registry for O(1) event routing
+ 
 export const terminalRegistry = new Map<string, XTerm>();
 
 // Static global listener to avoid O(N) listener overhead
@@ -43,7 +44,7 @@ export function Terminal({ sessionId, onInput, onResize, isActive }: TerminalPro
   const fitAddonRef = useRef<FitAddon | null>(null);
   const lastSizeRef = useRef({ rows: 0, cols: 0 });
 
-  const activeConversationId = useStore(s => s.activeConversationId);
+  const _activeConversationId = useStore(s => s._activeConversationId);
   const theme = useStore(s => s.theme);
 
   // Stable refs for callbacks — never stale, never trigger re-renders

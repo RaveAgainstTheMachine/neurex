@@ -1,10 +1,8 @@
 import { StoreSlice } from "./types";
 import { api } from "../api";
-import toast from "react-hot-toast";
-import { terminalRegistry } from "../../components/Terminal/Terminal";
-import type { NeurexStore, TaskNode, Diagnostic, FileNode } from "../types";
+import type { NeurexStore } from "../types";
 
-export const createSystemSlice: StoreSlice<NeurexStore> = (set, get) => ({
+export const createSystemSlice: StoreSlice<NeurexStore> = (set, _get) => ({
   // ── App Lifecycle ────────────────────────────────────────────────
 
     isInitialized: false,
@@ -46,8 +44,8 @@ export const createSystemSlice: StoreSlice<NeurexStore> = (set, get) => ({
     refreshTheme: async () => {},
     settings: null,
     setSettings: (settings) => set((s) => { s.settings = settings; }),
-    refreshSettings: async () => { try { const data = await api.get<any>("/api/settings/"); set((s) => { s.settings = data.settings || data; }); } catch (err) {} },
-    send: (payload) => { /* placeholder */ },
+    refreshSettings: async () => { try { const data = await api.get<any>("/api/settings/"); set((s) => { s.settings = data.settings || data; }); } catch { /* intentional */ } },
+    send: (_payload) => { /* placeholder */ },
 
       // ── UI Panels ────────────────────────────────────────────────
 

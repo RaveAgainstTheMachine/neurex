@@ -149,3 +149,77 @@ async def test_scenario_sequential_dependency_integrity(db_session: AsyncSession
             pass
             
     assert execution_order == [task1.id, task2.id, task3.id]
+
+
+def test_websocket_plan_approve_execute():
+    """
+    E2E Integration Scenario: Connect via WebSocket, submit user message,
+    receive plan_ready, approve plan, and receive execution completion event.
+    """
+    from unittest.mock import AsyncMock, patch
+
+    from fastapi.testclient import TestClient
+
+    from main import app
+
+    # Patch heavy lifespan dependencies
+    with (
+        patch("core.memory.worker.MemoryWorker.start", new_callable=AsyncMock),
+        patch("core.infrastructure.distributed.distributed_manager.start_rpc_server", new_callable=AsyncMock),
+        patch("core.infrastructure.firewall.firewall_manager.check_startup", new_callable=AsyncMock),
+        patch("core.infrastructure.firewall.firewall_manager.start_sentinel", new_callable=AsyncMock),
+        patch("core.infrastructure.mesh.mesh_router.start_monitoring", new_callable=AsyncMock),
+        patch("core.observability.service_sentinel.sentinel.start", new_callable=AsyncMock),
+        patch("core.observability.ci_healer.ci_healer.check_pipeline_health", new_callable=AsyncMock),
+        patch("core.observability.flight_recorder.flush_decisions", new_callable=AsyncMock),
+        patch("core.languages.lsp_manager.lsp_manager.initialize_workspace", new_callable=AsyncMock),
+        patch("core.infrastructure.manager.InfrastructureManager._is_process_running", return_value=True),
+        patch("api.websocket._authenticate", new_callable=AsyncMock) as mock_auth,
+        patch("core.orchestrator.Orchestrator.run") as mock_run,
+        patch("core.orchestrator.Orchestrator.resume") as mock_resume,
+    ):
+        mock_auth.return_value = True
+
+        # Mock Orchestrator.run async generator
+        async def mock_run_gen(*args, **kwargs):
+            yield {"event": "token", "data": "Generating plan..."}
+            yield {"event": "plan_ready", "data": {"graph_id": "test-graph-123"}}
+        mock_run.side_effect = mock_run_gen
+
+        # Mock Orchestrator.resume async generator
+        async def mock_resume_gen(*args, **kwargs):
+            yield {"event": "token", "data": "Executing plan..."}
+            yield {"event": "done", "data": {"graph_id": "test-graph-123"}}
+        mock_resume.side_effect = mock_resume_gen
+
+        def wait_for_event(ws, event_type):
+            while True:
+                ev = ws.receive_json()
+                if ev.get("event") == event_type:
+                    return ev
+
+        # Connect using TestClient (it handles FastAPI lifecycle)
+        with TestClient(app) as client:
+            with client.websocket_connect("/ws/conv-123?token=mocked-token") as websocket:
+                # 1. Send user message
+                websocket.send_json({"type": "message", "content": "Create a new file"})
+
+                # 2. Receive token event
+                ev1 = wait_for_event(websocket, "token")
+                assert ev1["data"] == "Generating plan..."
+
+                # 3. Receive plan_ready event
+                ev2 = wait_for_event(websocket, "plan_ready")
+                assert ev2["data"]["graph_id"] == "test-graph-123"
+
+                # 4. Approve plan
+                websocket.send_json({"type": "approve_plan", "graph_id": "test-graph-123"})
+
+                # 5. Receive execution token event
+                ev3 = wait_for_event(websocket, "token")
+                assert ev3["data"] == "Executing plan..."
+
+                # 6. Receive done event
+                ev4 = wait_for_event(websocket, "done")
+                assert ev4["data"]["graph_id"] == "test-graph-123"
+

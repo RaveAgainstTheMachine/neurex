@@ -1,1 +1,1 @@
-VERSION = "0.6.0"  # The Interactive Agentic Pivot
+VERSION = "0.7.0"  # Grounded Intelligence & Developer Experience

@@ -1,7 +1,9 @@
 import React, { useRef, useEffect, useState } from "react";
 import { useStore } from "../../lib/store";
-import { Globe, Send, Gavel, Shield, Bot, AlertTriangle, Eye } from "lucide-react";
+import { Globe, Send, Gavel, Shield, Bot, AlertTriangle, Eye, Sparkles, Loader2, RefreshCw } from "lucide-react";
 import toast from "react-hot-toast";
+import { api } from "../../lib/api";
+import type { DebateMessage } from "../../lib/types";
 import "./DebateArena.css";
 
 export function DebateArena() {
@@ -9,23 +11,52 @@ export function DebateArena() {
   const wsStatus = useStore((s) => s.wsStatus);
   const send = useStore((s) => s.send);
   const clearDebateMessages = useStore((s) => s.clearDebateMessages);
+  const activeConversationId = useStore((s) => s.activeConversationId);
   
   const [input, setInput] = useState("");
+  const [proposalQuery, setProposalQuery] = useState("");
+  const [initiating, setInitiating] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [debateMessages]);
 
+  useEffect(() => {
+    let active = true;
+    const fetchHistory = async () => {
+      if (!activeConversationId) return;
+      setLoadingHistory(true);
+      try {
+        const data = await api.get<DebateMessage[]>(`/api/debate/status?conversation_id=${activeConversationId}`);
+        if (active) {
+          clearDebateMessages();
+          data.forEach((msg) => {
+            useStore.getState().addDebateMessage(msg);
+          });
+        }
+      } catch (err) {
+        console.error("Failed to load debate history:", err);
+      } finally {
+        if (active) setLoadingHistory(false);
+      }
+    };
+    fetchHistory();
+    return () => {
+      active = false;
+    };
+  }, [activeConversationId, clearDebateMessages]);
+
   const handleSend = () => {
     const content = input.trim();
     if (!content || wsStatus !== "connected") return;
     
     // Optimistically inject Judge's verdict
-    const judgeMsg = {
+    const judgeMsg: DebateMessage = {
       id: Math.random().toString(36).substring(7),
       agent: "Architect Judge",
-      role: "judge" as const,
+      role: "judge",
       content,
       timestamp: new Date().toLocaleTimeString()
     };
@@ -48,6 +79,38 @@ export function DebateArena() {
     }
   };
 
+  const handleInitiateDebate = async () => {
+    const query = proposalQuery.trim();
+    if (!query) {
+      toast.error("Please enter a technical proposal query first.");
+      return;
+    }
+    setInitiating(true);
+    try {
+      await api.post("/api/debate/start", {
+        conversation_id: activeConversationId,
+        query
+      });
+      clearDebateMessages();
+      toast.success("Swarm technical debate session initiated!");
+      setProposalQuery("");
+    } catch (err) {
+      toast.error("Failed to initiate debate session");
+      console.error(err);
+    } finally {
+      setInitiating(false);
+    }
+  };
+
+  const handleReachVerdict = () => {
+    if (!input.trim()) {
+      setInput("Architect Verdict: Proceed with the proposed technical plan. Tradeoffs have been evaluated and the risks are acceptable.");
+      toast("Drafted a default verdict. Click again to dispatch!", { icon: "📝" });
+      return;
+    }
+    handleSend();
+  };
+
   const getAgentRoleBadge = (role: string) => {
     switch (role) {
       case "planner":
@@ -62,6 +125,21 @@ export function DebateArena() {
         return { label: "AGENT", bg: "rgba(255,255,255,0.08)", color: "#aaa", icon: Bot };
     }
   };
+
+  const templates = [
+    {
+      label: "SQL Engine Migration",
+      text: "Should we migrate the high-throughput task queues from SQLite to a dedicated PostgreSQL instance?"
+    },
+    {
+      label: "Parallel Orchestrator",
+      text: "Should we refactor the orchestrator to process independent task nodes in parallel or enforce strict sequential chains?"
+    },
+    {
+      label: "Zero-Trust MCP Sandbox",
+      text: "Should we enforce local sandbox restriction on third-party MCP tool permissions or trust standard shell defaults?"
+    }
+  ];
 
   return (
     <div className="debate-arena">
@@ -79,7 +157,12 @@ export function DebateArena() {
       </div>
 
       <div className="debate-arena__chat" ref={scrollRef}>
-        {debateMessages.length > 0 ? (
+        {loadingHistory ? (
+          <div className="debate-arena__loading">
+            <RefreshCw size={24} className="animate-spin text-cyan" />
+            <span>Reading technical courtroom archives...</span>
+          </div>
+        ) : debateMessages.length > 0 ? (
           debateMessages.map((msg) => {
             const badge = getAgentRoleBadge(msg.role);
             const Icon = badge.icon;
@@ -103,16 +186,62 @@ export function DebateArena() {
           })
         ) : (
           <div className="debate-arena__empty">
-            <Gavel size={32} className="text-muted text-gavel-empty" />
-            <p>Courtroom is quiet.</p>
-            <span>Multi-agent debates will stream here automatically when agents evaluate architectural design paths.</span>
+            <div className="empty-title-section">
+              <Gavel size={40} className="text-muted text-gavel-empty animate-pulse" />
+              <h3>Assemble the Consensus Swarm</h3>
+              <p>Propose an architectural dilemma or code-level decision to the multi-agent consensus swarm. The Planner, Coder, and Reviewer will debate tradeoffs, while you exercise supreme veto authority as the Architect Judge.</p>
+            </div>
+
+            <div className="courtroom-proposal-card">
+              <div className="card-header">
+                <Sparkles size={14} className="text-cyan text-sparkles" />
+                <span>Consensus Proposal Engine</span>
+              </div>
+
+              <textarea
+                className="proposal-textarea"
+                value={proposalQuery}
+                onChange={(e) => setProposalQuery(e.target.value)}
+                placeholder="Type or click a template below to describe your architectural dilemma..."
+                rows={4}
+              />
+
+              <div className="template-chips">
+                {templates.map((tpl, i) => (
+                  <button
+                    key={i}
+                    className="template-chip"
+                    onClick={() => setProposalQuery(tpl.text)}
+                  >
+                    {tpl.label}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                className="initiate-debate-btn"
+                onClick={handleInitiateDebate}
+                disabled={initiating || !proposalQuery.trim() || wsStatus !== "connected"}
+              >
+                {initiating ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Assembling Swarm...</span>
+                  </>
+                ) : (
+                  <>
+                    <Gavel size={16} />
+                    <span>Initiate Technical Debate</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         )}
       </div>
 
       <div className="debate-arena__input-area">
         <textarea
-          ref={null}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyPress}
@@ -132,6 +261,13 @@ export function DebateArena() {
 
       {debateMessages.length > 0 && (
         <div className="debate-arena__footer">
+          <button 
+            className="reach-verdict-btn" 
+            onClick={handleReachVerdict}
+            disabled={wsStatus !== "connected"}
+          >
+            Reach Verdict
+          </button>
           <button className="clear-debate-btn" onClick={clearDebateMessages}>
             Reset Court logs
           </button>

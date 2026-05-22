@@ -2,6 +2,12 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
+## [0.7.0] - 2026-05-22: GROUNDED INTELLIGENCE & DEVELOPER EXPERIENCE
+### Added
+- **Pillar A: Clean CI/CD & Teardown Hygiene**: Hardened pytest teardown hooks by cleanly shutting down `watcher_service` and disposing of SQLAlchemy connection pools on lifespan exit, achieving 100% clean pre-release gates with zero connection leaks, unhandled thread exceptions, or warnings.
+- **Pillar B: Multi-Agent Consensus Debates**: Implemented a SQLite-backed persistent `DebateSession` state machine, a round-robin sequencer for multi-agent arguments, and a premium, highly responsive glassmorphic Courtroom UI with debate steering capabilities, real-time presence markers, and visualization dashboards.
+- **Pillar C: Hermetic E2E WebSocket & Smoke Evaluations**: Added 6 new high-coverage E2E integration test scenarios to the smoke evaluation suite (`run_evals.py` and `test_smoke_evals.py`), fully verifying round-robin execution, concurrent WebSocket lock contention, and message streaming.
+
 ## [0.6.0] - 2026-05-22: THE INTERACTIVE AGENTIC PIVOT
 ### Added
 - **Pillar 1: Visual Agent Task Graph Editor**: Designed and built an interactive node-based designer canvas using SVG edges and glassmorphism styling. Supports on-graph rewiring of dependencies, inline node editing, manual step insertions, parent-child deletion auto-rewiring, and full-screen visualization overlays.

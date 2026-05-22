@@ -3,8 +3,8 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { 
-  Search, FileText, Loader2, X, ChevronDown, ChevronRight, CaseSensitive, 
-  WholeWord, Regex as RegexIcon, Replace as ReplaceIcon, Check, MoreHorizontal
+  FileText, Loader2, X, ChevronDown, ChevronRight, CaseSensitive, 
+  WholeWord, Regex as RegexIcon, Replace as ReplaceIcon, MoreHorizontal
 } from "lucide-react";
 import { useStore } from "../../lib/store";
 import { toast } from "react-hot-toast";
@@ -88,7 +88,7 @@ export function SearchPanel({ onExpand }: { onExpand?: (s: number) => void }) {
       const nextExpanded: Record<string, boolean> = {};
       flattenedResults.forEach(r => { nextExpanded[r.path] = true; });
       setExpandedFiles(nextExpanded);
-    } catch (err) {
+    } catch (_err) {
       console.error("Search failed", err);
       toast.error("Search failed");
     } finally {
@@ -137,7 +137,7 @@ export function SearchPanel({ onExpand }: { onExpand?: (s: number) => void }) {
       } else {
         toast.error("No occurrences replaced");
       }
-    } catch (err) {
+    } catch (_err) {
       console.error("Replace failed", err);
       toast.error("Replace failed");
     } finally {
@@ -155,7 +155,7 @@ export function SearchPanel({ onExpand }: { onExpand?: (s: number) => void }) {
       const data = await r.json();
       openFile(path, data.content ?? "", getLanguage(path), true, root);
       setPendingJump(path, line, root);
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to open file");
     }
   };
@@ -180,7 +180,7 @@ export function SearchPanel({ onExpand }: { onExpand?: (s: number) => void }) {
       return parts.map((part, i) => 
         regex.test(part) ? <span key={i} className="search-highlight">{part}</span> : part
       );
-    } catch (e) {
+    } catch (_e) {
       return content;
     }
   };

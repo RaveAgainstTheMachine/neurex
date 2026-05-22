@@ -57,7 +57,7 @@ export function SourceControlPanel() {
       const data = await res.json();
       setBranch(data.branch || "unknown");
       setChanges(data.changes || []);
-    } catch (err) {
+    } catch (_err) {
       console.error("Git status failed", err);
     } finally {
       setLoading(false);
@@ -81,7 +81,7 @@ export function SourceControlPanel() {
         setCommitMessage(data.message);
         toast.success("Semantic message generated");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to generate message");
     } finally {
       setIsGenerating(false);
@@ -106,7 +106,7 @@ export function SourceControlPanel() {
         refreshFileTree();
         toast.success("Changes committed to " + branch);
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Commit failed");
     } finally {
       setLoading(false);
@@ -124,7 +124,7 @@ export function SourceControlPanel() {
         body: JSON.stringify({ path })
       });
       fetchGitStatus();
-    } catch (err) {}
+    } catch { /* intentional */ }
   };
 
   const stagedChanges = changes.filter(c => c.staged);
@@ -300,7 +300,7 @@ function GitTree({ changes, onToggle, onSelect, expandedNodes, onToggleNode }: {
       })
       .map(node => {
         const isExpanded = expandedNodes.has(node.path);
-        const hasChildren = Object.keys(node.children).length > 0;
+        const _hasChildren = Object.keys(node.children).length > 0;
 
         return (
           <React.Fragment key={node.path}>

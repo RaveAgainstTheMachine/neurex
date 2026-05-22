@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { 
-  X, Plus, Bot as BotIcon, AlertCircle, Sparkles, MessageSquare, 
+  X, Plus, Bot as BotIcon, Sparkles, 
   ChevronRight, ChevronDown, FileCode, AlertTriangle, Info
 } from "lucide-react";
 import { useStore } from "../../lib/store";
@@ -179,7 +179,7 @@ export function BottomPanel({ send }: BottomPanelProps) {
                             openFile(d.path, data.content ?? "", lang);
                             setPendingJump(d.path, d.line);
                             setActiveFile(d.path);
-                          } catch (err) {
+                          } catch {
                             toast.error("Could not open file");
                           }
                         }}>

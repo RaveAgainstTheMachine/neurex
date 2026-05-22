@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useStore } from "../../lib/store";
-import { Check, ChevronRight, Menu } from "lucide-react";
+import { Check, ChevronRight } from "lucide-react";
 import "./MenuBar.css";
 
 interface MenuOption {
@@ -18,7 +18,7 @@ interface MenuSection {
   options: MenuOption[];
 }
 
-interface MenuBarProps {
+interface _MenuBarProps {
   mode?: "vertical" | "horizontal";
 }
 

@@ -1,8 +1,5 @@
 import { StoreSlice } from "./types";
-import { api } from "../api";
-import toast from "react-hot-toast";
-import { terminalRegistry } from "../../components/Terminal/Terminal";
-import type { NeurexStore, TaskNode, Diagnostic, FileNode } from "../types";
+import type { NeurexStore } from "../types";
 
 export const createChatSlice: StoreSlice<NeurexStore> = (set, get) => ({
   // ── Chat ────────────────────────────────────────────────

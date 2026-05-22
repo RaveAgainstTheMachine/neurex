@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { useStore } from "../../lib/store";
-import { Sparkles, Check, X, Eye, FileText, AlertCircle, Trash2, Plus } from "lucide-react";
+import { Sparkles, Check, X, FileText, AlertCircle, Trash2, Plus } from "lucide-react";
 import toast from "react-hot-toast";
 import "./SwarmDiffSidebar.css";
 
@@ -8,9 +8,9 @@ export function SwarmDiffSidebar() {
   const swarmDiffsObj = useStore((s) => s.swarmDiffs);
   const swarmDiffs = useMemo(() => Object.values(swarmDiffsObj), [swarmDiffsObj]);
   const activeFile = useStore((s) => s.activeFile);
-  const openFile = useStore((s) => s.openFile);
-  const setActiveFile = useStore((s) => s.setActiveFile);
-  const setDiff = useStore((s) => s.setDiff);
+  const _openFile = useStore((s) => s._openFile);
+  const _setActiveFile = useStore((s) => s._setActiveFile);
+  const _setDiff = useStore((s) => s._setDiff);
   const acceptSwarmDiff = useStore((s) => s.acceptSwarmDiff);
   const discardSwarmDiff = useStore((s) => s.discardSwarmDiff);
   const clearSwarmDiffs = useStore((s) => s.clearSwarmDiffs);
@@ -26,10 +26,10 @@ export function SwarmDiffSidebar() {
     const s = useStore.getState();
     const isAlreadyOpen = s.openFiles.some((f) => f.path === path);
     if (!isAlreadyOpen) {
-      s.openFile(path, original || "", "plaintext");
+      s._openFile(path, original || "", "plaintext");
     }
     s.setDiff(path, original, modified);
-    s.setActiveFile(path);
+    s._setActiveFile(path);
     toast.success(`Comparing: ${path.split("/").pop()}`, { id: "diff-toast" });
   };
 
@@ -105,7 +105,7 @@ export function SwarmDiffSidebar() {
             {swarmDiffs.map((diff) => {
               const meta = getChangeType(diff.original, diff.modified);
               const isCurrent = activeFile === diff.path;
-              const Icon = meta.icon;
+              const _Icon = meta.icon;
 
               return (
                 <div 

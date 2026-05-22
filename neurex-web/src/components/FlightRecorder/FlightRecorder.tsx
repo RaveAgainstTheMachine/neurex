@@ -3,8 +3,8 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { 
-  Brain, ChevronRight, Activity, Terminal, FileText, 
-  Search, Shield, Cpu, Clock, Zap, AlertCircle
+  Brain, Activity, Terminal, FileText, 
+  Search, Shield, Cpu, Zap
 } from "lucide-react";
 import "./FlightRecorder.css";
 
@@ -22,7 +22,7 @@ interface TraceEntry {
 
 export function FlightRecorder({ conversationId }: { conversationId: string }) {
   const [traces, setTraces] = useState<TraceEntry[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [__loading, __setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const fetchTraces = async () => {
@@ -35,7 +35,7 @@ export function FlightRecorder({ conversationId }: { conversationId: string }) {
       if (Array.isArray(data)) {
         setTraces(data);
       }
-    } catch (err) {}
+    } catch { /* intentional */ }
   };
 
   useEffect(() => {

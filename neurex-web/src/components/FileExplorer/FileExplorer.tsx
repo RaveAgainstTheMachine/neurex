@@ -4,7 +4,7 @@ import {
   ChevronRight, ChevronDown, File, Folder, FolderOpen, RefreshCw, Loader2,
   FileJson, FileCode, FileText, Settings, GitGraph, 
   Database, Terminal as TerminalIcon, FilePlus, FolderPlus, FoldVertical, X,
-  Braces, Square, PlusCircle, MinusCircle
+  Braces, Square, PlusCircle
 } from "lucide-react";
 import { Panel, PanelGroup, PanelResizeHandle, ImperativePanelHandle } from "react-resizable-panels";
 import { useStore } from "../../lib/store";
@@ -123,7 +123,7 @@ const FileItem = React.memo(function FileItem({ node, depth, rootPath }: {
         if (currentRoot) params.append("root_path", currentRoot);
         const data = await api.get<{ content: string }>(`/api/files/read?${params.toString()}`);
         openFile(node.path, data.content ?? "", getLanguage(node.path), true, currentRoot);
-      } catch (err) {}
+      } catch { /* intentional */ }
     }
   };
 
@@ -170,12 +170,12 @@ const FileItem = React.memo(function FileItem({ node, depth, rootPath }: {
 
 export function FileExplorer() {
   const { 
-    fileTree, workspaceFolders, addWorkspaceFolder, removeWorkspaceFolder, 
+    fileTree, workspaceFolders, addWorkspaceFolder, __removeWorkspaceFolder, 
     refreshFileTree, setWorkspace, createFile, createFolder, 
     collapseAllFolders, deleteFile, activeFile, openFiles, setPendingJump 
   } = useStore();
 
-  const [loading, setLoading] = useState(false);
+  const [__loading, setLoading] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<{ path: string, name: string, root?: string } | null>(null);
   const [inputDialog, setInputDialog] = useState<{ type: 'file' | 'folder', dir: string, root?: string } | null>(null);
   const [folderBrowser, setFolderBrowser] = useState<{ open: boolean, mode: 'open' | 'add' }>({ open: false, mode: 'open' });
@@ -217,7 +217,7 @@ export function FileExplorer() {
     try {
       await refreshFileTree();
       toast.success("Explorer synchronized", { id: tid });
-    } catch (err) {
+    } catch (_err) {
       toast.error("Sync failed", { id: tid });
     } finally {
       setLoading(false);
@@ -232,9 +232,9 @@ export function FileExplorer() {
     setSections(s => ({ ...s, [key]: newVal }));
     
     if (key === 'open' && openEditorsRef.current) {
-      newVal ? openEditorsRef.current.resize(10) : openEditorsRef.current.resize(4);
+      void (newVal ? openEditorsRef.current.resize(10) : openEditorsRef.current.resize(4));
     } else if (key === 'workspace' && explorerRef.current) {
-      newVal ? explorerRef.current.resize(80) : explorerRef.current.resize(10);
+      void (newVal ? explorerRef.current.resize(80) : explorerRef.current.resize(10));
     } else if (key === 'outline' && outlineRef.current) {
       if (newVal) {
         outlineRef.current.resize(20);

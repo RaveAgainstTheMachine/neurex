@@ -1,10 +1,8 @@
 import { StoreSlice } from "./types";
 import { api } from "../api";
-import toast from "react-hot-toast";
-import { terminalRegistry } from "../../components/Terminal/Terminal";
-import type { NeurexStore, TaskNode, Diagnostic, FileNode } from "../types";
+import type { NeurexStore } from "../types";
 
-export const createAuthSlice: StoreSlice<NeurexStore> = (set, get) => ({
+export const createAuthSlice: StoreSlice<NeurexStore> = (set, _get) => ({
   // ── Auth ────────────────────────────────────────────────
 
     onboardingRequired: false,
@@ -44,7 +42,7 @@ export const createAuthSlice: StoreSlice<NeurexStore> = (set, get) => ({
         const data = await api.get<any>("/api/auth/me");
         set((s) => { s.user = data; });
         localStorage.setItem("user", JSON.stringify(data));
-      } catch (err) {}
+      } catch { /* intentional */ }
     },
 
     } as unknown as NeurexStore);

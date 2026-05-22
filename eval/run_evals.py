@@ -145,6 +145,50 @@ EVAL_CASES = [
         "prompt": "Research how to use the 'duckduckgo-search' Python library to get news results. Provide a code example.",
         "checks": ["DDGS", "ddgs.news", "duckduckgo-search"],
     },
+
+    # ── Refactoring (edge case) ──
+    {
+        "id": "refactor-complexity",
+        "tag": "refactor",
+        "prompt": "Create complex_calc.py with a 60-line function with multiple nested loops. Then refactor complex_calc.py to extract nested conditions into distinct helper functions. Save the result to refactored_calc.py.",
+        "checks": ["refactored_calc.py", "def ", "helper", "-> "],
+    },
+    # ── Deletion ──
+    {
+        "id": "delete-dead-code",
+        "tag": "maintenance",
+        "prompt": "Create calculations.py that imports legacy_math.py. Then delete the legacy_math.py file and remove all imports referencing it inside calculations.py.",
+        "checks": ["calculations.py"],
+        "negative_checks": ["legacy_math.py", "import legacy_math"],
+    },
+    # ── Multi-file edits (edge case) ──
+    {
+        "id": "multi-refactor",
+        "tag": "multi",
+        "prompt": "Create models.py and views.py. In models.py, add a method get_full_name() to the User class. In views.py, update the render_user function to call user.get_full_name() instead of format_name(user).",
+        "checks": ["models.py", "views.py", "get_full_name", "user.get_full_name"],
+    },
+    # ── Test generation (edge case) ──
+    {
+        "id": "test-gen-edge",
+        "tag": "python",
+        "prompt": "Write a complete pytest test suite for a divide(a, b) function that handles ZeroDivisionError and TypeError. Save to test_divide.py.",
+        "checks": ["test_divide.py", "ZeroDivisionError", "TypeError", "pytest.raises"],
+    },
+    # ── Error recovery (edge case) ──
+    {
+        "id": "error-recovery-syntax",
+        "tag": "maintenance",
+        "prompt": "Read broken.py (which has mismatched brackets/syntax error: 'def func(): print(\"hello\"'), fix the syntax error so that it compiles and runs correctly, and save to fixed.py.",
+        "checks": ["fixed.py", "def func()", "print"],
+    },
+    # ── Consensus Debate (Smoke test) ──
+    {
+        "id": "smoke-consensus-debate",
+        "tag": "smoke",
+        "prompt": "Create a brief summary doc debate_summary.md explaining the roles of Planner, Coder, and Reviewer in a swarm debate courtroom.",
+        "checks": ["debate_summary.md", "Planner", "Coder", "Reviewer"],
+    },
 ]
 
 

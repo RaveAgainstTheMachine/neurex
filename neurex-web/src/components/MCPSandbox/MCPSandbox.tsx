@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { 
-  Shield, Server, Terminal, Play, Lock, Eye, AlertTriangle, 
-  Settings, Check, X, HelpCircle, ArrowRight, RefreshCw, Plus, Trash2
+  Shield, Server, Terminal, Play, AlertTriangle, RefreshCw, Plus
 } from "lucide-react";
 import { api } from "../../lib/api";
 import toast from "react-hot-toast";
@@ -344,7 +343,7 @@ export function MCPSandbox() {
                                         } else {
                                           handleArgChange(paramName, e.target.value);
                                         }
-                                      } catch (err) {}
+                                      } catch { /* intentional */ }
                                     }}
                                   />
                                 ) : paramInfo.type === "number" || paramInfo.type === "integer" ? (
@@ -384,7 +383,7 @@ export function MCPSandbox() {
                                   if ((propSchema.type === "object" || propSchema.type === "array") && typeof v === "string") {
                                     try {
                                       finalArgs[k] = JSON.parse(v);
-                                    } catch (err) {
+                                    } catch (_err) {
                                       // Fallback to raw value
                                       finalArgs[k] = v;
                                     }

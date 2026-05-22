@@ -6,24 +6,33 @@ The UI can still build the tree view using parent_id.
 
 from __future__ import annotations
 
+import os
 import uuid
+from collections.abc import AsyncGenerator
 from datetime import UTC, datetime
 from enum import Enum
 
 from sqlalchemy import event
-from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy.pool import NullPool
 from sqlmodel import Field, SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-DATABASE_URL = "sqlite+aiosqlite:///./neurex.db"
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./neurex.db")
 
 # Phase 44.4: High-Performance SQLite Tuning
-from sqlalchemy.orm import sessionmaker
+
+pool_args = {}
+if os.getenv("TESTING") == "1":
+    pool_args["poolclass"] = NullPool
 
 engine = create_async_engine(
-    DATABASE_URL, echo=False, connect_args={"check_same_thread": False, "timeout": 30}
+    DATABASE_URL,
+    echo=False,
+    connect_args={"check_same_thread": False, "timeout": 30},
+    **pool_args
 )
-async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 
 # Mandatory PRAGMAs for Concurrency & Speed
@@ -115,7 +124,17 @@ class MCPToolPermission(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
+class DebateSession(SQLModel, table=True):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
+    conversation_id: str = Field(index=True)
+    agent_role: str  # "planner", "coder", "reviewer", "judge"
+    content: str
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    verdict: str | None = Field(default=None)
+
+
 # DecisionEvent moved to core.observability.flight_recorder
+
 
 
 async def init_db():
@@ -123,7 +142,7 @@ async def init_db():
         await conn.run_sync(SQLModel.metadata.create_all)
 
 
-async def get_session() -> AsyncSession:
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSession(engine, expire_on_commit=False) as session:
         yield session
 
@@ -191,7 +210,7 @@ async def update_task(
 
 async def get_graph(session: AsyncSession, graph_id: str) -> list[TaskNode]:
     result = await session.exec(select(TaskNode).where(TaskNode.graph_id == graph_id))
-    return result.all()
+    return list(result.all())
 
 
 def is_stalled(node: TaskNode, last_tool_call: dict | None, current_tool_call: dict | None) -> bool:

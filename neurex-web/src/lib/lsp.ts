@@ -3,13 +3,13 @@ import {
     MonacoLanguageClient,
 } from 'monaco-languageclient';
 import { MonacoVscodeApiWrapper } from 'monaco-languageclient/vscodeApiWrapper';
-import { API_BASE } from './config';
+import { _API_BASE } from './config';
 import { api } from './api';
 import { useStore } from './store';
 
 let servicesInitialized = false;
 
-export async function createLSPConnection(lang: string, token: string): Promise<MonacoLanguageClient> {
+export async function createLSPConnection(lang: string, _token: string): Promise<MonacoLanguageClient> {
     if (!servicesInitialized) {
         const wrapper = new MonacoVscodeApiWrapper({
             $type: 'classic',
@@ -82,7 +82,7 @@ export async function createLSPConnection(lang: string, token: string): Promise<
 class LSPManager {
     private clients: Map<string, MonacoLanguageClient> = new Map();
 
-    async connect(lang: string, token: string) {
+    async connect(lang: string, _token: string) {
         if (this.clients.has(lang)) return;
         
         try {
@@ -109,10 +109,10 @@ class LSPManager {
 
 export const lspManager = new LSPManager();
 
-export async function installLanguageServer(lang: string, token: string) {
+export async function installLanguageServer(lang: string, _token: string) {
     try {
         return await api.post(`/api/languages/install/${lang}`);
-    } catch (err: any) {
+    } catch (_err: unknown) {
         throw new Error(err.message || "Installation failed");
     }
 }

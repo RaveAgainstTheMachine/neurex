@@ -10,7 +10,6 @@ import {
   X, 
   Maximize2, 
   Minimize2, 
-  PlusCircle, 
   HelpCircle, 
   AlertCircle,
   CheckCircle,

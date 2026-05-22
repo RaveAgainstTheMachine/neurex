@@ -4,9 +4,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { 
   Play, Square, RefreshCcw, Cpu, Zap, Search, 
-  Brain, Braces, Video, AudioLines, 
-  Thermometer, Gauge, Eye, X, Image as ImageIcon,
-  Monitor, HardDrive, Activity, Info, MessageSquare, Plus, Trash2,
+  Brain, Braces, AudioLines, Gauge, Eye, X, Image as ImageIcon,
+  Monitor, Activity, Info, MessageSquare, Plus, Trash2,
   LucideIcon
 } from "lucide-react";
 import "./InfraPanel.css";
@@ -18,7 +17,7 @@ import { api } from "../../lib/api";
 import { InfraDashboard } from "../InfraDashboard/InfraDashboard";
 import { AnimatePresence } from "framer-motion";
 
-export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) => void, currentSize: number }) {
+export function InfraPanel({ onExpand, _currentSize }: { onExpand: (s: number) => void, _currentSize: number }) {
   const engines = useStore(s => s.infraEngines);
   const metrics = useStore(s => s.infraMetrics);
   const registry = useStore(s => s.infraRegistry);
@@ -47,7 +46,7 @@ export function InfraPanel({ onExpand, currentSize }: { onExpand: (s: number) =>
       clearInterval(timer);
       onExpand(18);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   // Debounced search for Hugging Face ONLY

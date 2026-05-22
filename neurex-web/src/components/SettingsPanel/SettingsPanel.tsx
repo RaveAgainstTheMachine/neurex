@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { 
   Zap, Settings as SettingsIcon, Save, Palette, Cpu, HardDrive, 
-  ShieldCheck, Network, Sliders, ChevronRight, Search, Trash2
+  ShieldCheck, Network, Sliders, ChevronRight, Search
 } from "lucide-react";
 import toast from "react-hot-toast";
 import "./SettingsPanel.css";
@@ -73,7 +73,7 @@ export function SettingsPanel() {
         });
         if (res.ok) setUsers(await res.json());
       }
-    } catch (err) {
+    } catch (_err) {
       if (!localSettings) toast.error("Failed to sync with Neurex core");
     } finally {
       setLoading(false);
@@ -115,7 +115,7 @@ export function SettingsPanel() {
         const error = await res.json();
         toast.error(error.detail || "Save failed");
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Network error");
     } finally {
       setSaving(false);

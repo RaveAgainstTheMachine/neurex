@@ -26,6 +26,11 @@ def event_loop():
     """Use a single event loop for all tests."""
     loop = asyncio.new_event_loop()
     yield loop
+    # Dispose of SQLModel engine cleanly before closing loop
+    from core.task_graph import engine
+    async def dispose_engine():
+        await engine.dispose()
+    loop.run_until_complete(dispose_engine())
     loop.close()
 
 
@@ -37,8 +42,11 @@ async def db_session():
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
 
-    async with AsyncSession(engine, expire_on_commit=False) as session:
+    session = AsyncSession(engine, expire_on_commit=False)
+    try:
         yield session
+    finally:
+        await session.close()
 
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.drop_all)
@@ -72,6 +80,14 @@ async def test_client():
         patch("core.observability.flight_recorder.flush_decisions", new_callable=AsyncMock),
         patch(
             "core.languages.lsp_manager.lsp_manager.initialize_workspace", new_callable=AsyncMock
+        ),
+        patch(
+            "core.observability.dependency_watch.dependency_watch.start_background_watch",
+            new_callable=AsyncMock,
+        ),
+        patch(
+            "core.security.sentinel.security_sentinel.start_background_scan",
+            new_callable=AsyncMock,
         ),
         patch(
             "core.infrastructure.manager.InfrastructureManager._is_process_running",

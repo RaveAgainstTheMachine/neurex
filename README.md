@@ -12,7 +12,7 @@
 
   <p>
     <a href="./LICENSE"><img src="https://img.shields.io/badge/License-BSL%201.1-purple.svg?style=for-the-badge" alt="License"></a>
-    <a href="#"><img src="https://img.shields.io/badge/Version-v0.6.0-blueviolet.svg?style=for-the-badge" alt="Version"></a>
+    <a href="#"><img src="https://img.shields.io/badge/Version-v0.7.0-blueviolet.svg?style=for-the-badge" alt="Version"></a>
     <a href="#"><img src="https://img.shields.io/badge/Status-Active%20Development-success.svg?style=for-the-badge" alt="Status"></a>
   </p>
 
@@ -142,5 +142,5 @@ See [LICENSE](./LICENSE) for full details.
 ---
 
 <div align="center">
-  <sub>Built by the Neurex Collective. v0.6.0.</sub>
+  <sub>Built by the Neurex Collective. v0.7.0.</sub>
 </div>

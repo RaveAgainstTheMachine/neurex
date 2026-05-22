@@ -19,6 +19,7 @@ from api.routes import (
     auth,
     benchmarks,
     chat,
+    debate,
     files,
     git,
     infra,
@@ -154,6 +155,13 @@ async def lifespan(app: FastAPI):
 
     # Teardown
     try:
+        from core.infrastructure.watcher import watcher_service
+        watcher_service.stop()
+
+        import os
+        if os.getenv("TESTING") != "1":
+            from core.task_graph import engine
+            await engine.dispose()
         if hasattr(app.state, "lsp_manager"):
             await app.state.lsp_manager.cleanup()
         if hasattr(app.state, "memory_worker"):
@@ -172,7 +180,7 @@ from core.infrastructure.logging_middleware import DebugLoggingMiddleware
 app = FastAPI(
     title="Neurex API",
     description="Local-First AI Engineering Workspace",
-    version="0.6.0",
+    version="0.7.0",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",
@@ -192,6 +200,7 @@ app.add_middleware(
 
 # ── Routes ──────────────────────────────────────────────────────────────────
 app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
+app.include_router(debate.router, prefix="/api/debate", tags=["debate"])
 app.include_router(tasks.router, prefix="/api/tasks", tags=["tasks"])
 app.include_router(files.router, prefix="/api/files", tags=["files"])
 app.include_router(infra.router, prefix="/api/infra", tags=["infra"])

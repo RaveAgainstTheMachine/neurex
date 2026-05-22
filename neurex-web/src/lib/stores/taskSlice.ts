@@ -3,7 +3,7 @@ import { api } from "../api";
 import toast from "react-hot-toast";
 import type { NeurexStore, TaskNode } from "../types";
 
-export const createTaskSlice: StoreSlice<NeurexStore> = (set, get) => ({
+export const createTaskSlice: StoreSlice<NeurexStore> = (set, _get) => ({
   tasks: {},
   upsertTask: (task: TaskNode) => set((s) => { s.tasks[task.id] = task; }),
   clearTasks: () => set((s) => { s.tasks = {}; }),

@@ -1,7 +1,7 @@
 // neurex-web/src/components/GitTimeline/GitTimeline.tsx
 import { useEffect, useState } from "react";
 import { useStore } from "../../lib/store";
-import { History, GitCommit, User, Calendar, ExternalLink } from "lucide-react";
+import { History, GitCommit, User } from "lucide-react";
 import { API_BASE } from "../../lib/config";
 import "./GitTimeline.css";
 

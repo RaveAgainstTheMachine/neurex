@@ -4,7 +4,7 @@
 > **Internal API**: `http://localhost:8000`  
 > **Auth**: Bearer JWT (obtain via `POST /api/auth/token`)  
 > **WebSocket**: `wss://localhost:3000/ws/{conversation_id}` (Internal: `ws://localhost:8000/ws/...`)  
-> **Version**: 0.6.0 (THE INTERACTIVE AGENTIC PIVOT)
+> **Version**: 0.7.0 (GROUNDED INTELLIGENCE & DEVELOPER EXPERIENCE)
 
 ---
 
@@ -937,6 +937,6 @@ The WebSocket is the primary channel for all real-time agent interaction, termin
 
 ### `GET /health`
 ```json
-{ "status": "ok", "version": "0.6.0" }
+{ "status": "ok", "version": "0.7.0" }
 ```
 No authentication required.

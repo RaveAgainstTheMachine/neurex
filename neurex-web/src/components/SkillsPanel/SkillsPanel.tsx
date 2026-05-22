@@ -1,8 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { 
-  Puzzle, Download, Trash2, Globe, Loader2, Plus, 
-  Search, Star, X, Zap, AlertTriangle, ChevronDown, 
-  ChevronRight, Filter
+  Puzzle, Trash2, Globe, 
+  Search, Star, X, Zap, AlertTriangle, ChevronDown, Filter
 } from "lucide-react";
 import "./SkillsPanel.css";
 import toast from "react-hot-toast";
@@ -124,9 +123,9 @@ function SkillDetailModal({
 export function SkillsPanel() {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [curated, setCurated] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [_loading, setLoading] = useState(true);
   const [installing, setInstalling] = useState(false);
-  const [newSkillUrl, setNewSkillUrl] = useState("");
+  const [_newSkillUrl, _setNewSkillUrl] = useState("");
   const [tab, setTab] = useState<"installed" | "discover">("installed");
   const [confirmState, setConfirmState] = useState<{ show: boolean; skillId: string | null }>({ show: false, skillId: null });
   const [selectedSkill, setSelectedSkill] = useState<any>(null);
@@ -144,7 +143,7 @@ export function SkillsPanel() {
       });
       const data = await resp.json();
       if (Array.isArray(data)) setSkills(data);
-    } catch (err) {
+    } catch (_err) {
       console.error("Failed to fetch skills", err);
     } finally {
       setLoading(false);
@@ -160,7 +159,7 @@ export function SkillsPanel() {
         const data = await resp.json();
         setSelectedSkill(data);
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error("Failed to load skill details");
     }
   };
@@ -173,7 +172,7 @@ export function SkillsPanel() {
       });
       const data = await resp.json();
       if (Array.isArray(data)) setCurated(data);
-    } catch (err) {
+    } catch (_err) {
       console.error("Failed to fetch curated list", err);
     } finally {
       setLoading(false);

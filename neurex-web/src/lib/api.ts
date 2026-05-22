@@ -1,6 +1,5 @@
 import { API_BASE } from "./config";
 import { useStore } from "./store";
-import toast from "react-hot-toast";
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const state = useStore.getState();
@@ -33,7 +32,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const text = await response.text();
   try {
     return text ? JSON.parse(text) : {} as T;
-  } catch (err) {
+  } catch {
     return {} as T;
   }
 }

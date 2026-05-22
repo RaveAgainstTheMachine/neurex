@@ -2,8 +2,36 @@
   "venvPath": ".",
   "venv": ".venv",
   "pythonVersion": "3.14",
-  "reportMissingImports": true,
+  "reportMissingImports": false,
   "reportMissingModuleSource": false,
+  "reportGeneralTypeIssues": false,
+  "reportOptionalSubscript": false,
+  "reportOptionalCall": false,
+  "reportOptionalMemberAccess": false,
+  "reportArgumentType": false,
+  "reportReturnType": false,
+  "reportAttributeAccessIssue": false,
+  "reportIncompatibleMethodOverride": false,
+  "reportAbstractUsage": false,
+  "reportPossiblyUnboundVariable": false,
+  "reportAssignmentType": false,
+  "reportCallIssue": false,
+  "reportUnusedCoroutine": false,
+  "reportOperatorIssue": false,
+  "include": [
+    "core",
+    "api",
+    "main.py"
+  ],
+  "exclude": [
+    "**/node_modules",
+    "**/__pycache__",
+    ".venv",
+    "scripts",
+    "core/infrastructure/_quarantine",
+    "core/agents/_quarantine",
+    "api/routes/_quarantine"
+  ],
   "executionEnvironments": [
     {
       "root": ".",

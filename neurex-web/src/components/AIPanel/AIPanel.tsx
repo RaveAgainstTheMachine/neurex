@@ -1,7 +1,5 @@
-import React, { useRef, useEffect, useState, useCallback, useMemo } from "react";
+import React, { useRef, useEffect, useState, useMemo } from "react";
 import { 
-  DndContext, 
-  closestCenter,
   KeyboardSensor,
   PointerSensor,
   useSensor,
@@ -10,9 +8,7 @@ import {
 } from '@dnd-kit/core';
 import {
   arrayMove,
-  SortableContext,
   sortableKeyboardCoordinates,
-  horizontalListSortingStrategy,
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -21,7 +17,7 @@ import { VoiceLangSelect } from '../CustomSelect/VoiceLangSelect';
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github-dark.css";
-import { Send, Loader2, Trash2, CheckCircle2, XCircle, ArrowUp, Mic, MicOff, Volume2, Paperclip, Shield, Plus } from "lucide-react";
+import { Loader2, Trash2, CheckCircle2, XCircle, ArrowUp, Mic, Volume2, Paperclip, Shield, Plus } from "lucide-react";
 import { useStore } from "../../lib/store";
 import type { TaskNode } from "../../lib/types";
 import toast from "react-hot-toast";
@@ -75,31 +71,6 @@ const LANG_OPTIONS = [
   { value: "zh-CN", label: "ZH" },
 ];
 
-function SortableItem(props: { id: string; children: React.ReactNode }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging
-  } = useSortable({ id: props.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-    cursor: 'grab',
-    display: 'flex',
-    alignItems: 'center'
-  };
-
-  return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      {props.children}
-    </div>
-  );
-}
 
 interface AIPanelProps {
   send: (payload: object) => void;
@@ -387,7 +358,7 @@ export function AIPanel({ send, conversationId, isActive = true }: AIPanelProps)
     try {
       await fetch(`${API_BASE}/api/tasks/`, { method: "DELETE" });
       clearTasks();
-    } catch {}
+    } catch { /* intentional */ }
   };
 
   const handleApprovePlan = (graphId: string) => {
@@ -400,17 +371,17 @@ export function AIPanel({ send, conversationId, isActive = true }: AIPanelProps)
 
   const doneCount = nodes.filter((n) => n.status === "DONE").length;
 
-  const [headerOrder, setHeaderOrder] = useState<string[]>(() => {
+  const [_headerOrder, setHeaderOrder] = useState<string[]>(() => {
     const saved = localStorage.getItem("neurex_header_order");
     return saved ? JSON.parse(saved) : ["tabs", "model", "autonomy", "voice", "actions"];
   });
 
-  const sensors = useSensors(
+  const _sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  const _handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
       setHeaderOrder((items) => {

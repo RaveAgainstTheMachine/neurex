@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { 
-  MessageSquare, Files, Cpu, Settings, BrainCircuit,
-  Terminal as TerminalIcon, Bot, Plus, X, Menu, Search
+  MessageSquare, Files, Cpu, Settings,
+  Terminal as TerminalIcon
 } from "lucide-react";
 import { useStore } from "../../lib/store";
 import { AIPanel } from "../AIPanel/AIPanel";
@@ -18,7 +18,7 @@ interface MobileViewProps {
 
 export function MobileView({ send }: MobileViewProps) {
   const [activeTab, setActiveTab] = useState<"chat" | "files" | "infra" | "terminal" | "settings">("chat");
-  const { activeConversationId, theme } = useStore();
+  const { activeConversationId, _theme } = useStore();
 
   const renderContent = () => {
     switch (activeTab) {

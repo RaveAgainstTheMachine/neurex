@@ -116,5 +116,11 @@ Neurex integrates a robust execution safety layer, providing full workspace isol
 - **Flight Recorder Buffering & Playback**: Reasoning traces and agentic decisions are recorded to a thread-safe, high-throughput in-memory buffer before being written to SQLite in periodic batches. The **Teleplay Replay** engine retrieves these logs (including pending buffer items) and compiles them into chronologically ordered screenplay scenes/beats for diagnostic analysis.
 - **Startup Dependency Audits**: The API lifespan initialization automatically triggers an asynchronous, non-blocking pip audit to trace and record local dependency status to the Flight Recorder under the `system-watch` conversation ID.
 
+## 15. Grounded Intelligence & Developer Experience (v0.7.0)
+The v0.7.0 release introduces highly-grounded consensus execution frameworks and verified teardown reliability:
+- **Multi-Agent Consensus Debates**: A SQLite-backed `DebateSession` coordinates multi-agent consensus through round-robin sequencers. Arguments stream in real time, permitting users to steer reasoning trajectories and evaluate multi-agent alignment inside the glassmorphic courtroom interface.
+- **Lifespan Teardown Hygiene**: Explicit cleanup callbacks stop the filesystem file watcher (`watcher_service`) and cleanly close/dispose of the database engines, eliminating all unhandled thread warnings and socket leaks during shutdown.
+- **E2E WebSocket Smoke Harness**: A non-flaky WebSocket testing mechanism that utilizes concurrency locks to evaluate token streaming, interactive approvals, and collaborative file tree synchronization under hermetic conditions.
+
 ---
 © 2026 Neurex Collective. All rights reserved.

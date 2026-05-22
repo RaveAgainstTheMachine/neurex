@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Folder, ChevronLeft, Home, HardDrive, Check } from 'lucide-react';
+import { Folder, ChevronLeft, Home, Check } from 'lucide-react';
 import { api } from '../../lib/api';
 import './Modals.css';
 

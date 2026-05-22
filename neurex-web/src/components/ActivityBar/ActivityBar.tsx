@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { 
   Files, Search, GitBranch, Clock, MessageSquare, 
-  Cpu, Shield, Puzzle, Bot, Settings, Sparkles, Activity, Globe, Timer, Sliders
+  Cpu, Shield, Puzzle, Bot, Settings, Sparkles, Globe, Sliders
 } from "lucide-react";
 import { 
   DndContext, 

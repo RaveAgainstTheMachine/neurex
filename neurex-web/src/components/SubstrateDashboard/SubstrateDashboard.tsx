@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { 
   Database, 
   Cpu, 
@@ -7,8 +7,7 @@ import {
   Zap, 
   AlertCircle, 
   RefreshCw, 
-  CheckCircle2, 
-  Settings2,
+  CheckCircle2,
   HardDrive
 } from 'lucide-react';
 import { API_BASE } from '../../lib/config';

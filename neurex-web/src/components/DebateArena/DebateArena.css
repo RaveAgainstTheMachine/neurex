@@ -240,11 +240,35 @@
 }
 
 .debate-arena__footer {
-  padding: 10px;
+  padding: 10px 16px;
   border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.05));
   display: flex;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.1);
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.reach-verdict-btn {
+  font-size: 11px;
+  font-weight: 600;
+  color: #00b8d4;
+  background: rgba(0, 184, 212, 0.1);
+  border: 1px solid rgba(0, 184, 212, 0.3);
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.reach-verdict-btn:hover:not(:disabled) {
+  background: #00b8d4;
+  color: #000;
+  box-shadow: 0 0 8px rgba(0, 184, 212, 0.3);
+}
+
+.reach-verdict-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .clear-debate-btn {
@@ -257,5 +281,148 @@
 }
 
 .clear-debate-btn:hover {
-  color: var(--accent-glow, #00b8d4);
+  color: #ff3d00;
+}
+
+/* Enhanced Courtroom Styling */
+.debate-arena__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 16px;
+  color: var(--text-muted, #888);
+  font-size: 12px;
+}
+
+.empty-title-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.empty-title-section h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+.empty-title-section p {
+  font-size: 11px;
+  line-height: 1.5;
+  color: #aaa;
+  max-width: 320px;
+  margin: 0;
+}
+
+.courtroom-proposal-card {
+  width: 100%;
+  max-width: 380px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(8px);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.courtroom-proposal-card:hover {
+  border-color: rgba(0, 184, 212, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 184, 212, 0.05);
+}
+
+.courtroom-proposal-card .card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #00b8d4;
+}
+
+.proposal-textarea {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 10px;
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.45;
+  resize: none;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+
+.proposal-textarea:focus {
+  outline: none;
+  border-color: #00b8d4;
+  background: rgba(0, 0, 0, 0.35);
+  box-shadow: inset 0 0 10px rgba(0, 184, 212, 0.05);
+}
+
+.template-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.template-chip {
+  font-size: 10px;
+  color: #ccc;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.template-chip:hover {
+  background: rgba(0, 184, 212, 0.08);
+  border-color: rgba(0, 184, 212, 0.3);
+  color: #00b8d4;
+}
+
+.initiate-debate-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  background: linear-gradient(135deg, #00b8d4 0%, #00e676 100%);
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 8px;
+  box-shadow: 0 4px 15px rgba(0, 184, 212, 0.2);
+}
+
+.initiate-debate-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(0, 184, 212, 0.4);
+}
+
+.initiate-debate-btn:disabled {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted, #666);
+  cursor: not-allowed;
+  box-shadow: none;
 }

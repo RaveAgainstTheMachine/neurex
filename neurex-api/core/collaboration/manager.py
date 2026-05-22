@@ -32,13 +32,12 @@ class CollaborationManager:
         Federated Collision Prevention:
         Ensure only one entity (User or Agent) can mutate a file across the entire mesh.
         """
-        async with AsyncSession(engine) as session:
+        session = AsyncSession(engine)
+        try:
             now = datetime.now(UTC)
 
             # Check for existing lock
-            statement = select(FileLock).where(FileLock.path == path)
-            results = await session.exec(statement)
-            current_lock = results.first()
+            current_lock = await session.get(FileLock, path)
 
             # If lock exists and hasn't expired, and it's not the requester's
             if current_lock:
@@ -88,15 +87,16 @@ class CollaborationManager:
                 "collaboration.lock_acquired", path=path, requester=requester_id, node=self.node_id
             )
             return True
+        finally:
+            await session.close()
 
     async def release_lock(
         self, path: str, requester_id: str, conversation_id: str | None = None
     ) -> bool:
         """Release a held lock, allowing others to edit."""
-        async with AsyncSession(engine) as session:
-            statement = select(FileLock).where(FileLock.path == path)
-            results = await session.exec(statement)
-            current_lock = results.first()
+        session = AsyncSession(engine)
+        try:
+            current_lock = await session.get(FileLock, path)
 
             if current_lock and current_lock.locked_by == requester_id:
                 await session.delete(current_lock)
@@ -111,14 +111,19 @@ class CollaborationManager:
                 return True
 
             return False
+        finally:
+            await session.close()
 
     async def get_active_locks(self) -> list[FileLock]:
         """Fetch all active locks across the mesh."""
-        async with AsyncSession(engine) as session:
+        session = AsyncSession(engine)
+        try:
             now = datetime.now(UTC)
             statement = select(FileLock).where(FileLock.expires_at > now)
             results = await session.exec(statement)
             return results.all()
+        finally:
+            await session.close()
 
 
 collaboration_manager = CollaborationManager()

@@ -4,8 +4,8 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { 
   Play, Pause, SkipBack, SkipForward, ArrowLeft, ArrowRight,
-  Activity, Brain, Cpu, Terminal, FileText, Compass, Shield, Clock,
-  RefreshCw, CheckCircle, AlertTriangle
+  Activity, Brain, Cpu, Compass, Shield, Clock,
+  RefreshCw, AlertTriangle
 } from "lucide-react";
 import "./TelemetryReplayCanvas.css";
 import { API_BASE } from "../../lib/config";

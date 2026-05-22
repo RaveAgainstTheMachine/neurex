@@ -1,10 +1,8 @@
 import { StoreSlice } from "./types";
 import { api } from "../api";
-import toast from "react-hot-toast";
-import { terminalRegistry } from "../../components/Terminal/Terminal";
-import type { NeurexStore, TaskNode, Diagnostic, FileNode } from "../types";
+import type { NeurexStore } from "../types";
 
-export const createInfraSlice: StoreSlice<NeurexStore> = (set, get) => ({
+export const createInfraSlice: StoreSlice<NeurexStore> = (set, _get) => ({
   // ── Infra ────────────────────────────────────────────────
 
     infraEngines: [],

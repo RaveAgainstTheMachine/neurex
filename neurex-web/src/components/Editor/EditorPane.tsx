@@ -2,13 +2,11 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import MonacoEditor, { Editor, DiffEditor } from "@monaco-editor/react";
+import { Editor, DiffEditor } from "@monaco-editor/react";
 import { useStore } from "../../lib/store";
-import { API_BASE } from "../../lib/config";
 import { 
-  ChevronDown, ChevronRight, Save, FileCode, Check, AlertCircle, 
-  Sparkles, X, CornerDownLeft, Loader2, Activity, Cpu, Zap, Layout,
-  RefreshCw, Folder, Pin, PinOff
+  ChevronRight, FileCode, Check, 
+  Sparkles, X, CornerDownLeft, Loader2, Layout, Folder, Pin
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { ContextMenu } from "../ContextMenu/ContextMenu";
@@ -623,7 +621,7 @@ export function EditorPane({ paneId = "pane-main" }: { paneId?: string }) {
                     }
                   }];
                   blameDecorations = editor.deltaDecorations(blameDecorations, newDecorations);
-                } catch (err) {}
+                } catch { /* intentional */ }
               };
 
               let lastLine = -1;
@@ -660,7 +658,7 @@ export function EditorPane({ paneId = "pane-main" }: { paneId?: string }) {
                     }
                   });
                   decorations = editor.deltaDecorations(decorations, newDecorations);
-                } catch (err) {}
+                } catch { /* intentional */ }
               };
 
               (editor as any)._presenceObserver = renderRemoteCursors;

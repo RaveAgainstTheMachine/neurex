@@ -11,12 +11,7 @@ export function useWebSocket(conversationId: string) {
   const userId = user?.username || "anonymous";
   const refreshTimeout = useRef<any>(null);
   
-  const setWsStatus = useStore(s => s.setWsStatus);
   const upsertTask = useStore(s => s.upsertTask);
-  const addMessage = useStore(s => s.addMessage);
-  const appendToken = useStore(s => s.appendToken);
-  const clearTasks = useStore(s => s.clearTasks);
-  const setPresence = useStore(s => s.setPresence);
 
   const send = useCallback((payload: object) => {
     if (ws.current?.readyState === WebSocket.OPEN) {
@@ -44,18 +39,18 @@ export function useWebSocket(conversationId: string) {
       const url = `${WS_BASE}/ws/${conversationId}?token=${token}&user_id=${userId}`;
       socket = new WebSocket(url);
       ws.current = socket;
-      state.setWsStatus("connecting");
+      state._setWsStatus("connecting");
       
       // Wire up the store's send method
       useStore.setState({ send });
 
       socket.onopen = () => {
-        state.setWsStatus("connected");
+        state._setWsStatus("connected");
         backoff = 1000; // Reset backoff on success
       };
 
       socket.onclose = (e) => {
-        state.setWsStatus("disconnected");
+        state._setWsStatus("disconnected");
         // Don't reconnect if closed normally
         if (e.code !== 1000 && e.code !== 1001) {
           reconnectTimeout = setTimeout(() => {
@@ -66,7 +61,7 @@ export function useWebSocket(conversationId: string) {
       };
 
       socket.onerror = () => {
-        state.setWsStatus("disconnected");
+        state._setWsStatus("disconnected");
       };
 
       // Phase 44.22: Token Buffering (Prevent UI thread saturation)
@@ -75,7 +70,7 @@ export function useWebSocket(conversationId: string) {
 
       const flushTokens = () => {
         if (!tokenBuffer) return;
-        useStore.getState().appendToken(tokenBuffer);
+        useStore.getState()._appendToken(tokenBuffer);
         tokenBuffer = "";
         tokenTimer = null;
       };
@@ -88,7 +83,7 @@ export function useWebSocket(conversationId: string) {
 
           switch (event) {
             case "presence_update":
-              s.setPresence(data.filter((p: any) => p.user_id !== userId));
+              s._setPresence(data.filter((p: any) => p.user_id !== userId));
               break;
             case "task_created":
             case "task_updated":
@@ -121,11 +116,12 @@ export function useWebSocket(conversationId: string) {
             case "lock_update":
               s.setLocks({ ...s.locks, [data.path]: data });
               break;
-            case "lock_release":
+            case "lock_release": {
               const nextLocks = { ...s.locks };
               delete nextLocks[data.path];
               s.setLocks(nextLocks);
               break;
+            }
             case "diagnostics_updated":
               if (data.path && data.diagnostics) {
                 s.updateDiagnostics(data.path, data.diagnostics);
@@ -154,7 +150,9 @@ export function useWebSocket(conversationId: string) {
               break;
             case "swarm_diff":
               if (data && Array.isArray(data.changes)) {
+                 
                 const diffsObj: Record<string, any> = {};
+                 
                 data.changes.forEach((c: any) => {
                   diffsObj[c.path] = {
                     path: c.path,
@@ -179,12 +177,13 @@ export function useWebSocket(conversationId: string) {
                 s.setSidebarTab("debate");
               }
               break;
-            case "error":
+            case "error": {
               const errorMsg = typeof data === "object" ? JSON.stringify(data) : data;
-              s.addMessage({ role: "assistant", content: `❌ Error: ${errorMsg}` });
+              useStore.getState().addMessage({ role: "assistant", content: `❌ Error: ${errorMsg}` });
               break;
+            }
           }
-        } catch {}
+        } catch { /* intentional */ }
       };
     };
 
@@ -203,7 +202,7 @@ export function useWebSocket(conversationId: string) {
         socket.onclose = null; // Prevent reconnect on cleanup
         socket.close();
       }
-      useStore.getState().clearTasks();
+      useStore.getState()._clearTasks();
     };
   }, [conversationId, send, sendPresence, token, userId]);
 

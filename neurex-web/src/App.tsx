@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { AlertTriangle } from "lucide-react";
 import { DynamicRenderer, UIBlueprint } from './components/DynamicUI/DynamicRenderer';
 import { StatusBar } from "./components/StatusBar/StatusBar";
@@ -31,7 +31,6 @@ import { useStore } from "./lib/store";
 import { Toaster } from "react-hot-toast";
 import { LoadingOverlay } from "./components/LoadingOverlay/LoadingOverlay";
 import { MobileView } from "./components/MobileView/MobileView";
-import { ContextMenu } from "./components/ContextMenu/ContextMenu";
 import { SwarmDiffSidebar } from "./components/SwarmDiff/SwarmDiffSidebar";
 import { DebateArena } from "./components/DebateArena/DebateArena";
 import { MCPSandbox } from "./components/MCPSandbox/MCPSandbox";
@@ -65,7 +64,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
   }
 }
 
-type SidebarTab = "explorer" | "search" | "git" | "agent" | "skills" | "history" | "timeline" | "infra" | "system" | "swarm" | "debate";
+type _SidebarTab = "explorer" | "search" | "git" | "agent" | "skills" | "history" | "timeline" | "infra" | "system" | "swarm" | "debate";
 
 export default function App() {
   const [blueprint, setBlueprint] = useState<UIBlueprint | null>(null);
@@ -78,7 +77,7 @@ export default function App() {
         if (data.type === 'UI_BLUEPRINT') {
           setBlueprint(data.payload);
         }
-      } catch (e) {}
+      } catch { /* intentional */ }
     };
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
@@ -125,9 +124,9 @@ function AppContent() {
   const showAIPanel = useStore(s => s.showAIPanel);
   const setShowAIPanel = useStore(s => s.setShowAIPanel);
   const showSettings = useStore(s => s.showSettings);
-  const setShowSettings = useStore(s => s.setShowSettings);
+  const _setShowSettings = useStore(s => s._setShowSettings);
   const showAbout = useStore(s => s.showAbout);
-  const setShowAbout = useStore(s => s.setShowAbout);
+  const _setShowAbout = useStore(s => s._setShowAbout);
   const settings = useStore(s => s.settings);
   const tasks = useStore(s => s.tasks);
   const activeFile = useStore(s => s.activeFile);
@@ -242,7 +241,7 @@ function AppContent() {
             if ((window as any).hidePreloader) (window as any).hidePreloader();
           }
         }
-      } catch (e) {
+      } catch (_e) {
         console.error("System status check failed", e);
         setIsInitialized(true); // Fallback
       }
@@ -259,7 +258,7 @@ function AppContent() {
   }, [sidebarTab]);
 
 
-  const activeTaskCount = Object.values(tasks).filter((t: any) => t.status === "THINKING" || t.status === "WRITING" || t.status === "TESTING").length;
+  const _activeTaskCount = Object.values(tasks).filter((t: any) => t.status === "THINKING" || t.status === "WRITING" || t.status === "TESTING").length;
   const isAIActive = Object.values(tasks).some((t: any) => t.status === "THINKING" || t.status === "WRITING");
 
   const languageItems = useMemo(() => [

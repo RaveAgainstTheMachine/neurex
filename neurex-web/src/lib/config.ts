@@ -4,7 +4,7 @@
 // In production (Caddy/Docker), the same relative paths work via the reverse proxy.
 
 const config = (window as any).__NEUREX_CONFIG__ || {};
-const protocol = config.enableHttps ? "https" : "http";
+const _protocol = config.enableHttps ? "https" : "http";
 const wsProtocol = config.enableHttps ? "wss" : "ws";
 
 export const API_BASE = (window as any).__API_BASE__ || ""; 
