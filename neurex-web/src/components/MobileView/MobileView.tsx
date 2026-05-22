@@ -10,7 +10,6 @@ import { InfraPanel } from "../InfraPanel/InfraPanel";
 import { SettingsPanel } from "../SettingsPanel/SettingsPanel";
 import { Terminal } from "../Terminal/Terminal";
 import { ConversationList } from "../ConversationList/ConversationList";
-import { HiveMindPanel } from "../HiveMindPanel/HiveMindPanel";
 import "./MobileView.css";
 
 interface MobileViewProps {
@@ -18,7 +17,7 @@ interface MobileViewProps {
 }
 
 export function MobileView({ send }: MobileViewProps) {
-  const [activeTab, setActiveTab] = useState<"chat" | "files" | "infra" | "terminal" | "settings" | "hive">("chat");
+  const [activeTab, setActiveTab] = useState<"chat" | "files" | "infra" | "terminal" | "settings">("chat");
   const { activeConversationId, theme } = useStore();
 
   const renderContent = () => {
@@ -42,8 +41,6 @@ export function MobileView({ send }: MobileViewProps) {
         );
       case "settings":
         return <SettingsPanel />;
-      case "hive":
-        return <HiveMindPanel />;
       default:
         return null;
     }
