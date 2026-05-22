@@ -37,3 +37,12 @@
 ## 🧩 Skills / Extensibility
 - **Skill Discovery**: Interface for discovering and installing agentic toolsets.
 - **Git-based Install**: Install skills directly from Git repositories.
+
+---
+
+## ⚡ Active Development in v0.6.0 (The Interactive Agentic Pivot)
+- **Visual Agent Task Graph Editor**: A node-based designer canvas where users can visually rewire task dependencies, insert manual/agent steps, and set active execution breakpoints.
+- **Multi-Cursor AI Pair Programming**: Real-time collaborative typing in Monaco with visual AI cursors (`[Neurex Coder]`), selection highlights, and 60Hz telemetry sync.
+- **Bidirectional LSP Context Router**: Exposing language server operations (`find references`, `go to definition`, `diagnostics`) directly to agents to query semantic codebase relations.
+- **Visual MCP Tool Sandbox & Manager**: A dashboard listing connected Model Context Protocol servers with a granular permission matrix (Always Allow, Always Ask, Deny) and manual tool playgrounds.
+

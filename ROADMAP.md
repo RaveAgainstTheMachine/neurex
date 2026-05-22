@@ -36,29 +36,30 @@ Neurex focuses on three pillars:
 
 ---
 
-## ⚡ Active Development: The Maintenance Pivot (v0.6.0)
+## ⚡ Active Development: The Interactive Agentic Pivot (v0.6.0)
 
-Our current focus is transforming Neurex from a "general substrate" into a high-reliability **Autonomous Maintenance Engine**.
+Our current focus is elevating Neurex from a background task sandbox into a premier, high-fidelity **Interactive Agentic IDE** where developers and AI agents collaborate visually as true equal peers.
 
-### 🛠️ Core Maintenance Workflows
-- [ ] **Automated Dependency Hardening**: Tools for agents to upgrade library major versions and autonomously fix breaking changes.
-- [ ] **Security Sentinel**: Background scanning and auto-patching of subprocess command injections and path traversals.
-- [ ] **Type-Safety Enforcement**: Repo-wide autonomous addition of type hints and docstrings with verification.
+### 🎨 Core Interactive IDE Workflows
+- [ ] **Visual Agent Task Graph Editor**: A node-based designer canvas where users can visually rewire task dependencies, insert manual/agent steps, and set active execution breakpoints.
+- [ ] **Multi-Cursor AI Pair Programming**: Real-time collaborative typing in Monaco with visual AI cursors (`[Neurex Coder]`), selection highlights, and 60Hz telemetry sync.
+- [ ] **Bidirectional LSP Context Router**: Exposing language server operations (`find references`, `go to definition`, `diagnostics`) directly to agents to query semantic codebase relations.
+- [ ] **Visual MCP Tool Sandbox & Manager**: A dashboard listing connected Model Context Protocol servers with a granular permission matrix (Always Allow, Always Ask, Deny) and manual tool playgrounds.
 
-### 🧪 Reliability & Evals
-- [ ] **Release Evals**: Every release must pass a standardized suite of 50+ maintenance tasks (see `eval/run_evals.py`).
-- [ ] **Agent Trace Debugger**: A high-fidelity UI for inspecting agent tool usage to reduce "loop hallucinations."
-- [ ] **Regression Snapshots**: Automatic git snapshots before any agent mutation to ensure 100% rollback reliability.
+### 🧪 Reliability, Evals & Controls
+- [ ] **Interactive Simulation Benchmarks**: Real-time evaluation runs designed to test agent responsiveness and cooperation in live visual environments.
+- [ ] **Telemetry Replay Canvas**: An interactive debugger to record, play back, and inspect agent WebSocket events, PTY streams, and cursor selections.
+- [ ] **Zero-Diff Staging Guard**: Sandboxed environment checking before committing swarm mutations, ensuring 100% stable workspace rollbacks.
 
 ### 🔬 Experimental Labs (Lower Priority)
 - **Distributed VRAM Pooling**: Functional but considered a niche power-user feature.
-- **Mobile Peer Support**: Experimental nodes for running inference on mobile NPUs.
+- **Mobile NPU Nodes**: Experimental nodes for offloading inference to mobile devices.
 
 ---
 
 ## 🛠️ Future Backlog
-- [ ] **Plugin System**: Public API for extending the IDE.
-- [ ] **Multi-Agent Debate**: Refinement loop for high-risk maintenance tasks.
+- [ ] **Extensible Plugin Hub**: A community-driven marketplace for publishing and sharing custom agent toolkits and themes.
+- [ ] **Multi-Agent Consensus Debates**: Automated high-stakes architecture reviews with multi-agent consensus voting.
 
 ---
-*Roadmap updated to reflect the Maintenance & Reliability pivot.*
+*Roadmap updated to reflect the Interactive Agentic Pivot.*
