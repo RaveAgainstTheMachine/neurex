@@ -120,7 +120,10 @@ async def file_tree(path: str = ".", depth: int = 2, root_path: str | None = Non
     safe_root = os.path.realpath(str(WORKSPACE))
     target = os.path.realpath(os.path.join(safe_root, path))
     safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-    if target != safe_root and not target.startswith(safe_prefix):
+    try:
+        if target != safe_root and not target.startswith(safe_prefix):
+            raise ValueError("Path traversal blocked")
+    except ValueError:
         raise HTTPException(status_code=403, detail="Path traversal blocked")
     target_path = Path(target)
     git_status = {}
@@ -245,7 +248,10 @@ async def read_file(path: str, root_path: str | None = None):
     safe_root = os.path.realpath(str(WORKSPACE))
     target = os.path.realpath(os.path.join(safe_root, path))
     safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-    if target != safe_root and not target.startswith(safe_prefix):
+    try:
+        if target != safe_root and not target.startswith(safe_prefix):
+            raise ValueError("Path traversal blocked")
+    except ValueError:
         raise HTTPException(status_code=403, detail="Path traversal blocked")
     resolved = Path(target)
     
