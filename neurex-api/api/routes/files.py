@@ -567,6 +567,11 @@ async def replace_all(
 
     for rel_path in file_matches:
         abs_path = (WORKSPACE / rel_path).resolve()
+        abs_str = str(abs_path)
+        base_prefix = str(base_workspace) if str(base_workspace).endswith(os.sep) else str(base_workspace) + os.sep
+        if not abs_str.startswith(base_prefix):
+            raise PermissionError("Path traversal blocked")
+        abs_path = Path(abs_str)
         if not abs_path.exists():
             continue
 
@@ -703,6 +708,11 @@ async def browse_directories(path: str = "."):
             target = (base / path).resolve()
         else:
             target = target.resolve()
+
+        target_str = os.path.realpath(str(target))
+        if not target_str.startswith("/"):
+            raise PermissionError("Path must be absolute")
+        target = Path(target_str)
 
         if not target.exists() or not target.is_dir():
             return {"dirs": [], "current": str(target), "error": "Not a directory"}

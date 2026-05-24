@@ -196,9 +196,8 @@ async def get_diff(path: str = Query(...), user=Depends(get_current_user)):
         safe_root = os.path.realpath(str(workspace))
         target = os.path.realpath(os.path.join(safe_root, path))
         safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-        if target != safe_root:
-            if not target.startswith(safe_prefix):
-                raise PermissionError("Path traversal blocked")
+        if not target.startswith(safe_prefix):
+            raise PermissionError("Path traversal blocked")
         resolved = Path(target)
         rel_path = str(resolved.relative_to(workspace))
 
