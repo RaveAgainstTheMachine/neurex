@@ -142,6 +142,15 @@ eval:
 loc:
 	bash scripts/update-loc.sh
 
+## Sync sanitized branch to public GitHub remote
+sync-github:
+	bash scripts/sync-github.sh
+
+## Run tests and checks, then push to internal origin and public GitHub
+release: test typecheck lint
+	git push origin main
+	bash scripts/sync-github.sh
+
 # ── Help ──────────────────────────────────────────────────────────────────────
 
 help:
