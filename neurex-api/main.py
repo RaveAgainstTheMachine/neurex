@@ -227,6 +227,12 @@ async def health():
     return {"status": "ok", "version": VERSION}
 
 
+@app.exception_handler(PermissionError)
+async def permission_error_handler(request: Request, exc: PermissionError):
+    log.warning("permission_violation", path=request.url.path, error=str(exc))
+    return JSONResponse(status_code=403, content={"detail": str(exc)})
+
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     log.error("unhandled_exception", path=request.url.path, error=str(exc))
