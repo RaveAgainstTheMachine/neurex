@@ -7,7 +7,10 @@ from __future__ import annotations
 from core.intelligence.ast_helper import get_ast_bounds
 
 
-def test_ast_bounds_python_function(tmp_path):
+def test_ast_bounds_python_function(tmp_path, monkeypatch):
+    from api.routes import files as api_files
+    monkeypatch.setattr(api_files, "get_workspace", lambda: tmp_path)
+
     # Create a mock Python file with clear function boundaries
     source_code = (
         "def hello_world():\n"
