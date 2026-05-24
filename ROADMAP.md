@@ -3,7 +3,7 @@
 This document outlines the development trajectory of Neurex, focusing on building a stable, local-first AI engineering workspace.
 
 ## 🛰️ Current Operational Status
-- **Current Version**: `v0.8.0-STABLE`
+- **Current Version**: `v0.8.1-STABLE`
 - **Core Engine**: NeuralHarness v2.3
 - **Status**: Stable for local and LAN-based multi-device collaboration with fully clean CI/CD gates.
 
@@ -64,4 +64,4 @@ Neurex focuses on three pillars:
 - [ ] **🛡️ Secure Capability Guardrails**: Upgraded runtime sandbox granting granular, secure web searches and authenticated API capabilities with real-time human confirmation.
 
 ---
-*Roadmap updated to reflect Extensible Plugin Hub & Sanitized Sync (v0.8.0).*
+*Roadmap updated to reflect High-Fidelity Security Hardening (v0.8.1).*

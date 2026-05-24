@@ -1,2 +1,2 @@
-VERSION = "0.8.0"  # Extensible Plugin Hub & Codebase Hygiene
+VERSION = "0.8.1"  # High-Fidelity Security Hardening
 
