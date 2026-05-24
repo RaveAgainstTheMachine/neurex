@@ -22,7 +22,9 @@ def _validate_safe_path(path: str) -> Path:
     target = os.path.realpath(os.path.join(safe_root, path))
     safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
     
-    if not target.startswith(safe_prefix) and target != safe_root:
+    if target == safe_root:
+        return Path(target)
+    if not target.startswith(safe_prefix):
         raise HTTPException(status_code=403, detail="Path traversal blocked")
         
     return Path(target)
@@ -64,6 +66,9 @@ def get_all_git_roots(workspace: Path) -> list[Path]:
             if line:
                 # remove /.git and convert to absolute
                 root = (workspace / line).parent.resolve()
+                safe_prefix = str(workspace) if str(workspace).endswith(os.sep) else str(workspace) + os.sep
+                if not str(root).startswith(safe_prefix) and str(root) != str(workspace):
+                    continue
                 if root not in roots:
                     roots.append(root)
     except (subprocess.SubprocessError, OSError):
@@ -152,6 +157,9 @@ async def get_status(user=Depends(get_current_user)):
 @router.post("/stage")
 async def stage_file(payload: dict, user=Depends(get_current_user)):
     resolved = _validate_safe_path(payload["path"])
+    safe_prefix = str(get_workspace()) if str(get_workspace()).endswith(os.sep) else str(get_workspace()) + os.sep
+    if not str(resolved).startswith(safe_prefix) and str(resolved) != str(get_workspace()):
+        raise HTTPException(status_code=403, detail="Path traversal blocked")
     rel_path = str(resolved.relative_to(get_workspace()))
     run_git(["add", "--", rel_path])
     return {"status": "ok"}
@@ -160,6 +168,9 @@ async def stage_file(payload: dict, user=Depends(get_current_user)):
 @router.post("/unstage")
 async def unstage_file(payload: dict, user=Depends(get_current_user)):
     resolved = _validate_safe_path(payload["path"])
+    safe_prefix = str(get_workspace()) if str(get_workspace()).endswith(os.sep) else str(get_workspace()) + os.sep
+    if not str(resolved).startswith(safe_prefix) and str(resolved) != str(get_workspace()):
+        raise HTTPException(status_code=403, detail="Path traversal blocked")
     rel_path = str(resolved.relative_to(get_workspace()))
     run_git(["reset", "HEAD", "--", rel_path])
     return {"status": "ok"}
@@ -170,6 +181,9 @@ async def get_diff(path: str = Query(...), user=Depends(get_current_user)):
     try:
         workspace = get_workspace()
         resolved = _validate_safe_path(path)
+        safe_prefix = str(workspace) if str(workspace).endswith(os.sep) else str(workspace) + os.sep
+        if not str(resolved).startswith(safe_prefix) and str(resolved) != str(workspace):
+            raise HTTPException(status_code=403, detail="Path traversal blocked")
         rel_path = str(resolved.relative_to(workspace))
 
         # Get original from HEAD
@@ -210,6 +224,9 @@ async def generate_commit_msg(user=Depends(get_current_user)):
 async def get_blame(path: str = Query(...), user=Depends(get_current_user)):
     try:
         resolved = _validate_safe_path(path)
+        safe_prefix = str(get_workspace()) if str(get_workspace()).endswith(os.sep) else str(get_workspace()) + os.sep
+        if not str(resolved).startswith(safe_prefix) and str(resolved) != str(get_workspace()):
+            raise HTTPException(status_code=403, detail="Path traversal blocked")
         rel_path = str(resolved.relative_to(get_workspace()))
         # Use line-porcelain for detailed, stable parsing
         res = run_git(["blame", "--line-porcelain", "--", rel_path])
@@ -239,6 +256,9 @@ async def get_blame(path: str = Query(...), user=Depends(get_current_user)):
 async def get_history(path: str = Query(...), user=Depends(get_current_user)):
     try:
         resolved = _validate_safe_path(path)
+        safe_prefix = str(get_workspace()) if str(get_workspace()).endswith(os.sep) else str(get_workspace()) + os.sep
+        if not str(resolved).startswith(safe_prefix) and str(resolved) != str(get_workspace()):
+            raise HTTPException(status_code=403, detail="Path traversal blocked")
         rel_path = str(resolved.relative_to(get_workspace()))
         # Get history with hash, author, time, and summary
         res = run_git(["log", "--pretty=format:%h|%an|%at|%s", "--", rel_path])

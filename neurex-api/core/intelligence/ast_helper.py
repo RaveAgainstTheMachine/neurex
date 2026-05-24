@@ -77,9 +77,12 @@ def get_ast_bounds(file_path: Path, line: int, column: int) -> tuple[int, int]:
                 safe_root = os.path.realpath(str(workspace))
                 target = os.path.realpath(str(file_path))
                 safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-                if not target.startswith(safe_prefix) and target != safe_root:
+                if target == safe_root:
+                    pass
+                elif not target.startswith(safe_prefix):
                     log.warning("ast.security_violation", path=str(file_path))
                     return line, line
+                file_path = Path(target)
     except Exception:
         pass
 

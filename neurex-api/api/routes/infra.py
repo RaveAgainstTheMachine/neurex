@@ -222,6 +222,9 @@ async def download_sync_file(path: str):
     workspace = get_workspace_root()
     try:
         resolved = _validate_safe_path(path, workspace)
+        safe_prefix = str(workspace) if str(workspace).endswith(os.sep) else str(workspace) + os.sep
+        if not str(resolved).startswith(safe_prefix) and str(resolved) != str(workspace):
+            raise HTTPException(status_code=403, detail="Path traversal blocked")
         if not resolved.is_file():
             raise HTTPException(status_code=404, detail="File not found")
         content = resolved.read_bytes()
@@ -241,6 +244,9 @@ async def upload_sync_file(path: str, mtime: float, request: Request):
     workspace = get_workspace_root()
     try:
         resolved = _validate_safe_path(path, workspace)
+        safe_prefix = str(workspace) if str(workspace).endswith(os.sep) else str(workspace) + os.sep
+        if not str(resolved).startswith(safe_prefix) and str(resolved) != str(workspace):
+            raise HTTPException(status_code=403, detail="Path traversal blocked")
         resolved.parent.mkdir(parents=True, exist_ok=True)
         content = await request.body()
         resolved.write_bytes(content)

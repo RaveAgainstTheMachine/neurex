@@ -60,13 +60,14 @@ async def rollback_system(backup_name: str) -> str:
         raise ValueError("Invalid backup name")
 
     safe_root = os.path.realpath(str(BACKUP_DIR))
-    resolved_path = Path(os.path.join(safe_root, backup_name)).resolve()
-    target = os.path.realpath(str(resolved_path))
+    target = os.path.realpath(os.path.join(safe_root, backup_name))
     safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-    if not target.startswith(safe_prefix) and target != safe_root:
+    if target == safe_root:
+        pass
+    elif not target.startswith(safe_prefix):
         raise ValueError("Security violation: Path traversal attempted")
 
-    backup_path = resolved_path
+    backup_path = Path(target)
     if not backup_path.exists():
         raise FileNotFoundError(f"Backup {backup_name} not found.")
 

@@ -348,7 +348,9 @@ class LSPManager:
         safe_root = os.path.realpath(str(workspace or "."))
         target = os.path.realpath(workspace_path)
         safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-        if not target.startswith(safe_prefix) and target != safe_root:
+        if target == safe_root:
+            pass
+        elif not target.startswith(safe_prefix):
             raise PermissionError("Path traversal attempt blocked in initialize_workspace")
         workspace_path = target
 
@@ -578,7 +580,9 @@ class LSPManager:
         safe_root = os.path.realpath(str(workspace or "."))
         target = os.path.realpath(str(root / ".neurex" / "lsp.json"))
         safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-        if not target.startswith(safe_prefix) and target != safe_root:
+        if target == safe_root:
+            pass
+        elif not target.startswith(safe_prefix):
             return {}
         
         config_path = Path(target)

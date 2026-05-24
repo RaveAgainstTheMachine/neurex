@@ -202,9 +202,9 @@ class BaseAgent(ABC):
                 # Planning request
                 import re
 
-                last_msg = messages[-1]["content"].lower()
+                last_msg = messages[-1]["content"].lower()[-500:]
                 path_match = re.search(
-                    r"([a-zA-Z0-9_/.-]+\.(?:py|md|ts))", last_msg
+                    r"([a-zA-Z0-9_/-]+(?:\.[a-zA-Z0-9_/-]+)*\.(?:py|md|ts))", last_msg
                 )
                 path = path_match.group(1) if path_match else "output.txt"
 
@@ -224,9 +224,9 @@ class BaseAgent(ABC):
                 # Mock a write_file call if we can guess the path
                 import re
 
-                last_msg = messages[-1]["content"].lower()
+                last_msg = messages[-1]["content"].lower()[-500:]
                 path_match = re.search(
-                    r"([a-zA-Z0-9_/.-]+\.(?:py|md|ts))", last_msg
+                    r"([a-zA-Z0-9_/-]+(?:\.[a-zA-Z0-9_/-]+)*\.(?:py|md|ts))", last_msg
                 )
                 if path_match:
                     path = path_match.group(1)

@@ -118,6 +118,9 @@ async def file_tree(path: str = ".", depth: int = 2, root_path: str | None = Non
         return {"name": "No Workspace", "type": "dir", "children": []}
     log.info("files.tree_request", path=path, depth=depth, workspace=str(WORKSPACE))
     target_path = _validate_safe_path(path, WORKSPACE)
+    safe_prefix = str(WORKSPACE) if str(WORKSPACE).endswith(os.sep) else str(WORKSPACE) + os.sep
+    if not str(target_path).startswith(safe_prefix) and str(target_path) != str(WORKSPACE):
+        raise HTTPException(status_code=403, detail="Path traversal blocked")
     git_status = {}
     try:
         from .git import get_all_git_roots
@@ -238,6 +241,9 @@ async def read_file(path: str, root_path: str | None = None):
     if not WORKSPACE:
         raise HTTPException(status_code=400, detail="No workspace open")
     resolved = _validate_safe_path(path, WORKSPACE)
+    safe_prefix = str(WORKSPACE) if str(WORKSPACE).endswith(os.sep) else str(WORKSPACE) + os.sep
+    if not str(resolved).startswith(safe_prefix) and str(resolved) != str(WORKSPACE):
+        raise HTTPException(status_code=403, detail="Path traversal blocked")
     if not resolved.is_file():
         raise HTTPException(status_code=404, detail="File not found")
     content = resolved.read_text(errors="replace")
@@ -258,6 +264,9 @@ async def save_file(req: SaveRequest):
     if not WORKSPACE:
         raise HTTPException(status_code=400, detail="No workspace open")
     resolved = _validate_safe_path(req.path, WORKSPACE)
+    safe_prefix = str(WORKSPACE) if str(WORKSPACE).endswith(os.sep) else str(WORKSPACE) + os.sep
+    if not str(resolved).startswith(safe_prefix) and str(resolved) != str(WORKSPACE):
+        raise HTTPException(status_code=403, detail="Path traversal blocked")
 
     # Advanced Collision Prevention
     if not collab_manager.acquire_lock(req.path, req.requester_id):
@@ -283,6 +292,9 @@ async def upload_file(file: UploadFile = File(...), path: str = "uploads"):
     # Ensure relative path
     clean_path = path.lstrip("/")
     resolved_dir = _validate_safe_path(clean_path, WORKSPACE)
+    safe_prefix = str(WORKSPACE) if str(WORKSPACE).endswith(os.sep) else str(WORKSPACE) + os.sep
+    if not str(resolved_dir).startswith(safe_prefix) and str(resolved_dir) != str(WORKSPACE):
+        raise HTTPException(status_code=403, detail="Path traversal blocked")
 
     resolved_dir.mkdir(parents=True, exist_ok=True)
     file_path = resolved_dir / file.filename
@@ -513,6 +525,9 @@ async def create_folder(path: str, root_path: str | None = None):
     """Create a new directory recursively."""
     WORKSPACE = get_workspace(root_path)
     resolved = _validate_safe_path(path, WORKSPACE)
+    safe_prefix = str(WORKSPACE) if str(WORKSPACE).endswith(os.sep) else str(WORKSPACE) + os.sep
+    if not str(resolved).startswith(safe_prefix) and str(resolved) != str(WORKSPACE):
+        raise HTTPException(status_code=403, detail="Path traversal blocked")
     resolved.mkdir(parents=True, exist_ok=True)
     return {"path": path, "status": "created"}
 
@@ -522,6 +537,9 @@ async def delete_file(path: str, root_path: str | None = None):
     """Delete a file or directory recursively."""
     WORKSPACE = get_workspace(root_path)
     resolved = _validate_safe_path(path, WORKSPACE)
+    safe_prefix = str(WORKSPACE) if str(WORKSPACE).endswith(os.sep) else str(WORKSPACE) + os.sep
+    if not str(resolved).startswith(safe_prefix) and str(resolved) != str(WORKSPACE):
+        raise HTTPException(status_code=403, detail="Path traversal blocked")
 
     if not resolved.exists():
         raise HTTPException(status_code=404, detail="Path not found")
