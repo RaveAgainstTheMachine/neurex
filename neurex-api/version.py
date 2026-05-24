@@ -1,1 +1,2 @@
-VERSION = "0.7.0"  # Grounded Intelligence & Developer Experience
+VERSION = "0.8.0"  # Extensible Plugin Hub & Codebase Hygiene
+

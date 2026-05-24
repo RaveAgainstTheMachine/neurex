@@ -195,33 +195,6 @@ export function AIPanel({ send, conversationId, isActive = true }: AIPanelProps)
       existingAudio.src = "";
     }
 
-    // Attempt Backend Neural Synthesis (Phase 55.9)
-    try {
-      const response = await fetch(`${API_BASE}/api/voice/speak`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: content,
-          voice: voicePreset
-        })
-      });
-
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const audio = new Audio(url);
-        (window as any)._neurex_audio = audio;
-        audio.play().catch(e => {
-          console.warn("Audio playback blocked. User interaction required.", e);
-          // Fallback to browser TTS if audio blocked
-          fallbackBrowserSpeak(content);
-        });
-        return;
-      }
-    } catch (err) {
-      console.error("Backend synthesis failed, falling back to browser.", err);
-    }
-
     fallbackBrowserSpeak(content);
   };
 

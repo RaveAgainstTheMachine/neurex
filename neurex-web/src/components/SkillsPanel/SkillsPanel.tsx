@@ -124,7 +124,7 @@ export function SkillsPanel() {
   const [skills, setSkills] = useState<Skill[]>([]);
   const [curated, setCurated] = useState<any[]>([]);
   const [_loading, setLoading] = useState(true);
-  const [installing, setInstalling] = useState(false);
+  const [installingUrl, setInstallingUrl] = useState<string | null>(null);
   const [_newSkillUrl, _setNewSkillUrl] = useState("");
   const [tab, setTab] = useState<"installed" | "discover">("installed");
   const [confirmState, setConfirmState] = useState<{ show: boolean; skillId: string | null }>({ show: false, skillId: null });
@@ -167,22 +167,22 @@ export function SkillsPanel() {
   const fetchCurated = async () => {
     setLoading(true);
     try {
-      const resp = await fetch(`${API_BASE}/api/skills/curated`, {
+      const resp = await fetch(`${API_BASE}/api/skills/marketplace`, {
         headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
       });
       const data = await resp.json();
       if (Array.isArray(data)) setCurated(data);
     } catch (_err) {
-      console.error("Failed to fetch curated list", _err);
+      console.error("Failed to fetch marketplace", _err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (tab === "installed") fetchSkills();
-    else fetchCurated();
-  }, [tab]);
+    fetchSkills();
+    fetchCurated();
+  }, []);
 
   const filteredInstalled = useMemo(() => {
     return skills.filter(s => 
@@ -200,8 +200,12 @@ export function SkillsPanel() {
     });
   }, [curated, searchQuery, marketCategory]);
 
+  const isInstalled = (item: any) => {
+    return skills.some(s => s.id === item.id || s.url === item.url);
+  };
+
   const handleInstall = async (url: string) => {
-    setInstalling(true);
+    setInstallingUrl(url);
     try {
       const res = await fetch(`${API_BASE}/api/skills/install`, {
         method: "POST",
@@ -217,12 +221,11 @@ export function SkillsPanel() {
       }
       toast.success("Skill installed successfully");
       setSearchQuery("");
-      setTab("installed");
       fetchSkills();
     } catch (err: any) {
       toast.error(err.message);
     } finally {
-      setInstalling(false);
+      setInstallingUrl(null);
     }
   };
 
@@ -288,7 +291,7 @@ export function SkillsPanel() {
           </select>
         </div>
       </div>
-
+ 
       <div className="extensions-content">
         <div className="extensions-section">
           <div className="extensions-section-header">
@@ -339,7 +342,7 @@ export function SkillsPanel() {
             )}
           </div>
         </div>
-
+ 
         <div className="extensions-section">
           <div className="extensions-section-header">
             <ChevronDown size={14} />
@@ -355,13 +358,17 @@ export function SkillsPanel() {
                   <div className="extension-details">
                     <div className="extension-name-row">
                       <span className="extension-name">{item.name}</span>
-                      <button 
-                        className="btn btn--purple btn--xs"
-                        onClick={() => handleInstall(item.url)}
-                        disabled={installing}
-                      >
-                        Install
-                      </button>
+                      {isInstalled(item) ? (
+                        <span className="badge badge--installed">Installed</span>
+                      ) : (
+                        <button 
+                          className="btn btn--purple btn--xs"
+                          onClick={() => handleInstall(item.url)}
+                          disabled={installingUrl !== null}
+                        >
+                          {installingUrl === item.url ? "Installing..." : "Install"}
+                        </button>
+                      )}
                     </div>
                     <span className="extension-description">{item.description}</span>
                     <div className="extension-footer">

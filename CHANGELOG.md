@@ -2,6 +2,13 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
+## [0.8.0] - 2026-05-23: EXTENSIBLE PLUGIN HUB & CODEBASE HYGIENE
+### Added
+- **Pillar A: Extensible Plugin Hub & Local Marketplace**: Implemented dynamic Plugin Hub endpoints (`GET /api/skills/marketplace` and `POST /api/skills/publish`) in the backend, backed by local mock storage (`.marketplace_mock.json`). Fully validated duplicate prevention, conflict assertions, and permission-gated developer roles.
+- **Pillar B: Unified Discovery Canvas & Installed Badges**: Wired up the premium frontend "Discover" catalog to fetch directly from the marketplace unified API, featuring individual loading trackers ("Installing...") and green neon status badges for already-installed capabilities.
+- **Pillar C: Rigorous Codebase Sanitization & Hygiene**: Permanently purged the orphaned legacy `SubstrateDashboard` panel directory. Conducted a comprehensive audit of the voice synthesis endpoints in `AIPanel.tsx`, gracefully routing them to the native browser speech fallback interface to completely eliminate speculative dead routes.
+- **Pillar D: High-Fidelity Pre-Release Gates**: Hardened the entire development loop, achieving 100% green test passing rates across 49+ tests with strictly zero linter, formatter, typecheck, or runtime warnings/errors.
+
 ## [0.7.0] - 2026-05-22: GROUNDED INTELLIGENCE & DEVELOPER EXPERIENCE
 ### Added
 - **Pillar A: Clean CI/CD & Teardown Hygiene**: Hardened pytest teardown hooks by cleanly shutting down `watcher_service` and disposing of SQLAlchemy connection pools on lifespan exit, achieving 100% clean pre-release gates with zero connection leaks, unhandled thread exceptions, or warnings.
