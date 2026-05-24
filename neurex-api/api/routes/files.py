@@ -117,10 +117,12 @@ async def file_tree(path: str = ".", depth: int = 2, root_path: str | None = Non
     if not WORKSPACE:
         return {"name": "No Workspace", "type": "dir", "children": []}
     log.info("files.tree_request", path=path, depth=depth, workspace=str(WORKSPACE))
-    target_path = _validate_safe_path(path, WORKSPACE)
-    safe_prefix = str(WORKSPACE) if str(WORKSPACE).endswith(os.sep) else str(WORKSPACE) + os.sep
-    if not str(target_path).startswith(safe_prefix) and str(target_path) != str(WORKSPACE):
+    safe_root = os.path.realpath(str(WORKSPACE))
+    target = os.path.realpath(os.path.join(safe_root, path))
+    safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
+    if target != safe_root and not target.startswith(safe_prefix):
         raise HTTPException(status_code=403, detail="Path traversal blocked")
+    target_path = Path(target)
     git_status = {}
     try:
         from .git import get_all_git_roots
@@ -240,10 +242,13 @@ async def read_file(path: str, root_path: str | None = None):
     WORKSPACE = get_workspace(root_path)
     if not WORKSPACE:
         raise HTTPException(status_code=400, detail="No workspace open")
-    resolved = _validate_safe_path(path, WORKSPACE)
-    safe_prefix = str(WORKSPACE) if str(WORKSPACE).endswith(os.sep) else str(WORKSPACE) + os.sep
-    if not str(resolved).startswith(safe_prefix) and str(resolved) != str(WORKSPACE):
+    safe_root = os.path.realpath(str(WORKSPACE))
+    target = os.path.realpath(os.path.join(safe_root, path))
+    safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
+    if target != safe_root and not target.startswith(safe_prefix):
         raise HTTPException(status_code=403, detail="Path traversal blocked")
+    resolved = Path(target)
+    
     if not resolved.is_file():
         raise HTTPException(status_code=404, detail="File not found")
     content = resolved.read_text(errors="replace")  # lgtm [py/path-injection]
