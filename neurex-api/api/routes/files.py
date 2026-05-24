@@ -404,7 +404,8 @@ async def search_files(
                             continue
             return matches[:200]
         except Exception as e:
-            return {"error": str(e)}
+            log.error("files.search_failed", error=str(e))
+            return {"error": "Failed to perform file search. Check API logs."}
 
 
 @router.post("/replace-all")
@@ -569,7 +570,8 @@ async def browse_directories(path: str = "."):
             "parent": str(target.parent) if target.parent != target else None,
         }
     except Exception as e:
-        return {"dirs": [], "current": path, "error": str(e)}
+        log.error("files.list_folders_failed", path=path, error=str(e))
+        return {"dirs": [], "current": path, "error": "Failed to list folders."}
 
 
 @router.get("/stage")
@@ -581,7 +583,7 @@ async def get_staged_files():
         return items
     except Exception as e:
         log.error("files.get_stage_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Failed to list staged files.")
 
 
 @router.post("/stage/commit")

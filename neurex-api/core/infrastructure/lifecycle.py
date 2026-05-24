@@ -59,7 +59,7 @@ async def rollback_system(backup_name: str) -> str:
         raise ValueError("Invalid backup name")
 
     backup_path = (BACKUP_DIR / backup_name).resolve()
-    if not str(backup_path).startswith(str(BACKUP_DIR.resolve())):
+    if not backup_path.is_relative_to(BACKUP_DIR.resolve()):
         raise ValueError("Security violation: Path traversal attempted")
 
     if not backup_path.exists():
@@ -70,11 +70,10 @@ async def rollback_system(backup_name: str) -> str:
         def extract_zip():
             with zipfile.ZipFile(backup_path, "r") as zipf:
                 # SECURITY: Check for ZipSlip (malicious paths in zip)
+                extract_root = Path(".").resolve()
                 for member in zipf.infolist():
-                    member_path = Path(member.filename).resolve()
-                    # We want to ensure it doesn't try to extract outside the current dir
-                    # But actually rollback extracts to '.', so we just check if it's absolute
-                    if member.filename.startswith("/") or ".." in member.filename:
+                    member_path = (extract_root / member.filename).resolve()
+                    if not member_path.is_relative_to(extract_root):
                         raise Exception(f"Malicious member in backup: {member.filename}")
                 zipf.extractall(".")  # Extract back to root
 

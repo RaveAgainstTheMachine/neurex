@@ -77,7 +77,7 @@ class SkillManager:
 
         # Handle GitHub tree/blob URLs (subdirectories)
         sub_path = None
-        if "github.com" in url and "/tree/" in url:
+        if parsed.netloc in ("github.com", "www.github.com") and "/tree/" in url:
             import re
 
             # Extract Repo URL and Path: https://github.com/USER/REPO/tree/BRANCH/PATH
@@ -218,12 +218,17 @@ class SkillManager:
         repo_url = m.get("repository", "")
 
         # GitHub Author Extraction fallback
-        if not author and "github.com" in repo_url:
-            import re
-
-            match = re.search(r"github\.com/([^/]+)/", repo_url)
-            if match:
-                author = match.group(1)
+        if not author and repo_url:
+            from urllib.parse import urlparse
+            try:
+                parsed_repo = urlparse(repo_url)
+                if parsed_repo.netloc in ("github.com", "www.github.com"):
+                    import re
+                    match = re.search(r"github\.com/([^/]+)/", repo_url)
+                    if match:
+                        author = match.group(1)
+            except Exception:
+                pass
 
         return {
             "id": name,
