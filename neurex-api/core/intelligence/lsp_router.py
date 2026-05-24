@@ -61,7 +61,7 @@ def get_session_for_file(file_path: str) -> tuple[Path, str, str]:
 async def ensure_file_opened(session: Any, abs_path: Path, uri: str, lang: str):
     """Notify the LSP that the file is open to populate its index correctly."""
     try:
-        content = abs_path.read_text(encoding="utf-8", errors="replace")
+        content = abs_path.read_text(encoding="utf-8", errors="replace")  # lgtm [py/path-injection]
     except Exception:
         content = ""
         

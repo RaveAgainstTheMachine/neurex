@@ -225,9 +225,9 @@ async def download_sync_file(path: str):
         safe_prefix = str(workspace) if str(workspace).endswith(os.sep) else str(workspace) + os.sep
         if not str(resolved).startswith(safe_prefix) and str(resolved) != str(workspace):
             raise HTTPException(status_code=403, detail="Path traversal blocked")
-        if not resolved.is_file():
+        if not resolved.is_file():  # lgtm [py/path-injection]
             raise HTTPException(status_code=404, detail="File not found")
-        content = resolved.read_bytes()
+        content = resolved.read_bytes()  # lgtm [py/path-injection]
         return Response(content=content, media_type="application/octet-stream")
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -247,10 +247,10 @@ async def upload_sync_file(path: str, mtime: float, request: Request):
         safe_prefix = str(workspace) if str(workspace).endswith(os.sep) else str(workspace) + os.sep
         if not str(resolved).startswith(safe_prefix) and str(resolved) != str(workspace):
             raise HTTPException(status_code=403, detail="Path traversal blocked")
-        resolved.parent.mkdir(parents=True, exist_ok=True)
+        resolved.parent.mkdir(parents=True, exist_ok=True)  # lgtm [py/path-injection]
         content = await request.body()
-        resolved.write_bytes(content)
-        os.utime(resolved, (mtime, mtime))
+        resolved.write_bytes(content)  # lgtm [py/path-injection]
+        os.utime(resolved, (mtime, mtime))  # lgtm [py/path-injection]
         return {"status": "success"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

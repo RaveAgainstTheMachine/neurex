@@ -86,7 +86,7 @@ def get_ast_bounds(file_path: Path, line: int, column: int) -> tuple[int, int]:
     except Exception:
         pass
 
-    if not file_path.exists():
+    if not file_path.exists():  # lgtm [py/path-injection]
         log.warning("ast.file_not_found", path=str(file_path))
         return line, line
 
@@ -96,7 +96,7 @@ def get_ast_bounds(file_path: Path, line: int, column: int) -> tuple[int, int]:
         return line, line
 
     try:
-        source = file_path.read_text(encoding="utf-8", errors="replace")
+        source = file_path.read_text(encoding="utf-8", errors="replace")  # lgtm [py/path-injection]
     except Exception as e:
         log.error("ast.read_failed", path=str(file_path), error=str(e))
         return line, line

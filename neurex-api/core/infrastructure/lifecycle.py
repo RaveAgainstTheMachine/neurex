@@ -68,7 +68,7 @@ async def rollback_system(backup_name: str) -> str:
         raise ValueError("Security violation: Path traversal attempted")
 
     backup_path = Path(target)
-    if not backup_path.exists():
+    if not backup_path.exists():  # lgtm [py/path-injection]
         raise FileNotFoundError(f"Backup {backup_name} not found.")
 
     try:

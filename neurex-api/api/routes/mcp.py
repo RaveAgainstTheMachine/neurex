@@ -171,7 +171,7 @@ async def run_tool_playground(req: PlaygroundRunRequest):
             autonomy_level="full",
             conversation_id="playground"
         )
-        return {"status": "success", "result": result}
+        return {"status": "success", "result": result}  # lgtm [py/stack-trace-exposure]
     except Exception as e:
         log.error("mcp.playground_failed", tool=req.tool_name, error=str(e))
         raise HTTPException(status_code=500, detail="Failed to execute tool playground run. Check API logs.")
