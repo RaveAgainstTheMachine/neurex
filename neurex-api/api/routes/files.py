@@ -119,7 +119,8 @@ async def file_tree(path: str = ".", depth: int = 2, root_path: str | None = Non
     log.info("files.tree_request", path=path, depth=depth, workspace=str(WORKSPACE))
     safe_root = os.path.realpath(str(WORKSPACE))
     target = os.path.realpath(os.path.join(safe_root, path))
-    trusted_root = os.path.realpath(str(workspace_state.path or "."))
+    trusted_workspace = os.getenv("WORKSPACE_PATH") or os.getcwd()
+    trusted_root = os.path.realpath(trusted_workspace)
     trusted_prefix = trusted_root if trusted_root.endswith(os.sep) else trusted_root + os.sep
     if target != trusted_root and not target.startswith(trusted_prefix):
         raise PermissionError("Path traversal blocked")
@@ -245,7 +246,8 @@ async def read_file(path: str, root_path: str | None = None):
         raise HTTPException(status_code=400, detail="No workspace open")
     safe_root = os.path.realpath(str(WORKSPACE))
     target = os.path.realpath(os.path.join(safe_root, path))
-    trusted_root = os.path.realpath(str(workspace_state.path or "."))
+    trusted_workspace = os.getenv("WORKSPACE_PATH") or os.getcwd()
+    trusted_root = os.path.realpath(trusted_workspace)
     trusted_prefix = trusted_root if trusted_root.endswith(os.sep) else trusted_root + os.sep
     if target != trusted_root and not target.startswith(trusted_prefix):
         raise PermissionError("Path traversal blocked")
