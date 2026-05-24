@@ -45,11 +45,7 @@ class WorkspaceState:
 workspace_state = WorkspaceState()
 
 
-def get_workspace(requested_root: str | None = None) -> Path | None:
-    if requested_root:
-        p = Path(requested_root).resolve()
-        if p.exists() and p.is_dir():
-            return p
+def get_workspace() -> Path | None:
     if not workspace_state.path:
         return None
     return workspace_state.path
@@ -113,9 +109,21 @@ collab_manager = CollaborationManager()
 async def file_tree(path: str = ".", depth: int = 2, root_path: str | None = None):
     from core.logger import log
 
-    WORKSPACE = get_workspace(root_path)
-    if not WORKSPACE:
+    base_workspace = get_workspace()
+    if not base_workspace:
         return {"name": "No Workspace", "type": "dir", "children": []}
+
+    WORKSPACE = base_workspace
+    if root_path:
+        req_path = Path(root_path).resolve()
+        safe_prefix = str(base_workspace) if str(base_workspace).endswith(os.sep) else str(base_workspace) + os.sep
+        if str(req_path) == str(base_workspace):
+            WORKSPACE = req_path
+        elif str(req_path).startswith(safe_prefix):
+            WORKSPACE = req_path
+        else:
+            raise PermissionError("Path traversal blocked")
+
     log.info("files.tree_request", path=path, depth=depth, workspace=str(WORKSPACE))
     safe_root = os.path.realpath(str(WORKSPACE))
     target = os.path.realpath(os.path.join(safe_root, path))
@@ -243,9 +251,21 @@ async def file_tree(path: str = ".", depth: int = 2, root_path: str | None = Non
 @router.get("/read")
 async def read_file(path: str, root_path: str | None = None):
     """Read a workspace file by relative path."""
-    WORKSPACE = get_workspace(root_path)
-    if not WORKSPACE:
+    base_workspace = get_workspace()
+    if not base_workspace:
         raise HTTPException(status_code=400, detail="No workspace open")
+
+    WORKSPACE = base_workspace
+    if root_path:
+        req_path = Path(root_path).resolve()
+        safe_prefix = str(base_workspace) if str(base_workspace).endswith(os.sep) else str(base_workspace) + os.sep
+        if str(req_path) == str(base_workspace):
+            WORKSPACE = req_path
+        elif str(req_path).startswith(safe_prefix):
+            WORKSPACE = req_path
+        else:
+            raise PermissionError("Path traversal blocked")
+
     safe_root = os.path.realpath(str(WORKSPACE))
     target = os.path.realpath(os.path.join(safe_root, path))
     trusted_workspace = os.getenv("WORKSPACE_PATH") or os.getcwd()
@@ -273,9 +293,21 @@ class SaveRequest(BaseModel):
 @router.post("/save")
 async def save_file(req: SaveRequest):
     """Write content to a workspace file."""
-    WORKSPACE = get_workspace(req.root_path)
-    if not WORKSPACE:
+    base_workspace = get_workspace()
+    if not base_workspace:
         raise HTTPException(status_code=400, detail="No workspace open")
+
+    WORKSPACE = base_workspace
+    if req.root_path:
+        req_path = Path(req.root_path).resolve()
+        safe_prefix = str(base_workspace) if str(base_workspace).endswith(os.sep) else str(base_workspace) + os.sep
+        if str(req_path) == str(base_workspace):
+            WORKSPACE = req_path
+        elif str(req_path).startswith(safe_prefix):
+            WORKSPACE = req_path
+        else:
+            raise PermissionError("Path traversal blocked")
+
     resolved = _validate_safe_path(req.path, WORKSPACE)
     safe_prefix = str(WORKSPACE) if str(WORKSPACE).endswith(os.sep) else str(WORKSPACE) + os.sep
     if not str(resolved).startswith(safe_prefix) and str(resolved) != str(WORKSPACE):
@@ -336,7 +368,21 @@ async def search_files(
     if not query:
         return []
 
-    WORKSPACE = get_workspace(root_path)
+    base_workspace = get_workspace()
+    if not base_workspace:
+        raise HTTPException(status_code=400, detail="No workspace open")
+
+    WORKSPACE = base_workspace
+    if root_path:
+        req_path = Path(root_path).resolve()
+        safe_prefix = str(base_workspace) if str(base_workspace).endswith(os.sep) else str(base_workspace) + os.sep
+        if str(req_path) == str(base_workspace):
+            WORKSPACE = req_path
+        elif str(req_path).startswith(safe_prefix):
+            WORKSPACE = req_path
+        else:
+            raise PermissionError("Path traversal blocked")
+
     # Prefer ripgrep (rg) if available
     rg_path = shutil.which("rg")
 
@@ -445,7 +491,20 @@ async def replace_all(
     root_path: str = "",
 ):
     """Global search and replace in workspace."""
-    WORKSPACE = get_workspace(root_path)
+    base_workspace = get_workspace()
+    if not base_workspace:
+        raise HTTPException(status_code=400, detail="No workspace open")
+
+    WORKSPACE = base_workspace
+    if root_path:
+        req_path = Path(root_path).resolve()
+        safe_prefix = str(base_workspace) if str(base_workspace).endswith(os.sep) else str(base_workspace) + os.sep
+        if str(req_path) == str(base_workspace):
+            WORKSPACE = req_path
+        elif str(req_path).startswith(safe_prefix):
+            WORKSPACE = req_path
+        else:
+            raise PermissionError("Path traversal blocked")
 
     # Use search_files logic to find matches first
     matches = await search_files(
@@ -512,9 +571,20 @@ class RenameRequest(BaseModel):
 @router.post("/rename")
 async def rename_file(req: RenameRequest):
     """Rename or move a file/directory."""
-    WORKSPACE = get_workspace(req.root_path)
-    if not WORKSPACE:
+    base_workspace = get_workspace()
+    if not base_workspace:
         raise HTTPException(status_code=400, detail="No workspace open")
+
+    WORKSPACE = base_workspace
+    if req.root_path:
+        req_path = Path(req.root_path).resolve()
+        safe_prefix = str(base_workspace) if str(base_workspace).endswith(os.sep) else str(base_workspace) + os.sep
+        if str(req_path) == str(base_workspace):
+            WORKSPACE = req_path
+        elif str(req_path).startswith(safe_prefix):
+            WORKSPACE = req_path
+        else:
+            raise PermissionError("Path traversal blocked")
     old_resolved = (WORKSPACE / req.old_path).resolve()
     new_resolved = (WORKSPACE / req.new_path).resolve()
 
@@ -536,7 +606,21 @@ async def rename_file(req: RenameRequest):
 @router.post("/create-folder")
 async def create_folder(path: str, root_path: str | None = None):
     """Create a new directory recursively."""
-    WORKSPACE = get_workspace(root_path)
+    base_workspace = get_workspace()
+    if not base_workspace:
+        raise HTTPException(status_code=400, detail="No workspace open")
+
+    WORKSPACE = base_workspace
+    if root_path:
+        req_path = Path(root_path).resolve()
+        safe_prefix = str(base_workspace) if str(base_workspace).endswith(os.sep) else str(base_workspace) + os.sep
+        if str(req_path) == str(base_workspace):
+            WORKSPACE = req_path
+        elif str(req_path).startswith(safe_prefix):
+            WORKSPACE = req_path
+        else:
+            raise PermissionError("Path traversal blocked")
+
     resolved = _validate_safe_path(path, WORKSPACE)
     safe_prefix = str(WORKSPACE) if str(WORKSPACE).endswith(os.sep) else str(WORKSPACE) + os.sep
     if not str(resolved).startswith(safe_prefix) and str(resolved) != str(WORKSPACE):
@@ -548,7 +632,21 @@ async def create_folder(path: str, root_path: str | None = None):
 @router.delete("/delete")
 async def delete_file(path: str, root_path: str | None = None):
     """Delete a file or directory recursively."""
-    WORKSPACE = get_workspace(root_path)
+    base_workspace = get_workspace()
+    if not base_workspace:
+        raise HTTPException(status_code=400, detail="No workspace open")
+
+    WORKSPACE = base_workspace
+    if root_path:
+        req_path = Path(root_path).resolve()
+        safe_prefix = str(base_workspace) if str(base_workspace).endswith(os.sep) else str(base_workspace) + os.sep
+        if str(req_path) == str(base_workspace):
+            WORKSPACE = req_path
+        elif str(req_path).startswith(safe_prefix):
+            WORKSPACE = req_path
+        else:
+            raise PermissionError("Path traversal blocked")
+
     resolved = _validate_safe_path(path, WORKSPACE)
     safe_prefix = str(WORKSPACE) if str(WORKSPACE).endswith(os.sep) else str(WORKSPACE) + os.sep
     if not str(resolved).startswith(safe_prefix) and str(resolved) != str(WORKSPACE):
