@@ -481,30 +481,31 @@ class LSPManager:
         if not target.startswith(safe_prefix) and target != safe_root:
             raise PermissionError("Path traversal attempt blocked in _find_project_root")
 
-        curr = resolved_start
-        while curr != curr.parent:
-            curr_real = Path(os.path.realpath(str(curr)))
-            curr_str = str(curr_real)
+        curr_str = os.path.realpath(str(resolved_start))
+        while curr_str != os.path.dirname(curr_str):
             if not curr_str.startswith(safe_prefix) and curr_str != safe_root:
                 raise PermissionError("Path traversal out of bounds in _find_project_root")
-            # Check for git or common project markers
+            # Check for git or common project markers using safe OS paths
             if (
-                (curr_real / ".git").is_dir()
-                or (curr_real / "pyproject.toml").exists()
-                or (curr_real / "package.json").exists()
+                os.path.isdir(os.path.join(curr_str, ".git"))
+                or os.path.exists(os.path.join(curr_str, "pyproject.toml"))
+                or os.path.exists(os.path.join(curr_str, "package.json"))
             ):
-                return curr_real
-            if curr_real == Path(safe_root):
+                return Path(curr_str)
+            if curr_str == safe_root:
                 break
-            curr = curr_real.parent
+            curr_str = os.path.dirname(curr_str)
 
         # If not found in parent, check if there is a project root in a direct subdirectory
         for item in resolved_start.iterdir():
             item_str = os.path.realpath(str(item))
             if not item_str.startswith(safe_prefix) and item_str != safe_root:
-                continue
-            if item.is_dir() and ((item / ".git").is_dir() or (item / "pyproject.toml").exists()):
-                return item
+                raise PermissionError("Path traversal attempt blocked in _find_project_root subdirectory scan")
+            if os.path.isdir(item_str) and (
+                os.path.isdir(os.path.join(item_str, ".git"))
+                or os.path.exists(os.path.join(item_str, "pyproject.toml"))
+            ):
+                return Path(item_str)
 
         return resolved_start
 
