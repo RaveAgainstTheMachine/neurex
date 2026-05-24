@@ -45,7 +45,7 @@ class WorkspaceState:
 workspace_state = WorkspaceState()
 
 
-def get_workspace(requested_root: str = None) -> Path:
+def get_workspace(requested_root: str | None = None) -> Path | None:
     if requested_root:
         p = Path(requested_root).resolve()
         if p.exists() and p.is_dir():
@@ -110,7 +110,7 @@ collab_manager = CollaborationManager()
 
 
 @router.get("/tree")
-async def file_tree(path: str = ".", depth: int = 2, root_path: str = None):
+async def file_tree(path: str = ".", depth: int = 2, root_path: str | None = None):
     from core.logger import log
 
     WORKSPACE = get_workspace(root_path)
@@ -232,7 +232,7 @@ async def file_tree(path: str = ".", depth: int = 2, root_path: str = None):
 
 
 @router.get("/read")
-async def read_file(path: str, root_path: str = None):
+async def read_file(path: str, root_path: str | None = None):
     """Read a workspace file by relative path."""
     WORKSPACE = get_workspace(root_path)
     if not WORKSPACE:
@@ -247,7 +247,7 @@ async def read_file(path: str, root_path: str = None):
 class SaveRequest(BaseModel):
     path: str
     content: str
-    root_path: str = None
+    root_path: str | None = None
     requester_id: str = "anonymous"
 
 
@@ -481,13 +481,15 @@ async def replace_all(
 class RenameRequest(BaseModel):
     old_path: str
     new_path: str
-    root_path: str = None
+    root_path: str | None = None
 
 
 @router.post("/rename")
 async def rename_file(req: RenameRequest):
     """Rename or move a file/directory."""
     WORKSPACE = get_workspace(req.root_path)
+    if not WORKSPACE:
+        raise HTTPException(status_code=400, detail="No workspace open")
     old_resolved = (WORKSPACE / req.old_path).resolve()
     new_resolved = (WORKSPACE / req.new_path).resolve()
 
@@ -507,7 +509,7 @@ async def rename_file(req: RenameRequest):
 
 
 @router.post("/create-folder")
-async def create_folder(path: str, root_path: str = None):
+async def create_folder(path: str, root_path: str | None = None):
     """Create a new directory recursively."""
     WORKSPACE = get_workspace(root_path)
     resolved = _validate_safe_path(path, WORKSPACE)
@@ -516,7 +518,7 @@ async def create_folder(path: str, root_path: str = None):
 
 
 @router.delete("/delete")
-async def delete_file(path: str, root_path: str = None):
+async def delete_file(path: str, root_path: str | None = None):
     """Delete a file or directory recursively."""
     WORKSPACE = get_workspace(root_path)
     resolved = _validate_safe_path(path, WORKSPACE)

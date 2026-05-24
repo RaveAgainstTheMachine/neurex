@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+from typing import Any
 
 import structlog
 
@@ -30,7 +31,7 @@ LANG_MAP: dict[str, str] = {
     ".cpp": "cpp",
 }
 
-def get_session_for_file(file_path: str) -> tuple[any, Path, str, str]:
+def get_session_for_file(file_path: str) -> tuple[Path, str, str]:
     """Resolves session, absolute file path, relative file path, and language ID."""
     workspace = get_workspace()
     if not workspace:
@@ -54,7 +55,8 @@ def get_session_for_file(file_path: str) -> tuple[any, Path, str, str]:
     # Synchronously look up or try to get session (since session startup is async, we do startup inline)
     return abs_path, rel_path, lang
 
-async def ensure_file_opened(session: any, abs_path: Path, uri: str, lang: str):
+
+async def ensure_file_opened(session: Any, abs_path: Path, uri: str, lang: str):
     """Notify the LSP that the file is open to populate its index correctly."""
     try:
         content = abs_path.read_text(encoding="utf-8", errors="replace")

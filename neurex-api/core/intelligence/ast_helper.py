@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import ast
 from pathlib import Path
+from typing import Any
 
 import structlog
 
@@ -42,7 +43,7 @@ TOP_LEVEL_TYPES: set[str] = {
 }
 
 
-def find_node_at_position(node: any, line: int, col: int) -> any:
+def find_node_at_position(node: Any, line: int, col: int) -> Any:
     """
     Finds the deepest (smallest) node containing the 0-indexed position (line, col).
     """

@@ -24,7 +24,8 @@ class SwarmEngine:
 
     def __init__(self, workspace_path: Path | None = None) -> None:
         try:
-            self.workspace_path = workspace_path or get_workspace()
+            resolved_path = workspace_path or get_workspace()
+            self.workspace_path: Path = resolved_path if resolved_path is not None else Path.cwd()
         except Exception:
             self.workspace_path = Path.cwd()
 
