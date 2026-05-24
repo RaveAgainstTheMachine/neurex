@@ -122,7 +122,9 @@ async def file_tree(path: str = ".", depth: int = 2, root_path: str | None = Non
     trusted_workspace = os.getenv("WORKSPACE_PATH") or os.getcwd()
     trusted_root = os.path.realpath(trusted_workspace)
     trusted_prefix = trusted_root if trusted_root.endswith(os.sep) else trusted_root + os.sep
-    if target != trusted_root and not target.startswith(trusted_prefix):
+    if target == trusted_root:
+        pass
+    elif not target.startswith(trusted_prefix):
         raise PermissionError("Path traversal blocked")
     target_path = Path(target)
     git_status = {}
@@ -249,7 +251,9 @@ async def read_file(path: str, root_path: str | None = None):
     trusted_workspace = os.getenv("WORKSPACE_PATH") or os.getcwd()
     trusted_root = os.path.realpath(trusted_workspace)
     trusted_prefix = trusted_root if trusted_root.endswith(os.sep) else trusted_root + os.sep
-    if target != trusted_root and not target.startswith(trusted_prefix):
+    if target == trusted_root:
+        pass
+    elif not target.startswith(trusted_prefix):
         raise PermissionError("Path traversal blocked")
     resolved = Path(target)
     
