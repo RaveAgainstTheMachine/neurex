@@ -58,10 +58,13 @@ async def rollback_system(backup_name: str) -> str:
     if not re.match(r"^[a-zA-Z0-9_\-.]+\.zip$", backup_name):
         raise ValueError("Invalid backup name")
 
-    backup_path = (BACKUP_DIR / backup_name).resolve()
-    if not backup_path.is_relative_to(BACKUP_DIR.resolve()):
+    safe_root = os.path.realpath(str(BACKUP_DIR))
+    target = os.path.realpath(os.path.join(safe_root, backup_name))
+    safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
+    if not target.startswith(safe_prefix) and target != safe_root:
         raise ValueError("Security violation: Path traversal attempted")
 
+    backup_path = Path(target)
     if not backup_path.exists():
         raise FileNotFoundError(f"Backup {backup_name} not found.")
 

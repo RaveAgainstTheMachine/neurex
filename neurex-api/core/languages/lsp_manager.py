@@ -339,6 +339,21 @@ class LSPManager:
     async def initialize_workspace(self, workspace_path: str):
         """Scans workspace for extensions and starts LSPs for found languages."""
         logger.info("lsp.initialize_workspace", workspace_path=workspace_path)
+        try:
+            from api.routes.files import get_workspace
+            workspace = get_workspace()
+            if workspace:
+                safe_root = os.path.realpath(str(workspace))
+                target = os.path.realpath(workspace_path)
+                safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
+                if not target.startswith(safe_prefix) and target != safe_root:
+                    raise PermissionError("Path traversal attempt blocked in initialize_workspace")
+                workspace_path = target
+        except PermissionError:
+            raise
+        except Exception:
+            pass
+
         root = Path(workspace_path)
         if not root.exists():
             logger.warning("lsp.workspace_missing", workspace_path=workspace_path)
@@ -455,6 +470,21 @@ class LSPManager:
 
     def _find_project_root(self, start_path: Path) -> Path:
         """Find the nearest directory containing a .git folder or common project markers."""
+        try:
+            from api.routes.files import get_workspace
+            workspace = get_workspace()
+            if workspace:
+                safe_root = os.path.realpath(str(workspace))
+                target = os.path.realpath(str(start_path))
+                safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
+                if not target.startswith(safe_prefix) and target != safe_root:
+                    raise PermissionError("Path traversal attempt blocked in _find_project_root")
+                start_path = Path(target)
+        except PermissionError:
+            raise
+        except Exception:
+            pass
+
         curr = start_path.resolve()
         while curr != curr.parent:
             # Check for git or common project markers
@@ -475,6 +505,21 @@ class LSPManager:
 
     async def get_session(self, lang: str, workspace_path: str) -> LSPSession:
         # Adjust workspace_path to the nearest project root
+        try:
+            from api.routes.files import get_workspace
+            workspace = get_workspace()
+            if workspace:
+                safe_root = os.path.realpath(str(workspace))
+                target = os.path.realpath(workspace_path)
+                safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
+                if not target.startswith(safe_prefix) and target != safe_root:
+                    raise PermissionError("Path traversal attempt blocked in get_session")
+                workspace_path = target
+        except PermissionError:
+            raise
+        except Exception:
+            pass
+
         actual_root = self._find_project_root(Path(workspace_path))
         root_str = str(actual_root)
 
@@ -520,7 +565,21 @@ class LSPManager:
         return None
 
     def _load_custom_config(self, root: Path) -> dict:
-        config_path = root / ".neurex" / "lsp.json"
+        try:
+            from api.routes.files import get_workspace
+            workspace = get_workspace()
+            if workspace:
+                safe_root = os.path.realpath(str(workspace))
+                target = os.path.realpath(str(root / ".neurex" / "lsp.json"))
+                safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
+                if not target.startswith(safe_prefix) and target != safe_root:
+                    return {}
+                config_path = Path(target)
+            else:
+                config_path = root / ".neurex" / "lsp.json"
+        except Exception:
+            config_path = root / ".neurex" / "lsp.json"
+
         if config_path.exists():
             try:
                 with open(config_path) as f:

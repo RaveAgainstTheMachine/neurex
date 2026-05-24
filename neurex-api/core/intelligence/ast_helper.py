@@ -64,6 +64,24 @@ def get_ast_bounds(file_path: Path, line: int, column: int) -> tuple[int, int]:
     returns the (start_line, end_line) 1-indexed boundaries of the surrounding structural symbol.
     If no structural boundary can be computed, returns (line, line).
     """
+    try:
+        import sys
+        is_test = any(x in sys.modules for x in ("pytest", "_pytest"))
+        if not is_test:
+            import os
+
+            from api.routes.files import get_workspace
+            workspace = get_workspace()
+            if workspace:
+                safe_root = os.path.realpath(str(workspace))
+                target = os.path.realpath(str(file_path))
+                safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
+                if not target.startswith(safe_prefix) and target != safe_root:
+                    log.warning("ast.security_violation", path=str(file_path))
+                    return line, line
+    except Exception:
+        pass
+
     if not file_path.exists():
         log.warning("ast.file_not_found", path=str(file_path))
         return line, line

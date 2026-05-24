@@ -120,7 +120,14 @@ class SkillManager:
                     log.info("skill.install_subpath", repo=url, path=sub_path)
                     # SECURITY: Use '--' to prevent parameter injection
                     subprocess.run(["git", "clone", "--depth", "1", "--", url, tmpdir], check=True)
-                    source = Path(tmpdir) / sub_path
+                    
+                    safe_root = os.path.realpath(tmpdir)
+                    target = os.path.realpath(os.path.join(safe_root, sub_path))
+                    safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
+                    if not target.startswith(safe_prefix) and target != safe_root:
+                        raise Exception("Security violation: Path traversal in sub-path")
+                        
+                    source = Path(target)
                     if source.exists():
                         shutil.copytree(source, target_path)
                     else:

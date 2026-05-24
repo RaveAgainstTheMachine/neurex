@@ -7,6 +7,7 @@ to active language server sessions. Exposes them directly for agentic invocation
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import structlog
@@ -32,8 +33,17 @@ LANG_MAP: dict[str, str] = {
 def get_session_for_file(file_path: str) -> tuple[any, Path, str, str]:
     """Resolves session, absolute file path, relative file path, and language ID."""
     workspace = get_workspace()
-    abs_path = (workspace / file_path).resolve()
-    rel_path = str(abs_path.relative_to(workspace)) if abs_path.is_relative_to(workspace) else file_path
+    if not workspace:
+        raise ValueError("No active workspace found")
+    
+    safe_root = os.path.realpath(str(workspace))
+    target = os.path.realpath(os.path.join(safe_root, file_path))
+    safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
+    if not target.startswith(safe_prefix) and target != safe_root:
+        raise PermissionError(f"Path traversal attempt blocked: {file_path!r} resolves outside workspace.")
+        
+    abs_path = Path(target)
+    rel_path = str(abs_path.relative_to(workspace))
     
     ext = abs_path.suffix.lower()
     lang = LANG_MAP.get(ext)

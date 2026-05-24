@@ -200,7 +200,7 @@ class BaseAgent(ABC):
 
                 last_msg = messages[-1]["content"].lower()
                 path_match = re.search(
-                    r"([a-zA-Z0-9_/.-]+\.py|[a-zA-Z0-9_/.-]+\.md|[a-zA-Z0-9_/.-]+\.ts)", last_msg
+                    r"([a-zA-Z0-9_/.-]+\.(?:py|md|ts))", last_msg
                 )
                 path = path_match.group(1) if path_match else "output.txt"
 
@@ -222,7 +222,7 @@ class BaseAgent(ABC):
 
                 last_msg = messages[-1]["content"].lower()
                 path_match = re.search(
-                    r"([a-zA-Z0-9_/.-]+\.py|[a-zA-Z0-9_/.-]+\.md|[a-zA-Z0-9_/.-]+\.ts)", last_msg
+                    r"([a-zA-Z0-9_/.-]+\.(?:py|md|ts))", last_msg
                 )
                 if path_match:
                     path = path_match.group(1)

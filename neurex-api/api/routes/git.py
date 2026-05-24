@@ -1,4 +1,5 @@
 # neurex-api/api/routes/git.py
+import os
 import subprocess
 from pathlib import Path
 
@@ -16,10 +17,16 @@ def _validate_safe_path(path: str) -> Path:
     workspace = get_workspace()
     if not workspace:
         raise HTTPException(status_code=400, detail="No workspace open")
-    resolved = (workspace / path).resolve()
-    if not resolved.is_relative_to(workspace):
+    
+    safe_root = os.path.realpath(str(workspace))
+    target = os.path.realpath(os.path.join(safe_root, path))
+    safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
+    
+    if not target.startswith(safe_prefix) and target != safe_root:
         raise HTTPException(status_code=403, detail="Path traversal blocked")
-    return resolved
+        
+    return Path(target)
+
 
 
 def run_git(args: list[str], cwd: str | None = None):

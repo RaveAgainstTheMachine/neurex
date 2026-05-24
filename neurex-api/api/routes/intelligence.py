@@ -5,6 +5,9 @@ REST router for language intelligence and code comprehension capabilities.
 
 from __future__ import annotations
 
+import os
+from pathlib import Path
+
 import structlog
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -29,13 +32,19 @@ async def get_bounds(
     """
     try:
         workspace_path = get_workspace()
-        file_path = (workspace_path / path).resolve()
+        if not workspace_path:
+            raise HTTPException(status_code=400, detail="No active workspace found")
 
+        safe_root = os.path.realpath(str(workspace_path))
+        target = os.path.realpath(os.path.join(safe_root, path))
+        safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
+        
         # Security check: ensure resolved path is contained within active workspace
-        if not str(file_path).startswith(str(workspace_path.resolve())):
+        if not target.startswith(safe_prefix) and target != safe_root:
             log.warning("ast.out_of_bounds_access", path=path, workspace=str(workspace_path))
             raise HTTPException(status_code=403, detail="Access denied")
 
+        file_path = Path(target)
         start, end = get_ast_bounds(file_path, line, column)
         return {"start_line": start, "end_line": end}
 
@@ -43,4 +52,4 @@ async def get_bounds(
         raise
     except Exception as e:
         log.error("ast.endpoint_failed", path=path, error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Failed to get AST boundaries. Check API logs.")
