@@ -45,6 +45,7 @@ export const createSystemSlice: StoreSlice<NeurexStore> = (set, _get) => ({
     settings: null,
     setSettings: (settings) => set((s) => { s.settings = settings; }),
     refreshSettings: async () => { try { const data = await api.get<any>("/api/settings/"); set((s) => { s.settings = data.settings || data; }); } catch { /* intentional */ } },
+    refreshHiveStats: async () => { try { const stats = await api.get<any>("/api/memory/stats"); set((s) => { s.hiveStats = stats; }); } catch { /* intentional */ } },
     send: (_payload) => { /* placeholder */ },
 
       // ── UI Panels ────────────────────────────────────────────────

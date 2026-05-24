@@ -107,5 +107,13 @@ We have successfully resolved all High and Critical security vulnerability alert
 2. **Polynomial REDoS Backtracking Protection**: Re-engineered path-matching regular expressions in `base_agent.py` to share the suffix extension group, ensuring zero-backtracking deterministic execution when parsing markdown fences.
 3. **Quality Gate Compliance**: Guaranteed zero regressions by passing all 49/49 backend unit tests, zero pyright typecheck errors, and zero ruff/eslint violations.
 
+## 9. Phase 5 & v0.9.0 Swarm Memory & Secure Capability Guardrails Milestone Review (2026-05-24)
+
+We have successfully completed all core sequence components for the Neurex v0.9.0 release, bringing robust distributed workspace operations, swarm cognitive persistence, and interactive user-guided capability sandboxing to the substrate:
+1. **Pillar A (Peer-to-Peer Mesh Sync)**: Enabled zero-friction P2P folder synchronization over LAN with secure mTLS. Implemented manifest validation, SHA-256 integrity verification, and path traversal protection under `/api/infra/mesh/sync/*` routes, preserving modification times during bidirectional push/pull loops.
+2. **Pillar B (Collective Swarm Memory Substrate)**: Built the Swarm Collective Memory (Hive Mind) core. Exposed semantic vector search on ChromaDB, wired the `refreshHiveStats` store action to fetch Swarm stats, and created the premium glassmorphic `SubstratePanel` dashboard in the UI allowing developers to recall semantic context, query memories, and view full context logs with zero layout thrashing.
+3. **Pillar C (Secure Capability Guardrails)**: Established human-in-the-loop tool sandboxing. Automatically intercepts privileged `shell` and `filesystem` tool operations when the substrate's autonomy ceiling is set to `limited`, halting the turn flow in an `asyncio.Queue` wait loop, emitting `approval_required` WebSocket events, and prompting the user with an exquisite glassmorphic capability authorization modal to "Allow Once" or "Deny" execution.
+4. **Quality & Standard Compliance**: Guaranteed 100% test suite completion with 49/49 green backend pytest cases, 0 pyright typecheck errors, and 0 eslint / ruff linting violations.
+
 ---
-*Reviewed 2026-05-24. Reflects codebase state at v0.8.1.*
+*Reviewed 2026-05-24. Reflects codebase state at v0.9.0.*

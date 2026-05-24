@@ -169,18 +169,22 @@ class BaseAgent(ABC):
         return "\n".join(parts)
 
     async def rag_context(self, query: str, n: int = 5) -> str:
-        """Retrieve relevant code chunks via Mesh-Scale Distributed RAG (Global Intelligence)."""
-        # Phase 37: Federated RAG across the Mesh
+        """Retrieve relevant code chunks and past session memories for local recall."""
+        # 1. Query past session context from Hive Mind
+        from core.memory.hive import hive_mind
+        memories = hive_mind.recall(query, limit=3)
+        memory_str = ""
+        if memories:
+            memory_str = "\n\n<session_memory>\n" + "\n".join([f"- {m['content']}" for m in memories]) + "\n</session_memory>"
+
+        # 2. Query code chunks from Federated RAG
         from core.context.federated_rag import FederatedRAG
-
         frag = FederatedRAG(self.ctx)
-
-        # Perform global search (Local + Peer Nodes)
         context = await frag.global_search(query, limit=n)
 
-        # Apply Neural Compression (Phase 22)
+        # 3. Apply Neural Compression
         compressed = await self.compressor.compress_context(context)
-        return compressed
+        return f"{compressed}{memory_str}"
 
     async def stream(
         self,

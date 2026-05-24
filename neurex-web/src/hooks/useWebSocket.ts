@@ -113,6 +113,11 @@ export function useWebSocket(conversationId: string) {
                 detail: { sessionId: msg.sessionId || conversationId, command: data.command, taskId: data.taskId }
               }));
               break;
+            case "approval_required":
+              window.dispatchEvent(new CustomEvent("neurex_tool_approval_required", {
+                detail: data
+              }));
+              break;
             case "lock_update":
               s.setLocks({ ...s.locks, [data.path]: data });
               break;

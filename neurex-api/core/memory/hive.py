@@ -55,5 +55,13 @@ class HiveMind:
             log.error("hive.recall_failed", error=str(e))
             return []
 
+    def search(self, query: str, n_results: int = 5) -> dict[str, Any]:
+        """Search the collective memory returning raw query results."""
+        try:
+            return self.collection.query(query_texts=[query], n_results=n_results)
+        except Exception as e:
+            log.error("hive.search_failed", error=str(e))
+            return {"documents": [], "metadatas": [], "ids": [], "distances": []}
+
 
 hive_mind = HiveMind()

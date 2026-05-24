@@ -21,6 +21,7 @@ export function StatusBar({ wsStatus, setPaletteMode, setSidebarTab, isAIActive 
   const cursorPosition = useStore(s => s.cursorPosition);
   const activeFileLanguage = useStore(s => s.activeFileLanguage);
   const settings = useStore(s => s.settings);
+  const hiveStats = useStore(s => s.hiveStats);
 
   const [showNotifications, setShowNotifications] = useState(false);
   const notificationCount = 0; // Mocked for now
@@ -63,9 +64,12 @@ export function StatusBar({ wsStatus, setPaletteMode, setSidebarTab, isAIActive 
           <button className="status-segment status-segment--interactive" onClick={() => setPaletteMode("language")}>
             <span>{(activeFileLanguage || "Plain Text").toUpperCase()}</span>
           </button>
-          <div className="status-segment status-segment--mesh" title="Mesh Network Status">
+          <div className="status-segment status-segment--mesh" title={`Mesh Network Status: ${hiveStats.total_nodes} node(s) online`}>
              <Activity size={12} />
-             <span>MESH ACTIVE</span>
+             <span>MESH ACTIVE ({hiveStats.total_nodes})</span>
+          </div>
+          <div className="status-segment" title={`Swarm Collective Memory: ${hiveStats.memory_count} memories indexed`}>
+             <span>MEM: {hiveStats.memory_count}</span>
           </div>
           <button 
             className={`status-segment status-segment--interactive status-segment--notification ${showNotifications ? "active" : ""}`}

@@ -68,3 +68,56 @@
 .animate-scale {
   animation: scaleIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
+/* Premium Glassmorphic Tool Capability Modal */
+.capability-modal {
+  max-width: 480px;
+  background: hsla(240, 10%, 4%, 0.75) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(156, 111, 255, 0.25) !important;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.9), 0 0 50px rgba(156, 111, 255, 0.15) !important;
+}
+
+.capability-details-box {
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid hsla(0, 0%, 100%, 0.05);
+  border-radius: 6px;
+  padding: 12px;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  color: #e5e7eb;
+}
+
+.capability-detail-row {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid hsla(0, 0%, 100%, 0.05);
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+}
+
+.capability-detail-key {
+  color: var(--text-muted, #71717a);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.capability-detail-val {
+  color: var(--accent-primary, #9c6fff);
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(156, 111, 255, 0.3);
+}
+
+.capability-args-pre {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid hsla(0, 0%, 100%, 0.04);
+  border-radius: 4px;
+  padding: 8px;
+  max-height: 180px;
+  overflow-y: auto;
+  margin-top: 4px;
+  white-space: pre-wrap;
+  word-break: break-all;
+}

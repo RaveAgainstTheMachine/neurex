@@ -372,7 +372,9 @@ export interface NeurexStore {
   // Settings
   settings: Settings | null;
   setSettings: (settings: Settings) => void;
-  refreshSettings: () => Promise<void>;
+   refreshSettings: () => Promise<void>;
+  hiveStats: { total_nodes: number; memory_count: number };
+  refreshHiveStats: () => Promise<void>;
   send: (payload: any) => void;
 
   // UI State & Panel Management

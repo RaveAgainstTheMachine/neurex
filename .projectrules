@@ -68,7 +68,14 @@
 - **Audit Log**: Every significant architectural change must be logged in `neurex/NEUREX_REVIEW.md`.
 - **Native Issue Tracking**: Use the project's native issue tracker as the absolute Source of Truth for all project anomalies. Every user-reported issue MUST be logged immediately to ensure mesh-wide development visibility.
 - **Traceable Mutations**: All commits targeting a specific issue MUST reference the Issue ID (e.g., `fix: #12 [core] ...`) to maintain a high-fidelity architectural audit trail.
-- **Concise Responses**: Keep responses factual, concise, and free of filler phrases. Lead with the action taken or the direct answer.
+- **Caveman Mode Protocol**: Actively apply `caveman` rules to compress communication and save up to 75% of output tokens. Keep full technical accuracy but eliminate all pleasantries, hedging, articles (a/an/the), and filler (just/really/basically). Use fragments and short synonyms where possible.
+- **Caveman Feature Suite**: Leverage the following features to optimize token usage:
+  - **Grunts**: Use `/caveman lite` (professional, no filler), `/caveman full` (fragments, default), or `/caveman ultra` (telegraphic, abbreviation of prose words) depending on complexity.
+  - **Commits**: Format git commits via `/caveman-commit` style (Conventional Commits, ≤50 char subject, focusing on why over what).
+  - **PR Reviews**: Deliver compact, actionable one-line PR comments matching the `/caveman-review` format (e.g., `L42: 🔴 bug: ...`).
+  - **Compression**: Use `/caveman-compress <file>` to rewrite memory files into compressed caveman-speak, saving up to 46% of input context tokens.
+  - **Observability**: Periodically check token usage and lifetime savings using `/caveman-stats`.
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 7. SELF-HEALING & INFRA

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { AnimatePresence } from "framer-motion";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, X, ShieldAlert } from "lucide-react";
 import { DynamicRenderer, UIBlueprint } from './components/DynamicUI/DynamicRenderer';
 import { StatusBar } from "./components/StatusBar/StatusBar";
 import { BottomPanel } from "./components/BottomPanel/BottomPanel";
@@ -18,6 +18,7 @@ import { AgentPanel } from "./components/AgentPanel/AgentPanel";
 import { SkillsPanel } from "./components/SkillsPanel/SkillsPanel";
 import { GitTimeline } from "./components/GitTimeline/GitTimeline";
 import { SettingsPanel } from "./components/SettingsPanel/SettingsPanel";
+import { SubstratePanel } from "./components/SubstratePanel/SubstratePanel";
 import { AboutPanel } from "./components/AboutPanel/AboutPanel";
 import { PresenceBar } from "./components/PresenceBar/PresenceBar";
 import { AuthOverlay } from "./components/AuthOverlay/AuthOverlay";
@@ -119,6 +120,7 @@ function AppContent() {
   const theme = useStore(s => s.theme);
   const refreshFileTree = useStore(s => s.refreshFileTree);
   const refreshGitStatus = useStore(s => s.refreshGitStatus);
+  const refreshHiveStats = useStore(s => s.refreshHiveStats);
   const sidebarTab = useStore(s => s.sidebarTab);
   const setSidebarTab = useStore(s => s.setSidebarTab);
   const showAIPanel = useStore(s => s.showAIPanel);
@@ -149,8 +151,27 @@ function AppContent() {
     }
   }, [token, refreshGitStatus]);
 
+  // ── Poll Hive Stats ──
+  useEffect(() => {
+    if (token) {
+      refreshHiveStats();
+      const timer = setInterval(refreshHiveStats, 30000); // 30s
+      return () => clearInterval(timer);
+    }
+  }, [token, refreshHiveStats]);
+
   const [visualProgress, setVisualProgress] = useState(25);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [toolApproval, setToolApproval] = useState<{ id: string; tool: string; args: any } | null>(null);
+
+  useEffect(() => {
+    const handleApproval = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      setToolApproval(customEvent.detail);
+    };
+    window.addEventListener("neurex_tool_approval_required", handleApproval);
+    return () => window.removeEventListener("neurex_tool_approval_required", handleApproval);
+  }, []);
   
   const { send } = useWebSocket(activeConversationId);
   useEffect(() => {
@@ -218,7 +239,8 @@ function AppContent() {
           const initPromise = Promise.all([
             state.refreshFileTree(), 
             state.refreshInfra(),
-            state.refreshSettings()
+            state.refreshSettings(),
+            state.refreshHiveStats()
           ]);
 
           const timeoutPromise = new Promise((resolve) => {
@@ -307,6 +329,85 @@ function AppContent() {
       />
       <Toaster position="top-right" />
       
+      {toolApproval && (
+        <div className="modal-overlay" onClick={() => {
+          send({
+            type: "approve_shell",
+            task_id: toolApproval.id,
+            approved: false
+          });
+          setToolApproval(null);
+        }}>
+          <div className="confirm-modal capability-modal animate-scale" onClick={e => e.stopPropagation()}>
+            <div className="confirm-modal__header">
+              <div className="confirm-modal__title">
+                <ShieldAlert size={18} className="text-glow-purple text-purple-main mr-2 animate-pulse" />
+                Capability Authorization
+              </div>
+              <button 
+                className="close-btn" 
+                onClick={() => {
+                  send({
+                    type: "approve_shell",
+                    task_id: toolApproval.id,
+                    approved: false
+                  });
+                  setToolApproval(null);
+                }}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="confirm-modal__body" style={{ padding: "16px 20px" }}>
+              <p style={{ margin: "0 0 12px 0", fontSize: "11px", color: "var(--text-muted)", lineHeight: 1.5 }}>
+                An autonomous agent is requesting permission to execute a privileged capability:
+              </p>
+              
+              <div className="capability-details-box">
+                <div className="capability-detail-row">
+                  <span className="capability-detail-key">Privileged Tool:</span>
+                  <span className="capability-detail-val">{toolApproval.tool}</span>
+                </div>
+                <div>
+                  <span className="capability-detail-key">Arguments:</span>
+                  <pre className="capability-args-pre">
+                    {JSON.stringify(toolApproval.args, null, 2)}
+                  </pre>
+                </div>
+              </div>
+            </div>
+            <div className="confirm-modal__footer">
+              <button 
+                className="btn btn--secondary" 
+                onClick={() => {
+                  send({
+                    type: "approve_shell",
+                    task_id: toolApproval.id,
+                    approved: false
+                  });
+                  setToolApproval(null);
+                }}
+              >
+                Deny
+              </button>
+              <button 
+                className="btn btn--purple" 
+                onClick={() => {
+                  send({
+                    type: "approve_shell",
+                    task_id: toolApproval.id,
+                    approved: true
+                  });
+                  setToolApproval(null);
+                }}
+              >
+                Allow Once
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className={`app__root ${settings?.menu_mode === 'horizontal' ? 'with-horizontal-menu' : ''}`}>
           {settings?.menu_mode === 'horizontal' && <TitleBar />}
           {isMobile ? (
@@ -327,6 +428,7 @@ function AppContent() {
                     {sidebarTab === "timeline" && <GitTimeline />}
                     {sidebarTab === "skills"   && <SkillsPanel />}
                     {sidebarTab === "agent"    && <AgentPanel />}
+                    {sidebarTab === "substrate" && <SubstratePanel />}
                     {sidebarTab === "swarm"    && <SwarmDiffSidebar />}
                     {sidebarTab === "debate"   && <DebateArena />}
                     {sidebarTab === "mcp"      && <MCPSandbox />}

@@ -5,6 +5,7 @@ Handles peer discovery, health checks, and LLM load balancing across nodes.
 """
 
 import asyncio
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -16,6 +17,58 @@ import structlog
 log = structlog.get_logger()
 
 PEERS_FILE = Path.home() / ".neurex" / "mesh_peers.json"
+
+
+def get_workspace_root() -> Path:
+    env_path = os.getenv("WORKSPACE_PATH")
+    if env_path:
+        return Path(env_path).resolve()
+    config_path = Path.home() / ".neurex_last_workspace"
+    if config_path.exists():
+        try:
+            saved = config_path.read_text().strip()
+            if saved and saved != "NONE" and Path(saved).exists():
+                return Path(saved).resolve()
+        except Exception:
+            pass
+    return Path(os.getcwd()).resolve()
+
+
+def calculate_sha256(p: Path) -> str:
+    h = hashlib.sha256()
+    try:
+        with open(p, "rb") as f:
+            for chunk in iter(lambda: f.read(65536), b""):
+                h.update(chunk)
+        return h.hexdigest()
+    except Exception:
+        return ""
+
+
+def generate_local_manifest() -> dict:
+    workspace = get_workspace_root()
+    manifest = {}
+    ignored_dirs = {".git", "node_modules", "__pycache__", ".neurex_trash", ".venv", "venv"}
+
+    for root, dirs, files in os.walk(workspace):
+        dirs[:] = [d for d in dirs if d not in ignored_dirs and not d.startswith(".")]
+
+        for file in files:
+            if file.startswith("."):
+                continue
+            abs_path = Path(root) / file
+            try:
+                rel_path = str(abs_path.relative_to(workspace))
+                stat = abs_path.stat()
+                manifest[rel_path] = {
+                    "hash": calculate_sha256(abs_path),
+                    "mtime": stat.st_mtime,
+                    "size": stat.st_size
+                }
+            except Exception:
+                continue
+    return manifest
+
 
 
 class PeerNode:
@@ -108,8 +161,18 @@ class ResourcePredictor:
 class MeshRouter:
     def __init__(self):
         self.peers: dict[str, PeerNode] = {}
-        # Phase 44.10: Persistent Telemetry Client
-        self._client: httpx.AsyncClient = httpx.AsyncClient(timeout=5)
+        # Load local mTLS certs if present
+        cert_dir = Path.home() / ".neurex" / "certs"
+        cert_path = cert_dir / "cert.pem"
+        key_path = cert_dir / "key.pem"
+        if cert_path.exists() and key_path.exists():
+            self._client: httpx.AsyncClient = httpx.AsyncClient(
+                timeout=10,
+                cert=(str(cert_path), str(key_path)),
+                verify=False
+            )
+        else:
+            self._client: httpx.AsyncClient = httpx.AsyncClient(timeout=10)
         self._load_peers()
 
     def _load_peers(self):
@@ -281,13 +344,97 @@ class MeshRouter:
 
         return selected["url"]
 
+    async def sync_with_peer(self, url: str):
+        """Synchronizes workspace files bi-directionally with a peer node."""
+        peer = self.peers.get(url)
+        if not peer or peer.status != "online":
+            return
+
+        log.info("mesh.sync_start", peer=peer.name, url=url)
+        try:
+            # 1. Fetch remote manifest
+            resp = await self._client.get(
+                f"{peer.url}/api/infra/mesh/sync/manifest",
+                headers={"Authorization": f"Bearer {peer.token}"}
+            )
+            resp.raise_for_status()
+            remote_manifest = resp.json().get("manifest", {})
+
+            # 2. Build local manifest
+            local_manifest = generate_local_manifest()
+            workspace = get_workspace_root()
+
+            # 3. Synchronize
+            # A. Download newer/missing files from remote
+            for rel_path, remote_meta in remote_manifest.items():
+                local_meta = local_manifest.get(rel_path)
+
+                # Check if we should download
+                should_download = False
+                if not local_meta:
+                    should_download = True
+                elif remote_meta["hash"] != local_meta["hash"] and remote_meta["mtime"] > local_meta["mtime"]:
+                    should_download = True
+
+                if should_download:
+                    log.info("mesh.sync_pulling", file=rel_path, peer=peer.name)
+                    # Download file
+                    dl_resp = await self._client.get(
+                        f"{peer.url}/api/infra/mesh/sync/download",
+                        params={"path": rel_path},
+                        headers={"Authorization": f"Bearer {peer.token}"}
+                    )
+                    dl_resp.raise_for_status()
+
+                    # Save locally safely
+                    local_path = workspace / rel_path
+                    local_path.parent.mkdir(parents=True, exist_ok=True)
+                    local_path.write_bytes(dl_resp.content)
+
+                    # Restore mtime
+                    os.utime(local_path, (remote_meta["mtime"], remote_meta["mtime"]))
+
+            # B. Upload newer/missing files to remote
+            for rel_path, local_meta in local_manifest.items():
+                remote_meta = remote_manifest.get(rel_path)
+
+                # Check if we should upload
+                should_upload = False
+                if not remote_meta:
+                    should_upload = True
+                elif local_meta["hash"] != remote_meta["hash"] and local_meta["mtime"] > remote_meta["mtime"]:
+                    should_upload = True
+
+                if should_upload:
+                    log.info("mesh.sync_pushing", file=rel_path, peer=peer.name)
+                    local_path = workspace / rel_path
+                    content = local_path.read_bytes()
+
+                    # Upload file
+                    up_resp = await self._client.post(
+                        f"{peer.url}/api/infra/mesh/sync/upload",
+                        params={"path": rel_path, "mtime": local_meta["mtime"]},
+                        headers={"Authorization": f"Bearer {peer.token}"},
+                        content=content
+                    )
+                    up_resp.raise_for_status()
+
+            log.info("mesh.sync_complete", peer=peer.name)
+        except Exception as e:
+            log.error("mesh.sync_failed", peer=peer.name, error=str(e))
+
     async def start_monitoring(self, interval_seconds: int = 60):
         """Background task to periodically refresh peer health and telemetry."""
         log.info("mesh.monitor_started", interval=interval_seconds)
         while True:
             tasks = [self.check_health(url) for url in self.peers.keys()]
             if tasks:
-                await asyncio.gather(*tasks)
+                await asyncio.gather(*tasks, return_exceptions=True)
+
+            # Bidirectional peer-to-peer workspace synchronization
+            sync_tasks = [self.sync_with_peer(url) for url in self.peers.keys()]
+            if sync_tasks:
+                await asyncio.gather(*sync_tasks, return_exceptions=True)
 
             # Phase 47: Sync Virtual VRAM Pool
             from core.infrastructure.vram_pool import vram_pool

@@ -12,7 +12,7 @@
 
   <p>
     <a href="./LICENSE"><img src="https://img.shields.io/badge/License-BSL%201.1-purple.svg?style=for-the-badge" alt="License"></a>
-    <a href="#"><img src="https://img.shields.io/badge/Version-v0.8.1-blueviolet.svg?style=for-the-badge" alt="Version"></a>
+    <a href="#"><img src="https://img.shields.io/badge/Version-v0.9.0-blueviolet.svg?style=for-the-badge" alt="Version"></a>
     <a href="#"><img src="https://img.shields.io/badge/Status-Active%20Development-success.svg?style=for-the-badge" alt="Status"></a>
   </p>
 
@@ -29,9 +29,9 @@
 
 ## What Is Neurex?
 
-**Neurex** is a browser-based IDE backed by a native Rust daemon, optimized for **Autonomous Codebase Maintenance**. 
+**Neurex** is a local-first AI engineering workspace designed for **Human-Agent Parity**. 
 
-While other tools focus on the *creative* act of writing new code, Neurex specializes in the high-fidelity "chores" of engineering: security hardening, dependency migrations, and codebase grounding. It combines a Monaco-based editor, persistent PTY terminals, and a multi-agent orchestration layer that runs open-weight models locally against your own hardware.
+Rather than treating AI as a black box executing background code edits, Neurex models agents as first-class IDE collaborators. They possess active multi-cursor overlays, secure file-locking mechanisms, and real-time human-in-the-loop capability guardrails. Neurex specializes in high-fidelity cooperative tasks—such as security hardening, dependency migrations, and codebase grounding—combining a Monaco-based editor, persistent PTY terminals, and a distributed local inference layer that pools consumer GPUs across a LAN.
 
 ---
 
@@ -41,7 +41,7 @@ While other tools focus on the *creative* act of writing new code, Neurex specia
 *   **Task Graphs**: Persistent SQLite-backed task plans that survive restarts.
 *   **Role-Based Routing**: Assign different models to planning, coding, and review tasks independently.
 *   **Multi-Agent Review**: Route changes through multiple agent personas before applying them.
-*   **Tool Calling**: Agents can read files, write files, run shell commands, and search the codebase.
+*   **Tool Calling & Interactive Guardrails**: Safe execution of files, shell commands, and search. Enforces real-time human capability authorization prompts under limited autonomy (v0.9.0).
 
 ### ⚡ Rust Control Plane (`neurex-cli`)
 *   **Self-Provisioning**: Downloads and configures a hermetic Python environment via `uv` on first run — no pre-installed Python required.
@@ -51,14 +51,14 @@ While other tools focus on the *creative* act of writing new code, Neurex specia
 ### 🌐 Experimental Labs (Lower Priority)
 *   **VRAM Pooling**: Distribute a model's layers across multiple machines via `llama-rpc-server` (functional but considered a niche power-user feature).
 *   **Dynamic Re-quantization**: Automatically downgrades model precision (e.g., Q8 → Q4) under memory pressure to prevent stalls.
-*   **Node Discovery**: Registers peer machines and monitors their VRAM and GPU load in real time.
+*   **Node Discovery & P2P Sync**: Registers peer machines and synchronizes active workspace directories dynamically over LAN via secure mTLS (v0.9.0).
 
 ### 📁 IDE Features
 *   **Monaco Editor**: Full VS Code-grade editing with syntax highlighting and formatting.
 *   **LSP Integration**: Connects to system-installed language servers for diagnostics and completion.
 *   **Multi-Root Workspaces**: Manage multiple project roots in a single session.
 *   **Persistent Terminals**: PTY sessions that reconnect after browser refresh.
-*   **RAG / Codebase Indexing**: Semantic search over your project via ChromaDB and local embedding models.
+*   **RAG & Swarm Collective Memory**: Cross-session cognitive persistence (Hive Mind) storing codebase architectural patterns, indexable via ChromaDB and local embedding models.
 
 ---
 
@@ -142,5 +142,5 @@ See [LICENSE](./LICENSE) for full details.
 ---
 
 <div align="center">
-  <sub>Built by the Neurex Collective. v0.7.0.</sub>
+  <sub>Built by the Neurex Collective. v0.9.0.</sub>
 </div>

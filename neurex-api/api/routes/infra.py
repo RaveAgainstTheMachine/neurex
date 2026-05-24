@@ -203,6 +203,54 @@ class PeerRequest(BaseModel):
     name: str
 
 
+from fastapi import Response
+
+
+@router.get("/mesh/sync/manifest")
+async def get_sync_manifest():
+    """Retrieve the manifest of files in the workspace (hashes, sizes, mtimes)."""
+    from core.infrastructure.mesh import generate_local_manifest
+    return {"manifest": generate_local_manifest()}
+
+
+@router.get("/mesh/sync/download")
+async def download_sync_file(path: str):
+    """Download a file from the workspace for peer syncing."""
+    from api.routes.files import _validate_safe_path
+    from core.infrastructure.mesh import get_workspace_root
+    
+    workspace = get_workspace_root()
+    try:
+        resolved = _validate_safe_path(path, workspace)
+        if not resolved.is_file():
+            raise HTTPException(status_code=404, detail="File not found")
+        content = resolved.read_bytes()
+        return Response(content=content, media_type="application/octet-stream")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/mesh/sync/upload")
+async def upload_sync_file(path: str, mtime: float, request: Request):
+    """Upload a file to the workspace from a peer during sync."""
+    import os
+
+    from api.routes.files import _validate_safe_path
+    from core.infrastructure.mesh import get_workspace_root
+    
+    workspace = get_workspace_root()
+    try:
+        resolved = _validate_safe_path(path, workspace)
+        resolved.parent.mkdir(parents=True, exist_ok=True)
+        content = await request.body()
+        resolved.write_bytes(content)
+        os.utime(resolved, (mtime, mtime))
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+
 @router.get("/engines")
 async def get_engines():
     """Returns status of all inference engines."""
