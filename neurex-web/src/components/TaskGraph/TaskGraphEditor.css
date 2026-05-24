@@ -471,3 +471,48 @@
   color: var(--text-muted);
   gap: 16px;
 }
+
+/* Floating Viewport Controls */
+.canvas-controls {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: hsla(240, 10%, 4%, 0.6);
+  border: 1px solid var(--border);
+  backdrop-filter: var(--glass-blur);
+  padding: 6px 10px;
+  border-radius: var(--radius);
+  z-index: 50;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.canvas-controls-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.canvas-controls-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--accent-cyan);
+}
+
+.zoom-indicator {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  min-width: 42px;
+  text-align: center;
+  font-weight: 600;
+}

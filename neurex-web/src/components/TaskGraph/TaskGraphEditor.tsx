@@ -13,7 +13,10 @@ import {
   HelpCircle, 
   AlertCircle,
   CheckCircle,
-  Loader2
+  Loader2,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw
 } from "lucide-react";
 import type { TaskNode, AgentType } from "../../lib/types";
 import "./TaskGraphEditor.css";
@@ -39,6 +42,45 @@ export function TaskGraphEditor() {
 
   // Link/Rewire state
   const [linkingTaskId, setLinkingTaskId] = useState<string | null>(null);
+
+  // Zoom & Pan viewport states
+  const [zoom, setZoom] = useState(1);
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    // Pan only if dragging background or empty elements
+    if (
+      target.classList.contains("task-graph-canvas-container") ||
+      target.classList.contains("task-graph-canvas") ||
+      target.tagName === "svg" ||
+      target.tagName === "rect"
+    ) {
+      setIsPanning(true);
+      setPanStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
+    }
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isPanning) return;
+    setPanOffset({
+      x: e.clientX - panStart.x,
+      y: e.clientY - panStart.y
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsPanning(false);
+  };
+
+  const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.1, 2));
+  const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.1, 0.5));
+  const handleZoomReset = () => {
+    setZoom(1);
+    setPanOffset({ x: 0, y: 0 });
+  };
 
   // Modals state
   const [isInsertModalOpen, setIsInsertModalOpen] = useState(false);
@@ -313,7 +355,14 @@ export function TaskGraphEditor() {
     const linkingNode = layoutNodes.find(n => n.id === linkingTaskId);
 
     return (
-      <div className="task-graph-canvas-container">
+      <div 
+        className="task-graph-canvas-container"
+        onMouseDown={handleMouseDown}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+        style={{ cursor: isPanning ? "grabbing" : "grab" }}
+      >
         {linkingTaskId && (
           <div className="linking-banner">
             <span>
@@ -325,9 +374,28 @@ export function TaskGraphEditor() {
           </div>
         )}
 
+        {/* Floating Viewport Controls */}
+        <div className="canvas-controls">
+          <button type="button" className="canvas-controls-btn" onClick={handleZoomIn} title="Zoom In">
+            <ZoomIn size={14} />
+          </button>
+          <span className="zoom-indicator">{Math.round(zoom * 100)}%</span>
+          <button type="button" className="canvas-controls-btn" onClick={handleZoomOut} title="Zoom Out">
+            <ZoomOut size={14} />
+          </button>
+          <button type="button" className="canvas-controls-btn" onClick={handleZoomReset} title="Reset View">
+            <RotateCcw size={14} />
+          </button>
+        </div>
+
         <div 
           className="task-graph-canvas" 
-          style={{ width: `${canvasWidth}px`, height: `${canvasHeight}px` }}
+          style={{ 
+            width: `${canvasWidth}px`, 
+            height: `${canvasHeight}px`,
+            transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${zoom})`,
+            transformOrigin: "top left"
+          }}
         >
           {/* Render Connections SVGs */}
           <svg className="graph-svg">
