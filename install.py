@@ -427,7 +427,7 @@ FIREWALL_LAN_ONLY={str(lan_only).lower()}
 # ──────────────────────────────────────────────────────────────────────────────
 
 def main():
-    os.system('clear' if os.name == 'posix' else 'cls')
+    print("\033[H\033[2J", end="")
     show_banner()
 
     # Role selection — the very first question
