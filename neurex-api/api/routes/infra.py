@@ -3,6 +3,7 @@ api/routes/infra.py
 Endpoints for managing AI infrastructure (engines, VRAM, performance).
 """
 
+from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -216,15 +217,19 @@ async def get_sync_manifest():
 @router.get("/mesh/sync/download")
 async def download_sync_file(path: str):
     """Download a file from the workspace for peer syncing."""
-    from api.routes.files import _validate_safe_path
+    import os
+
     from core.infrastructure.mesh import get_workspace_root
     
     workspace = get_workspace_root()
     try:
-        resolved = _validate_safe_path(path, workspace)
-        safe_prefix = str(workspace) if str(workspace).endswith(os.sep) else str(workspace) + os.sep
-        if not str(resolved).startswith(safe_prefix) and str(resolved) != str(workspace):
-            raise HTTPException(status_code=403, detail="Path traversal blocked")
+        safe_root = os.path.realpath(str(workspace))
+        target = os.path.realpath(os.path.join(safe_root, path))
+        safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
+        if target != safe_root:
+            if not target.startswith(safe_prefix):
+                raise PermissionError("Path traversal blocked")
+        resolved = Path(target)
         if not resolved.is_file():  # lgtm [py/path-injection]
             raise HTTPException(status_code=404, detail="File not found")
         content = resolved.read_bytes()  # lgtm [py/path-injection]
@@ -238,15 +243,17 @@ async def upload_sync_file(path: str, mtime: float, request: Request):
     """Upload a file to the workspace from a peer during sync."""
     import os
 
-    from api.routes.files import _validate_safe_path
     from core.infrastructure.mesh import get_workspace_root
     
     workspace = get_workspace_root()
     try:
-        resolved = _validate_safe_path(path, workspace)
-        safe_prefix = str(workspace) if str(workspace).endswith(os.sep) else str(workspace) + os.sep
-        if not str(resolved).startswith(safe_prefix) and str(resolved) != str(workspace):
-            raise HTTPException(status_code=403, detail="Path traversal blocked")
+        safe_root = os.path.realpath(str(workspace))
+        target = os.path.realpath(os.path.join(safe_root, path))
+        safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
+        if target != safe_root:
+            if not target.startswith(safe_prefix):
+                raise PermissionError("Path traversal blocked")
+        resolved = Path(target)
         resolved.parent.mkdir(parents=True, exist_ok=True)  # lgtm [py/path-injection]
         content = await request.body()
         resolved.write_bytes(content)  # lgtm [py/path-injection]

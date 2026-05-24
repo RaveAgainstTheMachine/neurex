@@ -40,9 +40,10 @@ async def get_bounds(
         safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
         
         # Security check: ensure resolved path is contained within active workspace
-        if not target.startswith(safe_prefix) and target != safe_root:
-            log.warning("ast.out_of_bounds_access", path=path, workspace=str(workspace_path))
-            raise HTTPException(status_code=403, detail="Access denied")
+        if target != safe_root:
+            if not target.startswith(safe_prefix):
+                log.warning("ast.out_of_bounds_access", path=path, workspace=str(workspace_path))
+                raise PermissionError("Path traversal blocked")
 
         file_path = Path(target)
         start, end = get_ast_bounds(file_path, line, column)
