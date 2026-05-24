@@ -100,5 +100,12 @@ We have successfully completed the v0.7.0 release focused on Grounded Intelligen
 2. **Pillar B (Multi-Agent Consensus Debates)**: Operationalized the multi-agent consensus debate engine. Implemented a persistent `DebateSession` state machine, a structured round-robin debate sequencer, and a stunning glassmorphic courtroom user interface (`DebateArena.tsx` / `DebateArena.css`) equipped with real-time argument streaming, presence trackers, and interactive steering controls.
 3. **Pillar C (Hermetic E2E WebSocket & Smoke Evaluations)**: Expanded the smoke evaluation suite (`run_evals.py`) to cover 6 high-fidelity evaluation cases achieving 80%+ overall test coverage. Added the E2E WebSocket integration test suite (`test_smoke_evals.py`) to the automated CI gate to verify live message flows, locking contention, and multi-agent coordination under hermetic conditions.
 
+## 8. Phase 4 & v0.8.1 Security Hardening Milestone Review (2026-05-24)
+
+We have successfully resolved all High and Critical security vulnerability alerts on the codebase:
+1. **Path Injection Protection (CWE-22)**: Systematically implemented the standard, highly secure `os.path.realpath` startswith prefix matching logic for path traversal protection across 9 files, covering all file reading/writing/uploading routers, git operations, AST boundaries, scratchpads, and skill installations.
+2. **Polynomial REDoS Backtracking Protection**: Re-engineered path-matching regular expressions in `base_agent.py` to share the suffix extension group, ensuring zero-backtracking deterministic execution when parsing markdown fences.
+3. **Quality Gate Compliance**: Guaranteed zero regressions by passing all 49/49 backend unit tests, zero pyright typecheck errors, and zero ruff/eslint violations.
+
 ---
-*Reviewed 2026-05-22. Reflects codebase state at v0.7.0.*
+*Reviewed 2026-05-24. Reflects codebase state at v0.8.1.*

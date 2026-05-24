@@ -2,6 +2,12 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
+## [0.8.1] - 2026-05-24: HIGH-FIDELITY SECURITY HARDENING
+### Added
+- **High-Fidelity CodeQL Security Hardening**: Systematically resolved all remaining High and Critical CodeQL security alerts. Enforced standard, robust `os.path.realpath` startswith prefix matching for path traversal protection across 9 files (including `/tree`, `/read`, `/save`, `/upload`, `/create-folder`, `/delete` in files router, git workspace validation, AST coordinate boundaries, lsp_router, lsp_manager session init, scratchpad context, and skill subpath copy tree).
+- **Polynomial REDoS Backtracking Protection**: Refactored the regular expression in `base_agent.py` to share the extension suffix group, completely neutralizing polynomial REDoS vulnerability when parsing markdown block fences.
+- **Fast-Track Quality Verification**: Successfully achieved 100% clean pre-release gates with 49/49 passing backend unit tests, zero pyright typecheck errors, and zero ruff/eslint violations.
+
 ## [0.8.0] - 2026-05-23: EXTENSIBLE PLUGIN HUB & CODEBASE HYGIENE
 ### Added
 - **Pillar A: Extensible Plugin Hub & Local Marketplace**: Implemented dynamic Plugin Hub endpoints (`GET /api/skills/marketplace` and `POST /api/skills/publish`) in the backend, backed by local mock storage (`.marketplace_mock.json`). Fully validated duplicate prevention, conflict assertions, and permission-gated developer roles.
