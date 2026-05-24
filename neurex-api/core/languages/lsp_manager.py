@@ -475,14 +475,17 @@ class LSPManager:
             workspace = None
 
         safe_root = os.path.realpath(str(workspace or "."))
-        target = os.path.realpath(str(start_path))
+        resolved_start = Path(start_path).resolve()
+        target = os.path.realpath(str(resolved_start))
         safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
         if not target.startswith(safe_prefix) and target != safe_root:
             raise PermissionError("Path traversal attempt blocked in _find_project_root")
-        start_path = Path(target)
 
-        curr = start_path.resolve()
+        curr = resolved_start
         while curr != curr.parent:
+            curr_str = os.path.realpath(str(curr))
+            if not curr_str.startswith(safe_prefix) and curr_str != safe_root:
+                break
             # Check for git or common project markers
             if (
                 (curr / ".git").is_dir()
@@ -493,11 +496,14 @@ class LSPManager:
             curr = curr.parent
 
         # If not found in parent, check if there is a project root in a direct subdirectory
-        for item in start_path.iterdir():
+        for item in resolved_start.iterdir():
+            item_str = os.path.realpath(str(item))
+            if not item_str.startswith(safe_prefix) and item_str != safe_root:
+                continue
             if item.is_dir() and ((item / ".git").is_dir() or (item / "pyproject.toml").exists()):
                 return item
 
-        return start_path
+        return resolved_start
 
     async def get_session(self, lang: str, workspace_path: str) -> LSPSession:
         # Adjust workspace_path to the nearest project root
