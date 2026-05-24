@@ -156,7 +156,7 @@ async def update_permission(req: PermissionUpdateRequest):
         return {"status": "success", "tool_name": req.tool_name, "rule": req.rule}
     except Exception as e:
         log.error("mcp.permission_update_failed", tool=req.tool_name, error=str(e))
-        raise HTTPException(status_code=500, detail=f"Failed to update permission: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to update permission due to database/internal error")
 
 
 @router.post("/playground/run", dependencies=[Depends(require_role(UserRole.DEVELOPER))])
@@ -191,4 +191,4 @@ async def import_mcp_server(req: ImportServerRequest):
         log.error("mcp.server_import_failed", url=req.url, error=err_msg)
         if "already exists" in err_msg:
             raise HTTPException(status_code=409, detail="Server already imported")
-        raise HTTPException(status_code=500, detail=f"Import failed: {err_msg}")
+        raise HTTPException(status_code=500, detail="Import failed. Please check the logs.")

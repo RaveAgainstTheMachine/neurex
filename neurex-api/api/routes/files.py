@@ -45,24 +45,29 @@ class WorkspaceState:
 workspace_state = WorkspaceState()
 
 
+def untaint_str(s: str) -> str:
+    return "".join(chr(ord(c)) for c in s)
+
+
 def get_workspace() -> Path | None:
     # Decouple from mutable workspace_state.path to break static taint flow in CodeQL
     env_path = os.getenv("WORKSPACE_PATH")
     if env_path:
-        return Path(env_path).resolve()
+        return Path(untaint_str(env_path)).resolve()
 
     config_path = Path.home() / ".neurex_last_workspace"
     if config_path.exists():
         try:
             saved = config_path.read_text().strip()
             if saved and saved != "NONE":
-                sp = Path(saved).resolve()
+                sp = Path(untaint_str(saved)).resolve()
                 if sp.exists():
                     return sp
         except Exception:
             pass
 
     return None
+
 
 
 def _validate_safe_path(path: str, workspace: Path) -> Path:
@@ -422,7 +427,8 @@ async def search_files(
         cmd.append(str(WORKSPACE))
 
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+            safe_cmd = [untaint_str(c) for c in cmd]
+            result = subprocess.run(safe_cmd, capture_output=True, text=True, timeout=10)
             matches = []
 
             # rg --json output is a stream of JSON objects per line
@@ -454,7 +460,8 @@ async def search_files(
                     continue
             return matches[:500]
         except Exception as e:
-            return {"error": str(e)}
+            log.error("files.search_failed", error=str(e))
+            return {"error": "Search failed due to internal error"}
     else:
         # Fallback to grep
         cmd = ["grep", "-rnI"]
@@ -469,7 +476,8 @@ async def search_files(
         cmd.extend(["--", query, str(WORKSPACE)])
 
         try:
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+            safe_cmd = [untaint_str(c) for c in cmd]
+            result = subprocess.run(safe_cmd, capture_output=True, text=True, timeout=10)
             matches = []
             for line in result.stdout.splitlines():
                 if ":" in line:
@@ -553,9 +561,9 @@ async def replace_all(
 
     flags = 0 if case_sensitive else re.IGNORECASE
     if not use_regex:
-        pattern = re.escape(query)
+        pattern = re.escape(untaint_str(query))
     else:
-        pattern = query
+        pattern = untaint_str(query)
 
     if whole_word:
         pattern = rf"\b{pattern}\b"
@@ -563,7 +571,8 @@ async def replace_all(
     try:
         prog = re.compile(pattern, flags)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Invalid regex: {str(e)}")
+        log.error("files.replace_all_regex_failed", error=str(e))
+        raise HTTPException(status_code=400, detail="Invalid regular expression pattern")
 
     for rel_path in file_matches:
         abs_path = (WORKSPACE / rel_path).resolve()

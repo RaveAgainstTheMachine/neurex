@@ -226,9 +226,14 @@ async def download_sync_file(path: str):
         safe_root = os.path.realpath(str(workspace))
         target = os.path.realpath(os.path.join(safe_root, path))
         safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-        if target != safe_root:
-            if not target.startswith(safe_prefix):
-                raise PermissionError("Path traversal blocked")
+        
+        if target == safe_root:
+            pass
+        elif target.startswith(safe_prefix):
+            pass
+        else:
+            raise PermissionError("Path traversal blocked")
+            
         resolved = Path(target)
         if not resolved.is_file():  # lgtm [py/path-injection]
             raise HTTPException(status_code=404, detail="File not found")
@@ -250,9 +255,14 @@ async def upload_sync_file(path: str, mtime: float, request: Request):
         safe_root = os.path.realpath(str(workspace))
         target = os.path.realpath(os.path.join(safe_root, path))
         safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-        if target != safe_root:
-            if not target.startswith(safe_prefix):
-                raise PermissionError("Path traversal blocked")
+        
+        if target == safe_root:
+            pass
+        elif target.startswith(safe_prefix):
+            pass
+        else:
+            raise PermissionError("Path traversal blocked")
+            
         resolved = Path(target)
         resolved.parent.mkdir(parents=True, exist_ok=True)  # lgtm [py/path-injection]
         content = await request.body()
