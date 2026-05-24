@@ -12,6 +12,16 @@ from .files import get_workspace
 router = APIRouter()
 
 
+def _validate_safe_path(path: str) -> Path:
+    workspace = get_workspace()
+    if not workspace:
+        raise HTTPException(status_code=400, detail="No workspace open")
+    resolved = (workspace / path).resolve()
+    if not resolved.is_relative_to(workspace):
+        raise HTTPException(status_code=403, detail="Path traversal blocked")
+    return resolved
+
+
 def run_git(args: list[str], cwd: str | None = None):
     workspace = get_workspace()
     if not cwd:
@@ -134,29 +144,36 @@ async def get_status(user=Depends(get_current_user)):
 
 @router.post("/stage")
 async def stage_file(payload: dict, user=Depends(get_current_user)):
-    run_git(["add", "--", payload["path"]])
+    resolved = _validate_safe_path(payload["path"])
+    rel_path = str(resolved.relative_to(get_workspace()))
+    run_git(["add", "--", rel_path])
     return {"status": "ok"}
 
 
 @router.post("/unstage")
 async def unstage_file(payload: dict, user=Depends(get_current_user)):
-    run_git(["reset", "HEAD", "--", payload["path"]])
+    resolved = _validate_safe_path(payload["path"])
+    rel_path = str(resolved.relative_to(get_workspace()))
+    run_git(["reset", "HEAD", "--", rel_path])
     return {"status": "ok"}
 
 
 @router.get("/diff")
 async def get_diff(path: str = Query(...), user=Depends(get_current_user)):
     try:
+        workspace = get_workspace()
+        resolved = _validate_safe_path(path)
+        rel_path = str(resolved.relative_to(workspace))
+
         # Get original from HEAD
         original = ""
         try:
-            original = run_git(["show", f"HEAD:{path}"])
+            original = run_git(["show", f"HEAD:{rel_path}"])
         except HTTPException:
             pass  # File might be new
 
         # Get current from disk
-        file_path = get_workspace() / path
-        with open(file_path) as f:
+        with open(resolved) as f:
             modified = f.read()
 
         return {"original": original, "modified": modified}
@@ -185,8 +202,10 @@ async def generate_commit_msg(user=Depends(get_current_user)):
 @router.get("/blame")
 async def get_blame(path: str = Query(...), user=Depends(get_current_user)):
     try:
+        resolved = _validate_safe_path(path)
+        rel_path = str(resolved.relative_to(get_workspace()))
         # Use line-porcelain for detailed, stable parsing
-        res = run_git(["blame", "--line-porcelain", "--", path])
+        res = run_git(["blame", "--line-porcelain", "--", rel_path])
         lines = []
         current_blame = {}
 
@@ -212,8 +231,10 @@ async def get_blame(path: str = Query(...), user=Depends(get_current_user)):
 @router.get("/history")
 async def get_history(path: str = Query(...), user=Depends(get_current_user)):
     try:
+        resolved = _validate_safe_path(path)
+        rel_path = str(resolved.relative_to(get_workspace()))
         # Get history with hash, author, time, and summary
-        res = run_git(["log", "--pretty=format:%h|%an|%at|%s", "--", path])
+        res = run_git(["log", "--pretty=format:%h|%an|%at|%s", "--", rel_path])
         history = []
         if res:
             for line in res.split("\n"):
