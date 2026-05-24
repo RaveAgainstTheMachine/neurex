@@ -342,17 +342,15 @@ class LSPManager:
         try:
             from api.routes.files import get_workspace
             workspace = get_workspace()
-            if workspace:
-                safe_root = os.path.realpath(str(workspace))
-                target = os.path.realpath(workspace_path)
-                safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-                if not target.startswith(safe_prefix) and target != safe_root:
-                    raise PermissionError("Path traversal attempt blocked in initialize_workspace")
-                workspace_path = target
-        except PermissionError:
-            raise
         except Exception:
-            pass
+            workspace = None
+
+        safe_root = os.path.realpath(str(workspace or "."))
+        target = os.path.realpath(workspace_path)
+        safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
+        if not target.startswith(safe_prefix) and target != safe_root:
+            raise PermissionError("Path traversal attempt blocked in initialize_workspace")
+        workspace_path = target
 
         root = Path(workspace_path)
         if not root.exists():
@@ -473,17 +471,15 @@ class LSPManager:
         try:
             from api.routes.files import get_workspace
             workspace = get_workspace()
-            if workspace:
-                safe_root = os.path.realpath(str(workspace))
-                target = os.path.realpath(str(start_path))
-                safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-                if not target.startswith(safe_prefix) and target != safe_root:
-                    raise PermissionError("Path traversal attempt blocked in _find_project_root")
-                start_path = Path(target)
-        except PermissionError:
-            raise
         except Exception:
-            pass
+            workspace = None
+
+        safe_root = os.path.realpath(str(workspace or "."))
+        target = os.path.realpath(str(start_path))
+        safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
+        if not target.startswith(safe_prefix) and target != safe_root:
+            raise PermissionError("Path traversal attempt blocked in _find_project_root")
+        start_path = Path(target)
 
         curr = start_path.resolve()
         while curr != curr.parent:
@@ -508,17 +504,15 @@ class LSPManager:
         try:
             from api.routes.files import get_workspace
             workspace = get_workspace()
-            if workspace:
-                safe_root = os.path.realpath(str(workspace))
-                target = os.path.realpath(workspace_path)
-                safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-                if not target.startswith(safe_prefix) and target != safe_root:
-                    raise PermissionError("Path traversal attempt blocked in get_session")
-                workspace_path = target
-        except PermissionError:
-            raise
         except Exception:
-            pass
+            workspace = None
+
+        safe_root = os.path.realpath(str(workspace or "."))
+        target = os.path.realpath(workspace_path)
+        safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
+        if not target.startswith(safe_prefix) and target != safe_root:
+            raise PermissionError("Path traversal attempt blocked in get_session")
+        workspace_path = target
 
         actual_root = self._find_project_root(Path(workspace_path))
         root_str = str(actual_root)
@@ -568,17 +562,16 @@ class LSPManager:
         try:
             from api.routes.files import get_workspace
             workspace = get_workspace()
-            if workspace:
-                safe_root = os.path.realpath(str(workspace))
-                target = os.path.realpath(str(root / ".neurex" / "lsp.json"))
-                safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-                if not target.startswith(safe_prefix) and target != safe_root:
-                    return {}
-                config_path = Path(target)
-            else:
-                config_path = root / ".neurex" / "lsp.json"
         except Exception:
-            config_path = root / ".neurex" / "lsp.json"
+            workspace = None
+
+        safe_root = os.path.realpath(str(workspace or "."))
+        target = os.path.realpath(str(root / ".neurex" / "lsp.json"))
+        safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
+        if not target.startswith(safe_prefix) and target != safe_root:
+            return {}
+        
+        config_path = Path(target)
 
         if config_path.exists():
             try:
