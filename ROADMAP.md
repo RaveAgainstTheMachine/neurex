@@ -3,8 +3,8 @@
 This document outlines the development trajectory of Neurex, focusing on building a stable, local-first AI engineering workspace.
 
 ## 🛰️ Current Operational Status
-- **Current Version**: `v0.7.0-STABLE`
-- **Core Engine**: NeuralHarness v2.2
+- **Current Version**: `v0.8.0-STABLE`
+- **Core Engine**: NeuralHarness v2.3
 - **Status**: Stable for local and LAN-based multi-device collaboration with fully clean CI/CD gates.
 
 ---
@@ -48,10 +48,20 @@ Neurex focuses on three pillars:
 - [x] **Clean CI/CD & Teardown Hygiene**: Hardened pytest teardown hooks by cleanly shutting down `watcher_service` and disposing of SQLAlchemy connection pools on lifespan exit, achieving 100% clean pre-release gates with zero connection leaks, unhandled thread exceptions, or warnings.
 - [x] **Hermetic E2E WebSocket & Smoke Evaluations**: Added 6 new high-coverage E2E integration test scenarios to the smoke evaluation suite (`run_evals.py` and `test_smoke_evals.py`), fully verifying round-robin execution, concurrent WebSocket lock contention, and message streaming.
 
+### Extensible Plugin Hub & Sanitized Sync (v0.8.0)
+- [x] **Plugin Hub & Local Marketplace**: Programmed dynamic Plugin Hub endpoints (`skills/marketplace` & `skills/publish`) with mock local persistence, duplicate prevention, and developer identity overrides.
+- [x] **Unified Discovery Canvas**: Designed a glassmorphic marketplace UI catalog in the browser featuring installing loaders and neon green "INSTALLED" badges synced to active registries.
+- [x] **Codebase Hygiene & Purges**: Removed spec legacy directories (`SubstrateDashboard`), audited voice synthetics fallback, and eradicated all linter, formatter, typecheck, and runtime warnings/errors.
+- [x] **Sanitized Dual-Remote Git Sync**: Implemented worktree-free sanitized sync logic force-pushing snapshot tags to public GitHub mirror (`github`) while keeping full development history on internal Gitea (`origin`).
+
 ---
 
 ## 🛠️ Future Backlog
-- [ ] **Extensible Plugin Hub**: A community-driven marketplace for publishing and sharing custom agent toolkits and themes.
+
+### Persistent Cognitive Substrates & LAN Mesh (v0.9.0 Plan)
+- [ ] **📡 Peer-to-Peer Mesh Sync**: Decentralized cross-device workspace syncing over LAN using secure TLS/mTLS without requiring central coordination.
+- [ ] **🧠 Ephemeral & Long-Term Memory Core**: Vector-backed memory engine storing structural architectural conventions, patterns, and past session contexts for local cognitive recall.
+- [ ] **🛡️ Secure Capability Guardrails**: Upgraded runtime sandbox granting granular, secure web searches and authenticated API capabilities with real-time human confirmation.
 
 ---
-*Roadmap updated to reflect Grounded Intelligence & Developer Experience (v0.7.0).*
+*Roadmap updated to reflect Extensible Plugin Hub & Sanitized Sync (v0.8.0).*
