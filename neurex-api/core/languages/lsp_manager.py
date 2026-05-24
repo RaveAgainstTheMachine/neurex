@@ -483,17 +483,20 @@ class LSPManager:
 
         curr = resolved_start
         while curr != curr.parent:
-            curr_str = os.path.realpath(str(curr))
+            curr_real = Path(os.path.realpath(str(curr)))
+            curr_str = str(curr_real)
             if not curr_str.startswith(safe_prefix) and curr_str != safe_root:
-                break
+                raise PermissionError("Path traversal out of bounds in _find_project_root")
             # Check for git or common project markers
             if (
-                (curr / ".git").is_dir()
-                or (curr / "pyproject.toml").exists()
-                or (curr / "package.json").exists()
+                (curr_real / ".git").is_dir()
+                or (curr_real / "pyproject.toml").exists()
+                or (curr_real / "package.json").exists()
             ):
-                return curr
-            curr = curr.parent
+                return curr_real
+            if curr_real == Path(safe_root):
+                break
+            curr = curr_real.parent
 
         # If not found in parent, check if there is a project root in a direct subdirectory
         for item in resolved_start.iterdir():
