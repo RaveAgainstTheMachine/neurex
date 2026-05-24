@@ -348,10 +348,9 @@ class LSPManager:
         safe_root = os.path.realpath(str(workspace or "."))
         target = os.path.realpath(workspace_path)
         safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-        if target == safe_root:
-            pass
-        elif not target.startswith(safe_prefix):
-            raise PermissionError("Path traversal attempt blocked in initialize_workspace")
+        if target != safe_root:
+            if not target.startswith(safe_prefix):
+                raise PermissionError("Path traversal attempt blocked in initialize_workspace")
         workspace_path = target
 
         root = Path(workspace_path)
@@ -480,13 +479,15 @@ class LSPManager:
         resolved_start = Path(start_path).resolve()  # lgtm [py/path-injection]
         target = os.path.realpath(str(resolved_start))
         safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-        if not target.startswith(safe_prefix) and target != safe_root:
-            raise PermissionError("Path traversal attempt blocked in _find_project_root")
+        if target != safe_root:
+            if not target.startswith(safe_prefix):
+                raise PermissionError("Path traversal attempt blocked in _find_project_root")
 
         curr_str = os.path.realpath(str(resolved_start))
         while curr_str != os.path.dirname(curr_str):
-            if not curr_str.startswith(safe_prefix) and curr_str != safe_root:
-                raise PermissionError("Path traversal out of bounds in _find_project_root")
+            if curr_str != safe_root:
+                if not curr_str.startswith(safe_prefix):
+                    raise PermissionError("Path traversal out of bounds in _find_project_root")
             # Check for git or common project markers using safe OS paths
             if (
                 os.path.isdir(os.path.join(curr_str, ".git"))  # lgtm [py/path-injection]
@@ -501,8 +502,9 @@ class LSPManager:
         # If not found in parent, check if there is a project root in a direct subdirectory
         for item in resolved_start.iterdir():
             item_str = os.path.realpath(str(item))
-            if not item_str.startswith(safe_prefix) and item_str != safe_root:
-                raise PermissionError("Path traversal attempt blocked in _find_project_root subdirectory scan")
+            if item_str != safe_root:
+                if not item_str.startswith(safe_prefix):
+                    raise PermissionError("Path traversal attempt blocked in _find_project_root subdirectory scan")
             if os.path.isdir(item_str) and (
                 os.path.isdir(os.path.join(item_str, ".git"))
                 or os.path.exists(os.path.join(item_str, "pyproject.toml"))
@@ -580,10 +582,9 @@ class LSPManager:
         safe_root = os.path.realpath(str(workspace or "."))
         target = os.path.realpath(str(root / ".neurex" / "lsp.json"))
         safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-        if target == safe_root:
-            pass
-        elif not target.startswith(safe_prefix):
-            return {}
+        if target != safe_root:
+            if not target.startswith(safe_prefix):
+                raise PermissionError("Path traversal blocked")
         
         config_path = Path(target)
 

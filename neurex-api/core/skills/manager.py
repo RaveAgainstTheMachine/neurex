@@ -124,10 +124,9 @@ class SkillManager:
                     safe_root = os.path.realpath(tmpdir)
                     target = os.path.realpath(os.path.join(safe_root, sub_path))
                     safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-                    if target == safe_root:
-                        pass
-                    elif not target.startswith(safe_prefix):
-                        raise Exception("Security violation: Path traversal in sub-path")
+                    if target != safe_root:
+                        if not target.startswith(safe_prefix):
+                            raise PermissionError("Security violation: Path traversal in sub-path")
                         
                     source = Path(target)
                     if source.exists():  # lgtm [py/path-injection]

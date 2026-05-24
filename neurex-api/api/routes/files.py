@@ -55,8 +55,9 @@ def _validate_safe_path(path: str, workspace: Path) -> Path:
     safe_root = os.path.realpath(str(workspace))
     target = os.path.realpath(os.path.join(safe_root, path))
     safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-    if not target.startswith(safe_prefix) and target != safe_root:
-        raise HTTPException(status_code=403, detail="Path traversal blocked")
+    if target != safe_root:
+        if not target.startswith(safe_prefix):
+            raise PermissionError("Path traversal blocked")
     return Path(target)
 
 
@@ -127,13 +128,11 @@ async def file_tree(path: str = ".", depth: int = 2, root_path: str | None = Non
     log.info("files.tree_request", path=path, depth=depth, workspace=str(WORKSPACE))
     safe_root = os.path.realpath(str(WORKSPACE))
     target = os.path.realpath(os.path.join(safe_root, path))
-    trusted_workspace = os.getenv("WORKSPACE_PATH") or os.getcwd()
-    trusted_root = os.path.realpath(trusted_workspace)
-    trusted_prefix = trusted_root if trusted_root.endswith(os.sep) else trusted_root + os.sep
-    if target == trusted_root:
-        pass
-    elif not target.startswith(trusted_prefix):
-        raise PermissionError("Path traversal blocked")
+    base_root = os.path.realpath(str(base_workspace))
+    base_prefix = base_root if base_root.endswith(os.sep) else base_root + os.sep
+    if target != base_root:
+        if not target.startswith(base_prefix):
+            raise PermissionError("Path traversal blocked")
     target_path = Path(target)
     git_status = {}
     try:
@@ -268,13 +267,11 @@ async def read_file(path: str, root_path: str | None = None):
 
     safe_root = os.path.realpath(str(WORKSPACE))
     target = os.path.realpath(os.path.join(safe_root, path))
-    trusted_workspace = os.getenv("WORKSPACE_PATH") or os.getcwd()
-    trusted_root = os.path.realpath(trusted_workspace)
-    trusted_prefix = trusted_root if trusted_root.endswith(os.sep) else trusted_root + os.sep
-    if target == trusted_root:
-        pass
-    elif not target.startswith(trusted_prefix):
-        raise PermissionError("Path traversal blocked")
+    base_root = os.path.realpath(str(base_workspace))
+    base_prefix = base_root if base_root.endswith(os.sep) else base_root + os.sep
+    if target != base_root:
+        if not target.startswith(base_prefix):
+            raise PermissionError("Path traversal blocked")
     resolved = Path(target)
     
     if not resolved.is_file():
@@ -308,10 +305,14 @@ async def save_file(req: SaveRequest):
         else:
             raise PermissionError("Path traversal blocked")
 
-    resolved = _validate_safe_path(req.path, WORKSPACE)
-    safe_prefix = str(WORKSPACE) if str(WORKSPACE).endswith(os.sep) else str(WORKSPACE) + os.sep
-    if not str(resolved).startswith(safe_prefix) and str(resolved) != str(WORKSPACE):
-        raise HTTPException(status_code=403, detail="Path traversal blocked")
+    safe_root = os.path.realpath(str(WORKSPACE))
+    target = os.path.realpath(os.path.join(safe_root, req.path))
+    base_root = os.path.realpath(str(base_workspace))
+    base_prefix = base_root if base_root.endswith(os.sep) else base_root + os.sep
+    if target != base_root:
+        if not target.startswith(base_prefix):
+            raise PermissionError("Path traversal blocked")
+    resolved = Path(target)
 
     # Advanced Collision Prevention
     if not collab_manager.acquire_lock(req.path, req.requester_id):
@@ -333,13 +334,18 @@ async def save_file(req: SaveRequest):
 @router.post("/upload")
 async def upload_file(file: UploadFile = File(...), path: str = "uploads"):
     """Upload a file to the workspace."""
-    WORKSPACE = get_workspace()
-    # Ensure relative path
+    base_workspace = get_workspace()
+    if not base_workspace:
+        raise HTTPException(status_code=400, detail="No workspace open")
+    WORKSPACE = base_workspace
     clean_path = path.lstrip("/")
-    resolved_dir = _validate_safe_path(clean_path, WORKSPACE)
-    safe_prefix = str(WORKSPACE) if str(WORKSPACE).endswith(os.sep) else str(WORKSPACE) + os.sep
-    if not str(resolved_dir).startswith(safe_prefix) and str(resolved_dir) != str(WORKSPACE):
-        raise HTTPException(status_code=403, detail="Path traversal blocked")
+    safe_root = os.path.realpath(str(WORKSPACE))
+    target = os.path.realpath(os.path.join(safe_root, clean_path))
+    safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
+    if target != safe_root:
+        if not target.startswith(safe_prefix):
+            raise PermissionError("Path traversal blocked")
+    resolved_dir = Path(target)
 
     resolved_dir.mkdir(parents=True, exist_ok=True)
     file_path = resolved_dir / file.filename
@@ -382,6 +388,14 @@ async def search_files(
             WORKSPACE = req_path
         else:
             raise PermissionError("Path traversal blocked")
+
+    target = os.path.realpath(str(WORKSPACE))
+    base_root = os.path.realpath(str(base_workspace))
+    base_prefix = base_root if base_root.endswith(os.sep) else base_root + os.sep
+    if target != base_root:
+        if not target.startswith(base_prefix):
+            raise PermissionError("Path traversal blocked")
+    WORKSPACE = Path(target)
 
     # Prefer ripgrep (rg) if available
     rg_path = shutil.which("rg")
@@ -506,6 +520,14 @@ async def replace_all(
         else:
             raise PermissionError("Path traversal blocked")
 
+    target = os.path.realpath(str(WORKSPACE))
+    base_root = os.path.realpath(str(base_workspace))
+    base_prefix = base_root if base_root.endswith(os.sep) else base_root + os.sep
+    if target != base_root:
+        if not target.startswith(base_prefix):
+            raise PermissionError("Path traversal blocked")
+    WORKSPACE = Path(target)
+
     # Use search_files logic to find matches first
     matches = await search_files(
         query=query,
@@ -585,13 +607,19 @@ async def rename_file(req: RenameRequest):
             WORKSPACE = req_path
         else:
             raise PermissionError("Path traversal blocked")
-    old_resolved = (WORKSPACE / req.old_path).resolve()
-    new_resolved = (WORKSPACE / req.new_path).resolve()
+    old_target = os.path.realpath(os.path.join(str(WORKSPACE), req.old_path))
+    base_root = os.path.realpath(str(base_workspace))
+    base_prefix = base_root if base_root.endswith(os.sep) else base_root + os.sep
+    if old_target != base_root:
+        if not old_target.startswith(base_prefix):
+            raise PermissionError("Path traversal blocked")
+    old_resolved = Path(old_target)
 
-    if not str(old_resolved).startswith(str(WORKSPACE)) or not str(new_resolved).startswith(
-        str(WORKSPACE)
-    ):
-        raise HTTPException(status_code=403, detail="Path traversal blocked")
+    new_target = os.path.realpath(os.path.join(str(WORKSPACE), req.new_path))
+    if new_target != base_root:
+        if not new_target.startswith(base_prefix):
+            raise PermissionError("Path traversal blocked")
+    new_resolved = Path(new_target)
 
     if not old_resolved.exists():
         raise HTTPException(status_code=404, detail="Source not found")
@@ -621,10 +649,14 @@ async def create_folder(path: str, root_path: str | None = None):
         else:
             raise PermissionError("Path traversal blocked")
 
-    resolved = _validate_safe_path(path, WORKSPACE)
-    safe_prefix = str(WORKSPACE) if str(WORKSPACE).endswith(os.sep) else str(WORKSPACE) + os.sep
-    if not str(resolved).startswith(safe_prefix) and str(resolved) != str(WORKSPACE):
-        raise HTTPException(status_code=403, detail="Path traversal blocked")
+    safe_root = os.path.realpath(str(WORKSPACE))
+    target = os.path.realpath(os.path.join(safe_root, path))
+    base_root = os.path.realpath(str(base_workspace))
+    base_prefix = base_root if base_root.endswith(os.sep) else base_root + os.sep
+    if target != base_root:
+        if not target.startswith(base_prefix):
+            raise PermissionError("Path traversal blocked")
+    resolved = Path(target)
     resolved.mkdir(parents=True, exist_ok=True)  # lgtm [py/path-injection]
     return {"path": path, "status": "created"}
 
@@ -647,10 +679,14 @@ async def delete_file(path: str, root_path: str | None = None):
         else:
             raise PermissionError("Path traversal blocked")
 
-    resolved = _validate_safe_path(path, WORKSPACE)
-    safe_prefix = str(WORKSPACE) if str(WORKSPACE).endswith(os.sep) else str(WORKSPACE) + os.sep
-    if not str(resolved).startswith(safe_prefix) and str(resolved) != str(WORKSPACE):
-        raise HTTPException(status_code=403, detail="Path traversal blocked")
+    safe_root = os.path.realpath(str(WORKSPACE))
+    target = os.path.realpath(os.path.join(safe_root, path))
+    base_root = os.path.realpath(str(base_workspace))
+    base_prefix = base_root if base_root.endswith(os.sep) else base_root + os.sep
+    if target != base_root:
+        if not target.startswith(base_prefix):
+            raise PermissionError("Path traversal blocked")
+    resolved = Path(target)
 
     if not resolved.exists():
         raise HTTPException(status_code=404, detail="Path not found")
