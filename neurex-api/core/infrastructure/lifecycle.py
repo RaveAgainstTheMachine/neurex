@@ -62,9 +62,8 @@ async def rollback_system(backup_name: str) -> str:
     safe_root = os.path.realpath(str(BACKUP_DIR))
     target = os.path.realpath(os.path.join(safe_root, backup_name))
     safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-    if target != safe_root:
-        if not target.startswith(safe_prefix):
-            raise ValueError("Security violation: Path traversal attempted")
+    if not target.startswith(safe_prefix):
+        raise ValueError("Security violation: Path traversal attempted")
 
     backup_path = Path(target)
     if not backup_path.exists():  # lgtm [py/path-injection]

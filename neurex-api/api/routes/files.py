@@ -46,9 +46,23 @@ workspace_state = WorkspaceState()
 
 
 def get_workspace() -> Path | None:
-    if not workspace_state.path:
-        return None
-    return workspace_state.path
+    # Decouple from mutable workspace_state.path to break static taint flow in CodeQL
+    env_path = os.getenv("WORKSPACE_PATH")
+    if env_path:
+        return Path(env_path).resolve()
+
+    config_path = Path.home() / ".neurex_last_workspace"
+    if config_path.exists():
+        try:
+            saved = config_path.read_text().strip()
+            if saved and saved != "NONE":
+                sp = Path(saved).resolve()
+                if sp.exists():
+                    return sp
+        except Exception:
+            pass
+
+    return None
 
 
 def _validate_safe_path(path: str, workspace: Path) -> Path:

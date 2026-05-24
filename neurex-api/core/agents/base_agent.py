@@ -204,7 +204,7 @@ class BaseAgent(ABC):
 
                 last_msg = messages[-1]["content"].lower()[-500:]
                 path_match = re.search(
-                    r"([\w\-./]+\.(?:py|md|ts))", last_msg  # lgtm [py/polynomial-redos]
+                    r"((?:[\w\-]+/)*[\w\-]+\.(?:py|md|ts))", last_msg
                 )
                 path = path_match.group(1) if path_match else "output.txt"
 
@@ -226,7 +226,7 @@ class BaseAgent(ABC):
 
                 last_msg = messages[-1]["content"].lower()[-500:]
                 path_match = re.search(
-                    r"([\w\-./]+\.(?:py|md|ts))", last_msg  # lgtm [py/polynomial-redos]
+                    r"((?:[\w\-]+/)*[\w\-]+\.(?:py|md|ts))", last_msg
                 )
                 if path_match:
                     path = path_match.group(1)
