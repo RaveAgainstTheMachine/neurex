@@ -149,10 +149,10 @@ else
         # Delete the old tag on remote first (it points to the unsanitized commit)
         git push "$REMOTE" ":refs/tags/$HEAD_TAG" 2>/dev/null || true
         # Create a new lightweight tag at the sanitized commit
-        git tag -f "$HEAD_TAG" "$SANITIZED_SHA" --quiet
+        git tag -f "$HEAD_TAG" "$SANITIZED_SHA"
         git push "$REMOTE" "$HEAD_TAG"
         # Restore the original tag to point at the real internal commit
-        git tag -f "$HEAD_TAG" "$ORIGINAL_SHA" --quiet
+        git tag -f "$HEAD_TAG" "$ORIGINAL_SHA"
     fi
 fi
 
