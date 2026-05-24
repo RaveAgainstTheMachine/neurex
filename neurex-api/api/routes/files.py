@@ -119,8 +119,9 @@ async def file_tree(path: str = ".", depth: int = 2, root_path: str | None = Non
     log.info("files.tree_request", path=path, depth=depth, workspace=str(WORKSPACE))
     safe_root = os.path.realpath(str(WORKSPACE))
     target = os.path.realpath(os.path.join(safe_root, path))
-    safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-    if target != safe_root and not target.startswith(safe_prefix):
+    trusted_root = os.path.realpath(str(workspace_state.path or "."))
+    trusted_prefix = trusted_root if trusted_root.endswith(os.sep) else trusted_root + os.sep
+    if target != trusted_root and not target.startswith(trusted_prefix):
         raise PermissionError("Path traversal blocked")
     target_path = Path(target)
     git_status = {}
@@ -244,8 +245,9 @@ async def read_file(path: str, root_path: str | None = None):
         raise HTTPException(status_code=400, detail="No workspace open")
     safe_root = os.path.realpath(str(WORKSPACE))
     target = os.path.realpath(os.path.join(safe_root, path))
-    safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-    if target != safe_root and not target.startswith(safe_prefix):
+    trusted_root = os.path.realpath(str(workspace_state.path or "."))
+    trusted_prefix = trusted_root if trusted_root.endswith(os.sep) else trusted_root + os.sep
+    if target != trusted_root and not target.startswith(trusted_prefix):
         raise PermissionError("Path traversal blocked")
     resolved = Path(target)
     
