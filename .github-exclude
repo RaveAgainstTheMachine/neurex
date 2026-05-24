@@ -5,6 +5,14 @@
 # AI Agent Development Protocols
 .projectrules
 .neurexrules
+.agents/
+.cursor/
+.windsurf/
+.clinerules
+.opencode/
+AGENTS.md
+skills/
+skills-lock.json
 
 # Gitea Config / Workflows
 .gitea/
