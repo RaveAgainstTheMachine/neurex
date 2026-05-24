@@ -72,15 +72,15 @@ def get_ast_bounds(file_path: Path, line: int, column: int) -> tuple[int, int]:
         workspace = get_workspace()
         safe_root = os.path.realpath(str(workspace or "."))
         target = os.path.realpath(str(file_path))
-        safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-        if target == safe_root:
-            pass
-        elif not target.startswith(safe_prefix):
-            log.warning("ast.security_violation", path=str(file_path))
-            return line, line
-        file_path = Path(target)
-    except Exception:
-        pass
+    except Exception as e:
+        log.error("ast.resolve_failed", path=str(file_path), error=str(e))
+        return line, line
+
+    safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
+    if target != safe_root and not target.startswith(safe_prefix):
+        log.warning("ast.security_violation", path=str(file_path))
+        return line, line
+    file_path = Path(target)
 
     if not file_path.exists():  # lgtm [py/path-injection]
         log.warning("ast.file_not_found", path=str(file_path))
