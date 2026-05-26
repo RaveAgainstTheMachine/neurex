@@ -4,7 +4,7 @@
 > **Internal API**: `http://localhost:8000`  
 > **Auth**: Bearer JWT (obtain via `POST /api/auth/token`)  
 > **WebSocket**: `wss://localhost:3000/ws/{conversation_id}` (Internal: `ws://localhost:8000/ws/...`)  
-> **Version**: 0.9.0 (THE DYNAMIC AUTONOMY & REPLAY REVOLUTION)
+> **Version**: 0.10.0 (THE DYNAMIC AUTONOMY & REPLAY REVOLUTION)
 
 ---
 
