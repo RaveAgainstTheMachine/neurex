@@ -1,2 +1,2 @@
-VERSION = "0.9.0"  # Swarm Memory & Secure Capability Guardrails
+VERSION = "0.10.0"  # Swarm Memory, Observability Replay Canvas, Dynamic Autonomy Level Transitions and Secure Guardrails
 
