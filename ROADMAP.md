@@ -3,9 +3,9 @@
 This document outlines the development trajectory of Neurex, focusing on building a stable, local-first AI engineering workspace.
 
 ## 🛰️ Current Operational Status
-- **Current Version**: `v0.9.0-STABLE`
-- **Core Engine**: NeuralHarness v2.4
-- **Status**: Stable for local and LAN-based multi-device collaboration with fully clean CI/CD gates.
+- **Current Version**: `v0.10.0-STABLE`
+- **Core Engine**: NeuralHarness v2.5
+- **Status**: Stable for local and LAN-based multi-device collaboration with fully clean CI/CD gates, dynamic autonomy transitions, and active telemetry timelines.
 
 ---
 
@@ -59,13 +59,19 @@ Neurex focuses on three pillars:
 - [x] **🧠 Swarm Memory Substrate (Hive Mind)**: Vector-backed memory engine storing structural architectural conventions, patterns, and past session contexts for local cognitive recall.
 - [x] **🛡️ Secure Capability Guardrails**: Upgraded runtime sandbox granting granular, secure web searches and authenticated API capabilities with real-time human confirmation.
 
+### Dynamic Autonomy & Timeline Observability (v0.10.0)
+- [x] **📈 Local Screenplay Teleplay Replay Canvas**: Chronologically visualizing and scrubbing through exact agent thought sequences during debug walkthroughs in the Flight Log panel.
+- [x] **⚙️ Dynamic Autonomy Level Transition**: On-the-fly toggling of execution authority ceilings (restricted, limited, staging, full) from the UI settings and AI Panel, dynamically bound to the central Zustand store.
+
 ---
 
 ## 🛠️ Future Backlog
 
-### Cognitive Refinement & Dynamic Autonomy
-- [ ] **📈 Local Screenplay Teleplay Replay Canvas**: chronologically visualizing exact agent thought sequences during debug walkthroughs.
-- [ ] **⚙️ Dynamic Autonomy Level Transition**: On-the-fly toggling of execution authority ceilings from full-trust manual bypass to strict verification loops.
+### Unmocked Containerization & Robust Testing Architecture
+- [ ] **🎭 Universal Playwright Component/E2E Testing (`neurex-web`)**: Direct browser automation checking Monaco editors, Graph editor actions, and resizable layout persistence.
+- [ ] **🐳 Unmocked Docker Sandbox Verification (`neurex-cli`)**: Rust integration tests executing real sandboxed PTY tasks inside Bollard containers, checking CPU/VRAM ceilings.
+- [ ] **📦 WASM/WASI Native Run Verification**: Validating zero-dependency `wasmtime` fallback execution planes.
+- [ ] **⚡ High-Throughput SQLite WAL Stress Testing**: High-concurrency database logging tests to prevent WAL lock contention.
 
 ---
-*Roadmap updated to reflect Swarm Memory & Secure Capability Guardrails (v0.9.0).*
+*Roadmap updated to reflect Dynamic Autonomy & Timeline Observability (v0.10.0).*
