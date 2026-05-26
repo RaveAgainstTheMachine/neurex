@@ -2,6 +2,11 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
+## [0.10.0] - 2026-05-26: BACKLOG PILLARS & PRODUCTION HARDENING
+### Added
+- **Local Screenplay Teleplay Replay Canvas**: Wired a high-fidelity chronological replay canvas to visualize and scrub agent decision beating and reasoning trajectories inside the Flight Log panel.
+- **Dynamic Autonomy Level Transition**: Standardized and unified the `staging` autonomy level across the backend `AutonomyLevel` enum and dynamic CustomSelect triggers in the AI Panel and Settings panel, enabling real-time workspace sync via Zustand store actions.
+
 ## [0.9.0] - 2026-05-24: P2P MESH SYNC, SWARM MEMORY SUBSTRATE & SECURE CAPABILITY GUARDRAILS
 ### Added
 - **P2P Mesh Workspace Sync**: Developed bi-directional directory synchronization over secure LAN mTLS. Implemented manifest validation, SHA-256 integrity checks, path traversal mitigation, and preservation of modification times.
