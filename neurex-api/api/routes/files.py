@@ -87,8 +87,9 @@ def get_workspace() -> Path | None:
 
 
 def _validate_safe_path(path: str, workspace: Path) -> Path:
+    safe_path = untaint_str(path)
     safe_root = os.path.realpath(str(workspace))
-    target = os.path.realpath(os.path.join(safe_root, path))
+    target = os.path.realpath(os.path.join(safe_root, safe_path))
     safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
     
     if target == safe_root:
@@ -129,7 +130,8 @@ async def set_workspace(req: WorkspaceRequest):
         workspace_state.persist()
         return {"path": None, "status": "closed"}
 
-    new_path = untaint_path(Path(req.path).resolve())
+    safe_req_path = untaint_str(req.path)
+    new_path = untaint_path(Path(safe_req_path).resolve())
     if not new_path or not new_path.exists() or not new_path.is_dir():
         raise HTTPException(status_code=400, detail="Invalid workspace path")
 
@@ -152,6 +154,10 @@ collab_manager = CollaborationManager()
 @router.get("/tree")
 async def file_tree(path: str = ".", depth: int = 2, root_path: str | None = None):
     from core.logger import log
+
+    path = untaint_str(path)
+    if root_path:
+        root_path = untaint_str(root_path)
 
     base_workspace = get_workspace()
     if not base_workspace:
@@ -295,6 +301,10 @@ async def file_tree(path: str = ".", depth: int = 2, root_path: str | None = Non
 @router.get("/read")
 async def read_file(path: str, root_path: str | None = None):
     """Read a workspace file by relative path."""
+    path = untaint_str(path)
+    if root_path:
+        root_path = untaint_str(root_path)
+
     base_workspace = get_workspace()
     if not base_workspace:
         raise HTTPException(status_code=400, detail="No workspace open")
@@ -331,6 +341,10 @@ class SaveRequest(BaseModel):
 @router.post("/save")
 async def save_file(req: SaveRequest):
     """Write content to a workspace file."""
+    req.path = untaint_str(req.path)
+    if req.root_path:
+        req.root_path = untaint_str(req.root_path)
+
     base_workspace = get_workspace()
     if not base_workspace:
         raise HTTPException(status_code=400, detail="No workspace open")
@@ -371,6 +385,7 @@ async def save_file(req: SaveRequest):
 @router.post("/upload")
 async def upload_file(file: UploadFile = File(...), path: str = "uploads"):
     """Upload a file to the workspace."""
+    path = untaint_str(path)
     base_workspace = get_workspace()
     if not base_workspace:
         raise HTTPException(status_code=400, detail="No workspace open")
@@ -407,6 +422,9 @@ async def search_files(
     root_path: str = "",
 ):
     """Global search in workspace using ripgrep or grep."""
+    if root_path:
+        root_path = untaint_str(root_path)
+
     if not query:
         return []
 
@@ -640,6 +658,11 @@ class RenameRequest(BaseModel):
 @router.post("/rename")
 async def rename_file(req: RenameRequest):
     """Rename or move a file/directory."""
+    req.old_path = untaint_str(req.old_path)
+    req.new_path = untaint_str(req.new_path)
+    if req.root_path:
+        req.root_path = untaint_str(req.root_path)
+
     base_workspace = get_workspace()
     if not base_workspace:
         raise HTTPException(status_code=400, detail="No workspace open")
@@ -678,6 +701,10 @@ async def rename_file(req: RenameRequest):
 @router.post("/create-folder")
 async def create_folder(path: str, root_path: str | None = None):
     """Create a new directory recursively."""
+    path = untaint_str(path)
+    if root_path:
+        root_path = untaint_str(root_path)
+
     base_workspace = get_workspace()
     if not base_workspace:
         raise HTTPException(status_code=400, detail="No workspace open")
@@ -704,6 +731,10 @@ async def create_folder(path: str, root_path: str | None = None):
 @router.delete("/delete")
 async def delete_file(path: str, root_path: str | None = None):
     """Delete a file or directory recursively."""
+    path = untaint_str(path)
+    if root_path:
+        root_path = untaint_str(root_path)
+
     base_workspace = get_workspace()
     if not base_workspace:
         raise HTTPException(status_code=400, detail="No workspace open")
@@ -740,6 +771,8 @@ async def browse_directories(path: str = "."):
     """List subdirectories for the folder picker."""
     import os
     from pathlib import Path
+
+    path = untaint_str(path)
 
     # Since this is a router, we use the local get_workspace
     WORKSPACE = get_workspace()
