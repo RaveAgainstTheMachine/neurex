@@ -1,2 +1,2 @@
-VERSION = "0.8.1"  # High-Fidelity Security Hardening
+VERSION = "0.9.0"  # Swarm Memory & Secure Capability Guardrails
 

@@ -3,8 +3,8 @@
 This document outlines the development trajectory of Neurex, focusing on building a stable, local-first AI engineering workspace.
 
 ## 🛰️ Current Operational Status
-- **Current Version**: `v0.8.1-STABLE`
-- **Core Engine**: NeuralHarness v2.3
+- **Current Version**: `v0.9.0-STABLE`
+- **Core Engine**: NeuralHarness v2.4
 - **Status**: Stable for local and LAN-based multi-device collaboration with fully clean CI/CD gates.
 
 ---
@@ -54,14 +54,18 @@ Neurex focuses on three pillars:
 - [x] **Codebase Hygiene & Purges**: Removed spec legacy directories (`SubstrateDashboard`), audited voice synthetics fallback, and eradicated all linter, formatter, typecheck, and runtime warnings/errors.
 - [x] **Sanitized Dual-Remote Git Sync**: Implemented worktree-free sanitized sync logic force-pushing snapshot tags to public GitHub mirror (`github`) while keeping full development history on internal Gitea (`origin`).
 
+### Persistent Cognitive Substrates & LAN Mesh (v0.9.0)
+- [x] **📡 Peer-to-Peer Mesh Sync**: Decentralized cross-device workspace syncing over LAN using secure TLS/mTLS without requiring central coordination.
+- [x] **🧠 Swarm Memory Substrate (Hive Mind)**: Vector-backed memory engine storing structural architectural conventions, patterns, and past session contexts for local cognitive recall.
+- [x] **🛡️ Secure Capability Guardrails**: Upgraded runtime sandbox granting granular, secure web searches and authenticated API capabilities with real-time human confirmation.
+
 ---
 
 ## 🛠️ Future Backlog
 
-### Persistent Cognitive Substrates & LAN Mesh (v0.9.0 Plan)
-- [ ] **📡 Peer-to-Peer Mesh Sync**: Decentralized cross-device workspace syncing over LAN using secure TLS/mTLS without requiring central coordination.
-- [ ] **🧠 Ephemeral & Long-Term Memory Core**: Vector-backed memory engine storing structural architectural conventions, patterns, and past session contexts for local cognitive recall.
-- [ ] **🛡️ Secure Capability Guardrails**: Upgraded runtime sandbox granting granular, secure web searches and authenticated API capabilities with real-time human confirmation.
+### Cognitive Refinement & Dynamic Autonomy
+- [ ] **📈 Local Screenplay Teleplay Replay Canvas**: chronologically visualizing exact agent thought sequences during debug walkthroughs.
+- [ ] **⚙️ Dynamic Autonomy Level Transition**: On-the-fly toggling of execution authority ceilings from full-trust manual bypass to strict verification loops.
 
 ---
-*Roadmap updated to reflect High-Fidelity Security Hardening (v0.8.1).*
+*Roadmap updated to reflect Swarm Memory & Secure Capability Guardrails (v0.9.0).*

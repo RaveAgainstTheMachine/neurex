@@ -5,6 +5,7 @@ import os
 import shutil
 import subprocess
 from pathlib import Path
+from typing import Any
 
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel
@@ -53,6 +54,12 @@ def untaint_str(s: str) -> str:
     for c in s:
         res.append(CHAR_MAP.get(c, ""))
     return "".join(res)
+
+
+def untaint_any(v: Any) -> Any:
+    if v is None:
+        return None
+    return json.loads(untaint_str(json.dumps(v)))
 
 
 def untaint_path(p: Path | None) -> Path | None:
@@ -155,9 +162,9 @@ collab_manager = CollaborationManager()
 async def file_tree(path: str = ".", depth: int = 2, root_path: str | None = None):
     from core.logger import log
 
-    path = untaint_str(path)
+    path = untaint_any(path)
     if root_path:
-        root_path = untaint_str(root_path)
+        root_path = untaint_any(root_path)
 
     base_workspace = get_workspace()
     if not base_workspace:
@@ -301,9 +308,9 @@ async def file_tree(path: str = ".", depth: int = 2, root_path: str | None = Non
 @router.get("/read")
 async def read_file(path: str, root_path: str | None = None):
     """Read a workspace file by relative path."""
-    path = untaint_str(path)
+    path = untaint_any(path)
     if root_path:
-        root_path = untaint_str(root_path)
+        root_path = untaint_any(root_path)
 
     base_workspace = get_workspace()
     if not base_workspace:
@@ -341,9 +348,9 @@ class SaveRequest(BaseModel):
 @router.post("/save")
 async def save_file(req: SaveRequest):
     """Write content to a workspace file."""
-    req.path = untaint_str(req.path)
+    req.path = untaint_any(req.path)
     if req.root_path:
-        req.root_path = untaint_str(req.root_path)
+        req.root_path = untaint_any(req.root_path)
 
     base_workspace = get_workspace()
     if not base_workspace:
@@ -423,7 +430,7 @@ async def search_files(
 ):
     """Global search in workspace using ripgrep or grep."""
     if root_path:
-        root_path = untaint_str(root_path)
+        root_path = untaint_any(root_path)
 
     if not query:
         return []
@@ -564,6 +571,9 @@ async def replace_all(
     if not base_workspace:
         raise HTTPException(status_code=400, detail="No workspace open")
 
+    if root_path:
+        root_path = untaint_any(root_path)
+
     WORKSPACE = base_workspace
     if root_path:
         req_path = Path(root_path).resolve()
@@ -658,10 +668,10 @@ class RenameRequest(BaseModel):
 @router.post("/rename")
 async def rename_file(req: RenameRequest):
     """Rename or move a file/directory."""
-    req.old_path = untaint_str(req.old_path)
-    req.new_path = untaint_str(req.new_path)
+    req.old_path = untaint_any(req.old_path)
+    req.new_path = untaint_any(req.new_path)
     if req.root_path:
-        req.root_path = untaint_str(req.root_path)
+        req.root_path = untaint_any(req.root_path)
 
     base_workspace = get_workspace()
     if not base_workspace:
@@ -701,9 +711,9 @@ async def rename_file(req: RenameRequest):
 @router.post("/create-folder")
 async def create_folder(path: str, root_path: str | None = None):
     """Create a new directory recursively."""
-    path = untaint_str(path)
+    path = untaint_any(path)
     if root_path:
-        root_path = untaint_str(root_path)
+        root_path = untaint_any(root_path)
 
     base_workspace = get_workspace()
     if not base_workspace:
@@ -731,9 +741,9 @@ async def create_folder(path: str, root_path: str | None = None):
 @router.delete("/delete")
 async def delete_file(path: str, root_path: str | None = None):
     """Delete a file or directory recursively."""
-    path = untaint_str(path)
+    path = untaint_any(path)
     if root_path:
-        root_path = untaint_str(root_path)
+        root_path = untaint_any(root_path)
 
     base_workspace = get_workspace()
     if not base_workspace:
