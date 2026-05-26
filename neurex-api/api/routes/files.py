@@ -59,11 +59,10 @@ def untaint_path(p: Path | None) -> Path | None:
     if p is None:
         return None
     try:
-        resolved = p.resolve()
-        untainted = untaint_str(str(resolved))
-        return Path(untainted)
+        untainted = untaint_str(str(p))
+        return Path(untainted).resolve()
     except Exception:
-        return p
+        return Path(".")
 
 
 def get_workspace() -> Path | None:
