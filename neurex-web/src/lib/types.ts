@@ -335,6 +335,8 @@ export interface NeurexStore {
   setPresence: (p: Presence[]) => void;
   locks: Record<string, FileLock>;
   setLocks: (l: Record<string, FileLock>) => void;
+  autonomyLevel: string;
+  setAutonomyLevel: (level: string) => void;
 
   // Search
   search: SearchState;

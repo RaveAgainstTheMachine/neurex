@@ -241,7 +241,7 @@ export function SettingsPanel() {
                 ])}
                 {renderSetting("accent_color", "Primary Accent", "Personalize the core visual identity.", "color")}
                 {renderSetting("autonomy_level", "Agent Autonomy", "Control the frequency of required approvals.", "select", [
-                  { value: "restricted", label: "Restricted" }, { value: "limited", label: "Limited" }, { value: "full", label: "Full" }
+                  { value: "restricted", label: "Restricted" }, { value: "limited", label: "Limited" }, { value: "staging", label: "Staging" }, { value: "full", label: "Full" }
                 ])}
               </>
             )}

@@ -78,6 +78,7 @@ class InviteCode(SQLModel, table=True):
 class AutonomyLevel(str, Enum):
     RESTRICTED = "restricted"  # Everything needs approval
     LIMITED = "limited"  # Safe commands are auto, unsafe need approval
+    STAGING = "staging"  # Staging constraints apply
     FULL = "full"  # Autonomous execution
 
 

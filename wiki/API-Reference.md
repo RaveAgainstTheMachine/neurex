@@ -4,7 +4,7 @@
 > **Internal API**: `http://localhost:8000`  
 > **Auth**: Bearer JWT (obtain via `POST /api/auth/token`)  
 > **WebSocket**: `wss://localhost:3000/ws/{conversation_id}` (Internal: `ws://localhost:8000/ws/...`)  
-> **Version**: 0.5.2 (THE STABLE SUBSTRATE)
+> **Version**: 0.9.0 (THE DYNAMIC AUTONOMY & REPLAY REVOLUTION)
 
 ---
 
@@ -643,7 +643,7 @@ Update settings. Partial update is supported. This endpoint is the source of tru
 ```json
 {
   "default_model": "qwen2.5-coder:32b",
-  "autonomy_ceiling": "limited",
+  "autonomy_ceiling": "limited", // Options: "restricted", "limited", "staging", "full"
   "model_routes": {
     "Planning": "gpt-4o",
     "Coding": "qwen2.5-coder:32b",

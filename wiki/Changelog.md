@@ -2,6 +2,11 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
+## [0.9.0] - 2026-05-26: BACKLOG PILLARS & PRODUCTION HARDENING
+### Added
+- **Local Screenplay Teleplay Replay Canvas**: Wired a high-fidelity chronological replay canvas to visualize and scrub agent decision beating and reasoning trajectories inside the Flight Log panel.
+- **Dynamic Autonomy Level Transition**: Standardized and unified the `staging` autonomy level across the backend `AutonomyLevel` enum and dynamic CustomSelect triggers in the AI Panel and Settings panel, enabling real-time workspace sync via Zustand store actions.
+
 ## [0.5.2] - 2026-05-09: ARCHITECTURAL REMEDIATION & PUBLIC RELEASE
 ### Added
 - **Final Architectural Remediations**: Completed Tier 1, 2, and 3 code audit fixes to ensure production stability.

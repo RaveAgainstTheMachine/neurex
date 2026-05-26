@@ -27,6 +27,12 @@ export const createSystemSlice: StoreSlice<NeurexStore> = (set, _get) => ({
     setPresence: (presence) => set((s) => { s.presence = presence; }),
     locks: {},
     setLocks: (locks) => set((s) => { s.locks = locks; }),
+    autonomyLevel: localStorage.getItem("neurex_autonomy_level") || "limited",
+    setAutonomyLevel: (level) => set((s) => {
+      s.autonomyLevel = level;
+      localStorage.setItem("neurex_autonomy_level", level);
+      s.send({ type: "set_autonomy", level });
+    }),
 
       // ── Search ────────────────────────────────────────────────
 

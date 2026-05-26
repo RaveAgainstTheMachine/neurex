@@ -46,6 +46,7 @@ const STATUS_LABEL: Record<string, string> = {
 const AUTONOMY_OPTIONS = [
   { value: "restricted", label: "Restricted" },
   { value: "limited", label: "Limited" },
+  { value: "staging", label: "Staging" },
   { value: "full", label: "Full Auto" }
 ];
 
@@ -100,6 +101,8 @@ export function AIPanel({ send, conversationId, isActive = true }: AIPanelProps)
   const activeFile = useStore(s => s.activeFile);
   const fileTree = useStore(s => s.fileTree);
   const infraRegistry = useStore(s => s.infraRegistry);
+  const autonomyLevel = useStore(s => s.autonomyLevel);
+  const setAutonomyLevel = useStore(s => s.setAutonomyLevel);
 
   const [isListening, setIsListening] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -401,8 +404,8 @@ export function AIPanel({ send, conversationId, isActive = true }: AIPanelProps)
     autonomy: (
       <CustomSelect 
         className="autonomy-selector"
-        value="limited"
-        onChange={(val) => send({ type: "set_autonomy", level: val })}
+        value={autonomyLevel}
+        onChange={(val) => setAutonomyLevel(val)}
         options={AUTONOMY_OPTIONS}
         title="Set Autonomy Level"
       />
@@ -610,8 +613,8 @@ export function AIPanel({ send, conversationId, isActive = true }: AIPanelProps)
                   />
                   <CustomSelect 
                     className="mini autonomy-selector-footer"
-                    value="limited"
-                    onChange={(val) => send({ type: "set_autonomy", level: val })}
+                    value={autonomyLevel}
+                    onChange={(val) => setAutonomyLevel(val)}
                     options={AUTONOMY_OPTIONS}
                     title="Set Autonomy Level"
                   />
