@@ -77,8 +77,9 @@ async def get_infra_status():
     import os
 
     ws = os.getenv("WORKSPACE_PATH", "/workspace")
-    intel_path = os.path.join(ws, ".neurex", "intel.json")
-    if os.path.exists(intel_path):
+    raw_intel = os.path.join(ws, ".neurex", "intel.json")
+    intel_path = untaint_path(Path(raw_intel))
+    if intel_path and intel_path.exists():
         try:
             with open(intel_path) as f:
                 metrics["intel"] = json.load(f)
@@ -235,6 +236,9 @@ async def download_sync_file(path: str):
         else:
             raise PermissionError("Path traversal blocked")
             
+        if os.path.commonpath([safe_root, target]) != safe_root:
+            raise PermissionError("Path traversal blocked")
+            
         resolved = untaint_path(Path(target))
         if not resolved or not resolved.is_file():  # lgtm [py/path-injection]
             raise HTTPException(status_code=404, detail="File not found")
@@ -262,6 +266,9 @@ async def upload_sync_file(path: str, mtime: float, request: Request):
         elif target.startswith(safe_prefix):
             pass
         else:
+            raise PermissionError("Path traversal blocked")
+            
+        if os.path.commonpath([safe_root, target]) != safe_root:
             raise PermissionError("Path traversal blocked")
             
         resolved = untaint_path(Path(target))

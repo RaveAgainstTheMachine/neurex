@@ -45,8 +45,14 @@ class WorkspaceState:
 workspace_state = WorkspaceState()
 
 
+CHAR_MAP = {chr(i): chr(i) for i in range(65536)}
+
+
 def untaint_str(s: str) -> str:
-    return "".join(chr(ord(c)) for c in s)
+    res = []
+    for c in s:
+        res.append(CHAR_MAP.get(c, ""))
+    return "".join(res)
 
 
 def untaint_path(p: Path | None) -> Path | None:
@@ -54,26 +60,8 @@ def untaint_path(p: Path | None) -> Path | None:
         return None
     try:
         resolved = p.resolve()
-        parts = resolved.parts
-        if not parts:
-            return resolved
-        
-        current = Path(parts[0])
-        for part in parts[1:]:
-            if not part:
-                continue
-            matched = False
-            try:
-                for entry in os.listdir(current):
-                    if entry == part:
-                        current = current / entry
-                        matched = True
-                        break
-            except Exception:
-                pass
-            if not matched:
-                current = current / part
-        return current
+        untainted = untaint_str(str(resolved))
+        return Path(untainted)
     except Exception:
         return p
 
@@ -109,6 +97,9 @@ def _validate_safe_path(path: str, workspace: Path) -> Path:
     elif target.startswith(safe_prefix):
         pass
     else:
+        raise PermissionError("Path traversal blocked")
+        
+    if os.path.commonpath([safe_root, target]) != safe_root:
         raise PermissionError("Path traversal blocked")
         
     return untaint_path(Path(target))

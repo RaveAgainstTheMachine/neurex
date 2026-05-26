@@ -29,7 +29,10 @@ def _validate_safe_path(path: str) -> Path:
     else:
         raise PermissionError("Path traversal blocked")
         
-    return Path(target)
+    if os.path.commonpath([safe_root, target]) != safe_root:
+        raise PermissionError("Path traversal blocked")
+        
+    return untaint_path(Path(target))
 
 
 
