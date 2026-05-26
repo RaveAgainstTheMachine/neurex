@@ -108,6 +108,6 @@
 # 10. DUAL-REMOTE SYNC
 # ─────────────────────────────────────────────────────────────────────────────
 - **Dual-Remote Separation Protocol**: Gitea (`origin`) is the absolute single source of truth for internal development history and configuration, containing `.projectrules`, `.neurexrules`, internal scratch space, and Gitea-specific CI. GitHub (`github`) is a sanitized public mirror containing no internal files.
+- **No Direct Pushes**: Never run `git push github main` manually. Always use `make sync-github` to automatically generate a sanitized single-commit state and force-push to GitHub. Every commit or push to the internal Gitea `origin` MUST be immediately followed by `make sync-github` to ensure public mirror alignment.
 - **Exclusion Manifest**: `.github-exclude` is the sole source of truth for paths to strip before pushing to the public GitHub remote.
-- **No Direct Pushes**: Never run `git push github main` manually. Always use `make sync-github` to automatically generate a sanitized single-commit state and force-push to GitHub.
 - **Tag Forwarding**: Release tags (`v*`) must be propagated to GitHub using `make sync-github` (or `make release`). The script will automatically tag the sanitized commit on the public remote, allowing the public GitHub Actions CI to trigger.
