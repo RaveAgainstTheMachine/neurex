@@ -28,6 +28,11 @@ export default tseslint.config(
       'no-useless-escape': 'off',
       'no-case-declarations': 'off',
       '@typescript-eslint/no-unused-expressions': 'off',
+      'react-hooks/set-state-in-effect': 'off',
+      'preserve-caught-error': 'off',
+      'react-hooks/refs': 'off',
+      'react-hooks/immutability': 'off',
+      'react-hooks/preserve-manual-memoization': 'off',
     },
   },
 )

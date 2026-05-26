@@ -8,7 +8,7 @@ description = "The first autonomous engineering workspace for the neural era."
 
 [dependencies]
 axum = { version = "0.8.9", features = ["ws", "http2"] }
-axum-server = { version = "0.7", features = ["tls-rustls"] }
+axum-server = { version = "0.7.2", features = ["tls-rustls"] }
 bollard = "0.21"
 clap = { version = "4.6.1", features = ["derive"] }
 colored = "3.1.1"
@@ -18,7 +18,7 @@ mime_guess = "2.0.5"
 reqwest = { version = "0.13.3", default-features = false, features = ["blocking", "json", "stream", "rustls"] }
 rust-embed = "8.11.0"
 sysinfo = "0.38.4"
-tar = "0.4.45"
+tar = "0.4.46"
 tokio-tungstenite = "0.29.0"
 tungstenite = "0.29.0"
 futures-util = "0.3"
@@ -27,9 +27,9 @@ zip = "8.6.0"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 anyhow = "1.0"
-tower-http = { version = "0.6", features = ["fs", "trace"] }
-wasmtime = "44.0.1"
-wasmtime-wasi = "44.0.1"
+tower-http = { version = "0.6.11", features = ["fs", "trace"] }
+wasmtime = "45.0.0"
+wasmtime-wasi = "45.0.0"
 
 cap-std = "4.0.2"
 serde = { version = "1.0", features = ["derive"] }
