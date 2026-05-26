@@ -93,8 +93,12 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # 9. BINARY RELEASES & VERSIONING STANDARDS
 # ─────────────────────────────────────────────────────────────────────────────
-- **Semantic Versioning (SemVer)**: All active components (API, Web, CLI) MUST share the exact same version string (e.g., `v0.6.0`). Never mismatch versions across components during releases.
-- **Release Triggering**: Releases MUST be driven strictly by git tags matching `v*` (e.g. `v0.6.0`). Never release by manually uploading assets or overwriting tags.
+- **Semantic Versioning (SemVer) Lifecycle**: All active components (API, Web, CLI) MUST share the exact same version string. We enforce a dynamic SemVer lifecycle:
+  1. **Development Cycles**: Do NOT freeze a target version (e.g. `0.9.0`) during active cycles of additions and fixes.
+  2. **Patch Releases (`X.Y.Z` where Z increases)**: Every cycle of backward-compatible bug fixes, security audits, or dependency bumps MUST immediately increment the patch number (e.g., `0.9.0` -> `0.9.1`).
+  3. **Minor Releases (`X.Y.0` where Y increases)**: Every completed feature batch or backlog addition MUST increment the minor version (e.g., `0.9.0` -> `0.10.0`).
+  4. **Major Releases (`X.0.0` where X increases)**: Any breaking architectural change or structural API contract revision MUST increment the major version.
+- **Release Triggering**: Releases MUST be driven strictly by git tags matching `v*` (e.g. `v0.9.0`). Never release by manually uploading assets or overwriting tags.
 - **Changelog Requirement**: Every release tag push MUST have its version details fully documented in `CHANGELOG.md` under a header matching `## [X.Y.Z] - YYYY-MM-DD: DESCRIPTION`.
 - **Pre-Release Verification**: Before pushing a release tag, you MUST run:
   1. `make test` locally to ensure 100% green backend tests.
