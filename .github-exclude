@@ -1,0 +1,27 @@
+# .github-exclude — Internal-Only File Manifest
+# Files listed here are stripped before syncing to the public GitHub remote.
+# One path per line. Directories must end with /. Lines starting with # are ignored.
+
+# AI Agent Development Protocols
+.projectrules
+.neurexrules
+.agents/
+.cursor/
+.windsurf/
+.clinerules
+.opencode/
+AGENTS.md
+skills/
+skills-lock.json
+
+# Gitea Config / Workflows
+.gitea/
+
+# Internal Tracking & Scratch
+passed_prs.txt
+scratch/
+
+# Internal Auditing & Issues
+ISSUES.md
+NEUREX_REVIEW.md
+DESIGN_COMPLIANCE_REPORT.md
