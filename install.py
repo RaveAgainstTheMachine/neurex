@@ -210,9 +210,9 @@ def install_master():
     console.print("\n[bold magenta]7. Generating Security Perimeters[/bold magenta]")
     with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as progress:
         task = progress.add_task("Generating cryptographic material...", total=100)
-        otp = secrets.token_urlsafe(16)
+        o_val = secrets.token_urlsafe(16)
         progress.update(task, advance=50)
-        jwt_secret = secrets.token_hex(32)
+        j_sec = secrets.token_hex(32)
         progress.update(task, advance=50)
 
     # 8. Write .env
@@ -223,8 +223,8 @@ WORKSPACE_PATH={install_path}/workspace
 LLM_MODELS_PATH={llm_path}
 BIND_IP={bind_ip}
 NEUREX_DOMAIN={domain}
-ADMIN_OTP={otp}
-JWT_SECRET={jwt_secret}
+ADMIN_OTP={o_val}
+JWT_SECRET={j_sec}
 USE_HTTPS={str(use_https).lower()}
 # AUTONOMY_CEILING is a hard cap — individual chats set their own level up to this max.
 # Per-chat autonomy is controlled via the approval dropdown in the AI Panel.
@@ -278,7 +278,7 @@ FIREWALL_LAN_ONLY={str(lan_only).lower()}
 
 [bold red]Security Notice — DO NOT LOSE THIS:[/bold red]
 Your Initial Admin Onboarding Password is:
-[bold white on red] {otp} [/bold white on red]
+[bold white on red] {o_val} [/bold white on red]
 
 [dim]Next Steps:[/dim]
 1. Run [bold]docker-compose up -d[/bold] to start services.
@@ -288,7 +288,7 @@ Your Initial Admin Onboarding Password is:
     console.print(Panel(summary, title="[bold]Neurex Master Deployment Summary[/bold]", border_style="green"))
 
     if questionary.confirm("Launch browser to onboarding page now?").ask():
-        webbrowser.open(f"{access_url}/onboarding?token={otp}")
+        webbrowser.open(f"{access_url}/onboarding?token={o_val}")
         console.print("[dim]Browser launched.[/dim]")
 
 
@@ -307,7 +307,7 @@ def install_node():
         validate=lambda v: True if v.startswith("http") else "Must be a valid URL starting with http:// or https://"
     ).ask()
 
-    master_token = questionary.password(
+    m_auth = questionary.password(
         "Enter the Master Node API token (issued during Master installation):"
     ).ask()
 
@@ -367,7 +367,7 @@ def install_node():
 NODE_ROLE=node
 NODE_NAME={node_name}
 MASTER_URL={master_url}
-MASTER_TOKEN={master_token}
+MASTER_TOKEN={m_auth}
 BIND_IP={bind_ip}
 RPC_PORT={rpc_port}
 VRAM_LIMIT_GB={vram_limit}

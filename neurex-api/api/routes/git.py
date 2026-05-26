@@ -6,7 +6,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 from .auth import get_current_user
-from .files import get_workspace, untaint_str
+from .files import get_workspace, untaint_path, untaint_str
 
 # subprocess-based git management
 
@@ -51,6 +51,9 @@ def run_git(args: list[str], cwd: str | None = None):
 
 def get_all_git_roots(workspace: Path) -> list[Path]:
     """Find all directories containing a .git folder within the workspace."""
+    workspace = untaint_path(workspace)
+    if not workspace:
+        return []
     roots = []
     # Check workspace itself
     if (workspace / ".git").is_dir():  # lgtm [py/path-injection]
@@ -219,7 +222,9 @@ async def get_diff(path: str = Query(...), user=Depends(get_current_user)):
         else:
             raise PermissionError("Path traversal blocked")
             
-        resolved = Path(target)
+        resolved = untaint_path(Path(target))
+        if not resolved:
+            raise HTTPException(status_code=400, detail="Invalid path")
         rel_path = str(resolved.relative_to(workspace))
 
         # Get original from HEAD

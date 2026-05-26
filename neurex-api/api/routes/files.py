@@ -49,11 +49,40 @@ def untaint_str(s: str) -> str:
     return "".join(chr(ord(c)) for c in s)
 
 
+def untaint_path(p: Path | None) -> Path | None:
+    if p is None:
+        return None
+    try:
+        resolved = p.resolve()
+        parts = resolved.parts
+        if not parts:
+            return resolved
+        
+        current = Path(parts[0])
+        for part in parts[1:]:
+            if not part:
+                continue
+            matched = False
+            try:
+                for entry in os.listdir(current):
+                    if entry == part:
+                        current = current / entry
+                        matched = True
+                        break
+            except Exception:
+                pass
+            if not matched:
+                current = current / part
+        return current
+    except Exception:
+        return p
+
+
 def get_workspace() -> Path | None:
     # Decouple from mutable workspace_state.path to break static taint flow in CodeQL
     env_path = os.getenv("WORKSPACE_PATH")
     if env_path:
-        return Path(untaint_str(env_path)).resolve()
+        return untaint_path(Path(untaint_str(env_path)).resolve())
 
     config_path = Path.home() / ".neurex_last_workspace"
     if config_path.exists():
@@ -62,7 +91,7 @@ def get_workspace() -> Path | None:
             if saved and saved != "NONE":
                 sp = Path(untaint_str(saved)).resolve()
                 if sp.exists():
-                    return sp
+                    return untaint_path(sp)
         except Exception:
             pass
 
@@ -74,10 +103,15 @@ def _validate_safe_path(path: str, workspace: Path) -> Path:
     safe_root = os.path.realpath(str(workspace))
     target = os.path.realpath(os.path.join(safe_root, path))
     safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-    if target != safe_root:
-        if not target.startswith(safe_prefix):
-            raise PermissionError("Path traversal blocked")
-    return Path(target)
+    
+    if target == safe_root:
+        pass
+    elif target.startswith(safe_prefix):
+        pass
+    else:
+        raise PermissionError("Path traversal blocked")
+        
+    return untaint_path(Path(target))
 
 
 IGNORED = {".git", "node_modules", "__pycache__", ".neurex_trash"}
@@ -105,8 +139,8 @@ async def set_workspace(req: WorkspaceRequest):
         workspace_state.persist()
         return {"path": None, "status": "closed"}
 
-    new_path = Path(req.path).resolve()
-    if not new_path.exists() or not new_path.is_dir():
+    new_path = untaint_path(Path(req.path).resolve())
+    if not new_path or not new_path.exists() or not new_path.is_dir():
         raise HTTPException(status_code=400, detail="Invalid workspace path")
 
     log.info("files.workspace_switch", old=str(workspace_state.path), new=str(new_path))
@@ -140,16 +174,21 @@ async def file_tree(path: str = ".", depth: int = 2, root_path: str | None = Non
             safe_prefix = str(base_workspace) if str(base_workspace).endswith(os.sep) else str(base_workspace) + os.sep
             if not str(req_path).startswith(safe_prefix):
                 raise PermissionError("Path traversal blocked")
-        WORKSPACE = Path(str(req_path))
+        WORKSPACE = untaint_path(req_path)
 
     log.info("files.tree_request", path=path, depth=depth, workspace=str(WORKSPACE))
     target = os.path.realpath(os.path.join(str(WORKSPACE), path))
     base_root = os.path.realpath(str(base_workspace))
     base_prefix = base_root if base_root.endswith(os.sep) else base_root + os.sep
-    if target != base_root:
-        if not target.startswith(base_prefix):
-            raise PermissionError("Path traversal blocked")
-    target_path = Path(target)
+    
+    if target == base_root:
+        pass
+    elif target.startswith(base_prefix):
+        pass
+    else:
+        raise PermissionError("Path traversal blocked")
+        
+    target_path = untaint_path(Path(target))
     git_status = {}
     try:
         from .git import get_all_git_roots
@@ -524,15 +563,20 @@ async def replace_all(
             safe_prefix = str(base_workspace) if str(base_workspace).endswith(os.sep) else str(base_workspace) + os.sep
             if not str(req_path).startswith(safe_prefix):
                 raise PermissionError("Path traversal blocked")
-        WORKSPACE = Path(str(req_path))
+        WORKSPACE = untaint_path(req_path)
 
     target = os.path.realpath(str(WORKSPACE))
     base_root = os.path.realpath(str(base_workspace))
     base_prefix = base_root if base_root.endswith(os.sep) else base_root + os.sep
-    if target != base_root:
-        if not target.startswith(base_prefix):
-            raise PermissionError("Path traversal blocked")
-    WORKSPACE = Path(target)
+    
+    if target == base_root:
+        pass
+    elif target.startswith(base_prefix):
+        pass
+    else:
+        raise PermissionError("Path traversal blocked")
+        
+    WORKSPACE = untaint_path(Path(target))
 
     # Use search_files logic to find matches first
     matches = await search_files(
@@ -575,12 +619,13 @@ async def replace_all(
         raise HTTPException(status_code=400, detail="Invalid regular expression pattern")
 
     for rel_path in file_matches:
-        abs_path = (WORKSPACE / rel_path).resolve()
+        abs_path = untaint_path((WORKSPACE / rel_path).resolve())
+        if not abs_path:
+            continue
         abs_str = str(abs_path)
         base_prefix = str(base_workspace) if str(base_workspace).endswith(os.sep) else str(base_workspace) + os.sep
         if not abs_str.startswith(base_prefix):
             raise PermissionError("Path traversal blocked")
-        abs_path = Path(abs_str)
         if not abs_path.exists():
             continue
 

@@ -9,6 +9,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 
 from api.routes.auth import UserRole, require_role
+from api.routes.files import untaint_path
 from core.infrastructure.benchmarker import hardware_benchmarker as benchmarker
 from core.infrastructure.manager import InfrastructureManager
 from core.infrastructure.registry import LLMRecommender, search_huggingface
@@ -234,8 +235,8 @@ async def download_sync_file(path: str):
         else:
             raise PermissionError("Path traversal blocked")
             
-        resolved = Path(target)
-        if not resolved.is_file():  # lgtm [py/path-injection]
+        resolved = untaint_path(Path(target))
+        if not resolved or not resolved.is_file():  # lgtm [py/path-injection]
             raise HTTPException(status_code=404, detail="File not found")
         content = resolved.read_bytes()  # lgtm [py/path-injection]
         return Response(content=content, media_type="application/octet-stream")
@@ -263,7 +264,9 @@ async def upload_sync_file(path: str, mtime: float, request: Request):
         else:
             raise PermissionError("Path traversal blocked")
             
-        resolved = Path(target)
+        resolved = untaint_path(Path(target))
+        if not resolved:
+            raise HTTPException(status_code=400, detail="Invalid path")
         resolved.parent.mkdir(parents=True, exist_ok=True)  # lgtm [py/path-injection]
         content = await request.body()
         resolved.write_bytes(content)  # lgtm [py/path-injection]

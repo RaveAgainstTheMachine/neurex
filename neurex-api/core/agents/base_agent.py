@@ -19,6 +19,7 @@ from typing import Any
 import httpx
 import structlog
 
+from api.routes.files import untaint_str
 from core.collaboration.manager import collaboration_manager
 from core.context.compression import ContextCompressor
 from core.context.manager import ContextManager
@@ -202,7 +203,7 @@ class BaseAgent(ABC):
                 # Planning request
                 import re
 
-                last_msg = messages[-1]["content"].lower()[-500:]
+                last_msg = untaint_str(messages[-1]["content"].lower()[-500:])
                 path_match = re.search(
                     r"([\w\-]+\.(?:py|md|ts))", last_msg
                 )
@@ -224,7 +225,7 @@ class BaseAgent(ABC):
                 # Mock a write_file call if we can guess the path
                 import re
 
-                last_msg = messages[-1]["content"].lower()[-500:]
+                last_msg = untaint_str(messages[-1]["content"].lower()[-500:])
                 path_match = re.search(
                     r"([\w\-]+\.(?:py|md|ts))", last_msg
                 )

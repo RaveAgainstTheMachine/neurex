@@ -40,9 +40,12 @@ def get_session_for_file(file_path: str) -> tuple[Path, str, str]:
     safe_root = os.path.realpath(str(workspace))
     target = os.path.realpath(os.path.join(safe_root, file_path))
     safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-    if target != safe_root:
-        if not target.startswith(safe_prefix):
-            raise PermissionError(f"Path traversal attempt blocked: {file_path!r} resolves outside workspace.")
+    if target == safe_root:
+        pass
+    elif target.startswith(safe_prefix):
+        pass
+    else:
+        raise PermissionError(f"Path traversal attempt blocked: {file_path!r} resolves outside workspace.")
         
     abs_path = Path(target)
     rel_path = str(abs_path.relative_to(workspace))
