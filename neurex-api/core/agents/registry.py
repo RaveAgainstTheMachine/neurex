@@ -14,12 +14,15 @@ log = structlog.get_logger()
 # Global registry of agent classes
 AGENT_REGISTRY: dict[str, type] = {}
 
+
 def register_agent(name: str, agent_class: type):
     AGENT_REGISTRY[name] = agent_class
     log.info("agent.registered", name=name, class_name=agent_class.__name__)
 
+
 def get_agent_class(name: str) -> type | None:
     return AGENT_REGISTRY.get(name)
+
 
 def reload_agent(module_name: str, agent_name: str):
     """
@@ -29,19 +32,20 @@ def reload_agent(module_name: str, agent_name: str):
     try:
         module = importlib.import_module(module_name)
         importlib.reload(module)
-        
+
         # Determine the class name (usually CamelCase of agent_name + "Agent")
         # Or look for classes in the module that inherit from a base agent (if we have one)
         # For now, we use a mapping or convention.
         class_name = "".join(word.capitalize() for word in agent_name.split("_")) + "Agent"
         agent_class = getattr(module, class_name)
-        
+
         register_agent(agent_name, agent_class)
         log.info("agent.hot_reloaded", name=agent_name, module=module_name)
         return True
     except Exception as e:
         log.error("agent.reload_failed", name=agent_name, error=str(e))
         return False
+
 
 # Initial registration
 from core.agents.coder_agent import CoderAgent

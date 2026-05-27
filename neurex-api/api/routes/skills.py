@@ -41,7 +41,7 @@ async def list_curated():
 async def get_marketplace():
     """Fetch all discoverable marketplace plugins (curated + published)."""
     curated = manager.fetch_curated_list()
-    
+
     mock_path = manager.SKILLS_DIR / ".marketplace_mock.json"
     published = []
     if mock_path.exists():
@@ -50,18 +50,18 @@ async def get_marketplace():
                 published = json.load(f)
         except Exception:
             pass
-            
+
     combined = []
     seen_urls = set()
-    
+
     for p in published:
         combined.append(p)
         seen_urls.add(p["url"])
-        
+
     for c in curated:
         if c["url"] not in seen_urls:
             combined.append(c)
-            
+
     return combined
 
 
@@ -111,10 +111,10 @@ async def publish_skill(req: SkillPublishRequest):
                 published = json.load(f)
         except Exception:
             pass
-            
+
     if any(p["url"] == req.url for p in published):
         raise HTTPException(status_code=409, detail="Skill repository already published")
-        
+
     new_item = {
         "id": req.name.lower().replace(" ", "-"),
         "name": req.name,
@@ -125,14 +125,14 @@ async def publish_skill(req: SkillPublishRequest):
         "category": req.category,
         "stars": 0,
         "enabled": True,
-        "published_at": time.time()
+        "published_at": time.time(),
     }
-    
+
     published.append(new_item)
     try:
         with open(mock_path, "w") as f:
             json.dump(published, f, indent=2)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to persist plugin: {str(e)}")
-        
+
     return {"status": "success", "skill": new_item}

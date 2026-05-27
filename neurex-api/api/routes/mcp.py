@@ -24,7 +24,9 @@ class PermissionUpdateRequest(BaseModel):
 
 class PlaygroundRunRequest(BaseModel):
     tool_name: str = Field(..., description="Name of the tool to execute")
-    arguments: dict[str, Any] = Field(default_factory=dict, description="Arguments to pass to the tool")
+    arguments: dict[str, Any] = Field(
+        default_factory=dict, description="Arguments to pass to the tool"
+    )
 
 
 class ImportServerRequest(BaseModel):
@@ -36,13 +38,48 @@ CORE_CATEGORIES = {
     "Filesystem Substrate": ["read_file", "write_file", "list_directory", "delete_file"],
     "Terminal & Shell": ["run_command"],
     "Codebase Semantic Search": ["grep_search"],
-    "Web Research & Automation": ["web_search", "browser_navigate", "browser_screenshot", "browser_click", "browser_type", "browser_get_content"],
-    "LSP Code Intelligence": ["lsp_go_to_definition", "lsp_find_references", "lsp_get_hover", "lsp_get_diagnostics"],
-    "Project Architecture Intel": ["synthesize_project_intel", "query_project_intel", "audit_codebase_health", "check_design_compliance", "deep_clean", "analyze_project_structure"],
-    "Mesh & Collective Memory": ["get_mesh_topology", "check_peer_suitability", "add_global_memory", "query_global_memory"],
-    "Observability & Flight Recorder": ["set_scratchpad", "get_scratchpad", "clear_scratchpad", "record_decision", "get_flight_log"],
+    "Web Research & Automation": [
+        "web_search",
+        "browser_navigate",
+        "browser_screenshot",
+        "browser_click",
+        "browser_type",
+        "browser_get_content",
+    ],
+    "LSP Code Intelligence": [
+        "lsp_go_to_definition",
+        "lsp_find_references",
+        "lsp_get_hover",
+        "lsp_get_diagnostics",
+    ],
+    "Project Architecture Intel": [
+        "synthesize_project_intel",
+        "query_project_intel",
+        "audit_codebase_health",
+        "check_design_compliance",
+        "deep_clean",
+        "analyze_project_structure",
+    ],
+    "Mesh & Collective Memory": [
+        "get_mesh_topology",
+        "check_peer_suitability",
+        "add_global_memory",
+        "query_global_memory",
+    ],
+    "Observability & Flight Recorder": [
+        "set_scratchpad",
+        "get_scratchpad",
+        "clear_scratchpad",
+        "record_decision",
+        "get_flight_log",
+    ],
     "Skills Orchestration": ["create_skill", "publish_skill"],
-    "Neural Harness & Optimizations": ["neural_harness", "hyperplan", "genetic_optimize", "hardware_benchmark"]
+    "Neural Harness & Optimizations": [
+        "neural_harness",
+        "hyperplan",
+        "genetic_optimize",
+        "hardware_benchmark",
+    ],
 }
 
 
@@ -57,7 +94,7 @@ def extract_tool_schema(tool_name: str, fn: callable) -> dict[str, Any]:
     for name, param in sig.parameters.items():
         if name in ["autonomy_level", "conversation_id"]:
             continue
-        
+
         param_type = "string"
         if param.annotation != inspect.Parameter.empty:
             ann_str = str(param.annotation).lower()
@@ -72,21 +109,14 @@ def extract_tool_schema(tool_name: str, fn: callable) -> dict[str, Any]:
             elif "int" in ann_str or "float" in ann_str:
                 param_type = "number"
 
-        properties[name] = {
-            "type": param_type,
-            "description": f"Parameter {name} ({param_type})"
-        }
+        properties[name] = {"type": param_type, "description": f"Parameter {name} ({param_type})"}
         if param.default == inspect.Parameter.empty:
             required.append(name)
 
     return {
         "name": tool_name,
         "description": description,
-        "inputSchema": {
-            "type": "object",
-            "properties": properties,
-            "required": required
-        }
+        "inputSchema": {"type": "object", "properties": properties, "required": required},
     }
 
 
@@ -107,13 +137,15 @@ async def list_mcp_servers():
                 server_tools.append(schema)
 
         if server_tools:
-            servers.append({
-                "id": cat_name.lower().replace(" ", "-").replace("&", "and"),
-                "name": cat_name,
-                "status": "connected",
-                "type": "core",
-                "tools": server_tools
-            })
+            servers.append(
+                {
+                    "id": cat_name.lower().replace(" ", "-").replace("&", "and"),
+                    "name": cat_name,
+                    "status": "connected",
+                    "type": "core",
+                    "tools": server_tools,
+                }
+            )
 
     # 2. Extract Skill-Based Dynamic Servers
     installed_skills = skill_manager.list_available()
@@ -126,20 +158,24 @@ async def list_mcp_servers():
             if tname:
                 rule = await get_tool_permission(tname)
                 # Map schema structures cleanly
-                skill_tools.append({
-                    "name": tname,
-                    "description": func.get("description", "Dynamic tool."),
-                    "inputSchema": func.get("parameters", {"type": "object", "properties": {}}),
-                    "rule": rule
-                })
-        
-        servers.append({
-            "id": f"skill-{skill['id']}",
-            "name": f"Skill: {skill['name']}",
-            "status": "connected",
-            "type": "skill",
-            "tools": skill_tools
-        })
+                skill_tools.append(
+                    {
+                        "name": tname,
+                        "description": func.get("description", "Dynamic tool."),
+                        "inputSchema": func.get("parameters", {"type": "object", "properties": {}}),
+                        "rule": rule,
+                    }
+                )
+
+        servers.append(
+            {
+                "id": f"skill-{skill['id']}",
+                "name": f"Skill: {skill['name']}",
+                "status": "connected",
+                "type": "skill",
+                "tools": skill_tools,
+            }
+        )
 
     return servers
 
@@ -148,7 +184,9 @@ async def list_mcp_servers():
 async def update_permission(req: PermissionUpdateRequest):
     """Updates granular execution rules ('allow', 'ask', 'deny') for a tool."""
     if req.rule not in ["allow", "ask", "deny"]:
-        raise HTTPException(status_code=400, detail="Invalid rule. Must be 'allow', 'ask', or 'deny'")
+        raise HTTPException(
+            status_code=400, detail="Invalid rule. Must be 'allow', 'ask', or 'deny'"
+        )
 
     try:
         await set_tool_permission(req.tool_name, req.rule)
@@ -156,7 +194,9 @@ async def update_permission(req: PermissionUpdateRequest):
         return {"status": "success", "tool_name": req.tool_name, "rule": req.rule}
     except Exception as e:
         log.error("mcp.permission_update_failed", tool=req.tool_name, error=str(e))
-        raise HTTPException(status_code=500, detail="Failed to update permission due to database/internal error")
+        raise HTTPException(
+            status_code=500, detail="Failed to update permission due to database/internal error"
+        )
 
 
 @router.post("/playground/run", dependencies=[Depends(require_role(UserRole.DEVELOPER))])
@@ -169,7 +209,7 @@ async def run_tool_playground(req: PlaygroundRunRequest):
             tool_name=req.tool_name,
             arguments=req.arguments,
             autonomy_level="full",
-            conversation_id="playground"
+            conversation_id="playground",
         )
         # JSON serialize, untaint characters, and load back to break CodeQL static taint flow
         serialized = json.dumps(result)
@@ -178,7 +218,9 @@ async def run_tool_playground(req: PlaygroundRunRequest):
         return {"status": "success", "result": safe_result}
     except Exception as e:
         log.error("mcp.playground_failed", tool=req.tool_name, error=str(e))
-        raise HTTPException(status_code=500, detail="Failed to execute tool playground run. Check API logs.")
+        raise HTTPException(
+            status_code=500, detail="Failed to execute tool playground run. Check API logs."
+        )
 
 
 @router.post("/servers/import", dependencies=[Depends(require_role(UserRole.ADMIN))])

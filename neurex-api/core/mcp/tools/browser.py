@@ -81,11 +81,21 @@ async def browser_type(selector: str, text: str, browser_type: str = "chromium")
 
 
 async def browser_get_content(browser_type: str = "chromium") -> str:
-    """Return the text content of the current page."""
+    """Return the rendered visible text content of the current page.
+
+    Uses Playwright's inner_text("body") to extract human-readable text without
+    HTML tags, scripts, or style bleed-through. Budget capped at 10 000 characters
+    to keep agent context windows manageable.
+    """
     context = await get_browser(browser_type)
     if not context.pages:
         return "No pages open."
     page = context.pages[-1]
-    content = await page.content()
-    # Simple HTML-to-text placeholder
-    return content[:2000] + "..."  # Truncated for brevity
+    try:
+        text = await page.inner_text("body")
+    except Exception as e:
+        log.warning("browser.get_content_failed", error=str(e))
+        return f"Could not extract page text: {e}"
+    if len(text) > 10_000:
+        text = text[:10_000] + "\n... [truncated]"
+    return text

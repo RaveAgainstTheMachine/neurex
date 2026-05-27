@@ -2,6 +2,7 @@
 api/routes/benchmarks.py
 Endpoints for running and tracking local simulation benchmarks (run_evals.py).
 """
+
 import asyncio
 import os
 import sys
@@ -18,15 +19,15 @@ router = APIRouter()
 
 # Global memory state for tracking benchmark execution
 BENCHMARK_STATE = {
-    "status": "idle",       # "idle", "running", "completed", "failed"
-    "current_case": None,   # name of currently running case
-    "log": [],              # raw console output lines
-    "results": [],          # parsed results for each run case
+    "status": "idle",  # "idle", "running", "completed", "failed"
+    "current_case": None,  # name of currently running case
+    "log": [],  # raw console output lines
+    "results": [],  # parsed results for each run case
     "score": "0/0",
     "percentage": 0,
     "duration_s": 0.0,
     "start_time": 0.0,
-    "error_details": None
+    "error_details": None,
 }
 
 _LOCK = asyncio.Lock()
@@ -61,7 +62,7 @@ async def run_benchmark_task(tag: str | None = None):
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
             cwd=str(project_root),
-            env=os.environ.copy()
+            env=os.environ.copy(),
         )
 
         # Read stdout line by line
@@ -87,7 +88,7 @@ async def run_benchmark_task(tag: str | None = None):
                 if len(parts) >= 3:
                     case_id = parts[0]
                     passed = "✅" in line
-                    
+
                     # Extract duration
                     duration = 0.0
                     for part in parts:
@@ -101,13 +102,13 @@ async def run_benchmark_task(tag: str | None = None):
                     if "❌ FAIL" in line:
                         idx = stripped.find("❌ FAIL")
                         if idx != -1:
-                            details = stripped[idx + 7:].strip().strip("()")
+                            details = stripped[idx + 7 :].strip().strip("()")
 
                     result_item = {
                         "id": case_id,
                         "passed": passed,
                         "duration_s": duration,
-                        "details": details
+                        "details": details,
                     }
                     async with _LOCK:
                         BENCHMARK_STATE["results"].append(result_item)

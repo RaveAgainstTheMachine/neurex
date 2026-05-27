@@ -113,7 +113,12 @@ async def run_command(
         session = manager.get_session(conversation_id)
         if session:
             task_id = f"cmd_{uuid.uuid4().hex[:8]}"
-            log.info("terminal.intercept_proposal", command=command, task_id=task_id, session=conversation_id)
+            log.info(
+                "terminal.intercept_proposal",
+                command=command,
+                task_id=task_id,
+                session=conversation_id,
+            )
             approved_by_user = await session.propose_and_await_approval(command, task_id)
             if not approved_by_user:
                 log.info("terminal.intercept_rejected", command=command, task_id=task_id)

@@ -141,7 +141,9 @@ class CoderAgent(BaseAgent):
 
                 elif chunk["type"] == "tool_call":
                     tool_name = chunk["call"].get("function", {}).get("name", "")
-                    tool_cat = "filesystem" if tool_name in ["write_file", "delete_file"] else "generic"
+                    tool_cat = (
+                        "filesystem" if tool_name in ["write_file", "delete_file"] else "generic"
+                    )
                     if tool_name == "run_command":
                         tool_cat = "shell"
 

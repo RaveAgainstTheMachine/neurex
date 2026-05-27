@@ -122,5 +122,12 @@ The v0.7.0 release introduces highly-grounded consensus execution frameworks and
 - **Lifespan Teardown Hygiene**: Explicit cleanup callbacks stop the filesystem file watcher (`watcher_service`) and cleanly close/dispose of the database engines, eliminating all unhandled thread warnings and socket leaks during shutdown.
 - **E2E WebSocket Smoke Harness**: A non-flaky WebSocket testing mechanism that utilizes concurrency locks to evaluate token streaming, interactive approvals, and collaborative file tree synchronization under hermetic conditions.
 
+## 16. Fleshing Out & De-mocking Core Substrates (v0.11.0)
+To transition from a mock-heavy dashboard to a hardened, unmocked engineering substrate, the v0.11.0 release establishes unmocked, physical implementations of key developer and environment barriers:
+- **WASM Standard Stream Capture**: The `WasiSandbox` executor decouples guest console streams from host stdout/stderr using in-memory `MemoryOutputPipe` redirection buffers. It dynamically intercepts bytes written to the WASI context on the fly, decoding and returning them alongside raw guest exit code status codes parsed from `wasmtime_wasi::I32Exit` traits.
+- **Hardware Power Assertions**: Replaces static, print-based sleep-prevention stubs inside the orchestrator with physical, host-level power assertions managed via the `wakepy` library. This physically locks CPU power policies and prevents host machines from falling asleep during long-running planning and code synthesis sequences.
+- **High-Throughput Concurrency Locks**: SQLite WAL (Write-Ahead Logging) is configured alongside connection sharing parameters (`connect_args={"check_same_thread": False, "timeout": 30}`) to allow massive concurrent database writes and reads without suffering from lock contentions or thread blockages.
+
 ---
 © 2026 Neurex Collective. All rights reserved.
+

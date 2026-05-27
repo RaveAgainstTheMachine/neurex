@@ -31,6 +31,7 @@ async def test_plugin_hub_marketplace_lifecycle(test_client):
     handling duplicates, and ensuring integration with the skills system.
     """
     from core.skills.manager import skill_manager
+
     mock_path = skill_manager.SKILLS_DIR / ".marketplace_mock.json"
 
     # Clean up mock file before starting
@@ -52,7 +53,7 @@ async def test_plugin_hub_marketplace_lifecycle(test_client):
             "url": "https://github.com/neurex-swarm/skill-swarm-monitor",
             "author": "Mesh Devs",
             "version": "1.0.0",
-            "category": "Core"
+            "category": "Core",
         }
 
         # Developer role is required for publishing
@@ -82,4 +83,3 @@ async def test_plugin_hub_marketplace_lifecycle(test_client):
         # Clean up mock file at the end
         if mock_path.exists():
             mock_path.unlink()
-

@@ -2,7 +2,13 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
+## [0.11.1] - 2026-05-27: PRODUCTION DE-MOCKING: PREDICTIVE MAINTENANCE & BROWSER EXTRACTOR
+### Fixed
+- **PredictiveMaintenance Real Indexer**: `trigger_maintenance_task` previously slept for 10 seconds as a placeholder. Now delegates to `MemoryWorker._full_index()` — the real sema-throttled (10-concurrent) parallel indexer — keeping ChromaDB/RAG synchronized with actual workspace churn. Gracefully no-ops when ChromaDB is unavailable.
+- **Browser `get_content` HTML→Text**: `browser_get_content` previously dumped raw HTML truncated at 2 000 characters. Now uses `page.inner_text("body")` for clean rendered-text extraction (no tag bleed-through), with a 10 000-character budget. Zero new dependencies — Playwright was already required.
+
 ## [0.11.0] - 2026-05-27: UNIVERSAL AUTOMATED TESTING & WASM/WASI VERIFICATION
+
 ### Added
 - **Universal Testing Architecture & 100% Coverage**: Built an end-to-end integration and smoke testing suite across all three subsystems: Playwright browser E2E flows (Monaco hovers/jumps, MCP sandboxing matrix, Debate courtroom steerage), Rust Axum daemon routes, and Python backend P2P mesh discoverability and Security Sentinel audits.
 - **WASM/WASI Native Run Verification**: Designed dynamic Wasmtime sandbox pipeline capturing stdout/stderr bytes in memory pipes, with automatic WAT-to-Wasm compilations and full verification tests.

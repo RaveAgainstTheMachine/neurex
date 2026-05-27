@@ -63,12 +63,11 @@ def generate_local_manifest() -> dict:
                 manifest[rel_path] = {
                     "hash": calculate_sha256(abs_path),
                     "mtime": stat.st_mtime,
-                    "size": stat.st_size
+                    "size": stat.st_size,
                 }
             except Exception:
                 continue
     return manifest
-
 
 
 class PeerNode:
@@ -167,9 +166,7 @@ class MeshRouter:
         key_path = cert_dir / "key.pem"
         if cert_path.exists() and key_path.exists():
             self._client: httpx.AsyncClient = httpx.AsyncClient(
-                timeout=10,
-                cert=(str(cert_path), str(key_path)),
-                verify=False
+                timeout=10, cert=(str(cert_path), str(key_path)), verify=False
             )
         else:
             self._client: httpx.AsyncClient = httpx.AsyncClient(timeout=10)
@@ -355,7 +352,7 @@ class MeshRouter:
             # 1. Fetch remote manifest
             resp = await self._client.get(
                 f"{peer.url}/api/infra/mesh/sync/manifest",
-                headers={"Authorization": f"Bearer {peer.token}"}
+                headers={"Authorization": f"Bearer {peer.token}"},
             )
             resp.raise_for_status()
             remote_manifest = resp.json().get("manifest", {})
@@ -373,7 +370,10 @@ class MeshRouter:
                 should_download = False
                 if not local_meta:
                     should_download = True
-                elif remote_meta["hash"] != local_meta["hash"] and remote_meta["mtime"] > local_meta["mtime"]:
+                elif (
+                    remote_meta["hash"] != local_meta["hash"]
+                    and remote_meta["mtime"] > local_meta["mtime"]
+                ):
                     should_download = True
 
                 if should_download:
@@ -382,7 +382,7 @@ class MeshRouter:
                     dl_resp = await self._client.get(
                         f"{peer.url}/api/infra/mesh/sync/download",
                         params={"path": rel_path},
-                        headers={"Authorization": f"Bearer {peer.token}"}
+                        headers={"Authorization": f"Bearer {peer.token}"},
                     )
                     dl_resp.raise_for_status()
 
@@ -402,7 +402,10 @@ class MeshRouter:
                 should_upload = False
                 if not remote_meta:
                     should_upload = True
-                elif local_meta["hash"] != remote_meta["hash"] and local_meta["mtime"] > remote_meta["mtime"]:
+                elif (
+                    local_meta["hash"] != remote_meta["hash"]
+                    and local_meta["mtime"] > remote_meta["mtime"]
+                ):
                     should_upload = True
 
                 if should_upload:
@@ -415,7 +418,7 @@ class MeshRouter:
                         f"{peer.url}/api/infra/mesh/sync/upload",
                         params={"path": rel_path, "mtime": local_meta["mtime"]},
                         headers={"Authorization": f"Bearer {peer.token}"},
-                        content=content
+                        content=content,
                     )
                     up_resp.raise_for_status()
 

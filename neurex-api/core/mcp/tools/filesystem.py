@@ -82,7 +82,7 @@ async def write_file(path: str, content: str, autonomy_level: str = "limited") -
         if level == "staging":
             rel = resolved.relative_to(WORKSPACE_ROOT)
             target_path = STAGING_ROOT / rel
-            
+
             # If the file had a deletion marker, remove it
             marker_path = STAGING_ROOT / f"{rel}.deleted"
             if marker_path.exists():
@@ -123,13 +123,13 @@ async def delete_file(path: str, autonomy_level: str = "limited") -> str:
         # If it was already written in staging, delete it
         if target_path.is_file():
             target_path.unlink()
-        
+
         # Write a deletion marker file
         marker_path = STAGING_ROOT / f"{rel}.deleted"
         marker_path.parent.mkdir(parents=True, exist_ok=True)
         async with aiofiles.open(marker_path, "w") as f:
             await f.write("DELETED")
-        
+
         log.info("fs.stage_delete", path=path)
         return f"OK: staged deletion of {path}."
 
@@ -169,7 +169,7 @@ async def apply_diff(path: str, search: str, replace: str, autonomy_level: str =
         return f"APPROVAL_REQUIRED: Restricted mode: Applying diff to '{path}' requires approval."
 
     safe = _safe_path(path)
-    
+
     # Read from staging if it exists, otherwise from original
     source_path = safe
     if level == "staging":
@@ -201,14 +201,14 @@ async def apply_diff(path: str, search: str, replace: str, autonomy_level: str =
         )
 
     new_content = content.replace(search, replace)
-    
+
     # Write to target
     target_path = safe
     if level == "staging":
         rel = safe.relative_to(WORKSPACE_ROOT)
         target_path = STAGING_ROOT / rel
         target_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         # If the file had a deletion marker, remove it
         marker_path = STAGING_ROOT / f"{rel}.deleted"
         if marker_path.exists():
@@ -225,27 +225,21 @@ async def list_staging() -> list[dict]:
     """List all files in staging, categorized as modified or deleted."""
     if not STAGING_ROOT.exists():
         return []
-    
+
     staged = []
     # Walk staging directory
     for root, _, files in os.walk(STAGING_ROOT):
         for f in files:
             full_path = Path(root) / f
             rel = full_path.relative_to(STAGING_ROOT)
-            
+
             if f.endswith(".deleted"):
                 # It's a deletion marker
                 original_rel = str(rel)[:-8]  # Strip .deleted
-                staged.append({
-                    "path": original_rel,
-                    "status": "deleted"
-                })
+                staged.append({"path": original_rel, "status": "deleted"})
             else:
                 # Check if it was already listed as deleted (e.g. deletion markers exist)
-                staged.append({
-                    "path": str(rel),
-                    "status": "modified"
-                })
+                staged.append({"path": str(rel), "status": "modified"})
     return staged
 
 
@@ -253,6 +247,7 @@ async def clear_staging():
     """Clear all staged files."""
     if STAGING_ROOT.exists():
         import shutil
+
         shutil.rmtree(STAGING_ROOT)
         log.info("fs.staging_cleared")
 
@@ -261,16 +256,17 @@ async def commit_staging() -> dict:
     """Commit all staged modifications to WORKSPACE_ROOT."""
     if not STAGING_ROOT.exists():
         return {"status": "ok", "committed_count": 0}
-        
+
     staged_items = await list_staging()
     committed_count = 0
-    
+
     import shutil
+
     for item in staged_items:
         rel_path = item["path"]
         staged_file = STAGING_ROOT / rel_path
         original_file = WORKSPACE_ROOT / rel_path
-        
+
         if item["status"] == "deleted":
             # Delete original file
             if original_file.exists():
@@ -289,7 +285,7 @@ async def commit_staging() -> dict:
                 original_file.parent.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(staged_file, original_file)
                 committed_count += 1
-                
+
     # Now clear staging
     await clear_staging()
     log.info("fs.staging_committed", count=committed_count)

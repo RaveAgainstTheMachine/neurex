@@ -47,7 +47,7 @@ class DebaterAgent(BaseAgent):
         system_base = DEBATER_SYSTEM.format(persona=persona, intel=intel)
         if hasattr(self.ctx, "debate_verdicts") and conversation_id in self.ctx.debate_verdicts:
             verdict = self.ctx.debate_verdicts[conversation_id]
-            system_base += f"\n\n🚨 ARCHITECT JUDGE DIRECTIVE:\nThe Architect Judge (User) has issued a verdict to steer this debate:\n\"{verdict}\"\nYou MUST adapt your critique/argument to align with, address, or incorporate this directive directly."
+            system_base += f'\n\n🚨 ARCHITECT JUDGE DIRECTIVE:\nThe Architect Judge (User) has issued a verdict to steer this debate:\n"{verdict}"\nYou MUST adapt your critique/argument to align with, address, or incorporate this directive directly.'
 
         system = await self.build_system_prompt(conversation_id, system_base)
         messages = [

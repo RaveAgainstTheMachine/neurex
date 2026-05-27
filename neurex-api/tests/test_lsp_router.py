@@ -24,17 +24,18 @@ def mock_workspace(tmp_path, monkeypatch):
     """Create a temporary test workspace and mock the get_workspace utility."""
     ws = (tmp_path / "workspace").resolve()
     ws.mkdir()
-    
+
     # Create sample files
     hello_file = ws / "hello.py"
     hello_file.write_text("def my_func():\n    pass\n\nmy_func()\n", encoding="utf-8")
-    
+
     # Mock get_workspace to return this tmp path
     import api.routes.files as api_files
     import core.intelligence.lsp_router as lsp_router
+
     monkeypatch.setattr(api_files, "get_workspace", lambda: ws)
     monkeypatch.setattr(lsp_router, "get_workspace", lambda: ws)
-    
+
     return ws
 
 
@@ -43,22 +44,19 @@ async def test_lsp_go_to_definition(mock_workspace):
     """Test finding definition of a symbol with mocked LSP server response."""
     mock_session = AsyncMock()
     mock_session.write = AsyncMock()
-    
+
     # Mock standard LSP definition response
     mock_response = {
         "result": {
             "uri": (mock_workspace / "hello.py").as_uri(),
-            "range": {
-                "start": {"line": 0, "character": 4},
-                "end": {"line": 0, "character": 11}
-            }
+            "range": {"start": {"line": 0, "character": 4}, "end": {"line": 0, "character": 11}},
         }
     }
     mock_session.send_request.return_value = mock_response
-    
+
     with patch("core.languages.lsp_manager.lsp_manager.get_session", return_value=mock_session):
         res = await lsp_go_to_definition("hello.py", line=4, col=1)
-        
+
         assert res["found"] is True
         assert len(res["definitions"]) == 1
         defn = res["definitions"][0]
@@ -73,7 +71,7 @@ async def test_lsp_find_references(mock_workspace):
     """Test querying references with mocked LSP server response."""
     mock_session = AsyncMock()
     mock_session.write = AsyncMock()
-    
+
     # Mock references response from LSP
     mock_response = {
         "result": [
@@ -81,31 +79,28 @@ async def test_lsp_find_references(mock_workspace):
                 "uri": (mock_workspace / "hello.py").as_uri(),
                 "range": {
                     "start": {"line": 0, "character": 4},
-                    "end": {"line": 0, "character": 11}
-                }
+                    "end": {"line": 0, "character": 11},
+                },
             },
             {
                 "uri": (mock_workspace / "hello.py").as_uri(),
-                "range": {
-                    "start": {"line": 3, "character": 0},
-                    "end": {"line": 3, "character": 7}
-                }
-            }
+                "range": {"start": {"line": 3, "character": 0}, "end": {"line": 3, "character": 7}},
+            },
         ]
     }
     mock_session.send_request.return_value = mock_response
-    
+
     with patch("core.languages.lsp_manager.lsp_manager.get_session", return_value=mock_session):
         res = await lsp_find_references("hello.py", line=1, col=5)
-        
+
         assert res["found"] is True
         assert len(res["references"]) == 2
-        
+
         ref1 = res["references"][0]
         assert ref1["file"] == "hello.py"
         assert ref1["line"] == 1
         assert "def my_func():" in ref1["snippet"]
-        
+
         ref2 = res["references"][1]
         assert ref2["file"] == "hello.py"
         assert ref2["line"] == 4
@@ -117,20 +112,20 @@ async def test_lsp_get_hover(mock_workspace):
     """Test fetching hover documentation signature details with mocked LSP."""
     mock_session = AsyncMock()
     mock_session.write = AsyncMock()
-    
+
     mock_response = {
         "result": {
             "contents": {
                 "kind": "markdown",
-                "value": "```python\ndef my_func()\n```\nSample function docstring."
+                "value": "```python\ndef my_func()\n```\nSample function docstring.",
             }
         }
     }
     mock_session.send_request.return_value = mock_response
-    
+
     with patch("core.languages.lsp_manager.lsp_manager.get_session", return_value=mock_session):
         res = await lsp_get_hover("hello.py", line=4, col=2)
-        
+
         assert res["found"] is True
         assert "def my_func()" in res["markdown"]
         assert "docstring" in res["markdown"]
@@ -145,24 +140,20 @@ async def test_lsp_get_diagnostics(mock_workspace):
         {
             "severity": 1,  # Error
             "message": "Undefined variable 'x'",
-            "range": {
-                "start": {"line": 3, "character": 0},
-                "end": {"line": 3, "character": 1}
-            }
+            "range": {"start": {"line": 3, "character": 0}, "end": {"line": 3, "character": 1}},
         },
         {
             "severity": 2,  # Warning
             "message": "Unused import 'sys'",
-            "range": {
-                "start": {"line": 1, "character": 0},
-                "end": {"line": 1, "character": 3}
-            }
-        }
+            "range": {"start": {"line": 1, "character": 0}, "end": {"line": 1, "character": 3}},
+        },
     ]
-    
-    with patch("core.collaboration.presence.presence_manager.broadcast_global", new_callable=AsyncMock):
+
+    with patch(
+        "core.collaboration.presence.presence_manager.broadcast_global", new_callable=AsyncMock
+    ):
         diagnostic_tracker.update(file_uri, mock_diagnostics)
-        
+
         res = lsp_get_diagnostics("hello.py")
         assert res["file"] == "hello.py"
         assert len(res["diagnostics"]) == 2

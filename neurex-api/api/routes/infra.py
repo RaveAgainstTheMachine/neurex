@@ -213,6 +213,7 @@ from fastapi import Response
 async def get_sync_manifest():
     """Retrieve the manifest of files in the workspace (hashes, sizes, mtimes)."""
     from core.infrastructure.mesh import generate_local_manifest
+
     return {"manifest": generate_local_manifest()}
 
 
@@ -222,23 +223,23 @@ async def download_sync_file(path: str):
     import os
 
     from core.infrastructure.mesh import get_workspace_root
-    
+
     workspace = get_workspace_root()
     try:
         safe_root = os.path.realpath(str(workspace))
         target = os.path.realpath(os.path.join(safe_root, path))
         safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-        
+
         if target == safe_root:
             pass
         elif target.startswith(safe_prefix):
             pass
         else:
             raise PermissionError("Path traversal blocked")
-            
+
         if os.path.commonpath([safe_root, target]) != safe_root:
             raise PermissionError("Path traversal blocked")
-            
+
         resolved = untaint_path(Path(target))
         if not resolved or not resolved.is_file():  # lgtm [py/path-injection]
             raise HTTPException(status_code=404, detail="File not found")
@@ -254,23 +255,23 @@ async def upload_sync_file(path: str, mtime: float, request: Request):
     import os
 
     from core.infrastructure.mesh import get_workspace_root
-    
+
     workspace = get_workspace_root()
     try:
         safe_root = os.path.realpath(str(workspace))
         target = os.path.realpath(os.path.join(safe_root, path))
         safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-        
+
         if target == safe_root:
             pass
         elif target.startswith(safe_prefix):
             pass
         else:
             raise PermissionError("Path traversal blocked")
-            
+
         if os.path.commonpath([safe_root, target]) != safe_root:
             raise PermissionError("Path traversal blocked")
-            
+
         resolved = untaint_path(Path(target))
         if not resolved:
             raise HTTPException(status_code=400, detail="Invalid path")
@@ -281,7 +282,6 @@ async def upload_sync_file(path: str, mtime: float, request: Request):
         return {"status": "success"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-
 
 
 @router.get("/engines")

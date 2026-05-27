@@ -38,7 +38,7 @@ async def get_bounds(
         safe_root = os.path.realpath(str(workspace_path))
         target = os.path.realpath(os.path.join(safe_root, path))
         safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-        
+
         # Security check: ensure resolved path is contained within active workspace
         if target != safe_root:
             if not target.startswith(safe_prefix):

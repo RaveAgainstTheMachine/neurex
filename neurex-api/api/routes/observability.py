@@ -54,7 +54,9 @@ async def get_teleplay_replay(conversation_id: str):
 
         # 2. Add pending items from buffer
         async with _BUFFER_LOCK:
-            pending = [r.model_dump() for r in _DECISION_BUFFER if r.conversation_id == conversation_id]
+            pending = [
+                r.model_dump() for r in _DECISION_BUFFER if r.conversation_id == conversation_id
+            ]
 
         # Combine all events
         all_events = db_results + pending
@@ -70,7 +72,7 @@ async def get_teleplay_replay(conversation_id: str):
                     context_metadata = json.loads(event["context_keys"])
                 except Exception:
                     pass
-            
+
             timestamp_str = ""
             if event.get("created_at"):
                 if isinstance(event["created_at"], str):
@@ -78,14 +80,16 @@ async def get_teleplay_replay(conversation_id: str):
                 else:
                     timestamp_str = event["created_at"].isoformat()
 
-            beats.append({
-                "beat_number": idx,
-                "timestamp": timestamp_str,
-                "agent_type": event.get("agent_type"),
-                "act": event.get("decision"),
-                "narrative": event.get("rationale"),
-                "context_metadata": context_metadata,
-            })
+            beats.append(
+                {
+                    "beat_number": idx,
+                    "timestamp": timestamp_str,
+                    "agent_type": event.get("agent_type"),
+                    "act": event.get("decision"),
+                    "narrative": event.get("rationale"),
+                    "context_metadata": context_metadata,
+                }
+            )
         return beats
     except Exception as e:
         log.error(
@@ -95,4 +99,3 @@ async def get_teleplay_replay(conversation_id: str):
             exc_info=True,
         )
         raise HTTPException(status_code=500, detail=str(e))
-

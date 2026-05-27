@@ -17,24 +17,22 @@ def _validate_safe_path(path: str) -> Path:
     workspace = get_workspace()
     if not workspace:
         raise ValueError("No workspace open")
-    
+
     safe_root = os.path.realpath(str(workspace))
     target = os.path.realpath(os.path.join(safe_root, path))
     safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-    
+
     if target == safe_root:
         pass
     elif target.startswith(safe_prefix):
         pass
     else:
         raise PermissionError("Path traversal blocked")
-        
+
     if os.path.commonpath([safe_root, target]) != safe_root:
         raise PermissionError("Path traversal blocked")
-        
+
     return untaint_path(Path(target))
-
-
 
 
 def run_git(args: list[str], cwd: str | None = None):
@@ -46,7 +44,9 @@ def run_git(args: list[str], cwd: str | None = None):
         # SECURITY: Subprocess is used with a list of arguments (shell=False), which is safe
         # from shell injection. For parameter injection, callers should use '--' where needed.
         safe_args = [untaint_str(arg) for arg in args]
-        res = subprocess.run(["git"] + safe_args, capture_output=True, text=True, check=True, cwd=cwd)
+        res = subprocess.run(
+            ["git"] + safe_args, capture_output=True, text=True, check=True, cwd=cwd
+        )
         return res.stdout.strip()
     except subprocess.CalledProcessError as e:
         raise HTTPException(status_code=500, detail=f"Git error: {e.stderr}")
@@ -76,7 +76,9 @@ def get_all_git_roots(workspace: Path) -> list[Path]:
             if line:
                 # remove /.git and convert to absolute
                 root = (workspace / line).parent.resolve()  # lgtm [py/path-injection]
-                safe_prefix = str(workspace) if str(workspace).endswith(os.sep) else str(workspace) + os.sep
+                safe_prefix = (
+                    str(workspace) if str(workspace).endswith(os.sep) else str(workspace) + os.sep
+                )
                 if not str(root).startswith(safe_prefix) and str(root) != str(workspace):
                     continue
                 if root not in roots:
@@ -172,14 +174,14 @@ async def stage_file(payload: dict, user=Depends(get_current_user)):
     safe_root = os.path.realpath(str(workspace))
     target = os.path.realpath(os.path.join(safe_root, payload["path"]))
     safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-    
+
     if target == safe_root:
         pass
     elif target.startswith(safe_prefix):
         pass
     else:
         raise PermissionError("Path traversal blocked")
-        
+
     resolved = Path(target)
     rel_path = str(resolved.relative_to(workspace))
     run_git(["add", "--", rel_path])
@@ -194,14 +196,14 @@ async def unstage_file(payload: dict, user=Depends(get_current_user)):
     safe_root = os.path.realpath(str(workspace))
     target = os.path.realpath(os.path.join(safe_root, payload["path"]))
     safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-    
+
     if target == safe_root:
         pass
     elif target.startswith(safe_prefix):
         pass
     else:
         raise PermissionError("Path traversal blocked")
-        
+
     resolved = Path(target)
     rel_path = str(resolved.relative_to(workspace))
     run_git(["reset", "HEAD", "--", rel_path])
@@ -217,14 +219,14 @@ async def get_diff(path: str = Query(...), user=Depends(get_current_user)):
         safe_root = os.path.realpath(str(workspace))
         target = os.path.realpath(os.path.join(safe_root, path))
         safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-        
+
         if target == safe_root:
             pass
         elif target.startswith(safe_prefix):
             pass
         else:
             raise PermissionError("Path traversal blocked")
-            
+
         resolved = untaint_path(Path(target))
         if not resolved:
             raise HTTPException(status_code=400, detail="Invalid path")
@@ -273,14 +275,14 @@ async def get_blame(path: str = Query(...), user=Depends(get_current_user)):
         safe_root = os.path.realpath(str(workspace))
         target = os.path.realpath(os.path.join(safe_root, path))
         safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-        
+
         if target == safe_root:
             pass
         elif target.startswith(safe_prefix):
             pass
         else:
             raise PermissionError("Path traversal blocked")
-            
+
         resolved = Path(target)
         rel_path = str(resolved.relative_to(workspace))
         # Use line-porcelain for detailed, stable parsing
@@ -316,14 +318,14 @@ async def get_history(path: str = Query(...), user=Depends(get_current_user)):
         safe_root = os.path.realpath(str(workspace))
         target = os.path.realpath(os.path.join(safe_root, path))
         safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-        
+
         if target == safe_root:
             pass
         elif target.startswith(safe_prefix):
             pass
         else:
             raise PermissionError("Path traversal blocked")
-            
+
         resolved = Path(target)
         rel_path = str(resolved.relative_to(workspace))
         # Get history with hash, author, time, and summary

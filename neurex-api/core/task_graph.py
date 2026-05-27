@@ -27,10 +27,7 @@ if os.getenv("TESTING") == "1":
     pool_args["poolclass"] = NullPool
 
 engine = create_async_engine(
-    DATABASE_URL,
-    echo=False,
-    connect_args={"check_same_thread": False, "timeout": 30},
-    **pool_args
+    DATABASE_URL, echo=False, connect_args={"check_same_thread": False, "timeout": 30}, **pool_args
 )
 async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
@@ -135,7 +132,6 @@ class DebateSession(SQLModel, table=True):
 
 
 # DecisionEvent moved to core.observability.flight_recorder
-
 
 
 async def init_db():

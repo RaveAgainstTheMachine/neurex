@@ -60,11 +60,13 @@ class SwarmEngine:
                     log.error("swarm_engine.read_failed", path=rel_path, error=str(e))
                     original = ""
 
-            changes.append({
-                "path": rel_path,
-                "original": original,
-                "modified": modified,
-            })
+            changes.append(
+                {
+                    "path": rel_path,
+                    "original": original,
+                    "modified": modified,
+                }
+            )
 
         payload: dict[str, Any] = {
             "type": "swarm_diff",

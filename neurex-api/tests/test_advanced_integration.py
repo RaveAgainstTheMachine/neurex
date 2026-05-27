@@ -50,8 +50,15 @@ async def test_p2p_mesh_load_balancing_and_vram_pooling(tmp_path):
         router.peers[peer3_url].status = "offline"
 
         # Mock local node metrics
-        with patch("core.infrastructure.manager.infrastructure_manager.get_system_metrics", return_value={"vram_gb": 8.0, "cpu_percent": 15.0}):
-            with patch("core.infrastructure.manager.infrastructure_manager.get_installed_models", new_callable=AsyncMock, return_value=[]):
+        with patch(
+            "core.infrastructure.manager.infrastructure_manager.get_system_metrics",
+            return_value={"vram_gb": 8.0, "cpu_percent": 15.0},
+        ):
+            with patch(
+                "core.infrastructure.manager.infrastructure_manager.get_installed_models",
+                new_callable=AsyncMock,
+                return_value=[],
+            ):
                 # Request a model; router should select GPU-Node-Alpha (high VRAM, low load)
                 best_node = await router.get_best_inference_node(model_name="qwen2.5-coder:7b")
                 assert "ollama_proxy" in best_node
@@ -61,7 +68,10 @@ async def test_p2p_mesh_load_balancing_and_vram_pooling(tmp_path):
     pool = VirtualVRAMPool()
     with patch("core.infrastructure.mesh.mesh_router", router):
         with patch("core.infrastructure.vram_pool.mesh_router", router):
-            with patch("core.infrastructure.manager.InfrastructureManager.get_system_vram", return_value=8.0):
+            with patch(
+                "core.infrastructure.manager.InfrastructureManager.get_system_vram",
+                return_value=8.0,
+            ):
                 await pool.synchronize_mesh_resources()
 
                 # Local node (8GB) + GPU-Node-Alpha (24GB) + GPU-Node-Beta (8GB) = 40GB
@@ -101,7 +111,7 @@ def test_chromadb_ast_chunk_memory_hive(tmp_path):
         # Recall by query text similarity
         recalled = hive.recall(query="privileged database execution commands")
         assert len(recalled) > 0
-        
+
         # Verify the database execution snippet is returned
         best_match = recalled[0]
         assert "execute_sql" in best_match["content"]

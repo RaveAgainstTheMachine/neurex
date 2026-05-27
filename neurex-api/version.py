@@ -1,2 +1,1 @@
-VERSION = "0.11.0"  # Universal Testing Architecture, WASM/WASI stdout/stderr memory pipes, and VS Code formatting standards
-
+VERSION = "0.11.1"  # De-mocked PredictiveMaintenance real indexer and browser_get_content HTML→text extraction

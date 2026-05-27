@@ -95,9 +95,7 @@ async def cancel_graph(graph_id: str, session: AsyncSession = Depends(get_sessio
 
 @router.post("/{graph_id}/mutate")
 async def mutate_graph(
-    graph_id: str,
-    mutation: GraphMutation,
-    session: AsyncSession = Depends(get_session)
+    graph_id: str, mutation: GraphMutation, session: AsyncSession = Depends(get_session)
 ):
     """Mutate the task graph structure: rewire, insert, or delete nodes."""
     from sqlmodel import select
@@ -128,7 +126,7 @@ async def mutate_graph(
             title=mutation.title,
             description=mutation.description,
             agent_type=mutation.agent_type,
-            status=TaskStatus.PENDING
+            status=TaskStatus.PENDING,
         )
         session.add(new_node)
         await session.commit()
@@ -209,4 +207,3 @@ async def approve_single_task(task_id: str, session: AsyncSession = Depends(get_
     await session.commit()
     await session.refresh(node)
     return {"task_id": task_id, "status": node.status}
-

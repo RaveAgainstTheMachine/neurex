@@ -27,15 +27,29 @@ async def test_smoke_eval_cases():
 
     with (
         patch("core.memory.worker.MemoryWorker.start", new_callable=AsyncMock),
-        patch("core.infrastructure.distributed.distributed_manager.start_rpc_server", new_callable=AsyncMock),
-        patch("core.infrastructure.firewall.firewall_manager.check_startup", new_callable=AsyncMock),
-        patch("core.infrastructure.firewall.firewall_manager.start_sentinel", new_callable=AsyncMock),
+        patch(
+            "core.infrastructure.distributed.distributed_manager.start_rpc_server",
+            new_callable=AsyncMock,
+        ),
+        patch(
+            "core.infrastructure.firewall.firewall_manager.check_startup", new_callable=AsyncMock
+        ),
+        patch(
+            "core.infrastructure.firewall.firewall_manager.start_sentinel", new_callable=AsyncMock
+        ),
         patch("core.infrastructure.mesh.mesh_router.start_monitoring", new_callable=AsyncMock),
         patch("core.observability.service_sentinel.sentinel.start", new_callable=AsyncMock),
-        patch("core.observability.ci_healer.ci_healer.check_pipeline_health", new_callable=AsyncMock),
+        patch(
+            "core.observability.ci_healer.ci_healer.check_pipeline_health", new_callable=AsyncMock
+        ),
         patch("core.observability.flight_recorder.flush_decisions", new_callable=AsyncMock),
-        patch("core.languages.lsp_manager.lsp_manager.initialize_workspace", new_callable=AsyncMock),
-        patch("core.infrastructure.manager.InfrastructureManager._is_process_running", return_value=True),
+        patch(
+            "core.languages.lsp_manager.lsp_manager.initialize_workspace", new_callable=AsyncMock
+        ),
+        patch(
+            "core.infrastructure.manager.InfrastructureManager._is_process_running",
+            return_value=True,
+        ),
         patch("api.websocket._authenticate", new_callable=AsyncMock) as mock_auth,
         patch("core.orchestrator.Orchestrator.run") as mock_run,
         patch("core.orchestrator.Orchestrator.resume") as mock_resume,
@@ -47,12 +61,14 @@ async def test_smoke_eval_cases():
             async def mock_run_gen(*args, **kwargs):
                 yield {"event": "token", "data": f"Evaluating: {case['prompt']}"}
                 yield {"event": "plan_ready", "data": {"graph_id": f"graph-{case['id']}"}}
+
             mock_run.side_effect = mock_run_gen
 
             # Mock Orchestrator.resume to yield done
             async def mock_resume_gen(*args, **kwargs):
                 yield {"event": "token", "data": "Executing smoke eval task..."}
                 yield {"event": "done", "data": {"graph_id": f"graph-{case['id']}"}}
+
             mock_resume.side_effect = mock_resume_gen
 
             def wait_for_event(ws, event_type):

@@ -283,14 +283,21 @@ async def websocket_endpoint(
                         fut = s.pending_approvals.get(task_id)
                         if fut and not fut.done():
                             fut.set_result(approved)
-                            log.info("ws.terminal_command_approval", task_id=task_id, approved=approved, session_id=pty_sid)
+                            log.info(
+                                "ws.terminal_command_approval",
+                                task_id=task_id,
+                                approved=approved,
+                                session_id=pty_sid,
+                            )
                     continue
 
                 if msg_type == "debate_steer":
                     verdict = msg.get("verdict", "").strip()
                     if verdict:
                         ctx.debate_verdicts[conversation_id] = verdict
-                        log.info("ws.debate_steer", conversation_id=conversation_id, verdict=verdict)
+                        log.info(
+                            "ws.debate_steer", conversation_id=conversation_id, verdict=verdict
+                        )
                     continue
 
         except WebSocketDisconnect:

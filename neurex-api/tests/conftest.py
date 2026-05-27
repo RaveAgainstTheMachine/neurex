@@ -28,8 +28,10 @@ def event_loop():
     yield loop
     # Dispose of SQLModel engine cleanly before closing loop
     from core.task_graph import engine
+
     async def dispose_engine():
         await engine.dispose()
+
     loop.run_until_complete(dispose_engine())
     loop.close()
 

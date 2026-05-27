@@ -48,9 +48,12 @@ LSP_TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "file_path": {"type": "string", "description": "Relative path to the file from workspace root"},
+                    "file_path": {
+                        "type": "string",
+                        "description": "Relative path to the file from workspace root",
+                    },
                     "line": {"type": "integer", "description": "1-indexed line number"},
-                    "col": {"type": "integer", "description": "1-indexed column number"}
+                    "col": {"type": "integer", "description": "1-indexed column number"},
                 },
                 "required": ["file_path", "line", "col"],
             },
@@ -64,9 +67,12 @@ LSP_TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "file_path": {"type": "string", "description": "Relative path to the file from workspace root"},
+                    "file_path": {
+                        "type": "string",
+                        "description": "Relative path to the file from workspace root",
+                    },
                     "line": {"type": "integer", "description": "1-indexed line number"},
-                    "col": {"type": "integer", "description": "1-indexed column number"}
+                    "col": {"type": "integer", "description": "1-indexed column number"},
                 },
                 "required": ["file_path", "line", "col"],
             },
@@ -80,9 +86,12 @@ LSP_TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "file_path": {"type": "string", "description": "Relative path to the file from workspace root"},
+                    "file_path": {
+                        "type": "string",
+                        "description": "Relative path to the file from workspace root",
+                    },
                     "line": {"type": "integer", "description": "1-indexed line number"},
-                    "col": {"type": "integer", "description": "1-indexed column number"}
+                    "col": {"type": "integer", "description": "1-indexed column number"},
                 },
                 "required": ["file_path", "line", "col"],
             },
@@ -96,7 +105,10 @@ LSP_TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "file_path": {"type": "string", "description": "Relative path to the file from workspace root"}
+                    "file_path": {
+                        "type": "string",
+                        "description": "Relative path to the file from workspace root",
+                    }
                 },
                 "required": ["file_path"],
             },
@@ -173,13 +185,19 @@ class BaseAgent(ABC):
         """Retrieve relevant code chunks and past session memories for local recall."""
         # 1. Query past session context from Hive Mind
         from core.memory.hive import hive_mind
+
         memories = hive_mind.recall(query, limit=3)
         memory_str = ""
         if memories:
-            memory_str = "\n\n<session_memory>\n" + "\n".join([f"- {m['content']}" for m in memories]) + "\n</session_memory>"
+            memory_str = (
+                "\n\n<session_memory>\n"
+                + "\n".join([f"- {m['content']}" for m in memories])
+                + "\n</session_memory>"
+            )
 
         # 2. Query code chunks from Federated RAG
         from core.context.federated_rag import FederatedRAG
+
         frag = FederatedRAG(self.ctx)
         context = await frag.global_search(query, limit=n)
 
@@ -204,9 +222,7 @@ class BaseAgent(ABC):
                 import re
 
                 last_msg = untaint_str(messages[-1]["content"].lower()[-500:])
-                path_match = re.search(
-                    r"([\w\-]+\.(?:py|md|ts))", last_msg
-                )
+                path_match = re.search(r"([\w\-]+\.(?:py|md|ts))", last_msg)
                 path = path_match.group(1) if path_match else "output.txt"
 
                 plan = [
@@ -226,9 +242,7 @@ class BaseAgent(ABC):
                 import re
 
                 last_msg = untaint_str(messages[-1]["content"].lower()[-500:])
-                path_match = re.search(
-                    r"([\w\-]+\.(?:py|md|ts))", last_msg
-                )
+                path_match = re.search(r"([\w\-]+\.(?:py|md|ts))", last_msg)
                 if path_match:
                     path = path_match.group(1)
                     yield {

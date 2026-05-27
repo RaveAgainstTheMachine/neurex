@@ -54,6 +54,7 @@ async def rollback_system(backup_name: str) -> str:
     """Restore system state from a specific backup file."""
     # SECURITY: Sanitize backup_name to prevent path traversal
     import re
+
     backup_name = os.path.basename(backup_name)
 
     if not re.match(r"^[a-zA-Z0-9_\-.]+\.zip$", backup_name):

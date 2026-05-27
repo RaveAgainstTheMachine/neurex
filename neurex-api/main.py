@@ -156,11 +156,14 @@ async def lifespan(app: FastAPI):
     # Teardown
     try:
         from core.infrastructure.watcher import watcher_service
+
         watcher_service.stop()
 
         import os
+
         if os.getenv("TESTING") != "1":
             from core.task_graph import engine
+
             await engine.dispose()
         if hasattr(app.state, "lsp_manager"):
             await app.state.lsp_manager.cleanup()

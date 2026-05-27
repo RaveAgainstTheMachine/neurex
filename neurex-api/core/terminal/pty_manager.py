@@ -250,7 +250,9 @@ class PTYSession:
             output_buffer.append(data)
             full_output = "".join(output_buffer)
             if sentinel in full_output:
-                match = re.search(r"PTY_CMD_FINISHED__[a-zA-Z0-9_-]+__:(?P<code>-?\d+)", full_output)
+                match = re.search(
+                    r"PTY_CMD_FINISHED__[a-zA-Z0-9_-]+__:(?P<code>-?\d+)", full_output
+                )
                 if match:
                     exit_code = int(match.group("code"))
                     idx = full_output.find(sentinel)

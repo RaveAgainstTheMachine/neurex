@@ -58,6 +58,7 @@ async def test_approve_single_task_endpoint(test_client, db_session):
     from sqlmodel.ext.asyncio.session import AsyncSession
 
     from core.task_graph import engine
+
     async with AsyncSession(engine) as session:
         refreshed = await session.get(TaskNode, node.id)
         assert refreshed.status == TaskStatus.PENDING
@@ -76,11 +77,7 @@ async def test_mutate_graph_rewire(test_client, db_session):
     )
     assert t2.parent_id is None
 
-    payload = {
-        "action": "rewire",
-        "task_id": t2.id,
-        "parent_id": t1.id
-    }
+    payload = {"action": "rewire", "task_id": t2.id, "parent_id": t1.id}
     res = await test_client.post(f"/api/tasks/{graph_id}/mutate", json=payload)
     assert res.status_code == 200
     data = res.json()
@@ -96,7 +93,12 @@ async def test_mutate_graph_insert(test_client, db_session):
         db_session, graph_id=graph_id, agent_type="planner", title="Root", description="Root node"
     )
     t2 = await create_task(
-        db_session, graph_id=graph_id, agent_type="coder", title="Leaf", description="Leaf node", parent_id=t1.id
+        db_session,
+        graph_id=graph_id,
+        agent_type="coder",
+        title="Leaf",
+        description="Leaf node",
+        parent_id=t1.id,
     )
 
     # Insert a new node between t1 and t2
@@ -106,7 +108,7 @@ async def test_mutate_graph_insert(test_client, db_session):
         "child_id": t2.id,
         "title": "Middle",
         "description": "Intermediate node",
-        "agent_type": "coder"
+        "agent_type": "coder",
     }
     res = await test_client.post(f"/api/tasks/{graph_id}/mutate", json=payload)
     assert res.status_code == 200
@@ -120,6 +122,7 @@ async def test_mutate_graph_insert(test_client, db_session):
     from sqlmodel.ext.asyncio.session import AsyncSession
 
     from core.task_graph import engine
+
     async with AsyncSession(engine) as session:
         refreshed_t2 = await session.get(TaskNode, t2.id)
         assert refreshed_t2.parent_id == new_node_id
@@ -133,17 +136,24 @@ async def test_mutate_graph_delete(test_client, db_session):
         db_session, graph_id=graph_id, agent_type="planner", title="T1", description="Node 1"
     )
     t2 = await create_task(
-        db_session, graph_id=graph_id, agent_type="coder", title="T2", description="Node 2", parent_id=t1.id
+        db_session,
+        graph_id=graph_id,
+        agent_type="coder",
+        title="T2",
+        description="Node 2",
+        parent_id=t1.id,
     )
     t3 = await create_task(
-        db_session, graph_id=graph_id, agent_type="reviewer", title="T3", description="Node 3", parent_id=t2.id
+        db_session,
+        graph_id=graph_id,
+        agent_type="reviewer",
+        title="T3",
+        description="Node 3",
+        parent_id=t2.id,
     )
 
     # Delete middle node t2
-    payload = {
-        "action": "delete",
-        "task_id": t2.id
-    }
+    payload = {"action": "delete", "task_id": t2.id}
     res = await test_client.post(f"/api/tasks/{graph_id}/mutate", json=payload)
     assert res.status_code == 200
     data = res.json()
@@ -154,10 +164,11 @@ async def test_mutate_graph_delete(test_client, db_session):
     from sqlmodel.ext.asyncio.session import AsyncSession
 
     from core.task_graph import engine
+
     async with AsyncSession(engine) as session:
         refreshed_t3 = await session.get(TaskNode, t3.id)
         assert refreshed_t3.parent_id == t1.id
-        
+
         # Verify t2 is gone
         deleted_node = await session.get(TaskNode, t2.id)
         assert deleted_node is None
@@ -168,7 +179,11 @@ async def test_mutate_graph_modify(test_client, db_session):
     """POST /api/tasks/{graph_id}/mutate modify action must edit node title, description, and agent_type."""
     graph_id = "graph-mutate-4"
     t1 = await create_task(
-        db_session, graph_id=graph_id, agent_type="planner", title="Original Title", description="Original Desc"
+        db_session,
+        graph_id=graph_id,
+        agent_type="planner",
+        title="Original Title",
+        description="Original Desc",
     )
 
     payload = {
@@ -176,7 +191,7 @@ async def test_mutate_graph_modify(test_client, db_session):
         "task_id": t1.id,
         "title": "Modified Title",
         "description": "Modified Desc",
-        "agent_type": "coder"
+        "agent_type": "coder",
     }
     res = await test_client.post(f"/api/tasks/{graph_id}/mutate", json=payload)
     assert res.status_code == 200
@@ -191,9 +206,9 @@ async def test_mutate_graph_modify(test_client, db_session):
     from sqlmodel.ext.asyncio.session import AsyncSession
 
     from core.task_graph import engine
+
     async with AsyncSession(engine) as session:
         refreshed = await session.get(TaskNode, t1.id)
         assert refreshed.title == "Modified Title"
         assert refreshed.description == "Modified Desc"
         assert refreshed.agent_type == "coder"
-

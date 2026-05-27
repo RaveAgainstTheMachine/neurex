@@ -250,4 +250,3 @@ async def test_orchestrator_execute_inline_edit_stream(db_session: AsyncSession,
     diff_event = next(e for e in events if e["event"] == "inline_edit_diff")
     # Verified stripped markdown blocks
     assert diff_event["data"]["modified"] == "print('hello')\n# inline comments"
-

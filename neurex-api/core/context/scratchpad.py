@@ -24,13 +24,13 @@ async def set_scratchpad_value(conversation_id: str, key: str, value: str) -> st
         raise ValueError("Invalid conversation_id")
 
     SCRATCHPAD_DIR.mkdir(parents=True, exist_ok=True)
-    
+
     safe_dir = os.path.realpath(str(SCRATCHPAD_DIR))
     file_path_str = os.path.realpath(os.path.join(safe_dir, f"{conversation_id}.json"))
     safe_prefix = safe_dir if safe_dir.endswith(os.sep) else safe_dir + os.sep
     if not file_path_str.startswith(safe_prefix):
         raise ValueError("Security violation: Path traversal attempted")
-    
+
     file_path = Path(file_path_str)
 
     data = {}
@@ -60,7 +60,7 @@ async def get_scratchpad(conversation_id: str) -> dict:
     safe_prefix = safe_dir if safe_dir.endswith(os.sep) else safe_dir + os.sep
     if not file_path_str.startswith(safe_prefix):
         return {}
-        
+
     file_path = Path(file_path_str)
     if not file_path.exists():
         return {}
@@ -82,7 +82,7 @@ async def clear_scratchpad(conversation_id: str) -> str:
     safe_prefix = safe_dir if safe_dir.endswith(os.sep) else safe_dir + os.sep
     if not file_path_str.startswith(safe_prefix):
         return "❌ Security violation."
-        
+
     file_path = Path(file_path_str)
     if file_path.exists():
         file_path.unlink()

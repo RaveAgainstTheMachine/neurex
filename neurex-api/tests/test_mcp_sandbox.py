@@ -29,7 +29,6 @@ def override_auth():
 
 
 @pytest.mark.asyncio
-
 async def test_list_mcp_servers(test_client):
     """GET /api/mcp/servers must return list of virtual and dynamic servers with tools and schemas."""
     response = await test_client.get("/api/mcp/servers")
@@ -81,10 +80,7 @@ async def test_update_permission_rule(test_client, db_session):
 async def test_run_playground_tool(test_client):
     """POST /api/mcp/playground/run should execute tools manually and return raw outputs."""
     # Run a simple read-only tool like list_directory
-    payload = {
-        "tool_name": "list_directory",
-        "arguments": {"path": "."}
-    }
+    payload = {"tool_name": "list_directory", "arguments": {"path": "."}}
     response = await test_client.post("/api/mcp/playground/run", json=payload)
     assert response.status_code == 200
     data = response.json()

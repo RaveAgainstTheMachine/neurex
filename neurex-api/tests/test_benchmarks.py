@@ -30,6 +30,7 @@ async def test_benchmark_flow(test_client):
     """Verify triggering a benchmark and tracking its status/parsing."""
     # Reset state to idle if needed (for clean isolation)
     from api.routes.benchmarks import _LOCK, BENCHMARK_STATE
+
     async with _LOCK:
         BENCHMARK_STATE["status"] = "idle"
         BENCHMARK_STATE["results"] = []
@@ -49,7 +50,7 @@ async def test_benchmark_flow(test_client):
         b"  smoke-hello                        \xe2\x9c\x85 PASS  (1.23s)\n",
         b"  py-fibonacci                       \xe2\x9d\x8c FAIL  (Missing: fibonacci.py)\n",
         b"Score: 1/2  (50%)\n",
-        b""  # EOF
+        b"",  # EOF
     ]
 
     mock_process.stdout.readline.side_effect = outputs
@@ -97,6 +98,7 @@ async def test_benchmark_flow(test_client):
 async def test_run_benchmark_already_running(test_client):
     """Ensure POST /run fails if a benchmark is currently running."""
     from api.routes.benchmarks import _LOCK, BENCHMARK_STATE
+
     async with _LOCK:
         BENCHMARK_STATE["status"] = "running"
 

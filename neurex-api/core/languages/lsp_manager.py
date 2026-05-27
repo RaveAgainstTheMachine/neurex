@@ -278,40 +278,37 @@ class LSPSession:
 
         self._request_id_counter += 1
         req_id = self._request_id_counter
-        payload = {
-            "jsonrpc": "2.0",
-            "id": req_id,
-            "method": method,
-            "params": params
-        }
-        body = json.dumps(payload).encode('utf-8')
-        header = f"Content-Length: {len(body)}\r\n\r\n".encode('ascii')
-        
+        payload = {"jsonrpc": "2.0", "id": req_id, "method": method, "params": params}
+        body = json.dumps(payload).encode("utf-8")
+        header = f"Content-Length: {len(body)}\r\n\r\n".encode("ascii")
+
         loop = asyncio.get_running_loop()
         fut = loop.create_future()
         self._pending_requests[req_id] = fut
-        
+
         await self.write(header + body)
-        
+
         try:
             response = await asyncio.wait_for(fut, timeout=10.0)
             return response
         except TimeoutError:
             self._pending_requests.pop(req_id, None)
-            raise TimeoutError(f"LSP request '{method}' (id: {req_id}) timed out after 10.0 seconds")
+            raise TimeoutError(
+                f"LSP request '{method}' (id: {req_id}) timed out after 10.0 seconds"
+            )
 
     def handle_json(self, body_raw: bytes):
         """Parse LSP JSON messages for diagnostic tracking and request resolution."""
         try:
-            body = json.loads(body_raw.decode('utf-8', errors='ignore'))
-            
+            body = json.loads(body_raw.decode("utf-8", errors="ignore"))
+
             # Resolve pending requests if it's a response
             if "id" in body:
                 req_id = body["id"]
                 fut = self._pending_requests.pop(req_id, None)
                 if fut and not fut.done():
                     fut.set_result(body)
-                    
+
             if body.get("method") == "textDocument/publishDiagnostics":
                 params = body.get("params", {})
                 uri = params.get("uri")
@@ -341,6 +338,7 @@ class LSPManager:
         logger.info("lsp.initialize_workspace", workspace_path=workspace_path)
         try:
             from api.routes.files import get_workspace
+
             workspace = get_workspace()
         except Exception:
             workspace = None
@@ -474,6 +472,7 @@ class LSPManager:
         """Find the nearest directory containing a .git folder or common project markers."""
         try:
             from api.routes.files import get_workspace
+
             workspace = get_workspace()
         except Exception:
             workspace = None
@@ -482,7 +481,7 @@ class LSPManager:
         resolved_start = Path(start_path).resolve()  # lgtm [py/path-injection]
         target = os.path.realpath(str(resolved_start))
         safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-        
+
         if target == safe_root:
             pass
         elif target.startswith(safe_prefix):
@@ -501,8 +500,12 @@ class LSPManager:
             # Check for git or common project markers using safe OS paths
             if (
                 os.path.isdir(os.path.join(curr_str, ".git"))  # lgtm [py/path-injection]
-                or os.path.exists(os.path.join(curr_str, "pyproject.toml"))  # lgtm [py/path-injection]
-                or os.path.exists(os.path.join(curr_str, "package.json"))  # lgtm [py/path-injection]
+                or os.path.exists(
+                    os.path.join(curr_str, "pyproject.toml")
+                )  # lgtm [py/path-injection]
+                or os.path.exists(
+                    os.path.join(curr_str, "package.json")
+                )  # lgtm [py/path-injection]
             ):
                 return Path(curr_str)
             if curr_str == safe_root:
@@ -517,7 +520,9 @@ class LSPManager:
             elif item_str.startswith(safe_prefix):
                 pass
             else:
-                raise PermissionError("Path traversal attempt blocked in _find_project_root subdirectory scan")
+                raise PermissionError(
+                    "Path traversal attempt blocked in _find_project_root subdirectory scan"
+                )
             if os.path.isdir(item_str) and (
                 os.path.isdir(os.path.join(item_str, ".git"))
                 or os.path.exists(os.path.join(item_str, "pyproject.toml"))
@@ -530,6 +535,7 @@ class LSPManager:
         # Adjust workspace_path to the nearest project root
         try:
             from api.routes.files import get_workspace
+
             workspace = get_workspace()
         except Exception:
             workspace = None
@@ -592,6 +598,7 @@ class LSPManager:
     def _load_custom_config(self, root: Path) -> dict:
         try:
             from api.routes.files import get_workspace
+
             workspace = get_workspace()
         except Exception:
             workspace = None
@@ -605,7 +612,7 @@ class LSPManager:
             pass
         else:
             raise PermissionError("Path traversal blocked")
-        
+
         config_path = Path(target)
 
         if config_path.exists():  # lgtm [py/path-injection]

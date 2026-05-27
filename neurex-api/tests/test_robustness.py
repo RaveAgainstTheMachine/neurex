@@ -34,6 +34,7 @@ async def test_sqlite_wal_durability(db_session):
     """
     # 1. Clean the flight recorder buffer
     from core.observability.flight_recorder import _BUFFER_LOCK, _DECISION_BUFFER
+
     async with _BUFFER_LOCK:
         _DECISION_BUFFER.clear()
 
@@ -44,7 +45,7 @@ async def test_sqlite_wal_durability(db_session):
             agent_type="stress-agent",
             decision=f"Decision index {idx}",
             rationale=f"Simulating heavy flight load at concurrent index {idx}",
-            task_id=f"stress-task-{idx}"
+            task_id=f"stress-task-{idx}",
         )
 
     await asyncio.gather(*(log_decision_task(i) for i in range(100)))
@@ -61,7 +62,7 @@ async def test_sqlite_wal_durability(db_session):
     # 4. Verify all 100 decisions are durable in the flight log (specifying limit to bypass the default 50)
     events = await get_flight_log("stress-conv-1", limit=150)
     assert len(events) == 100
-    
+
     # Assert specific index properties to guarantee integrity
     task_ids = {e["task_id"] for e in events}
     assert "stress-task-0" in task_ids
@@ -76,24 +77,26 @@ async def test_websocket_pty_high_concurrency():
     to verify PTY multiplexing and prevent Listener Storms or cross-session data leaks.
     """
     num_clients = 10
-    
+
     def run_client_ws(client_idx: int, client: TestClient):
         conversation_id = f"stress-conv-{client_idx}"
         url = f"/ws/{conversation_id}?token=mock-token&user_id=user-{client_idx}"
-        
+
         # Connect to the mock-authenticated websocket via a shared TestClient instance
         with client.websocket_connect(url) as ws:
             # Send initial ping to verify basic route execution
             ws.send_json({"type": "ping"})
-            
+
             # Send simulated typing burst of terminal inputs
             for typing_idx in range(5):
-                ws.send_json({
-                    "type": "terminal_input",
-                    "sessionId": f"sess-{client_idx}",
-                    "data": f"echo data-{client_idx}-{typing_idx}\r"
-                })
-                
+                ws.send_json(
+                    {
+                        "type": "terminal_input",
+                        "sessionId": f"sess-{client_idx}",
+                        "data": f"echo data-{client_idx}-{typing_idx}\r",
+                    }
+                )
+
             # Verify we can receive status or connection validation gracefully
             try:
                 raw_data = ws.receive_json()
@@ -102,10 +105,14 @@ async def test_websocket_pty_high_concurrency():
                 pass
 
     # Bypass WebSocket token authentication cleanly for these tests
-    with patch("api.websocket._authenticate", new_callable=AsyncMock, return_value=True), \
-         patch("core.infrastructure.manager.InfrastructureManager._is_process_running", return_value=True), \
-         TestClient(app) as client:
-        
+    with (
+        patch("api.websocket._authenticate", new_callable=AsyncMock, return_value=True),
+        patch(
+            "core.infrastructure.manager.InfrastructureManager._is_process_running",
+            return_value=True,
+        ),
+        TestClient(app) as client,
+    ):
         # Execute WebSocket clients concurrently in standard threads to avoid blocking asyncio event loop
         tasks = [asyncio.to_thread(run_client_ws, i, client) for i in range(num_clients)]
         await asyncio.gather(*tasks)
@@ -119,24 +126,20 @@ async def test_unmocked_orchestrator_execution(db_session, tmp_path):
     """
     rules = RulesParser()
     ctx = ContextManager()
-    
+
     # Instantiate unmocked Orchestrator with real DB session
     orch = Orchestrator(db_session, rules, ctx)
     orch.workspace = tmp_path
-    
+
     # Create dummy file to refactor
     dummy_file = tmp_path / "hello.py"
     dummy_file.write_text("print('hello')")
-    
+
     # Create a new conversation message in DB
-    msg = ChatMessage(
-        conversation_id="conv-orch-1",
-        role="user",
-        content="Generate test file"
-    )
+    msg = ChatMessage(conversation_id="conv-orch-1", role="user", content="Generate test file")
     db_session.add(msg)
     await db_session.commit()
-    
+
     # Verify message was correctly persisted to DB
     statement = select(ChatMessage).where(ChatMessage.conversation_id == "conv-orch-1")
     results = await db_session.exec(statement)
@@ -156,12 +159,12 @@ async def test_unmocked_orchestrator_execution(db_session, tmp_path):
             conversation_id="conv-orch-1",
         ):
             events.append(event)
-            
+
     # Verify the inline edit was successfully structured and outputted
     event_types = [e["event"] for e in events]
     assert "task_updated" in event_types
     assert "inline_edit_diff" in event_types
-    
+
     diff_event = next(e for e in events if e["event"] == "inline_edit_diff")
     assert diff_event["data"]["path"] == "hello.py"
     assert diff_event["data"]["original"] == "print('hello')"
@@ -192,13 +195,15 @@ async def test_sqlite_wal_lock_contention_stress():
             msg = ChatMessage(
                 conversation_id=f"wal-stress-conv-{idx}",
                 role="user",
-                content=f"Stress message payload {idx}"
+                content=f"Stress message payload {idx}",
             )
             session.add(msg)
             await session.commit()
 
             # Select it back to verify reads alongside concurrent commits
-            statement = select(ChatMessage).where(ChatMessage.conversation_id == f"wal-stress-conv-{idx}")
+            statement = select(ChatMessage).where(
+                ChatMessage.conversation_id == f"wal-stress-conv-{idx}"
+            )
             results = await session.exec(statement)
             fetched = results.all()
             assert len(fetched) == 1
@@ -211,4 +216,3 @@ async def test_sqlite_wal_lock_contention_stress():
     # 4. Clean up tables
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.drop_all)
-

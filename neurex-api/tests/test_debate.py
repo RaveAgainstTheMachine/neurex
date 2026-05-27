@@ -25,8 +25,7 @@ async def test_debate_endpoints(test_client, db_session):
     # We mock run_debate_sequencer to avoid triggering the actual background execution during endpoint test
     with patch("api.routes.debate.run_debate_sequencer", new_callable=AsyncMock) as mock_sequencer:
         response = await test_client.post(
-            "/api/debate/start",
-            json={"conversation_id": conv_id, "query": query}
+            "/api/debate/start", json={"conversation_id": conv_id, "query": query}
         )
         assert response.status_code == 200
         assert response.json() == {"status": "ok", "message": "Debate sequence initialized."}
@@ -34,19 +33,20 @@ async def test_debate_endpoints(test_client, db_session):
 
     # 2. Add sample debate messages directly to the database
     from datetime import UTC, datetime
+
     m1 = DebateSession(
         id="msg-1",
         conversation_id=conv_id,
         agent_role="planner",
         content="I plan to use SQLite.",
-        timestamp=datetime.now(UTC)
+        timestamp=datetime.now(UTC),
     )
     m2 = DebateSession(
         id="msg-2",
         conversation_id=conv_id,
         agent_role="coder",
         content="Coding SQLite is easy.",
-        timestamp=datetime.now(UTC)
+        timestamp=datetime.now(UTC),
     )
     db_session.add(m1)
     db_session.add(m2)
@@ -76,8 +76,10 @@ async def test_debate_sequencer(db_session):
 
     # Mock the websocket presence_manager broadcast
     with (
-        patch("core.collaboration.presence.presence_manager.broadcast", new_callable=AsyncMock) as mock_broadcast,
-        patch("core.agents.debater_agent.DebaterAgent.stream") as mock_stream
+        patch(
+            "core.collaboration.presence.presence_manager.broadcast", new_callable=AsyncMock
+        ) as mock_broadcast,
+        patch("core.agents.debater_agent.DebaterAgent.stream") as mock_stream,
     ):
         # We need mock_stream to yield tokens and then a done event for each round
         async def mock_generator(*args, **kwargs):
@@ -88,6 +90,7 @@ async def test_debate_sequencer(db_session):
         mock_stream.side_effect = mock_generator
 
         from api.routes.debate import run_debate_sequencer
+
         await run_debate_sequencer(conv_id, query)
 
         # The sequencer must have broadcast events for all 4 rounds:
@@ -101,7 +104,7 @@ async def test_debate_sequencer(db_session):
         )
         records = result.all()
         assert len(records) == 4
-        
+
         # Verify the sequential roles
         assert records[0].agent_role == "planner"
         assert records[1].agent_role == "coder"

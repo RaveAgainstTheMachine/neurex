@@ -31,14 +31,14 @@ LANG_MAP: dict[str, str] = {
 # Node types that represent structural containers / declarations
 TOP_LEVEL_TYPES: set[str] = {
     "function_definition",
-    "class_definition",      # Python
+    "class_definition",  # Python
     "function_declaration",
-    "class_declaration",     # JS/TS
+    "class_declaration",  # JS/TS
     "method_definition",
-    "arrow_function",        # JS/TS
+    "arrow_function",  # JS/TS
     "impl_item",
     "fn_item",
-    "struct_item",           # Rust
+    "struct_item",  # Rust
     "function_declaration",  # Go
 }
 
@@ -70,6 +70,7 @@ def get_ast_bounds(file_path: Path, line: int, column: int) -> tuple[int, int]:
             import os
 
             from api.routes.files import get_workspace
+
             workspace = get_workspace()
             safe_root = os.path.realpath(str(workspace or "."))
             target = os.path.realpath(str(file_path))
@@ -109,7 +110,10 @@ def get_ast_bounds(file_path: Path, line: int, column: int) -> tuple[int, int]:
                         # Check if the line is within this node
                         if node.lineno <= line <= node.end_lineno:
                             # If we have no candidate, or this candidate is smaller (tighter)
-                            if candidate is None or (node.lineno >= candidate.lineno and node.end_lineno <= candidate.end_lineno):
+                            if candidate is None or (
+                                node.lineno >= candidate.lineno
+                                and node.end_lineno <= candidate.end_lineno
+                            ):
                                 candidate = node
                 if candidate:
                     return candidate.lineno, candidate.end_lineno
@@ -122,8 +126,10 @@ def get_ast_bounds(file_path: Path, line: int, column: int) -> tuple[int, int]:
         parser = None
         try:
             from tree_sitter import Language, Parser
+
             if language in ("javascript", "typescript", "tsx"):
                 import tree_sitter_javascript as tsjs
+
                 parser = Parser(Language(tsjs.language()))
         except Exception as e:
             log.debug("ast.direct_ts_failed", lang=language, error=str(e))
@@ -131,6 +137,7 @@ def get_ast_bounds(file_path: Path, line: int, column: int) -> tuple[int, int]:
         if parser is None:
             try:
                 from tree_sitter_languages import get_parser
+
                 parser = get_parser(language)
             except Exception as e:
                 log.warning("ast.ts_setup_failed", lang=language, error=str(e))

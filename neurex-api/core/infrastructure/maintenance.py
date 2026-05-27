@@ -55,7 +55,9 @@ class PredictiveMaintenance:
     async def trigger_maintenance_task(self):
         """
         Executes a background re-indexing of the workspace.
-        Phase 44.5: Sema-Throttled Memory Indexing integration.
+        Delegates to MemoryWorker._full_index() which uses a 10-semaphore parallel
+        pipeline over the entire WORKSPACE_PATH. Gracefully no-ops when ChromaDB
+        is unavailable (memory_worker._enabled == False).
         """
         if self._indexing_active:
             return
@@ -64,18 +66,20 @@ class PredictiveMaintenance:
             self._indexing_active = True
 
         try:
-            # We would normally trigger the MemoryWorker or ContextManager indexer here
-            # For Phase 45, we simulate the logic as a placeholder for the actual indexer integration
             log.info("maintenance.indexing_started")
 
-            # Reset churn after successful trigger
+            # Reset churn before indexing so new changes accumulated during the run
+            # are tracked in the next cycle rather than silently dropped.
             self.churn_buffer.clear()
             self.last_index_time = datetime.now(UTC)
 
-            # Simulate indexing work
-            await asyncio.sleep(10)
+            from core.memory.worker import memory_worker
 
-            log.info("maintenance.indexing_complete")
+            if memory_worker._enabled:
+                await memory_worker._full_index()
+                log.info("maintenance.indexing_complete")
+            else:
+                log.info("maintenance.indexing_skipped", reason="memory_worker_disabled")
         finally:
             async with self._lock:
                 self._indexing_active = False

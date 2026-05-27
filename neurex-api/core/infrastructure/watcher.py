@@ -45,6 +45,7 @@ class WatcherHandler(FileSystemEventHandler):
 
         # Phase 5: Hot Reloading
         from core.infrastructure.hot_reload import hot_reload_manager
+
         for p in paths:
             hot_reload_manager.handle_file_change(p)
 

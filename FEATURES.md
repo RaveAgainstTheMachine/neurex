@@ -54,3 +54,26 @@
 - **Clean CI/CD & Teardown Hygiene**: Hardened pytest teardown hooks by cleanly shutting down background services and disposing of SQLAlchemy connection pools on lifespan exit, achieving 100% clean pre-release gates with zero connection leaks, unhandled thread exceptions, or warnings.
 - **Hermetic E2E WebSocket & Smoke Evaluations**: Added 6 new high-coverage E2E integration test scenarios to the smoke evaluation suite (`run_evals.py` and `test_smoke_evals.py`), fully verifying round-robin execution, concurrent WebSocket lock contention, and message streaming.
 
+## 🔌 Released in v0.8.0 (Extensible Plugin Hub & Codebase Hygiene)
+- **Unified Local Skill Marketplace**: Full local persistence marketplace (`skills/marketplace` & `skills/publish`) cataloging connected developer identities and duplicate prevention structures.
+- **Discovery Catalog Canvas**: Highly interactive browser discovery UI complete with real-time neon green status badges synced to local registries.
+- **Legacy Purges**: Decoupled unused dashboards and speech synthesizers, routing back to standard native browser fallbacks to guarantee a completely clean, warning-free runtime.
+
+## 🛰️ Released in v0.9.0 (Persistent Cognitive Substrates & LAN Mesh)
+- **mTLS Peer-to-Peer Directory Sync**: Bi-directional secure directory synchronization over LAN using TLS/mTLS without requiring central server coordination.
+- **Swarm Memory Substrate (Hive Mind)**: Collective memory indexing and semantic RAG recall powered by local vector embedding pipelines in ChromaDB.
+- **Secure Human-in-the-Loop Guardrails**: Intercepting privileged `shell` and `filesystem` capabilities under limited autonomy to request developer approvals through real-time modal prompts.
+
+## 📈 Released in v0.10.0 (Dynamic Autonomy & Timeline Observability)
+- **Local Teleplay Canvas Playback**: Granular visual scrubber allowing developers to chronologically replay, pause, and inspect historical reasoning traces and execution beats.
+- **Dynamic Autonomy transitions**: Active UI settings and status controls to adjust agentic execution ceilings (restricted, limited, staging, full) bound to the central Zustand store.
+
+## 🛡️ Released in v0.11.0 (Universal Automated Testing & WASM/WASI Verification)
+- **Universal E2E and System Testing**: End-to-end integration and smoke test coverage across all subsystems: Playwright browser Monaco, MCP sandbox, and Debate courtroom tests; Rust Axum control plane daemon routes; and Python backend mesh discovery.
+- **Zero-Dependency WASM Sandboxing**: Captures guest stdout, stderr, and program exit codes programmatically using wasmtime memory pipes (`MemoryOutputPipe`), with dynamic WAT-to-Wasm compilations.
+- **Fleshing Out & De-mocking Core Substrates**:
+  - **Hardware Wakelock Assertions**: Replaced dummy wake logic inside the orchestrator with native `wakepy` power assertions to keep host threads alive during active planning sequences.
+  - **Dynamic Notification Center**: Connected status bar badge counts and UI notifications to active WebSocket event streams.
+  - **VS Code Auto-Format Settings**: Standardized codebase styling and resolved formatting anomalies by deploying default formatters (Rust, Python, TS/JS, JSON, CSS) and auto-format on save.
+
+

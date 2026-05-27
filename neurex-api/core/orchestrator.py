@@ -253,7 +253,7 @@ class Orchestrator:
         from core.collaboration.consensus import consensus_manager
 
         paths_to_review = [path] if path else list(consensus_manager.proposals.keys())
-        
+
         model = "mock" if os.getenv("NEUREX_MOCK_LLM") == "true" else None
 
         for p in paths_to_review:
@@ -274,7 +274,11 @@ class Orchestrator:
                 conversation_id,
             )
 
-            log.info("orchestrator.swarm_review_complete", path=p, reached=consensus_manager.get_proposal(p) is None)
+            log.info(
+                "orchestrator.swarm_review_complete",
+                path=p,
+                reached=consensus_manager.get_proposal(p) is None,
+            )
 
     async def resume(
         self,
@@ -297,7 +301,9 @@ class Orchestrator:
                         cancel_result = await session.exec(cancel_stmt)
                         if cancel_result.first():
                             log.info("orchestrator.halted", graph_id=graph_id, reason="cancelled")
-                            await queue.put({"event": "graph_cancelled", "data": {"graph_id": graph_id}})
+                            await queue.put(
+                                {"event": "graph_cancelled", "data": {"graph_id": graph_id}}
+                            )
                             break
 
                         # 1. Re-fetch tasks that are PENDING and belong to this graph
@@ -316,7 +322,9 @@ class Orchestrator:
 
                         if not tasks:
                             log.info("orchestrator.graph_complete", graph_id=graph_id)
-                            await queue.put({"event": "graph_complete", "data": {"graph_id": graph_id}})
+                            await queue.put(
+                                {"event": "graph_complete", "data": {"graph_id": graph_id}}
+                            )
                             break
 
                         for node in tasks:
@@ -342,7 +350,9 @@ class Orchestrator:
                                     )
                                     return
 
-                                log.info("orchestrator.executing_task", task_id=node.id, title=node.title)
+                                log.info(
+                                    "orchestrator.executing_task", task_id=node.id, title=node.title
+                                )
                                 await update_task(session, node.id, TaskStatus.THINKING)
                                 await queue.put(
                                     {
@@ -382,21 +392,26 @@ class Orchestrator:
                                     if model_params == "Unknown":
                                         model_params = None
 
-                                AgentClass = AGENT_REGISTRY.get(node.agent_type, AGENT_REGISTRY["coder"])
+                                AgentClass = AGENT_REGISTRY.get(
+                                    node.agent_type, AGENT_REGISTRY["coder"]
+                                )
                                 agent = AgentClass(self.rules, self.ctx, model=model_name)
 
                                 # Gather and summarize history context
                                 history_stmt = (
                                     select(TaskNode)
                                     .where(
-                                        TaskNode.graph_id == graph_id, TaskNode.status == TaskStatus.DONE
+                                        TaskNode.graph_id == graph_id,
+                                        TaskNode.status == TaskStatus.DONE,
                                     )
                                     .order_by(TaskNode.created_at)
                                 )
                                 history_result = await session.exec(history_stmt)
                                 done_tasks = history_result.all()
 
-                                history_context = await self._summarize_history(done_tasks, model_name)
+                                history_context = await self._summarize_history(
+                                    done_tasks, model_name
+                                )
 
                                 task_payload = {
                                     "id": node.id,
@@ -411,7 +426,13 @@ class Orchestrator:
                                 node_result = ""
                                 async for chunk in agent.execute(task_payload, conversation_id):
                                     if chunk["type"] == "token":
-                                        await queue.put({"event": "token", "data": chunk["text"], "task_id": node.id})
+                                        await queue.put(
+                                            {
+                                                "event": "token",
+                                                "data": chunk["text"],
+                                                "task_id": node.id,
+                                            }
+                                        )
                                     elif chunk["type"] == "status":
                                         await queue.put(
                                             {
@@ -423,13 +444,17 @@ class Orchestrator:
                                         tool_call = chunk.get("call", {})
                                         tool_name = tool_call.get("function", {}).get("name", "")
                                         from core.mcp.client import get_tool_permission
+
                                         rule = await get_tool_permission(tool_name)
 
                                         if rule == "ask" or (
                                             self.autonomy_level == "limited"
                                             and chunk.get("tool") in ["shell", "filesystem"]
                                         ):
-                                            log.info("orchestrator.hitl_required", tool=tool_name or chunk.get("tool"))
+                                            log.info(
+                                                "orchestrator.hitl_required",
+                                                tool=tool_name or chunk.get("tool"),
+                                            )
                                             await update_task(
                                                 session, node.id, TaskStatus.AWAITING_APPROVAL
                                             )
@@ -438,8 +463,12 @@ class Orchestrator:
                                                     "event": "approval_required",
                                                     "data": {
                                                         "id": node.id,
-                                                        "tool": tool_name or chunk.get("tool", "unknown"),
-                                                        "args": chunk.get("args") or tool_call.get("function", {}).get("arguments", {}),
+                                                        "tool": tool_name
+                                                        or chunk.get("tool", "unknown"),
+                                                        "args": chunk.get("args")
+                                                        or tool_call.get("function", {}).get(
+                                                            "arguments", {}
+                                                        ),
                                                     },
                                                 }
                                             )
@@ -448,34 +477,54 @@ class Orchestrator:
 
                                     elif chunk["type"] == "result":
                                         node_result = chunk["result"]
-                                        if isinstance(node_result, str) and "CONSENSUS_REQUIRED" in node_result:
+                                        if (
+                                            isinstance(node_result, str)
+                                            and "CONSENSUS_REQUIRED" in node_result
+                                        ):
                                             # Extract path if possible (this is a bit hacky, better to have it in metadata)
                                             # But for now, we trigger a broad review check
-                                            log.info("orchestrator.triggering_swarm_review", task_id=node.id)
+                                            log.info(
+                                                "orchestrator.triggering_swarm_review",
+                                                task_id=node.id,
+                                            )
                                             # Background task to not block the current loop
-                                            asyncio.create_task(self.trigger_swarm_review("", conversation_id))
+                                            asyncio.create_task(
+                                                self.trigger_swarm_review("", conversation_id)
+                                            )
 
                                         if node.agent_type == "debater":
                                             persona = "skeptic"
                                             desc_lower = node.description.lower()
                                             title_lower = node.title.lower()
-                                            if "optimist" in desc_lower or "optimist" in title_lower:
+                                            if (
+                                                "optimist" in desc_lower
+                                                or "optimist" in title_lower
+                                            ):
                                                 persona = "optimist"
-                                            
-                                            agent_name = "Optimist Debater" if persona == "optimist" else "Skeptic Critic"
+
+                                            agent_name = (
+                                                "Optimist Debater"
+                                                if persona == "optimist"
+                                                else "Skeptic Critic"
+                                            )
                                             role = "coder" if persona == "optimist" else "reviewer"
-                                            
+
                                             from datetime import datetime
-                                            await queue.put({
-                                                "event": "debate_message",
-                                                "data": {
-                                                    "id": f"debater-{node.id}",
-                                                    "agent": agent_name,
-                                                    "role": role,
-                                                    "content": node_result,
-                                                    "timestamp": datetime.now().strftime("%H:%M:%S")
+
+                                            await queue.put(
+                                                {
+                                                    "event": "debate_message",
+                                                    "data": {
+                                                        "id": f"debater-{node.id}",
+                                                        "agent": agent_name,
+                                                        "role": role,
+                                                        "content": node_result,
+                                                        "timestamp": datetime.now().strftime(
+                                                            "%H:%M:%S"
+                                                        ),
+                                                    },
                                                 }
-                                            })
+                                            )
 
                                 # Mark as DONE
                                 await update_task(
@@ -514,14 +563,22 @@ class Orchestrator:
 
                 # Final cleanup
                 graph = await get_graph(session, graph_id)
-                await queue.put({
-                    "event": "done",
-                    "data": {"graph_id": graph_id, "tasks": [jsonable_encoder(n) for n in graph]},
-                })
+                await queue.put(
+                    {
+                        "event": "done",
+                        "data": {
+                            "graph_id": graph_id,
+                            "tasks": [jsonable_encoder(n) for n in graph],
+                        },
+                    }
+                )
 
             except Exception as e:
                 log.critical(
-                    "orchestrator.resume_worker_crashed", graph_id=graph_id, error=str(e), exc_info=True
+                    "orchestrator.resume_worker_crashed",
+                    graph_id=graph_id,
+                    error=str(e),
+                    exc_info=True,
                 )
                 if active_node_id:
                     try:
@@ -534,7 +591,9 @@ class Orchestrator:
                             )
                     except Exception as update_err:
                         log.error("orchestrator.crash_update_failed", error=str(update_err))
-                await queue.put({"event": "error", "data": {"message": f"Execution failure: {str(e)}"}})
+                await queue.put(
+                    {"event": "error", "data": {"message": f"Execution failure: {str(e)}"}}
+                )
             finally:
                 await queue.put(None)
 
@@ -617,13 +676,17 @@ class Orchestrator:
                             tool_call = chunk.get("call", {})
                             tool_name = tool_call.get("function", {}).get("name", "")
                             from core.mcp.client import get_tool_permission
+
                             rule = await get_tool_permission(tool_name)
 
                             if rule == "ask" or (
                                 self.autonomy_level == "limited"
                                 and chunk.get("tool") in ["shell", "filesystem"]
                             ):
-                                log.info("orchestrator.resume_shell.hitl_required", tool=tool_name or chunk.get("tool"))
+                                log.info(
+                                    "orchestrator.resume_shell.hitl_required",
+                                    tool=tool_name or chunk.get("tool"),
+                                )
                                 await update_task(session, node.id, TaskStatus.AWAITING_APPROVAL)
                                 await queue.put(
                                     {
@@ -631,7 +694,8 @@ class Orchestrator:
                                         "data": {
                                             "id": node.id,
                                             "tool": tool_name or chunk.get("tool", "unknown"),
-                                            "args": chunk.get("args") or tool_call.get("function", {}).get("arguments", {}),
+                                            "args": chunk.get("args")
+                                            or tool_call.get("function", {}).get("arguments", {}),
                                         },
                                     }
                                 )
@@ -644,12 +708,13 @@ class Orchestrator:
                         elif chunk["type"] == "result":
                             node_result = chunk.get("result", "")
                             if isinstance(node_result, str) and "CONSENSUS_REQUIRED" in node_result:
-                                log.info("orchestrator.resume_shell.triggering_swarm_review", task_id=node.id)
+                                log.info(
+                                    "orchestrator.resume_shell.triggering_swarm_review",
+                                    task_id=node.id,
+                                )
                                 asyncio.create_task(self.trigger_swarm_review("", conversation_id))
 
-                            await update_task(
-                                session, node.id, TaskStatus.DONE, result=node_result
-                            )
+                            await update_task(session, node.id, TaskStatus.DONE, result=node_result)
                             await queue.put(
                                 {
                                     "event": "task_updated",
@@ -667,7 +732,9 @@ class Orchestrator:
                     error=str(e),
                     exc_info=True,
                 )
-                await queue.put({"event": "error", "data": {"message": f"Resume failure: {str(e)}"}})
+                await queue.put(
+                    {"event": "error", "data": {"message": f"Resume failure: {str(e)}"}}
+                )
             finally:
                 await queue.put(None)  # End of stream
 
@@ -706,8 +773,9 @@ class Orchestrator:
         import time
 
         from core.collaboration.presence import presence_manager
+
         agent_id = "Agent [Neurex Coder]"
-        
+
         # Initialize presence for agent
         if conversation_id not in presence_manager.presence_state:
             presence_manager.presence_state[conversation_id] = {}
@@ -723,7 +791,7 @@ class Orchestrator:
             {
                 "event": "presence_update",
                 "data": list(presence_manager.presence_state[conversation_id].values()),
-            }
+            },
         )
 
         try:
@@ -743,21 +811,23 @@ class Orchestrator:
                     "data": {"id": task_id, "status": "THINKING"},
                 }
                 # Simulate smooth, high-frequency typing motion in Mock LLM too!
-                lines = mock_modified.split('\n')
+                lines = mock_modified.split("\n")
                 for i in range(1, len(lines) + 1):
-                    presence_manager.presence_state[conversation_id][agent_id].update({
-                        "cursor": {"line": i, "ch": len(lines[i-1]) + 1},
-                        "active_file": path,
-                        "last_ping": time.time(),
-                    })
+                    presence_manager.presence_state[conversation_id][agent_id].update(
+                        {
+                            "cursor": {"line": i, "ch": len(lines[i - 1]) + 1},
+                            "active_file": path,
+                            "last_ping": time.time(),
+                        }
+                    )
                     await presence_manager.broadcast(
                         conversation_id,
                         {
                             "event": "presence_update",
                             "data": list(presence_manager.presence_state[conversation_id].values()),
-                        }
+                        },
                     )
-                    await asyncio.sleep(0.016) # ~60Hz typing sleep
+                    await asyncio.sleep(0.016)  # ~60Hz typing sleep
 
                 yield {
                     "event": "task_updated",
@@ -819,7 +889,9 @@ class Orchestrator:
                 system_prompt = "You are a precise refactoring assistant."
                 agent_type = "inline_helper"
 
-                async def execute(self, task: dict, conversation_id: str) -> AsyncGenerator[dict, None]:
+                async def execute(
+                    self, task: dict, conversation_id: str
+                ) -> AsyncGenerator[dict, None]:
                     pass
 
             agent = InlineHelperAgent(self.rules, self.ctx, model=model_name)
@@ -842,21 +914,25 @@ class Orchestrator:
                     if current_time - last_update_time >= (1.0 / 60.0):
                         last_update_time = current_time
                         accumulated = "".join(modified_content_chunks)
-                        lines = accumulated.split('\n')
+                        lines = accumulated.split("\n")
                         line_num = len(lines)
                         col_num = len(lines[-1]) + 1
 
-                        presence_manager.presence_state[conversation_id][agent_id].update({
-                            "cursor": {"line": line_num, "ch": col_num},
-                            "active_file": path,
-                            "last_ping": time.time(),
-                        })
+                        presence_manager.presence_state[conversation_id][agent_id].update(
+                            {
+                                "cursor": {"line": line_num, "ch": col_num},
+                                "active_file": path,
+                                "last_ping": time.time(),
+                            }
+                        )
                         await presence_manager.broadcast(
                             conversation_id,
                             {
                                 "event": "presence_update",
-                                "data": list(presence_manager.presence_state[conversation_id].values()),
-                            }
+                                "data": list(
+                                    presence_manager.presence_state[conversation_id].values()
+                                ),
+                            },
                         )
                 elif chunk["type"] == "done":
                     break
@@ -890,12 +966,15 @@ class Orchestrator:
             }
         finally:
             # Clean up the agent's presence cursor update when generation completes or crashes
-            if conversation_id in presence_manager.presence_state and agent_id in presence_manager.presence_state[conversation_id]:
+            if (
+                conversation_id in presence_manager.presence_state
+                and agent_id in presence_manager.presence_state[conversation_id]
+            ):
                 del presence_manager.presence_state[conversation_id][agent_id]
                 await presence_manager.broadcast(
                     conversation_id,
                     {
                         "event": "presence_update",
                         "data": list(presence_manager.presence_state[conversation_id].values()),
-                    }
+                    },
                 )

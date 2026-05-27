@@ -14,14 +14,24 @@ def lock():
     global _mode
     try:
         from wakepy import keep
+
         # Acquire keep.running() to prevent system sleep while keeping screen behavior default
         _mode = keep.running()
         _mode.__enter__()
-        log.info("wakelock.acquired", message="System sleep prevention active (wakepy.keep.running)")
+        log.info(
+            "wakelock.acquired", message="System sleep prevention active (wakepy.keep.running)"
+        )
     except ImportError:
-        log.warning("wakelock.unsupported", message="wakepy not installed. Sleep prevention operates as no-op.")
+        log.warning(
+            "wakelock.unsupported",
+            message="wakepy not installed. Sleep prevention operates as no-op.",
+        )
     except Exception as e:
-        log.warning("wakelock.failed", error=str(e), message="Failed to acquire system power assertions. Proceeding without sleep prevention.")
+        log.warning(
+            "wakelock.failed",
+            error=str(e),
+            message="Failed to acquire system power assertions. Proceeding without sleep prevention.",
+        )
 
 
 def unlock():
@@ -34,4 +44,3 @@ def unlock():
             log.info("wakelock.released", message="System sleep prevention released cleanly")
         except Exception as e:
             log.error("wakelock.release_failed", error=str(e))
-

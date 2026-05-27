@@ -95,23 +95,22 @@ def get_workspace() -> Path | None:
     return None
 
 
-
 def _validate_safe_path(path: str, workspace: Path) -> Path:
     safe_path = untaint_str(path)
     safe_root = os.path.realpath(str(workspace))
     target = os.path.realpath(os.path.join(safe_root, safe_path))
     safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
-    
+
     if target == safe_root:
         pass
     elif target.startswith(safe_prefix):
         pass
     else:
         raise PermissionError("Path traversal blocked")
-        
+
     if os.path.commonpath([safe_root, target]) != safe_root:
         raise PermissionError("Path traversal blocked")
-        
+
     return untaint_path(Path(target))
 
 
@@ -181,14 +180,14 @@ async def file_tree(path: str = ".", depth: int = 2, root_path: str | None = Non
     target = os.path.realpath(os.path.join(str(WORKSPACE), path))
     base_root = os.path.realpath(str(base_workspace))
     base_prefix = base_root if base_root.endswith(os.sep) else base_root + os.sep
-    
+
     if target == base_root:
         pass
     elif target.startswith(base_prefix):
         pass
     else:
         raise PermissionError("Path traversal blocked")
-        
+
     target_path = untaint_path(Path(target))
     git_status = {}
     try:
@@ -324,7 +323,7 @@ async def read_file(path: str, root_path: str | None = None):
     if not target.startswith(base_prefix):
         raise PermissionError("Path traversal blocked")
     resolved = Path(target)
-    
+
     if not resolved.is_file():
         raise HTTPException(status_code=404, detail="File not found")
     content = resolved.read_text(errors="replace")  # lgtm [py/path-injection]
@@ -564,14 +563,14 @@ async def replace_all(
     target = os.path.realpath(str(WORKSPACE))
     base_root = os.path.realpath(str(base_workspace))
     base_prefix = base_root if base_root.endswith(os.sep) else base_root + os.sep
-    
+
     if target == base_root:
         pass
     elif target.startswith(base_prefix):
         pass
     else:
         raise PermissionError("Path traversal blocked")
-        
+
     WORKSPACE = untaint_path(Path(target))
 
     # Use search_files logic to find matches first
@@ -619,7 +618,11 @@ async def replace_all(
         if not abs_path:
             continue
         abs_str = str(abs_path)
-        base_prefix = str(base_workspace) if str(base_workspace).endswith(os.sep) else str(base_workspace) + os.sep
+        base_prefix = (
+            str(base_workspace)
+            if str(base_workspace).endswith(os.sep)
+            else str(base_workspace) + os.sep
+        )
         if not abs_str.startswith(base_prefix):
             raise PermissionError("Path traversal blocked")
         if not abs_path.exists():
@@ -787,6 +790,7 @@ async def browse_directories(path: str = "."):
 async def get_staged_files():
     """Retrieve the list of files currently in the staging directory."""
     from core.mcp.tools.filesystem import list_staging
+
     try:
         items = await list_staging()
         return items
@@ -799,6 +803,7 @@ async def get_staged_files():
 async def commit_staged_files():
     """Apply all files from .neurex/staging to WORKSPACE_ROOT and clear staging."""
     from core.mcp.tools.filesystem import commit_staging
+
     try:
         res = await commit_staging()
         return res
@@ -811,10 +816,10 @@ async def commit_staged_files():
 async def clear_staged_files():
     """Empty the .neurex/staging directory."""
     from core.mcp.tools.filesystem import clear_staging
+
     try:
         await clear_staging()
         return {"status": "ok", "message": "Staging cleared successfully."}
     except Exception as e:
         log.error("files.clear_stage_failed", error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
-
