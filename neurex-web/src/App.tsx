@@ -110,6 +110,10 @@ export default function App() {
 function AppContent() {
   useNotifications();
 
+  useEffect(() => {
+    (window as any).useStore = useStore;
+  }, []);
+
   // Phase 44.21: Architectural State Decoupling (Stabilize Root Layout)
   const wsStatus = useStore(s => s.wsStatus);
   const isInitialized = useStore(s => s.isInitialized);
