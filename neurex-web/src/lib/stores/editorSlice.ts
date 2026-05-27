@@ -128,7 +128,23 @@ export const createEditorSlice: StoreSlice<NeurexStore> = (set, get) => ({
         });
       } catch { toast.error("Failed to save file"); }
     },
-    diffFile: async (path) => { /* placeholder */ },
+    diffFile: async (path) => {
+      try {
+        const data = await api.get<{ original: string; modified: string }>(`/api/git/diff?path=${encodeURIComponent(path)}`);
+        // Ensure file is open in the editor before setting diff state
+        const existing = get().openFiles.find(f => f.path === path);
+        if (!existing) {
+          const ext = path.split('.').pop() || 'plaintext';
+          get().openFile(path, data.modified, ext);
+        } else {
+          get().setActiveFile(path);
+        }
+        // Populate Monaco DiffEditor state (original = HEAD, modified = disk)
+        get().setDiff(path, data.original, data.modified);
+      } catch {
+        toast.error(`Could not open diff for ${path.split('/').pop()}`);
+      }
+    },
     renameFile: async (oldPath, newPath, root_path) => {
       try {
         await api.post("/api/files/rename", { old_path: oldPath, new_path: newPath, root_path });

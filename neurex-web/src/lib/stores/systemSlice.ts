@@ -52,7 +52,7 @@ export const createSystemSlice: StoreSlice<NeurexStore> = (set, _get) => ({
     setSettings: (settings) => set((s) => { s.settings = settings; }),
     refreshSettings: async () => { try { const data = await api.get<any>("/api/settings/"); set((s) => { s.settings = data.settings || data; }); } catch { /* intentional */ } },
     refreshHiveStats: async () => { try { const stats = await api.get<any>("/api/memory/stats"); set((s) => { s.hiveStats = stats; }); } catch { /* intentional */ } },
-    send: (_payload) => { /* placeholder */ },
+    send: (payload) => { console.warn("[neurex] send() called before WebSocket connected", payload); },
 
       // ── UI Panels ────────────────────────────────────────────────
 
@@ -73,7 +73,7 @@ export const createSystemSlice: StoreSlice<NeurexStore> = (set, _get) => ({
         id: "initial-sync",
         type: "success",
         title: "Substrate Active",
-        description: "Secure Neurex v0.11.0 runtime is active.",
+        description: "Secure Neurex v0.11.1 runtime is active.",
         timestamp: new Date().toLocaleTimeString(),
         unread: true,
       }
