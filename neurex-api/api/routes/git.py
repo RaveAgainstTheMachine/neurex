@@ -256,14 +256,85 @@ async def commit_changes(payload: dict, user=Depends(get_current_user)):
 
 @router.post("/generate_commit_msg")
 async def generate_commit_msg(user=Depends(get_current_user)):
-    # Simple logic for now: get diff and summarize
-    diff = run_git(["diff", "--cached", "--stat"])
-    if not diff:
-        return {"message": "Small cleanups and documentation updates"}
+    """Generate a Conventional Commits message from the staged diff via local LLM inference."""
+    import os
 
-    # In a real scenario, we would pass 'diff' to an LLM here.
-    # For now, we'll return a semantic placeholder or a basic summary.
-    return {"message": f"feat: update system components\n\nChanges identified:\n{diff}"}
+    import httpx
+
+    # Prefer full unified diff for semantic understanding; fall back to stat summary
+    diff = ""
+    try:
+        diff = run_git(["diff", "--cached", "--unified=3"])
+    except Exception:
+        pass
+
+    if not diff:
+        # Nothing staged
+        return {"message": "chore: minor cleanups and documentation updates"}
+
+    # Truncate to a safe token budget (~6k chars ≈ ~1.5k tokens)
+    diff_snippet = diff[:6000]
+    if len(diff) > 6000:
+        diff_snippet += "\n... [truncated for brevity]"
+
+    prompt = f"""You are an expert software engineer. Generate a single Conventional Commits message for the following staged git diff.
+
+Rules:
+- First line: "<type>(<optional scope>): <imperative summary>" — max 72 chars.
+- Types: feat, fix, refactor, chore, docs, test, style, perf, ci.
+- If the change touches multiple concerns, pick the dominant one.
+- Add a blank line then a brief body (2-4 lines) describing the WHY and key changes.
+- Do NOT wrap in markdown code fences. Output ONLY the commit message text.
+
+Staged diff:
+{diff_snippet}
+
+Commit message:"""
+
+    try:
+        from core.infrastructure.mesh import mesh_router
+
+        model = os.getenv("COMMIT_MSG_MODEL", "qwen2.5-coder:7b")
+        ollama_url = await mesh_router.get_best_inference_node(model)
+        target_url = (
+            f"{ollama_url}/api/chat"
+            if "ollama_proxy" not in ollama_url
+            else ollama_url.replace("ollama_proxy", "ollama_proxy/api/chat")
+        )
+
+        payload = {
+            "model": model,
+            "messages": [{"role": "user", "content": prompt}],
+            "stream": False,
+            "options": {"temperature": 0.2, "num_predict": 300},
+        }
+
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(target_url, json=payload)
+            if resp.status_code == 200:
+                data = resp.json()
+                message = data.get("message", {}).get("content", "").strip()
+                if message:
+                    return {"message": message}
+    except Exception as e:
+        import structlog as _log
+        _log.get_logger().warning("generate_commit_msg.llm_failed", error=str(e))
+
+    # Graceful fallback: derive a heuristic message from the diff stat
+    try:
+        stat = run_git(["diff", "--cached", "--stat"])
+        files_changed = [
+            line.strip().split()[0]
+            for line in stat.splitlines()
+            if "|" in line
+        ]
+        summary = ", ".join(files_changed[:3])
+        if len(files_changed) > 3:
+            summary += f" and {len(files_changed) - 3} more"
+        return {"message": f"chore: update {summary}"}
+    except Exception:
+        return {"message": "chore: update project files"}
+
 
 
 @router.get("/blame")
