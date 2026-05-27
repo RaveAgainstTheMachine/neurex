@@ -11,7 +11,6 @@ use tracing_subscriber::FmtSubscriber;
 
 use neurex_cli::{api, bootstrap, provision, sandbox, wasi_sandbox};
 
-
 /// Neurex CLI - The Universal Sentient IDE Substrate Manager
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
