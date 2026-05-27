@@ -73,7 +73,7 @@ export const createSystemSlice: StoreSlice<NeurexStore> = (set, _get) => ({
         id: "initial-sync",
         type: "success",
         title: "Substrate Active",
-        description: "Secure Neurex v0.10.0 runtime is active.",
+        description: "Secure Neurex v0.11.0 runtime is active.",
         timestamp: new Date().toLocaleTimeString(),
         unread: true,
       }

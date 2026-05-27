@@ -3,7 +3,7 @@
 This document outlines the development trajectory of Neurex, focusing on building a stable, local-first AI engineering workspace.
 
 ## 🛰️ Current Operational Status
-- **Current Version**: `v0.10.0-STABLE`
+- **Current Version**: `v0.11.0-STABLE`
 - **Core Engine**: NeuralHarness v2.5
 - **Status**: Stable for local and LAN-based multi-device collaboration with fully clean CI/CD gates, dynamic autonomy transitions, and active telemetry timelines.
 
@@ -26,7 +26,7 @@ Neurex focuses on three pillars:
 
 ### Security & Collaboration
 - [x] **Hermetic Substrate**: Isolated execution environments via Docker and WASI.
-- [x] **LAN Sovereignty**: Mandatory mTLS/SSL for all mesh traffic and secure device discovery.
+- [x] **LAN Sovereignty**: mTLS/SSL for all mesh traffic and secure device discovery.
 - [x] **Distributed Locking**: Mutation protection for collaborative engineering sessions.
 
 ### Intelligence & UX
@@ -63,15 +63,17 @@ Neurex focuses on three pillars:
 - [x] **📈 Local Screenplay Teleplay Replay Canvas**: Chronologically visualizing and scrubbing through exact agent thought sequences during debug walkthroughs in the Flight Log panel.
 - [x] **⚙️ Dynamic Autonomy Level Transition**: On-the-fly toggling of execution authority ceilings (restricted, limited, staging, full) from the UI settings and AI Panel, dynamically bound to the central Zustand store.
 
+### Universal Automated Testing & WASM/WASI Verification (v0.11.0)
+- [x] **🎭 Universal Playwright Component/E2E Testing (`neurex-web`)**: Direct browser automation checking Monaco editors, Graph editor actions, and resizable layout persistence.
+- [x] **🐳 Unmocked Docker Sandbox Verification (`neurex-cli`)**: Rust integration tests executing real sandboxed PTY tasks inside Bollard containers, checking CPU/VRAM ceilings.
+- [x] **📦 WASM/WASI Native Run Verification**: Validating zero-dependency `wasmtime` fallback execution planes with memory pipes.
+
 ---
 
 ## 🛠️ Future Backlog
 
 ### Unmocked Containerization & Robust Testing Architecture
-- [ ] **🎭 Universal Playwright Component/E2E Testing (`neurex-web`)**: Direct browser automation checking Monaco editors, Graph editor actions, and resizable layout persistence.
-- [ ] **🐳 Unmocked Docker Sandbox Verification (`neurex-cli`)**: Rust integration tests executing real sandboxed PTY tasks inside Bollard containers, checking CPU/VRAM ceilings.
-- [ ] **📦 WASM/WASI Native Run Verification**: Validating zero-dependency `wasmtime` fallback execution planes.
 - [ ] **⚡ High-Throughput SQLite WAL Stress Testing**: High-concurrency database logging tests to prevent WAL lock contention.
 
 ---
-*Roadmap updated to reflect Dynamic Autonomy & Timeline Observability (v0.10.0).*
+*Roadmap updated to reflect Universal Automated Testing & WASM/WASI Verification (v0.11.0).*

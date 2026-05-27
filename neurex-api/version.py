@@ -1,2 +1,2 @@
-VERSION = "0.10.0"  # Swarm Memory, Observability Replay Canvas, Dynamic Autonomy Level Transitions and Secure Guardrails
+VERSION = "0.11.0"  # Universal Testing Architecture, WASM/WASI stdout/stderr memory pipes, and VS Code formatting standards
 

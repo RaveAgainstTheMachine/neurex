@@ -253,7 +253,7 @@ async fn main() -> Result<()> {
                 }
             }
 
-            println!("\nSystem is {} for v0.10.0 Stable Substrate.", "Ready".bold().green());
+            println!("\nSystem is {} for v0.11.0 Stable Substrate.", "Ready".bold().green());
         }
         Commands::Provision => {
             provision::run_provisioning().await?;

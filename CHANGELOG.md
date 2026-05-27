@@ -2,10 +2,17 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
+## [0.11.0] - 2026-05-27: UNIVERSAL AUTOMATED TESTING & WASM/WASI VERIFICATION
+### Added
+- **Universal Testing Architecture & 100% Coverage**: Built an end-to-end integration and smoke testing suite across all three subsystems: Playwright browser E2E flows (Monaco hovers/jumps, MCP sandboxing matrix, Debate courtroom steerage), Rust Axum daemon routes, and Python backend P2P mesh discoverability and Security Sentinel audits.
+- **WASM/WASI Native Run Verification**: Designed dynamic Wasmtime sandbox pipeline capturing stdout/stderr bytes in memory pipes, with automatic WAT-to-Wasm compilations and full verification tests.
+- **Auto-Format on Save**: Standardized developer workflow by injecting `.vscode/settings.json` configuring default formatters (Rust, Python, TS/JS, JSON, CSS) and `editor.formatOnSave` enabled out of the box.
+
 ## [0.10.0] - 2026-05-26: BACKLOG PILLARS & PRODUCTION HARDENING
 ### Added
 - **Local Screenplay Teleplay Replay Canvas**: Wired a high-fidelity chronological replay canvas to visualize and scrub agent decision beating and reasoning trajectories inside the Flight Log panel.
 - **Dynamic Autonomy Level Transition**: Standardized and unified the `staging` autonomy level across the backend `AutonomyLevel` enum and dynamic CustomSelect triggers in the AI Panel and Settings panel, enabling real-time workspace sync via Zustand store actions.
+
 
 ## [0.9.0] - 2026-05-24: P2P MESH SYNC, SWARM MEMORY SUBSTRATE & SECURE CAPABILITY GUARDRAILS
 ### Added
