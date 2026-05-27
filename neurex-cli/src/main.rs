@@ -9,11 +9,8 @@ use tokio::process::Command;
 use tracing::{Level, error, info, warn};
 use tracing_subscriber::FmtSubscriber;
 
-mod api;
-mod bootstrap;
-mod provision;
-mod sandbox;
-mod wasi_sandbox;
+use neurex_cli::{api, bootstrap, provision, sandbox, wasi_sandbox};
+
 
 /// Neurex CLI - The Universal Sentient IDE Substrate Manager
 #[derive(Parser, Debug)]
@@ -257,7 +254,7 @@ async fn main() -> Result<()> {
                 }
             }
 
-            println!("\nSystem is {} for v0.5.2 Stable Substrate.", "Ready".bold().green());
+            println!("\nSystem is {} for v0.10.0 Stable Substrate.", "Ready".bold().green());
         }
         Commands::Provision => {
             provision::run_provisioning().await?;
