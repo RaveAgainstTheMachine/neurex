@@ -1,20 +1,16 @@
+use axum::Router;
+use axum::routing::get;
+use reqwest::StatusCode;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use axum::routing::get;
-use axum::Router;
-use reqwest::StatusCode;
 
-use neurex_cli::api::{create_router, AppState};
+use neurex_cli::api::{AppState, create_router};
 use neurex_cli::wasi_sandbox::WasiSandbox;
 
 #[tokio::test]
 async fn test_server_startup_and_status_routing() {
     let wasi_sandbox = Arc::new(WasiSandbox::new().unwrap());
-    let state = Arc::new(AppState {
-        api_port: 8080,
-        wasi_sandbox,
-        enable_https: false,
-    });
+    let state = Arc::new(AppState { api_port: 8080, wasi_sandbox, enable_https: false });
 
     let app = create_router(state);
     let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
@@ -28,11 +24,7 @@ async fn test_server_startup_and_status_routing() {
 
     // Verify substrate status endpoint is active and returns valid JSON matching our schema
     let client = reqwest::Client::new();
-    let resp = client
-        .get(format!("http://{}/api/substrate/status", addr))
-        .send()
-        .await
-        .unwrap();
+    let resp = client.get(format!("http://{}/api/substrate/status", addr)).send().await.unwrap();
 
     assert_eq!(resp.status(), StatusCode::OK);
     let status_json: serde_json::Value = resp.json().await.unwrap();
@@ -59,39 +51,26 @@ async fn test_reverse_proxy_gateway_routing() {
     let backend_port = backend_addr.port();
 
     let backend_server = tokio::spawn(async move {
-        axum::serve(backend_listener, backend_app.into_make_service())
-            .await
-            .unwrap();
+        axum::serve(backend_listener, backend_app.into_make_service()).await.unwrap();
     });
 
     // 2. Start the CLI substrate router pointing its api_port to our mock backend
     let wasi_sandbox = Arc::new(WasiSandbox::new().unwrap());
-    let state = Arc::new(AppState {
-        api_port: backend_port,
-        wasi_sandbox,
-        enable_https: false,
-    });
+    let state = Arc::new(AppState { api_port: backend_port, wasi_sandbox, enable_https: false });
 
     let cli_router = create_router(state);
     let cli_listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let cli_addr = cli_listener.local_addr().unwrap();
 
     let cli_server = tokio::spawn(async move {
-        axum::serve(
-            cli_listener,
-            cli_router.into_make_service_with_connect_info::<SocketAddr>(),
-        )
-        .await
-        .unwrap();
+        axum::serve(cli_listener, cli_router.into_make_service_with_connect_info::<SocketAddr>())
+            .await
+            .unwrap();
     });
 
     // 3. Make client request to the CLI proxy and verify the backend response is forwarded back
     let client = reqwest::Client::new();
-    let resp = client
-        .get(format!("http://{}/api/mock-endpoint", cli_addr))
-        .send()
-        .await
-        .unwrap();
+    let resp = client.get(format!("http://{}/api/mock-endpoint", cli_addr)).send().await.unwrap();
 
     assert_eq!(resp.status(), StatusCode::OK);
     let body = resp.text().await.unwrap();
@@ -122,9 +101,7 @@ async fn test_tls_boundary_init_validations() {
 }
 
 fn uuid_fallback() -> String {
-    let now = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_nanos();
+    let now =
+        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos();
     format!("{:x}", now)
 }
