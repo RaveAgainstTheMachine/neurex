@@ -48,6 +48,46 @@ fn test_wasi_sandbox_compilation() {
     let _ = std::fs::remove_dir_all(&temp_workspace);
 }
 
+#[test]
+fn test_wasi_sandbox_execution() {
+    let sandbox = WasiSandbox::new().unwrap();
+    let temp_workspace =
+        std::env::temp_dir().join(format!("neurex_test_wasi_exec_{}", uuid_fallback()));
+    std::fs::create_dir_all(&temp_workspace).unwrap();
+
+    let wat_content = r#"
+        (module
+          (import "wasi_snapshot_preview1" "fd_write" (func $fd_write (param i32 i32 i32 i32) (result i32)))
+          (memory 1)
+          (export "memory" (memory 0))
+          (data (i32.const 8) "Hello from WASI!")
+          (func $main (export "_start")
+            ;; io_vec.buf = 8
+            (i32.store (i32.const 32) (i32.const 8))
+            ;; io_vec.len = 16
+            (i32.store (i32.const 36) (i32.const 16))
+            ;; fd_write(1, &io_vec, 1, &written)
+            (call $fd_write
+              (i32.const 1)     ;; fd = stdout
+              (i32.const 32)    ;; *iovs
+              (i32.const 1)     ;; iovs_len
+              (i32.const 40)    ;; *written
+            )
+            drop
+          )
+        )
+    "#;
+
+    let wasm_bytes = wat_content.as_bytes();
+
+    let res = sandbox.run_module(wasm_bytes, &temp_workspace, vec![]).unwrap();
+    assert_eq!(res.exit_code, 0);
+    assert_eq!(res.stdout, "Hello from WASI!");
+    assert_eq!(res.stderr, "");
+
+    let _ = std::fs::remove_dir_all(&temp_workspace);
+}
+
 #[tokio::test]
 async fn test_docker_connection_handshake() {
     // Attempt local docker connection handshake
