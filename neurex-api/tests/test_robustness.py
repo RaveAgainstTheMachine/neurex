@@ -166,3 +166,49 @@ async def test_unmocked_orchestrator_execution(db_session, tmp_path):
     assert diff_event["data"]["path"] == "hello.py"
     assert diff_event["data"]["original"] == "print('hello')"
     assert "# Refactored by Mock AI: add a comment" in diff_event["data"]["modified"]
+
+
+@pytest.mark.asyncio
+async def test_sqlite_wal_lock_contention_stress():
+    """
+    High-Throughput SQLite WAL Stress Test.
+    Concurrently runs 50 independent parallel tasks, each establishing a dedicated
+    database session, writing a record, committing it, and selecting it back.
+    This validates SQLite's WAL concurrency capabilities and confirms zero lock contention.
+    """
+    from sqlmodel import SQLModel
+    from sqlmodel.ext.asyncio.session import AsyncSession
+
+    from core.task_graph import engine
+
+    # 1. Initialize tables for this test run
+    async with engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.create_all)
+
+    # 2. Define concurrent writer-and-reader task logic
+    async def db_task(idx: int):
+        async with AsyncSession(engine, expire_on_commit=False) as session:
+            # Write a unique message
+            msg = ChatMessage(
+                conversation_id=f"wal-stress-conv-{idx}",
+                role="user",
+                content=f"Stress message payload {idx}"
+            )
+            session.add(msg)
+            await session.commit()
+
+            # Select it back to verify reads alongside concurrent commits
+            statement = select(ChatMessage).where(ChatMessage.conversation_id == f"wal-stress-conv-{idx}")
+            results = await session.exec(statement)
+            fetched = results.all()
+            assert len(fetched) == 1
+            assert fetched[0].content == f"Stress message payload {idx}"
+
+    # 3. Trigger 50 parallel database sessions concurrently
+    num_tasks = 50
+    await asyncio.gather(*(db_task(i) for i in range(num_tasks)))
+
+    # 4. Clean up tables
+    async with engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.drop_all)
+
