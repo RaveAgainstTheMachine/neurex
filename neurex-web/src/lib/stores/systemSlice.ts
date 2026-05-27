@@ -1,6 +1,6 @@
 import { StoreSlice } from "./types";
 import { api } from "../api";
-import type { NeurexStore } from "../types";
+import type { NeurexStore, Notification } from "../types";
 
 export const createSystemSlice: StoreSlice<NeurexStore> = (set, _get) => ({
   // ── App Lifecycle ────────────────────────────────────────────────
@@ -66,4 +66,36 @@ export const createSystemSlice: StoreSlice<NeurexStore> = (set, _get) => ({
     setShowSettings: (val) => set((s) => { const next = typeof val === 'function' ? val(s.showSettings) : val; s.showSettings = next; if (next) { s.showAbout = false; } }),
     showAbout: false,
     setShowAbout: (val) => set((s) => { const next = typeof val === 'function' ? val(s.showAbout) : val; s.showAbout = next; if (next) { s.showSettings = false; } }),
+
+    // Notifications Center
+    notifications: [
+      {
+        id: "initial-sync",
+        type: "success",
+        title: "Substrate Active",
+        description: "Secure Neurex v0.10.0 runtime is active.",
+        timestamp: new Date().toLocaleTimeString(),
+        unread: true,
+      }
+    ],
+    addNotification: (type, title, description) => set((s) => {
+      s.notifications = [
+        {
+          id: Math.random().toString(36).substring(2, 9),
+          type,
+          title,
+          description,
+          timestamp: new Date().toLocaleTimeString(),
+          unread: true,
+        },
+        ...s.notifications
+      ];
+    }),
+    clearNotifications: () => set((s) => {
+      s.notifications = [];
+    }),
+    markNotificationsAsRead: () => set((s) => {
+      s.notifications = s.notifications.map(n => ({ ...n, unread: false }));
+    }),
   } as unknown as NeurexStore);
+

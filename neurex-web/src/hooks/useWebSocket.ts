@@ -90,6 +90,7 @@ export function useWebSocket(conversationId: string) {
               s.upsertTask(data as TaskNode);
               break;
             case "plan_ready":
+              s.addNotification("info", "Plan Created", "Multi-agent execution plan is ready for review.");
               (data.tasks as TaskNode[]).forEach(s.upsertTask);
               break;
             case "token":
@@ -101,6 +102,7 @@ export function useWebSocket(conversationId: string) {
               break;
             case "done":
               flushTokens(); // Ensure buffer is empty
+              s.addNotification("success", "Substrate Task Finished", "All planned operations completed cleanly.");
               (data.tasks as TaskNode[]).forEach(s.upsertTask);
               break;
             case "terminal_output":
@@ -114,6 +116,7 @@ export function useWebSocket(conversationId: string) {
               }));
               break;
             case "approval_required":
+              s.addNotification("warning", "Governance Check", "Agent is awaiting authorization to execute a tool.");
               window.dispatchEvent(new CustomEvent("neurex_tool_approval_required", {
                 detail: data
               }));
@@ -140,6 +143,7 @@ export function useWebSocket(conversationId: string) {
               }, 1500);
               break;
             case "file_system_changed":
+              s.addNotification("success", "File System Synced", "Workspace filesystem state updated.");
               // Skip refresh if we just saved locally (likely our own change)
               if (Date.now() - s.lastLocalSave < 3000) break;
 
@@ -154,6 +158,7 @@ export function useWebSocket(conversationId: string) {
               }
               break;
             case "swarm_diff":
+              s.addNotification("info", "Swarm Code Proposal", "Multi-agent swarm has generated a code diff proposal.");
               if (data && Array.isArray(data.changes)) {
                  
                 const diffsObj: Record<string, any> = {};
@@ -184,6 +189,7 @@ export function useWebSocket(conversationId: string) {
               break;
             case "error": {
               const errorMsg = typeof data === "object" ? JSON.stringify(data) : data;
+              s.addNotification("error", "Substrate Error", errorMsg);
               useStore.getState().addMessage({ role: "assistant", content: `❌ Error: ${errorMsg}` });
               break;
             }

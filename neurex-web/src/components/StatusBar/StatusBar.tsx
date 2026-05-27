@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { 
   AlertCircle, AlertTriangle, GitGraph, Activity, 
-  X, CheckCircle, Bell, BellOff 
+  X, CheckCircle, Bell, BellOff, Info 
 } from "lucide-react";
 import { useStore } from "../../lib/store";
 import "./StatusBar.css";
@@ -23,8 +23,12 @@ export function StatusBar({ wsStatus, setPaletteMode, setSidebarTab, isAIActive 
   const settings = useStore(s => s.settings);
   const hiveStats = useStore(s => s.hiveStats);
 
+  const notifications = useStore(s => s.notifications);
+  const clearNotifications = useStore(s => s.clearNotifications);
+  const markNotificationsAsRead = useStore(s => s.markNotificationsAsRead);
   const [showNotifications, setShowNotifications] = useState(false);
-  const notificationCount = 0; // Mocked for now
+  const notificationCount = notifications.filter(n => n.unread).length;
+
 
   return (
     <div className={`status-bar status-bar--${wsStatus} ${settings?.enable_swarm_glow ? "status-bar--glow" : ""}`}>
@@ -73,28 +77,62 @@ export function StatusBar({ wsStatus, setPaletteMode, setSidebarTab, isAIActive 
           </div>
           <button 
             className={`status-segment status-segment--interactive status-segment--notification ${showNotifications ? "active" : ""}`}
-            onClick={() => setShowNotifications(!showNotifications)}
+            onClick={() => {
+              const nextVal = !showNotifications;
+              setShowNotifications(nextVal);
+              if (nextVal) {
+                markNotificationsAsRead();
+              }
+            }}
           >
             {notificationCount > 0 ? <Bell size={12} /> : <BellOff size={12} />}
             {notificationCount > 0 && <span className="notification-badge">{notificationCount}</span>}
           </button>
         </div>
-
+ 
         {showNotifications && (
           <div className="notifications-center">
             <div className="notifications-header">
               <span>NOTIFICATIONS</span>
-              <button className="icon-btn" onClick={() => setShowNotifications(false)}><X size={14} /></button>
+              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                {notifications.length > 0 && (
+                  <button 
+                    className="notifications-clear-btn" 
+                    onClick={clearNotifications}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: "var(--accent-color, #9c6fff)",
+                      fontSize: "10px",
+                      cursor: "pointer",
+                      padding: "2px 6px",
+                      borderRadius: "4px",
+                    }}
+                  >
+                    Clear All
+                  </button>
+                )}
+                <button className="icon-btn" onClick={() => setShowNotifications(false)}><X size={14} /></button>
+              </div>
             </div>
             <div className="notifications-list">
-              <div className="notification-item">
-                <CheckCircle size={14} className="text-green" />
-                <div className="notification-content">
-                  <div className="notification-title">Workspace Synchronized</div>
-                  <div className="notification-time">Just now</div>
-                </div>
-              </div>
-              <div className="notification-empty">No new notifications</div>
+              {notifications.length === 0 ? (
+                <div className="notification-empty">No new notifications</div>
+              ) : (
+                notifications.map((n) => (
+                  <div key={n.id} className="notification-item">
+                    {n.type === "success" && <CheckCircle size={14} className="text-green" />}
+                    {n.type === "error" && <AlertCircle size={14} className="text-red" />}
+                    {n.type === "warning" && <AlertTriangle size={14} className="text-yellow" />}
+                    {n.type === "info" && <Info size={14} className="text-blue" />}
+                    <div className="notification-content">
+                      <div className="notification-title">{n.title}</div>
+                      <div className="notification-desc">{n.description}</div>
+                      <div className="notification-time">{n.timestamp}</div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}

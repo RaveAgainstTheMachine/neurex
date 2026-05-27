@@ -75,6 +75,16 @@ export interface DebateMessage {
   timestamp: string;
 }
 
+export interface Notification {
+  id: string;
+  type: "success" | "warning" | "info" | "error";
+  title: string;
+  description: string;
+  timestamp: string;
+  unread: boolean;
+}
+
+
 export interface ModelProfile {
   name: string;
   engine: string;
@@ -391,4 +401,11 @@ export interface NeurexStore {
 
   showAbout: boolean;
   setShowAbout: (val: boolean | ((v: boolean) => boolean)) => void;
+
+  // Notifications center
+  notifications: Notification[];
+  addNotification: (type: Notification["type"], title: string, description: string) => void;
+  clearNotifications: () => void;
+  markNotificationsAsRead: () => void;
 }
+
