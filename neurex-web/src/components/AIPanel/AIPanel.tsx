@@ -524,6 +524,24 @@ export function AIPanel({ send, conversationId, isActive = true }: AIPanelProps)
                     {msg.content}
                   </ReactMarkdown>
                 </div>
+                {msg.role === "assistant" && msg.graph_id && nodes.some(n => n.graph_id === msg.graph_id && n.status === "AWAITING_APPROVAL") && (
+                  <div className="message__inline-approval">
+                    <div className="inline-approval-card">
+                      <div className="inline-approval-card__title">
+                        🧠 Awaiting Governance Approval
+                      </div>
+                      <p>Neurex is waiting for your authorization to execute this plan.</p>
+                      <div className="inline-approval-card__actions">
+                        <button 
+                          className="btn btn--purple btn--full" 
+                          onClick={() => handleApprovePlan(msg.graph_id!)}
+                        >
+                          ▶ Approve & Execute Plan
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {msg.role === "assistant" && (
                   <button 
                     className="icon-btn message__tts" 
