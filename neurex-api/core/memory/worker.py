@@ -121,7 +121,7 @@ class MemoryWorker:
 
         log.info("memory_worker.full_index.start")
         # Throttle to avoid CPU/API exhaustion
-        semaphore = asyncio.Semaphore(10)
+        semaphore = asyncio.Semaphore(2)
 
         async def indexed_task(path):
             async with semaphore:
@@ -149,17 +149,9 @@ class MemoryWorker:
             chunks = chunk_file(path)
             if not chunks:
                 return
-            documents = []
-            for i, chunk in enumerate(chunks):
-                # Enrich first chunk (headers) and definitions (class/def)
-                if i == 0 or "class " in chunk["text"] or "def " in chunk["text"]:
-                    summary = await self.summarizer.summarize_chunk(chunk["text"])
-                    if summary:
-                        documents.append(f"ANALYSIS: {summary}\n\nCODE:\n{chunk['text']}")
-                    else:
-                        documents.append(chunk["text"])
-                else:
-                    documents.append(chunk["text"])
+
+            # Phase 44.12: Standardize on raw code chunk indexing to eliminate RAG Indexing Storms
+            documents = [chunk["text"] for chunk in chunks]
 
             embeddings = await self.embedder.embed_batch(documents)
             if not embeddings:
