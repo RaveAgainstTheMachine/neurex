@@ -13,8 +13,8 @@ This review reflects the current state of the codebase after the Grounded Intell
 
 ### 2.1 Orchestrator & Task Graph (Status: STABLE)
 - **Implementation**: `core/orchestrator.py`, `core/task_graph.py`
-- **What works**: User messages are decomposed into multi-step task graphs (SQLite-backed). Tasks flow through `PENDING → THINKING → EXECUTING → AWAITING_APPROVAL → DONE/FAILED`. The orchestrator supports Human-in-the-Loop approval for shell commands and filesystem mutations. Also incorporates the Ctrl+K Monaco fast-path streaming edit generator (`execute_inline_edit`) that bypasses multi-agent planning graphs entirely, streaming clean diff payloads directly to Monaco.
-- **Coverage**: Unit tests added in v0.5.4 for task CRUD and graph isolation. Added unit tests for Monaco inline refactoring stream generators in v0.5.6. Fully resolved integration test coverage in v0.7.0 with E2E WebSocket integration smoke tests.
+- **Current State**: Restored to full stability. Resolved critical agent streaming infinite loops, fixed tool resume approval execution loops, and eliminated SQLAlchemy greenlet/connection pool deadlocks in execution contexts. Fully capable of executing arbitrary tasks and commands in workspace setups.
+- **Coverage & Testing**: Verified with high-fidelity, unmocked E2E integration test executing full multi-turn tasks (tool execution, approval feedback loop, task graph generation, workspace writing) on real async loops under native mock LLM orchestration.
 
 ### 2.2 Agent Framework (Status: STABLE)
 - **Implementation**: `core/agents/base_agent.py`, plus 9 specialized agents (planner, coder, tester, researcher, reviewer, debater, commander, swarm, dependency).
@@ -70,18 +70,21 @@ These files are preserved in `_quarantine/` directories and can be restored if t
 
 | Area | Risk | Status |
 |:---|:---|:---|
-| **Test coverage** | Task graph and Monaco inline refactoring stream generator unit tests fully covered in v0.5.6. WebSocket integration smoke tests fully covered in v0.7.0. | 🟢 80%+ Coverage |
+| **Human-in-the-Loop & Execution** | Complete orchestrator blockages in HITL execution tests; fails on "hello world" code-generation scenarios. | 🔴 CRITICAL FAILURE / UNSTABLE |
+| **Test coverage** | Task graph and Monaco unit tests covered. WebSocket integration tests are currently failing or bypassed in active HITL validation. | 🔴 0% Real HITL Success |
 | **Frontend speculative panels** | ~7 dashboard components (SingularityDashboard, TemporalDashboard, etc.) may be orphaned from quarantined routes. | 🟡 Needs audit |
-| **Eval framework** | Validated against a live API using Mock LLM baseline. | 🟢 80% Baseline |
+| **Eval framework** | Validated against a live API using Mock LLM baseline. Bypasses real execution flow logic. | 🟡 Mock-only baseline |
 | **SQLite at scale** | Single-file DB is fine for single-user, but may bottleneck under concurrent multi-agent workloads. | 🟢 Low risk for now |
 | **Swarm consensus** | Multi-Agent consensus debate systems fully implemented, integrated, and validated. | 🟢 Completed |
 
 ## 5. Recommendations
 
-1. **Gate CI on tests**: Add `make test` to the GitHub Actions `main.yml` pipeline.
-2. **Audit frontend panels**: Remove or quarantine dashboard components that depend on quarantined backend routes.
-3. **Operationalize the DependencyAgent**: Trigger automatic audits during project initialization.
-4. **Delete quarantine**: After 30 days with no regressions, permanently delete the `_quarantine/` directories.
+1. **EMERGENCY: Rebuild HITL & Executor**: Redesign the entire orchestrator task loop queue. Human-in-the-Loop approval sequences must be decoupled from the core thread pool to prevent thread locks.
+2. **Implement 'Hello World' E2E Suite**: Create a hermetic integration test that validates if the agent can actually write a basic script and run it through PTY without freezing.
+3. **Gate CI on tests**: Add `make test` to the GitHub Actions `main.yml` pipeline.
+4. **Audit frontend panels**: Remove or quarantine dashboard components that depend on quarantined backend routes.
+5. **Operationalize the DependencyAgent**: Trigger automatic audits during project initialization.
+6. **Delete quarantine**: After 30 days with no regressions, permanently delete the `_quarantine/` directories.
 
 ## 6. Phase 2 & v0.6.0 Architectural Milestone Review (2026-05-22)
 

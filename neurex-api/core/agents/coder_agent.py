@@ -132,6 +132,35 @@ class CoderAgent(BaseAgent):
 
         params = task.get("params")
 
+        # Check if we are resuming from an approved tool call
+        last_tool_call = task.get("last_tool_call")
+        if last_tool_call:
+            log.info("coder.resuming_approved_tool", tool=last_tool_call.get("tool"))
+            tool_call = last_tool_call.get("call", {})
+            tool_cat = last_tool_call.get("tool", "generic")
+            yield {
+                "type": "tool_call",
+                "call": tool_call,
+                "tool": tool_cat,
+                "args": last_tool_call.get("args", {}),
+            }
+            yield {"type": "status", "status": TaskStatus.WRITING}
+
+            tool_result = await self.dispatch_tool(tool_call, conversation_id)
+            messages.append(
+                {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [tool_call],
+                }
+            )
+            messages.append(
+                {
+                    "role": "tool",
+                    "content": tool_result,
+                }
+            )
+
         # Phase 45: Autonomous Self-Repair Loop
         max_rounds = 10
         for i in range(max_rounds):

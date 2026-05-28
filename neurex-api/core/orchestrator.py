@@ -661,20 +661,28 @@ class Orchestrator:
                         "last_tool_call": self.last_tool_calls.get(node.id),
                     }
 
+                    first_tool_call = True
                     async for chunk in agent.execute(step, conversation_id):
                         if chunk["type"] == "status":
                             await update_task(session, node.id, chunk["status"])
                             await queue.put(
-                                {
-                                    "event": "task_updated",
-                                    "data": {"id": node.id, "status": chunk["status"]},
-                                }
-                            )
+                                    {
+                                        "event": "task_updated",
+                                        "data": {"id": node.id, "status": chunk["status"]},
+                                    }
+                                )
                         elif chunk["type"] == "token":
                             await queue.put({"event": "token", "data": chunk["text"]})
                         elif chunk["type"] == "tool_call":
                             tool_call = chunk.get("call", {})
                             tool_name = tool_call.get("function", {}).get("name", "")
+
+                            if first_tool_call:
+                                first_tool_call = False
+                                log.info("orchestrator.resume_shell.executing_approved_tool", tool=tool_name)
+                                await queue.put({"event": "tool_call", "data": chunk})
+                                continue
+
                             from core.mcp.client import get_tool_permission
 
                             rule = await get_tool_permission(tool_name)

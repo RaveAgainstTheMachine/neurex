@@ -2,6 +2,15 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
+## [0.12.1] - 2026-05-28: UNMOCKED E2E CHAT TESTS & ORCHESTRATOR HITL BUG FIXES
+### Added
+- **Unmocked E2E Chat Integration Test**: Added high-fidelity integration test in `tests/test_chat_unmocked.py` that exercises the direct Orchestrator chat workflow asynchronously, executing tool dispatch and interactive Human-in-the-Loop resume triggers without heavy socket mocks.
+### Fixed
+- **Agent Streaming Infinite Loop**: Resolved a critical deadlock in `BaseAgent.stream` where tool history loops caused infinite generation steps under standard mock LLM conditions.
+- **Approved Tool Execution Bypass**: Fixed `CoderAgent.execute` to correctly respect pre-approved tool resumes instead of discarding active tool states.
+- **Approval Handshake Loop**: Addressed Orchestrator shell resumption stalling by introducing execution bypass markers that prevent circular re-approval prompts.
+- **SQLAlchemy Greenlet/Pool Deadlock**: Patched test isolation by skipping database lock acquisitions within asynchronous runner threads during tool execution.
+
 ## [0.11.0] - 2026-05-27: UNIVERSAL AUTOMATED TESTING & WASM/WASI VERIFICATION
 ### Added
 - **Universal Testing Architecture & 100% Coverage**: Built an end-to-end integration and smoke testing suite across all three subsystems: Playwright browser E2E flows (Monaco hovers/jumps, MCP sandboxing matrix, Debate courtroom steerage), Rust Axum daemon routes, and Python backend P2P mesh discoverability and Security Sentinel audits.

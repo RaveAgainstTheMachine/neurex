@@ -238,28 +238,33 @@ class BaseAgent(ABC):
             else:
                 # Execution request
                 yield {"type": "token", "text": "Executing task..."}
-                # Mock a write_file call if we can guess the path
-                import re
+                
+                # Prevent infinite tool execution loop by checking if we already ran a tool call
+                has_run_tool = any(m.get("role") == "tool" for m in messages)
+                
+                if not has_run_tool:
+                    # Mock a write_file call if we can guess the path
+                    import re
 
-                last_msg = untaint_str(messages[-1]["content"].lower()[-500:])
-                path_match = re.search(r"([\w\-]+\.(?:py|md|ts))", last_msg)
-                if path_match:
-                    path = path_match.group(1)
-                    yield {
-                        "type": "tool_call",
-                        "call": {
-                            "function": {
-                                "name": "write_file",
-                                "arguments": json.dumps(
-                                    {
-                                        "path": path,
-                                        "content": f"# Content for {path}\n# Hello from Mock",
-                                    }
-                                ),
+                    last_msg = untaint_str(messages[-1]["content"].lower()[-500:])
+                    path_match = re.search(r"([\w\-]+\.(?:py|md|ts))", last_msg)
+                    if path_match:
+                        path = path_match.group(1)
+                        yield {
+                            "type": "tool_call",
+                            "call": {
+                                "function": {
+                                    "name": "write_file",
+                                    "arguments": json.dumps(
+                                        {
+                                            "path": path,
+                                            "content": f"# Content for {path}\n# Hello from Mock",
+                                        }
+                                    ),
+                                },
+                                "id": "mock_call_1",
                             },
-                            "id": "mock_call_1",
-                        },
-                    }
+                        }
                 yield {"type": "done", "full_text": "Mock execution complete."}
             return
 
@@ -369,7 +374,7 @@ class BaseAgent(ABC):
             path = args.get("path") or args.get("TargetFile")
 
             # 1. Collaboration Lock (Phase 44)
-            if path:
+            if path and os.getenv("NEUREX_MOCK_LLM") != "true":
                 locked = await collaboration_manager.acquire_lock(
                     path, requester, conversation_id=conversation_id
                 )

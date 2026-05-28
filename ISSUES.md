@@ -16,4 +16,6 @@
 | 016 | Transparent Proxy Header Propagation | FIXED | HIGH | Integrated X-Forwarded-* headers into Axum proxy for backend awareness. |
 | 017 | Chat Send Affordance optimization | FIXED | MEDIUM | Added high-visibility send button to AI chat UI. |
 | 018 | Dynamic Model Routing Architecture | FIXED | HIGH | Decoupled cognitive roles and implemented high-density routing grid. |
+| 019 | HITL Orchestrator & Execution complete failure (fails Hello World) | FIXED | CRITICAL | Resolved orchestrator and agent stream loops, bypassed SQLAlchemy greenlet locks, and implemented direct unmocked E2E integration tests. |
+
 
