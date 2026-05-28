@@ -26,18 +26,17 @@ async def list_tasks(graph_id: str | None = None, session: AsyncSession = Depend
 
     query = select(TaskNode)
     if graph_id:
-        # Check if it's a conversation ID (e.g. 'default' or direct alphanumeric session IDs)
-        if graph_id == "default" or len(graph_id) < 20:
-            graph_stmt = select(ChatMessage.graph_id).where(
-                ChatMessage.conversation_id == graph_id, ChatMessage.graph_id.is_not(None)
-            )
-            graph_res = await session.exec(graph_stmt)
-            graph_ids = list(set(graph_res.all()))
-            if graph_ids:
-                query = query.where(TaskNode.graph_id.in_(graph_ids))
-            else:
-                return []
+        # Check if this graph_id is a conversation ID by looking up associated ChatMessages
+        graph_stmt = select(ChatMessage.graph_id).where(
+            ChatMessage.conversation_id == graph_id, ChatMessage.graph_id.is_not(None)
+        )
+        graph_res = await session.exec(graph_stmt)
+        graph_ids = list(set(graph_res.all()))
+
+        if graph_ids:
+            query = query.where(TaskNode.graph_id.in_(graph_ids))
         else:
+            # Fallback to direct graph query
             query = query.where(TaskNode.graph_id == graph_id)
 
     result = await session.exec(query.order_by(TaskNode.created_at.desc()))
