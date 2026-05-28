@@ -12,7 +12,7 @@
 
   <p>
     <a href="./LICENSE"><img src="https://img.shields.io/badge/License-BSL%201.1-purple.svg?style=for-the-badge" alt="License"></a>
-    <a href="#"><img src="https://img.shields.io/badge/Version-v0.12.0-blueviolet.svg?style=for-the-badge" alt="Version"></a>
+    <a href="#"><img src="https://img.shields.io/badge/Version-v0.12.1-blueviolet.svg?style=for-the-badge" alt="Version"></a>
     <a href="#"><img src="https://img.shields.io/badge/Status-Active%20Development-success.svg?style=for-the-badge" alt="Status"></a>
   </p>
 
@@ -27,6 +27,9 @@
 
 ---
 
+> [!WARNING]
+> **CRITICAL STABILITY ALERT**: Recent Human-in-the-Loop (HITL) integration testing has revealed severe regressions. The core orchestrator is currently **unstable** and fails to execute the simplest workflows (including basic "hello world" file/command generations). Do not use for automated workflows until the executor and queue state machine are completely rebuilt.
+
 ## What Is Neurex?
 
 **Neurex** is a local-first AI engineering workspace designed for **Human-Agent Parity**. 
@@ -37,11 +40,11 @@ Rather than treating AI as a black box executing background code edits, Neurex m
 
 ## Core Features
 
-### 🧠 Agentic Orchestration
-*   **Task Graphs**: Persistent SQLite-backed task plans that survive restarts.
+### 🧠 Agentic Orchestration (⚠️ ACTIVE REGRESSION / UNSTABLE)
+*   **Task Graphs**: Persistent SQLite-backed task plans (stalls under current HITL testing).
 *   **Role-Based Routing**: Assign different models to planning, coding, and review tasks independently.
 *   **Multi-Agent Review**: Route changes through multiple agent personas before applying them.
-*   **Tool Calling & Interactive Guardrails**: Safe execution of files, shell commands, and search. Enforces real-time human capability authorization prompts under limited autonomy (v0.9.0).
+*   **Tool Calling & Interactive Guardrails**: Safe execution of files, shell commands, and search. *Currently failing on simple execution tasks like "hello world" due to blocking queue locks.* Enforces real-time human capability authorization prompts under limited autonomy (v0.9.0).
 
 ### ⚡ Rust Control Plane (`neurex-cli`)
 *   **Self-Provisioning**: Downloads and configures a hermetic Python environment via `uv` on first run — no pre-installed Python required.

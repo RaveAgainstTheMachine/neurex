@@ -2,6 +2,15 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
+## [0.12.1] - 2026-05-28: UNMOCKED E2E CHAT TESTS & ORCHESTRATOR HITL BUG FIXES
+### Added
+- **Unmocked E2E Chat Integration Test**: Added high-fidelity integration test in `tests/test_chat_unmocked.py` that exercises the direct Orchestrator chat workflow asynchronously, executing tool dispatch and interactive Human-in-the-Loop resume triggers without heavy socket mocks.
+### Fixed
+- **Agent Streaming Infinite Loop**: Resolved a critical deadlock in `BaseAgent.stream` where tool history loops caused infinite generation steps under standard mock LLM conditions.
+- **Approved Tool Execution Bypass**: Fixed `CoderAgent.execute` to correctly respect pre-approved tool resumes instead of discarding active tool states.
+- **Approval Handshake Loop**: Addressed Orchestrator shell resumption stalling by introducing execution bypass markers that prevent circular re-approval prompts.
+- **SQLAlchemy Greenlet/Pool Deadlock**: Patched test isolation by skipping database lock acquisitions within asynchronous runner threads during tool execution.
+
 ## [0.12.0] - 2026-05-28: GITEA ACTIONS CI/CD HEALER PIPELINE INTEGRATION
 ### Added
 - **Gitea Actions CI/CD Healer Polling**: Replaced simulated/placeholder pipeline healing logic in `ci_healer.py` with a real `httpx.AsyncClient` client polling `/api/v1/repos/{owner}/{repo}/actions/runs`.
