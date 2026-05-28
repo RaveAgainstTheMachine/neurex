@@ -1,1 +1,2 @@
-VERSION = "0.11.1"  # De-mocked PredictiveMaintenance real indexer and browser_get_content HTML→text extraction
+VERSION = "0.12.0"  # Real Gitea Actions CI/CD healer pipeline polling and SQLite task queuing
+

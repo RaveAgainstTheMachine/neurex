@@ -78,9 +78,7 @@ class ConsensusManager:
             del self.proposals[path]
             log.info("consensus.proposal_cleared", path=path)
 
-    async def _prompt_agent_for_vote(
-        self, agent: Any, path: str, content: str
-    ) -> bool:
+    async def _prompt_agent_for_vote(self, agent: Any, path: str, content: str) -> bool:
         """
         Prompts a reviewer agent via mesh inference to evaluate a proposed mutation.
         Returns True (APPROVE) or False (REJECT). Defaults to APPROVE on any error
@@ -187,4 +185,3 @@ Respond ONLY with a JSON object, no prose:
 
 
 consensus_manager = ConsensusManager()
-

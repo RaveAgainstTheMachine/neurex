@@ -2,6 +2,13 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
+## [0.12.0] - 2026-05-28: GITEA ACTIONS CI/CD HEALER PIPELINE INTEGRATION
+### Added
+- **Gitea Actions CI/CD Healer Polling**: Replaced simulated/placeholder pipeline healing logic in `ci_healer.py` with a real `httpx.AsyncClient` client polling `/api/v1/repos/{owner}/{repo}/actions/runs`.
+- **Gitea Config Registration**: Added `gitea_base_url`, `gitea_token`, `gitea_owner`, and `gitea_repo` parameters to the dynamic platform config in `settings_manager`.
+- **SQLite Task Queueing**: Upgraded `initiate_healing` to query the SQLite task graph using `create_task()` to register an `orchestrator` task in `TaskStatus.PENDING` status.
+- **Robustness Tests**: Implemented comprehensive unit tests in `tests/test_ci_healer.py` asserting correct polling, API interaction, double-processing prevention, and SQLite task scheduling.
+
 ## [0.11.1] - 2026-05-27: PRODUCTION DE-MOCKING: PREDICTIVE MAINTENANCE & BROWSER EXTRACTOR
 ### Fixed
 - **PredictiveMaintenance Real Indexer**: `trigger_maintenance_task` previously slept for 10 seconds as a placeholder. Now delegates to `MemoryWorker._full_index()` — the real sema-throttled (10-concurrent) parallel indexer — keeping ChromaDB/RAG synchronized with actual workspace churn. Gracefully no-ops when ChromaDB is unavailable.

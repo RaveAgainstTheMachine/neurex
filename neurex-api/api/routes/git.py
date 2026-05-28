@@ -318,23 +318,19 @@ Commit message:"""
                     return {"message": message}
     except Exception as e:
         import structlog as _log
+
         _log.get_logger().warning("generate_commit_msg.llm_failed", error=str(e))
 
     # Graceful fallback: derive a heuristic message from the diff stat
     try:
         stat = run_git(["diff", "--cached", "--stat"])
-        files_changed = [
-            line.strip().split()[0]
-            for line in stat.splitlines()
-            if "|" in line
-        ]
+        files_changed = [line.strip().split()[0] for line in stat.splitlines() if "|" in line]
         summary = ", ".join(files_changed[:3])
         if len(files_changed) > 3:
             summary += f" and {len(files_changed) - 3} more"
         return {"message": f"chore: update {summary}"}
     except Exception:
         return {"message": "chore: update project files"}
-
 
 
 @router.get("/blame")
