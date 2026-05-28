@@ -194,7 +194,7 @@ class Orchestrator:
                 augmented_message, conversation_id, params=model_params
             ):
                 if chunk["type"] == "token":
-                    yield {"event": "token", "data": chunk["text"]}
+                    yield {"event": "planning_token", "data": chunk["text"]}
                 elif chunk["type"] == "result":
                     plan = chunk["plan"]
 

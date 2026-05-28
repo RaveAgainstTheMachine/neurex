@@ -217,14 +217,39 @@ async def websocket_endpoint(
                         log.error("ws.orch_run_error", error=str(e))
                         await websocket.send_json({"event": "error", "data": str(e)})
                     finally:
-                        # Persist assistant response if any tokens were produced,
-                        # or if a graph was started (to link history to graph)
-                        if assistant_tokens or last_graph_id:
-                            text_content = (
-                                "".join(assistant_tokens) if assistant_tokens else "Plan generated."
-                            )
+                        if last_graph_id:
+                            try:
+                                from core.task_graph import get_graph
+
+                                graph = await get_graph(session, last_graph_id)
+                                markdown_plan = "### ⬡ Coordinated Multi-Agent Execution Plan\n\nI have generated a coordinated plan to fulfill your request:\n\n"
+                                markdown_plan += (
+                                    "| Step | Agent | Task Title | Description | Status |\n"
+                                )
+                                markdown_plan += "| :--- | :--- | :--- | :--- | :--- |\n"
+                                for i, node in enumerate(graph, 1):
+                                    agent_emoji = {
+                                        "planner": "🧠",
+                                        "coder": "💻",
+                                        "tester": "🧪",
+                                        "researcher": "🔍",
+                                        "reviewer": "👀",
+                                        "debater": "⚖️",
+                                        "swarm": "🐝",
+                                    }.get(node.agent_type, "🤖")
+                                    markdown_plan += f"| {i} | {agent_emoji} `{node.agent_type}` | **{node.title}** | {node.description} | `{node.status.value}` |\n"
+
+                                await _persist_message(
+                                    conversation_id, "assistant", markdown_plan, last_graph_id
+                                )
+                                await websocket.send_json(
+                                    {"event": "chat_reply", "data": markdown_plan}
+                                )
+                            except Exception as pe:
+                                log.error("ws.plan_format_error", error=str(pe))
+                        elif assistant_tokens:
                             await _persist_message(
-                                conversation_id, "assistant", text_content, last_graph_id
+                                conversation_id, "assistant", "".join(assistant_tokens)
                             )
 
                 if msg_type == "approve_plan":

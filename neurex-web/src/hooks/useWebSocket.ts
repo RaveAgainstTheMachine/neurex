@@ -82,6 +82,12 @@ export function useWebSocket(conversationId: string) {
           const s = useStore.getState();
 
           switch (event) {
+            case "chat_reply":
+              s.addMessage({ role: "assistant", content: data });
+              break;
+            case "planning_token":
+              // Intercepted planning tokens: do not render raw planning JSON in main chat
+              break;
             case "presence_update":
               s.setPresence(data.filter((p: any) => p.user_id !== userId));
               break;
