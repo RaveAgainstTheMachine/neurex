@@ -5,7 +5,7 @@ All notable changes to the Neurex project will be documented in this file.
 ## [0.12.0] - 2026-05-28: GITEA ACTIONS CI/CD HEALER PIPELINE INTEGRATION
 ### Added
 - **Gitea Actions CI/CD Healer Polling**: Replaced simulated/placeholder pipeline healing logic in `ci_healer.py` with a real `httpx.AsyncClient` client polling `/api/v1/repos/{owner}/{repo}/actions/runs`.
-- **Gitea Config Registration**: Added `gitea_base_url`, `gitea_token`, `gitea_owner`, and `gitea_repo` parameters to the dynamic platform config in `settings_manager`.
+- **Platform Agnostic Environment-Based Configuration**: Integrated Gitea config parameters (`GITEA_BASE_URL`, `GITEA_TOKEN`, `GITEA_OWNER`, `GITEA_REPO`) using standard, portable environment variables rather than polluting the core platform's settings schema, strictly adhering to settings integrity guidelines.
 - **SQLite Task Queueing**: Upgraded `initiate_healing` to query the SQLite task graph using `create_task()` to register an `orchestrator` task in `TaskStatus.PENDING` status.
 - **Robustness Tests**: Implemented comprehensive unit tests in `tests/test_ci_healer.py` asserting correct polling, API interaction, double-processing prevention, and SQLite task scheduling.
 

@@ -3,9 +3,9 @@
 This document outlines the development trajectory of Neurex, focusing on building a stable, local-first AI engineering workspace.
 
 ## 🛰️ Current Operational Status
-- **Current Version**: `v0.11.0-STABLE`
-- **Core Engine**: NeuralHarness v2.5
-- **Status**: Stable for local and LAN-based multi-device collaboration with fully clean CI/CD gates, dynamic autonomy transitions, and active telemetry timelines.
+- **Current Version**: `v0.12.0-STABLE`
+- **Core Engine**: NeuralHarness v2.6
+- **Status**: Stable for local and LAN-based multi-device collaboration with fully clean CI/CD gates, active Gitea Actions self-healing pipeline integration, dynamic autonomy transitions, and active telemetry timelines.
 
 ---
 
@@ -68,12 +68,17 @@ Neurex focuses on three pillars:
 - [x] **🐳 Unmocked Docker Sandbox Verification (`neurex-cli`)**: Rust integration tests executing real sandboxed PTY tasks inside Bollard containers, checking CPU/VRAM ceilings.
 - [x] **📦 WASM/WASI Native Run Verification**: Validating zero-dependency `wasmtime` fallback execution planes with memory pipes.
 
+### Self-Healing & Settings Sovereignty (v0.12.0)
+- [x] **🦊 Gitea Actions CI/CD Healer**: Real `httpx`-driven polling of Gitea Actions API, auto-queueing self-healing tasks in the SQLite graph on build failure.
+- [x] **🛡️ Settings Integrity Protocol**: Hardened platform settings to be 100% agnostic, enforcing the use of environment variables for local/dev infrastructure and secrets.
+- [x] **⚡ High-Throughput SQLite WAL Stress Testing**: Implemented high-concurrency database logging tests to prevent WAL lock contention and verify WAL durability.
+
 ---
 
 ## 🛠️ Future Backlog
 
 ### Unmocked Containerization & Robust Testing Architecture
-- [ ] **⚡ High-Throughput SQLite WAL Stress Testing**: High-concurrency database logging tests to prevent WAL lock contention.
+- [ ] **📈 End-to-End User Flow Smoke Testing**: Execute complete user sessions from authentication to agent code execution in visual environment.
 
 ---
-*Roadmap updated to reflect Universal Automated Testing & WASM/WASI Verification (v0.11.0).*
+*Roadmap updated to reflect Self-Healing & Settings Sovereignty (v0.12.0).*
