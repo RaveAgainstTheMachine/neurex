@@ -29,6 +29,7 @@
 - **Python Env**: Always use the virtual environment in `neurex-api/.venv`. Never install global packages. If a dependency is missing, add it to `requirements.txt` and run `make install-api`.
 - **Node Env**: Use `npm`. If you add a package, it must be in `package.json`.
 - **Secrets**: Never hardcode keys. Use `.env` and load via `dotenv` (Python) or Vite env vars (Web).
+- **Platform Agnosticism & Settings Integrity**: Never bake highly specific developer-infrastructure configurations, third-party hosting credentials, or local environment-specific configurations (e.g., Gitea API tokens, specific local DB credentials, custom path configs) into the core platforms' `DEFAULT_SETTINGS` schema. These MUST reside entirely in standard environment variables (`os.getenv`), ensuring that the default codebase remains 100% platform-agnostic, clean, and portable.
 - **Cleanup**: If you break the DB or vector store, use `make db-clear` or `make db-reset-vectors`. Do not leave the environment in a corrupted state.
 
 # ─────────────────────────────────────────────────────────────────────────────
