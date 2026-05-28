@@ -243,7 +243,13 @@ async def websocket_endpoint(
                                     conversation_id, "assistant", markdown_plan, last_graph_id
                                 )
                                 await websocket.send_json(
-                                    {"event": "chat_reply", "data": markdown_plan}
+                                    {
+                                        "event": "chat_reply",
+                                        "data": {
+                                            "content": markdown_plan,
+                                            "graph_id": last_graph_id,
+                                        },
+                                    }
                                 )
                             except Exception as pe:
                                 log.error("ws.plan_format_error", error=str(pe))

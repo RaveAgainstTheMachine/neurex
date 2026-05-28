@@ -15,6 +15,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { CustomSelect } from '../CustomSelect/CustomSelect';
 import { VoiceLangSelect } from '../CustomSelect/VoiceLangSelect';
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import "highlight.js/styles/github-dark.css";
 import { Loader2, Trash2, CheckCircle2, XCircle, ArrowUp, Mic, Volume2, Paperclip, Shield, Plus } from "lucide-react";
@@ -487,6 +488,7 @@ export function AIPanel({ send, conversationId, isActive = true }: AIPanelProps)
               <div key={msg.id} className={`message message--${msg.role}`}>
                 <div className="message__content">
                   <ReactMarkdown 
+                    remarkPlugins={[remarkGfm]}
                     rehypePlugins={[rehypeHighlight]}
                     components={{
                       code({ node, inline, className, children, ...props }: any) {

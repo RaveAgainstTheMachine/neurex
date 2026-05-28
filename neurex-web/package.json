@@ -39,6 +39,7 @@
     "react-markdown": "^10.1.0",
     "react-resizable-panels": "^2.1.9",
     "rehype-highlight": "^7.0.2",
+    "remark-gfm": "^4.0.1",
     "vscode-languageserver-protocol": "^3.17.5",
     "vscode-languageserver-types": "^3.17.5",
     "vscode-messenger-common": "^0.6.1",

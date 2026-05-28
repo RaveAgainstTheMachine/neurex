@@ -83,7 +83,11 @@ export function useWebSocket(conversationId: string) {
 
           switch (event) {
             case "chat_reply":
-              s.addMessage({ role: "assistant", content: data });
+              if (data && typeof data === "object" && data.content) {
+                s.addMessage({ role: "assistant", content: data.content, graph_id: data.graph_id });
+              } else {
+                s.addMessage({ role: "assistant", content: data });
+              }
               break;
             case "planning_token":
               // Intercepted planning tokens: do not render raw planning JSON in main chat
