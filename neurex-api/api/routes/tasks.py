@@ -22,9 +22,23 @@ class GraphMutation(BaseModel):
 async def list_tasks(graph_id: str | None = None, session: AsyncSession = Depends(get_session)):
     from sqlmodel import select
 
+    from api.routes.chat import ChatMessage
+
     query = select(TaskNode)
     if graph_id:
-        query = query.where(TaskNode.graph_id == graph_id)
+        # Check if it's a conversation ID (e.g. 'default' or direct alphanumeric session IDs)
+        if graph_id == "default" or len(graph_id) < 20:
+            graph_stmt = select(ChatMessage.graph_id).where(
+                ChatMessage.conversation_id == graph_id, ChatMessage.graph_id.is_not(None)
+            )
+            graph_res = await session.exec(graph_stmt)
+            graph_ids = list(set(graph_res.all()))
+            if graph_ids:
+                query = query.where(TaskNode.graph_id.in_(graph_ids))
+            else:
+                return []
+        else:
+            query = query.where(TaskNode.graph_id == graph_id)
 
     result = await session.exec(query.order_by(TaskNode.created_at.desc()))
     return [n.model_dump() for n in result.all()]
