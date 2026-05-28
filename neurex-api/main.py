@@ -37,7 +37,7 @@ from api.routes import (
 from api.websocket import router as ws_router
 from core.context.rules_parser import RulesParser
 from core.logger import setup_logging
-from core.memory.worker import MemoryWorker
+from core.memory.worker import memory_worker
 from core.task_graph import init_db
 
 setup_logging()
@@ -53,7 +53,6 @@ async def lifespan(app: FastAPI):
     await init_db()
 
     # Start file-watcher + indexing worker (non-blocking)
-    memory_worker = MemoryWorker()
     asyncio.create_task(memory_worker.start())
     app.state.memory_worker = memory_worker
 

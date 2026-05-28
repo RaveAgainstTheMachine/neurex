@@ -218,3 +218,6 @@ except ImportError:
     Observer = None
     FileSystemEventHandler = object
     _ChangeHandler = None
+
+
+memory_worker = MemoryWorker()
