@@ -179,11 +179,12 @@ async def lifespan(app: FastAPI):
 from fastapi.responses import JSONResponse as ORJSONResponse
 
 from core.infrastructure.logging_middleware import DebugLoggingMiddleware
+from version import VERSION
 
 app = FastAPI(
     title="Neurex API",
     description="Local-First AI Engineering Workspace",
-    version="0.7.0",
+    version=VERSION,
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json",
