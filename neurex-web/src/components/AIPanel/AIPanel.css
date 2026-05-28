@@ -479,20 +479,28 @@
 
 /* Task card */
 .task-card {
-  background: var(--bg-elevated);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
   border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 8px 10px;
+  border-radius: 8px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  transition: border-color 0.2s;
+  gap: 6px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.task-card:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
 }
 
 .task-card--active { 
   border-color: var(--accent-blue); 
-  box-shadow: 0 0 15px rgba(64, 156, 255, 0.1);
-  background: hsla(215, 100%, 65%, 0.03);
+  box-shadow: 0 0 15px rgba(64, 156, 255, 0.15);
+  background: linear-gradient(135deg, hsla(215, 100%, 65%, 0.06), hsla(215, 100%, 65%, 0.01));
 }
 
 .task-card__header {
