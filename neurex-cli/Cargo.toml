@@ -37,4 +37,4 @@ serde_json = "1.0.150"
 axum-server-dual-protocol = "0.7.0"
 
 [dev-dependencies]
-rcgen = "0.13"
+rcgen = "0.14"
