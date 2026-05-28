@@ -9,7 +9,6 @@ import pytest
 from sqlmodel import select
 
 from core.observability.ci_healer import CIHealer
-from core.settings.manager import settings_manager
 from core.task_graph import TaskNode, TaskStatus
 
 
@@ -17,7 +16,7 @@ from core.task_graph import TaskNode, TaskStatus
 async def test_ci_healer_skips_when_not_configured():
     """CIHealer must skip polling if Gitea environment is not configured."""
     with (
-        patch.object(settings_manager, "get", return_value=None),
+        patch("os.getenv", return_value=None),
         patch("httpx.AsyncClient.get", new_callable=AsyncMock) as mock_get,
     ):
         healer = CIHealer()
@@ -30,16 +29,16 @@ async def test_ci_healer_skips_when_not_configured():
 async def test_ci_healer_polls_and_finds_failure_and_queues_task(db_session):
     """CIHealer must fetch failed runs/jobs/logs and queue an orchestrator task."""
 
-    def mock_get_setting(key):
-        if key == "gitea_base_url":
+    def mock_os_getenv(key, default=None):
+        if key == "GITEA_BASE_URL":
             return "http://mock-gitea.local"
-        if key == "gitea_token":
+        if key == "GITEA_TOKEN":
             return "mock-token"
-        if key == "gitea_owner":
+        if key == "GITEA_OWNER":
             return "mock-owner"
-        if key == "gitea_repo":
+        if key == "GITEA_REPO":
             return "mock-repo"
-        return None
+        return default
 
     mock_runs_response = [
         {
@@ -85,7 +84,7 @@ async def test_ci_healer_polls_and_finds_failure_and_queues_task(db_session):
     healer = CIHealer()
 
     with (
-        patch.object(settings_manager, "get", side_effect=mock_get_setting),
+        patch("os.getenv", side_effect=mock_os_getenv),
         patch("httpx.AsyncClient.get", side_effect=mock_client_get),
         patch("core.observability.ci_healer.async_session", return_value=db_session),
     ):

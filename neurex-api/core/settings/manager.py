@@ -81,11 +81,6 @@ DEFAULT_SETTINGS = {
     "terminal_font_size": 13,
     "terminal_font_family": "'JetBrains Mono', 'Fira Code', monospace",
     "terminal_cursor_style": "block",
-    # Gitea Actions
-    "gitea_base_url": "http://localhost:3000",
-    "gitea_token": "",
-    "gitea_owner": "",
-    "gitea_repo": "",
 }
 
 

@@ -7,13 +7,13 @@ Integrates with the Orchestrator to fix regression bugs in the background.
 from __future__ import annotations
 
 import asyncio
+import os
 import uuid
 from typing import Any
 
 import httpx
 import structlog
 
-from core.settings.manager import settings_manager
 from core.task_graph import TaskStatus, async_session, create_task
 
 log = structlog.get_logger()
@@ -29,10 +29,10 @@ class CIHealer:
         """
         Polls Gitea API for failed action runs.
         """
-        base_url = settings_manager.get("gitea_base_url") or "http://localhost:3000"
-        token = settings_manager.get("gitea_token")
-        owner = settings_manager.get("gitea_owner")
-        repo = settings_manager.get("gitea_repo")
+        base_url = os.getenv("GITEA_BASE_URL") or "http://localhost:3000"
+        token = os.getenv("GITEA_TOKEN")
+        owner = os.getenv("GITEA_OWNER")
+        repo = os.getenv("GITEA_REPO")
 
         # Skip polling if not fully configured
         if not owner or not repo or not token:
