@@ -17,9 +17,11 @@ export const createChatSlice: StoreSlice<NeurexStore> = (set, get) => ({
       const last = s.messages[s.messages.length - 1];
       if (last?.role === "assistant") {
         last.content += token;
+        // Force array reference change so Zustand triggers React re-render
+        s.messages = [...s.messages];
       } else {
         const id = typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Math.random().toString(36).substring(2);
-        s.messages.push({ id, role: "assistant", content: token, timestamp: new Date() });
+        s.messages = [...s.messages, { id, role: "assistant", content: token, timestamp: new Date() }];
       }
     }),
     setActiveConversation: (id) => set((s) => {
