@@ -31,13 +31,13 @@
     "framer-motion": "^12.40.0",
     "highlight.js": "^11.11.1",
     "immer": "^11.1.8",
-    "lucide-react": "^1.16.0",
+    "lucide-react": "^1.17.0",
     "monaco-languageclient": "^10.7.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-hot-toast": "^2.6.0",
     "react-markdown": "^10.1.0",
-    "react-resizable-panels": "^2.1.9",
+    "react-resizable-panels": "^4.11.2",
     "rehype-highlight": "^7.0.2",
     "remark-gfm": "^4.0.1",
     "vscode-languageserver-protocol": "^3.17.5",
@@ -46,7 +46,7 @@
     "vscode-messenger-webview": "^0.6.1",
     "vscode-ws-jsonrpc": "^3.5.0",
     "workbox-precaching": "^7.4.0",
-    "zustand": "^5.0.13"
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
