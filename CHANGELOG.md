@@ -2,6 +2,13 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
+## [0.13.1] - 2026-06-01: IMMUTABILITY RULE INTEGRATION & RELEASE ALIGNMENT
+### Added
+- **Release Immutability Rules**: Integrated explicit release and asset immutability guidelines into `.projectrules` to establish a clean protocol for handling version bumps when corrections are needed instead of in-place tag rewrites.
+
+### Fixed
+- **Release pipeline synchronization**: Bumped all subsystem and core versions to 0.13.1 to trigger clean semantic release tags.
+
 ## [0.13.0] - 2026-06-01: DYNAMIC WORKSPACE, OPT-IN CONSENSUS & SAFE WRITE AUTO-APPROVALS
 ### Added
 - **Dynamic Workspace Binding**: Switched from hardcoded workspace baselines to reactive environment variable bindings on UI path changes.
