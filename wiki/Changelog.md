@@ -2,6 +2,19 @@
 
 All notable changes to the Neurex project will be documented in this file.
 
+## [0.13.0] - 2026-06-01: DYNAMIC WORKSPACE, OPT-IN CONSENSUS & SAFE WRITE AUTO-APPROVALS
+### Added
+- **Dynamic Workspace Binding**: Switched from hardcoded workspace baselines to reactive environment variable bindings on UI path changes.
+- **Opt-In Swarm Consensus**: Converted the global Swarm Consensus protocol into a user setting (`consensus_enabled`, defaulting to False). Added predictive WebSocket notifications suggesting consensus activations during existing file modifications.
+- **Safe-Write HITL Bypass**: Introduced auto-approvals for new file creations under Limited autonomy levels, entirely bypassing the human confirmation queue.
+- **Single-Step Plan Execution**: Enabled task graphs with a single non-planner execution node to run automatically without manual plan approvals.
+- **Structured MCP Results**: Restructured tool responses as JSON envelopes indicating strict success/error states to optimize model reasoning loops.
+
+### Fixed
+- **Double Lock Deadlock**: Purged filesystem-level duplicate lock acquisitions causing agents to deadlock against themselves.
+- **Unified Model Resolution**: Patched Orchestrator shell resumption paths to resolve cognitive agent roles via Route Maps.
+- **Early Linter Return**: Upgraded the Neural Linter to return early without server overhead when standard documents do not exist in the active workspace.
+
 ## [0.12.1] - 2026-05-28: UNMOCKED E2E CHAT TESTS & ORCHESTRATOR HITL BUG FIXES
 ### Added
 - **Unmocked E2E Chat Integration Test**: Added high-fidelity integration test in `tests/test_chat_unmocked.py` that exercises the direct Orchestrator chat workflow asynchronously, executing tool dispatch and interactive Human-in-the-Loop resume triggers without heavy socket mocks.

@@ -1,2 +1,2 @@
-VERSION = "0.12.1"  # E2E unmocked chat test & Orchestrator HITL bug fixes
+VERSION = "0.13.0"  # Dynamic workspace, opt-in consensus, and safe-write auto-approvals
 

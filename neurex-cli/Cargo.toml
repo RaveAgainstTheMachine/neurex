@@ -1,6 +1,6 @@
 [package]
 name = "neurex-cli"
-version = "0.12.1"
+version = "0.13.0"
 edition = "2024"
 repository = "https://github.com/RaveAgainstTheMachine/neurex"
 homepage = "https://github.com/RaveAgainstTheMachine/neurex"
