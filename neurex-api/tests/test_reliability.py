@@ -26,6 +26,8 @@ from core.observability.flight_recorder import get_flight_log, record_decision
 def clean_test_workspace():
     """Ensure the test workspace is completely fresh before and after every test."""
     workspace_path = Path("/tmp/neurex-test-workspace")
+    import os
+    os.environ["WORKSPACE_PATH"] = str(workspace_path)
     if workspace_path.exists():
         shutil.rmtree(workspace_path)
     workspace_path.mkdir(parents=True, exist_ok=True)
