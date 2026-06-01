@@ -15,7 +15,8 @@ log = structlog.get_logger()
 
 class NeuralLinter:
     def __init__(self):
-        self.workspace_path = os.getenv("WORKSPACE_PATH", os.getcwd())
+        from core.mcp.tools.filesystem import get_workspace_root
+        self.workspace_path = str(get_workspace_root())
         self.design_system_path = os.path.join(self.workspace_path, "DESIGN_SYSTEM.md")
         self.architecture_path = os.path.join(self.workspace_path, "ARCHITECTURE.md")
 
@@ -26,6 +27,10 @@ class NeuralLinter:
         Validates a file mutation against architectural standards.
         Returns: (is_valid, reason)
         """
+        # Phase 2.3: Early return if no standards exist
+        if not os.path.exists(self.design_system_path) and not os.path.exists(self.architecture_path):
+            return True, "No standards defined."
+
         # Phase 2.1: Bypass in Mock Mode
         if os.getenv("NEUREX_MOCK_LLM") == "true":
             return True, "Mock mode bypass"

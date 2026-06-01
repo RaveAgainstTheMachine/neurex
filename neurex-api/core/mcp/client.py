@@ -221,11 +221,16 @@ class MCPClient:
         """
         Executes a tool call. Enforces YOLO classification and Swarm Self-Governance (Phase 40).
         """
+        import json
+
         # Granular Permission Check
         rule = await get_tool_permission(tool_name)
         if rule == "deny":
             log.warning("mcp.tool_denied", tool=tool_name)
-            return f"Permission denied: Tool '{tool_name}' has been DENIED by the user."
+            return json.dumps({
+                "success": False,
+                "error": f"Permission denied: Tool '{tool_name}' has been DENIED by the user."
+            })
 
         # Phase 40: Swarm Self-Governance Check
         from core.security.governance import governance_manager
@@ -233,7 +238,10 @@ class MCPClient:
         path = arguments.get("path") or arguments.get("file_path") or arguments.get("TargetFile")
         if path and not governance_manager.is_authorized(conversation_id or "global", path):
             log.error("governance.unauthorized_access", tool=tool_name, path=path)
-            return f"Error: Governance violation. Path '{path}' is not authorized for this task session."
+            return json.dumps({
+                "success": False,
+                "error": f"Error: Governance violation. Path '{path}' is not authorized for this task session."
+            })
 
         # Phase 32: YOLO Permission Classifier
         safe_tools = [
@@ -262,8 +270,18 @@ class MCPClient:
             skill_name = self.skills.get_skill_for_tool(tool_name)
             if skill_name:
                 log.info("mcp.dispatch_to_skill", tool=tool_name, skill=skill_name)
-                return await self.skills.execute_skill_tool(skill_name, tool_name, arguments)
-            return f"Error: Tool '{tool_name}' not found."
+                try:
+                    res = await self.skills.execute_skill_tool(skill_name, tool_name, arguments)
+                    res_str = str(res)
+                    if res_str.startswith("Error") or res_str.startswith("Permission denied") or res_str.startswith("APPROVAL_REQUIRED"):
+                        return json.dumps({"success": False, "error": res_str})
+                    return json.dumps({"success": True, "result": res_str})
+                except Exception as e:
+                    return json.dumps({"success": False, "error": str(e)})
+            return json.dumps({
+                "success": False,
+                "error": f"Error: Tool '{tool_name}' not found."
+            })
 
         try:
             # Inject context-aware parameters
@@ -274,13 +292,16 @@ class MCPClient:
                 arguments["conversation_id"] = conversation_id
 
             result = await fn(**arguments)
-            return str(result)
+            res_str = str(result)
+            if res_str.startswith("Error") or res_str.startswith("Permission denied") or res_str.startswith("APPROVAL_REQUIRED"):
+                return json.dumps({"success": False, "error": res_str})
+            return json.dumps({"success": True, "result": res_str})
         except PermissionError as e:
             log.error("mcp.permission_denied", tool=tool_name, error=str(e))
-            return f"Permission denied: {e}"
+            return json.dumps({"success": False, "error": f"Permission denied: {e}"})
         except Exception as e:
             log.error("mcp.tool_error", tool=tool_name, error=str(e))
-            return f"Tool error: {e}"
+            return json.dumps({"success": False, "error": f"Tool error: {e}"})
 
     def list_tools(self) -> list[str]:
         return list(TOOL_REGISTRY.keys())

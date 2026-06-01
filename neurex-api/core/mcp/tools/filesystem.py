@@ -14,30 +14,42 @@ import structlog
 
 log = structlog.get_logger()
 
-WORKSPACE_ROOT = Path(os.getenv("WORKSPACE_PATH", "/workspace")).resolve()
-TRASH_ROOT = Path(
-    os.getenv("NEUREX_TRASH_PATH", str(WORKSPACE_ROOT / ".neurex" / "trash"))
-).resolve()
+
+def get_workspace_root() -> Path:
+    return Path(os.getenv("WORKSPACE_PATH", "/workspace")).resolve()
+
+
+def get_trash_root() -> Path:
+    return Path(
+        os.getenv("NEUREX_TRASH_PATH", str(get_workspace_root() / ".neurex" / "trash"))
+    ).resolve()
+
+
+def get_staging_root() -> Path:
+    return get_workspace_root() / ".neurex" / "staging"
 
 
 def _safe_path(relative_path: str) -> Path:
-    """Resolve and validate that the path stays within WORKSPACE_ROOT and NOT in TRASH_ROOT."""
+    """Resolve and validate that the path stays within get_workspace_root() and NOT in get_trash_root()."""
+    root = get_workspace_root()
+    trash = get_trash_root()
+    
     # Ensure workspace root exists
-    if not WORKSPACE_ROOT.exists():
-        WORKSPACE_ROOT.mkdir(parents=True, exist_ok=True)
+    if not root.exists():
+        root.mkdir(parents=True, exist_ok=True)
 
     try:
         # Join and resolve
-        resolved = (WORKSPACE_ROOT / relative_path).resolve()
+        resolved = (root / relative_path).resolve()
 
-        # Security check: must be inside WORKSPACE_ROOT
-        if not resolved.is_relative_to(WORKSPACE_ROOT):
+        # Security check: must be inside root
+        if not resolved.is_relative_to(root):
             raise PermissionError(
                 f"Path traversal attempt blocked: {relative_path!r} resolves outside workspace."
             )
 
         # Rogue agent safeguard: Block access to trash
-        if resolved.is_relative_to(TRASH_ROOT):
+        if resolved.is_relative_to(trash):
             raise PermissionError(
                 f"Access denied: {relative_path!r} is inside the protected Trash directory. "
                 "Agents are not permitted to read, write, or delete files from the trash."
@@ -61,9 +73,6 @@ async def read_file(path: str) -> str:
     return content
 
 
-STAGING_ROOT = WORKSPACE_ROOT / ".neurex" / "staging"
-
-
 async def write_file(path: str, content: str, autonomy_level: str = "limited") -> str:
     """Write text content to a file in the workspace, supporting staging mode."""
     resolved = _safe_path(path)
@@ -72,29 +81,21 @@ async def write_file(path: str, content: str, autonomy_level: str = "limited") -
     if level == "restricted":
         return f"APPROVAL_REQUIRED: Restricted mode: File write to '{path}' requires approval."
 
-    from api.routes.files import collab_manager
+    target_path = resolved
+    if level == "staging":
+        rel = resolved.relative_to(get_workspace_root())
+        target_path = get_staging_root() / rel
 
-    if not await collab_manager.acquire_lock(path, "autonomous_agent_1"):
-        return "Error: Collision detected. File is locked by another user. Retry later."
+        # If the file had a deletion marker, remove it
+        marker_path = get_staging_root() / f"{rel}.deleted"
+        if marker_path.exists():
+            marker_path.unlink()
 
-    try:
-        target_path = resolved
-        if level == "staging":
-            rel = resolved.relative_to(WORKSPACE_ROOT)
-            target_path = STAGING_ROOT / rel
-
-            # If the file had a deletion marker, remove it
-            marker_path = STAGING_ROOT / f"{rel}.deleted"
-            if marker_path.exists():
-                marker_path.unlink()
-
-        target_path.parent.mkdir(parents=True, exist_ok=True)
-        async with aiofiles.open(target_path, "w") as f:
-            await f.write(content)
-        log.info("fs.write", path=path, chars=len(content), staged=(level == "staging"))
-        return f"OK: wrote {len(content)} chars to {path}"
-    finally:
-        await collab_manager.release_lock(path, "autonomous_agent_1")
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+    async with aiofiles.open(target_path, "w") as f:
+        await f.write(content)
+    log.info("fs.write", path=path, chars=len(content), staged=(level == "staging"))
+    return f"OK: wrote {len(content)} chars to {path}"
 
 
 async def delete_file(path: str, autonomy_level: str = "limited") -> str:
@@ -110,22 +111,22 @@ async def delete_file(path: str, autonomy_level: str = "limited") -> str:
     resolved = _safe_path(path)
     if not resolved.exists():
         if level == "staging":
-            rel = resolved.relative_to(WORKSPACE_ROOT)
-            staged_path = STAGING_ROOT / rel
+            rel = resolved.relative_to(get_workspace_root())
+            staged_path = get_staging_root() / rel
             if not staged_path.exists():
                 return f"Error: {path} does not exist"
         else:
             return f"Error: {path} does not exist"
 
     if level == "staging":
-        rel = resolved.relative_to(WORKSPACE_ROOT)
-        target_path = STAGING_ROOT / rel
+        rel = resolved.relative_to(get_workspace_root())
+        target_path = get_staging_root() / rel
         # If it was already written in staging, delete it
         if target_path.is_file():
             target_path.unlink()
 
         # Write a deletion marker file
-        marker_path = STAGING_ROOT / f"{rel}.deleted"
+        marker_path = get_staging_root() / f"{rel}.deleted"
         marker_path.parent.mkdir(parents=True, exist_ok=True)
         async with aiofiles.open(marker_path, "w") as f:
             await f.write("DELETED")
@@ -133,13 +134,13 @@ async def delete_file(path: str, autonomy_level: str = "limited") -> str:
         log.info("fs.stage_delete", path=path)
         return f"OK: staged deletion of {path}."
 
-    TRASH_ROOT.mkdir(parents=True, exist_ok=True)
+    get_trash_root().mkdir(parents=True, exist_ok=True)
 
     import shutil
     from datetime import datetime
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    trash_path = TRASH_ROOT / f"{timestamp}_{resolved.name}"
+    trash_path = get_trash_root() / f"{timestamp}_{resolved.name}"
 
     shutil.move(str(resolved), str(trash_path))
     log.info("fs.soft_delete", path=path, trash=str(trash_path))
@@ -152,7 +153,7 @@ async def list_directory(path: str = ".") -> str:
         return f"Error: not a directory: {path}"
     entries = []
     for item in sorted(safe.iterdir()):
-        rel = item.relative_to(WORKSPACE_ROOT)
+        rel = item.relative_to(get_workspace_root())
         kind = "dir" if item.is_dir() else "file"
         entries.append(f"{kind}  {rel}")
     return "\n".join(entries) if entries else "(empty directory)"
@@ -173,8 +174,8 @@ async def apply_diff(path: str, search: str, replace: str, autonomy_level: str =
     # Read from staging if it exists, otherwise from original
     source_path = safe
     if level == "staging":
-        rel = safe.relative_to(WORKSPACE_ROOT)
-        staged_path = STAGING_ROOT / rel
+        rel = safe.relative_to(get_workspace_root())
+        staged_path = get_staging_root() / rel
         if staged_path.is_file():
             source_path = staged_path
         elif not safe.is_file():
@@ -205,12 +206,12 @@ async def apply_diff(path: str, search: str, replace: str, autonomy_level: str =
     # Write to target
     target_path = safe
     if level == "staging":
-        rel = safe.relative_to(WORKSPACE_ROOT)
-        target_path = STAGING_ROOT / rel
+        rel = safe.relative_to(get_workspace_root())
+        target_path = get_staging_root() / rel
         target_path.parent.mkdir(parents=True, exist_ok=True)
 
         # If the file had a deletion marker, remove it
-        marker_path = STAGING_ROOT / f"{rel}.deleted"
+        marker_path = get_staging_root() / f"{rel}.deleted"
         if marker_path.exists():
             marker_path.unlink()
 
@@ -223,15 +224,16 @@ async def apply_diff(path: str, search: str, replace: str, autonomy_level: str =
 
 async def list_staging() -> list[dict]:
     """List all files in staging, categorized as modified or deleted."""
-    if not STAGING_ROOT.exists():
+    staging = get_staging_root()
+    if not staging.exists():
         return []
 
     staged = []
     # Walk staging directory
-    for root, _, files in os.walk(STAGING_ROOT):
+    for root, _, files in os.walk(staging):
         for f in files:
             full_path = Path(root) / f
-            rel = full_path.relative_to(STAGING_ROOT)
+            rel = full_path.relative_to(staging)
 
             if f.endswith(".deleted"):
                 # It's a deletion marker
@@ -245,16 +247,19 @@ async def list_staging() -> list[dict]:
 
 async def clear_staging():
     """Clear all staged files."""
-    if STAGING_ROOT.exists():
+    staging = get_staging_root()
+    if staging.exists():
         import shutil
 
-        shutil.rmtree(STAGING_ROOT)
+        shutil.rmtree(staging)
         log.info("fs.staging_cleared")
 
 
 async def commit_staging() -> dict:
     """Commit all staged modifications to WORKSPACE_ROOT."""
-    if not STAGING_ROOT.exists():
+    staging = get_staging_root()
+    workspace = get_workspace_root()
+    if not staging.exists():
         return {"status": "ok", "committed_count": 0}
 
     staged_items = await list_staging()
@@ -264,8 +269,8 @@ async def commit_staging() -> dict:
 
     for item in staged_items:
         rel_path = item["path"]
-        staged_file = STAGING_ROOT / rel_path
-        original_file = WORKSPACE_ROOT / rel_path
+        staged_file = staging / rel_path
+        original_file = workspace / rel_path
 
         if item["status"] == "deleted":
             # Delete original file
@@ -275,8 +280,8 @@ async def commit_staging() -> dict:
                 else:
                     original_file.unlink()
                 committed_count += 1
-            # Clean up the marker file
-            marker_file = STAGING_ROOT / f"{rel_path}.deleted"
+              # Clean up the marker file
+            marker_file = staging / f"{rel_path}.deleted"
             if marker_file.exists():
                 marker_file.unlink()
         else:

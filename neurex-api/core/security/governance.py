@@ -51,15 +51,26 @@ class GovernanceManager:
 
     def is_authorized(self, task_id: str, path: str) -> bool:
         """Checks if a path is authorized for a specific task."""
-        # Check global safe paths (e.g. within current project root)
+        # Check dynamic workspace path
+        workspace_path = os.environ.get("WORKSPACE_PATH")
+        if workspace_path:
+            abs_workspace = os.path.abspath(workspace_path)
+            abs_path = os.path.abspath(path)
+            if abs_path == abs_workspace or abs_path.startswith(abs_workspace + os.sep):
+                return True
+
+        # Check global safe paths (e.g. within current project root / cwd)
         cwd = os.getcwd()
-        if path.startswith(cwd):
+        abs_cwd = os.path.abspath(cwd)
+        abs_path = os.path.abspath(path)
+        if abs_path == abs_cwd or abs_path.startswith(abs_cwd + os.sep):
             return True
 
         # Check dynamic grants
         grants = self.dynamic_grants.get(task_id, set())
         for granted_path in grants:
-            if path.startswith(granted_path):
+            abs_granted = os.path.abspath(granted_path)
+            if abs_path == abs_granted or abs_path.startswith(abs_granted + os.sep):
                 return True
         return False
 

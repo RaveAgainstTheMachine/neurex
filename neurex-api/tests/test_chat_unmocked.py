@@ -29,15 +29,10 @@ async def test_real_chat_workflow_hello_world(db_session, sample_workspace):
     os.environ["WORKSPACE_PATH"] = str(sample_workspace)
     os.environ["AUTONOMY_CEILING"] = "limited"
 
-    # Grant dynamic governance path access to the test conversation
-    from core.security.governance import governance_manager
-
-    governance_manager.dynamic_grants["test-unmocked-conv"] = {""}
-
-    # Pre-clear the output file in the globally resolved workspace root
+    # Pre-create the output file to test overwrite (non-safe write) HITL block
     stale_file = Path("/tmp/neurex-test-workspace/hello.py")
-    if stale_file.exists():
-        stale_file.unlink()
+    stale_file.parent.mkdir(parents=True, exist_ok=True)
+    stale_file.write_text("# Existing stale hello.py content")
 
     # 2. Instantiate real Orchestrator components
     rules = RulesParser()

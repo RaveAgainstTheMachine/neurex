@@ -55,6 +55,7 @@ DEFAULT_SETTINGS = {
     # Security & Filesystem
     "neurex_trash_path": ".neurex/trash",
     "enable_push_notifications": True,
+    "consensus_enabled": False,
     # Appearance
     "enable_glassmorphism": True,
     "enable_animations": True,

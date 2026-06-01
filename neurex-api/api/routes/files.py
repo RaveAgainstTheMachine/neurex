@@ -137,6 +137,8 @@ async def set_workspace(req: WorkspaceRequest):
     if not req.path:
         workspace_state.path = None
         workspace_state.persist()
+        if "WORKSPACE_PATH" in os.environ:
+            del os.environ["WORKSPACE_PATH"]
         return {"path": None, "status": "closed"}
 
     safe_req_path = untaint_str(req.path)
@@ -145,6 +147,7 @@ async def set_workspace(req: WorkspaceRequest):
         raise HTTPException(status_code=400, detail="Invalid workspace path")
 
     log.info("files.workspace_switch", old=str(workspace_state.path), new=str(new_path))
+    os.environ["WORKSPACE_PATH"] = str(new_path)
     workspace_state.path = new_path
     workspace_state.persist()
 

@@ -192,6 +192,14 @@ The frontend `NeurexStore` tracks the source root for every asset:
 - **Tabs**: Editor tabs use `${root}:${path}` identifiers to support duplicate filenames across different projects.
 - **Navigation**: Breadcrumbs are prefixed with the workspace root name to provide instant spatial orientation.
 - **Presence**: User and agent presence are scoped to the active project root, allowing for focused collaboration.
+
+### 11.4 Dynamic Workspace Binding (IDE Workspace Mode)
+Workspace binding is dynamic. Rather than a hardcoded baseline folder, Neurex dynamically updates the active workspace path (`WORKSPACE_PATH` environment variable) when the user switches folders in the visual file explorer. 
+- **Dynamic Roots**: All filesystem tools, linter boundaries, and path authorization rules dynamically evaluate paths relative to the active workspace folder at execution time.
+- **Fast-Path Auto-Approvals**:
+  - **Single-Step Plans**: Single-step execution tasks bypass the plan approval step entirely, executing instantly to maximize throughput.
+  - **Safe Writes**: Attempts to create entirely new files that do not exist on disk bypass the Human-in-the-Loop (HITL) manual approval queue, while destructive actions (overwriting existing files or running shell commands) remain strictly halted for safety.
+
 ## 10. Language Intelligence & LSP Hub
 
 Neurex implements a high-performance, native LSP Hub that provides IDE-grade intelligence without the overhead of external plugins.
@@ -246,8 +254,10 @@ The `NeuralLinter` serves as an intelligent gatekeeper within the `BaseAgent` to
 - **Feedback & Correction**: If a mutation is rejected, the linter returns a detailed architectural rationale, triggering an **Autonomous Self-Repair Loop** where the agent reflects on the failure and regenerates a compliant change.
  
 ### 13.2 Swarm Consensus Protocol
-Critical architectural assets (core agent logic, infrastructure, task graphs) are protected by a democratic governance layer.
-- **Consensus Manager**: Tracks mutation proposals for protected paths.
+Critical architectural assets (core agent logic, infrastructure, task graphs) are protected by a democratic governance layer. Swarm Consensus is a **user-configurable opt-in toggle** (defaulting to `False`).
+- **Opt-In Toggle**: Consensus can be enabled or disabled via the `consensus_enabled` setting in settings.
+- **Intelligent Recommendations**: If consensus is disabled, and an agent proposes mutating or overwriting an *existing* file, the system broadcasts a real-time WebSocket suggestion (`suggest_consensus` event) recommending that the user enable consensus for that operation.
+- **Consensus Manager**: Tracks mutation proposals for protected paths when consensus is enabled.
 - **Voting Threshold**: Mutations to core assets require a minimum of 3 positive votes from distinct agent personas (e.g., Coder, Reviewer, Planner).
 - **Consensus Evaluation**: Specialized reviewer agents are autonomously spawned to evaluate and vote on proposals, preventing unilateral "Neural Drift."
  

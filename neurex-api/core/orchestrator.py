@@ -227,23 +227,47 @@ class Orchestrator:
                 )
                 await self.session.commit()
 
-            # Set planner to AWAITING_APPROVAL
-            await update_task(
-                self.session, planner_node.id, TaskStatus.AWAITING_APPROVAL, result=json.dumps(plan)
-            )
+            non_planner_tasks = [step for step in plan if step.get("agent") != "planner"]
+            is_single_step = len(non_planner_tasks) == 1
 
-            from api.routes.notifications import send_notification
+            if is_single_step:
+                log.info("orchestrator.run.auto_approve_single_step", graph_id=graph_id)
+                await update_task(self.session, planner_node.id, TaskStatus.DONE, result=json.dumps(plan))
+                await self.session.commit()
 
-            send_notification(
-                title="Plan Ready", body=f"Neurex has created a plan for: {planner_node.title}"
-            )
+                # Yield plan_ready so the UI shows the plan
+                graph = await get_graph(self.session, graph_id)
+                yield {
+                    "event": "plan_ready",
+                    "data": {
+                        "graph_id": graph_id,
+                        "tasks": [jsonable_encoder(n) for n in graph],
+                        "auto_approved": True,
+                    },
+                }
 
-            # Reload graph to send to UI
-            graph = await get_graph(self.session, graph_id)
-            yield {
-                "event": "plan_ready",
-                "data": {"graph_id": graph_id, "tasks": [jsonable_encoder(n) for n in graph]},
-            }
+                # Immediately resume and yield its events!
+                async for event in self.resume(graph_id, conversation_id):
+                    yield event
+            else:
+                # Set planner to AWAITING_APPROVAL
+                await update_task(
+                    self.session, planner_node.id, TaskStatus.AWAITING_APPROVAL, result=json.dumps(plan)
+                )
+                await self.session.commit()
+
+                from api.routes.notifications import send_notification
+
+                send_notification(
+                    title="Plan Ready", body=f"Neurex has created a plan for: {planner_node.title}"
+                )
+
+                # Reload graph to send to UI
+                graph = await get_graph(self.session, graph_id)
+                yield {
+                    "event": "plan_ready",
+                    "data": {"graph_id": graph_id, "tasks": [jsonable_encoder(n) for n in graph]},
+                }
         except Exception as e:
             log.critical("orchestrator.run_crashed", graph_id=graph_id, error=str(e), exc_info=True)
             yield {"event": "error", "data": {"message": f"Critical planning failure: {str(e)}"}}
@@ -447,10 +471,32 @@ class Orchestrator:
 
                                         rule = await get_tool_permission(tool_name)
 
-                                        if rule == "ask" or (
+                                        is_safe_write = False
+                                        if tool_name == "write_file":
+                                            args_dict = chunk.get("args") or tool_call.get("function", {}).get("arguments", {})
+                                            if isinstance(args_dict, str):
+                                                try:
+                                                    args_dict = json.loads(args_dict)
+                                                except Exception:
+                                                    args_dict = {}
+                                            target_path = args_dict.get("path")
+                                            if target_path:
+                                                try:
+                                                    from core.mcp.tools.filesystem import (
+                                                        get_workspace_root,
+                                                    )
+                                                    ws_root = get_workspace_root()
+                                                    full_target = (ws_root / target_path).resolve()
+                                                    if not full_target.exists():
+                                                        is_safe_write = True
+                                                        log.info("orchestrator.resume.auto_approve_safe_write", path=target_path)
+                                                except Exception as ex:
+                                                    log.warning("orchestrator.resume.safe_write_check_failed", error=str(ex))
+
+                                        if not is_safe_write and (rule == "ask" or (
                                             self.autonomy_level == "limited"
                                             and chunk.get("tool") in ["shell", "filesystem"]
-                                        ):
+                                        )):
                                             log.info(
                                                 "orchestrator.hitl_required",
                                                 tool=tool_name or chunk.get("tool"),
@@ -643,12 +689,34 @@ class Orchestrator:
 
                     from core.settings.manager import settings_manager
 
-                    settings_key = f"{node.agent_type}_model"
-                    model_name = settings_manager.get(settings_key)
+                    # Phase 60: Resolve model via Route Map
+                    role_map = {
+                        "planner": "Planning",
+                        "coder": "Coding",
+                        "tester": "Testing",
+                        "researcher": "Researching",
+                        "reviewer": "Reviewing",
+                        "debater": "Reviewing",
+                        "commander": "Planning",
+                    }
 
-                    model_params = await self.infra.resolve_model_params(model_name)
-                    if model_params == "Unknown":
+                    routes = settings_manager.get("model_routes") or {}
+                    target_role = role_map.get(node.agent_type, "Coding")
+                    route_config = routes.get(target_role) or settings_manager.get(
+                        f"{node.agent_type}_model"
+                    )
+
+                    if isinstance(route_config, dict):
+                        model_name = route_config.get("model")
+                        model_params = route_config.get("params")
+                    else:
+                        model_name = route_config
                         model_params = None
+
+                    if not model_params and model_name:
+                        model_params = await self.infra.resolve_model_params(model_name)
+                        if model_params == "Unknown":
+                            model_params = None
 
                     AgentClass = AGENT_REGISTRY.get(node.agent_type, AGENT_REGISTRY["coder"])
                     agent = AgentClass(self.rules, self.ctx, model=model_name)
@@ -687,10 +755,30 @@ class Orchestrator:
 
                             rule = await get_tool_permission(tool_name)
 
-                            if rule == "ask" or (
+                            is_safe_write = False
+                            if tool_name == "write_file":
+                                args_dict = chunk.get("args") or tool_call.get("function", {}).get("arguments", {})
+                                if isinstance(args_dict, str):
+                                    try:
+                                        args_dict = json.loads(args_dict)
+                                    except Exception:
+                                        args_dict = {}
+                                target_path = args_dict.get("path")
+                                if target_path:
+                                    try:
+                                        from core.mcp.tools.filesystem import get_workspace_root
+                                        ws_root = get_workspace_root()
+                                        full_target = (ws_root / target_path).resolve()
+                                        if not full_target.exists():
+                                            is_safe_write = True
+                                            log.info("orchestrator.resume_shell.auto_approve_safe_write", path=target_path)
+                                    except Exception as ex:
+                                        log.warning("orchestrator.resume_shell.safe_write_check_failed", error=str(ex))
+
+                            if not is_safe_write and (rule == "ask" or (
                                 self.autonomy_level == "limited"
                                 and chunk.get("tool") in ["shell", "filesystem"]
-                            ):
+                            )):
                                 log.info(
                                     "orchestrator.resume_shell.hitl_required",
                                     tool=tool_name or chunk.get("tool"),

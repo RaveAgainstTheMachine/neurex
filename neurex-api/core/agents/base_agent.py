@@ -222,16 +222,31 @@ class BaseAgent(ABC):
                 import re
 
                 last_msg = untaint_str(messages[-1]["content"].lower()[-500:])
-                path_match = re.search(r"([\w\-]+\.(?:py|md|ts))", last_msg)
+                path_match = re.search(r"([\w\-]+\.(?:py|md|ts|js|jsx|tsx|css|html|json|yaml|yml|toml|sh|txt|rs|go|java|rb|c|cpp|h))", last_msg)
                 path = path_match.group(1) if path_match else "output.txt"
 
-                plan = [
-                    {
-                        "agent": "coder",
-                        "title": f"Create {path}",
-                        "description": f"Create a file named {path} with appropriate content.",
-                    }
-                ]
+                plan = []
+                if "named" in last_msg:
+                    plan = [
+                        {
+                            "agent": "coder",
+                            "title": "Create workspace structure",
+                            "description": "Ensure project folders are ready.",
+                        },
+                        {
+                            "agent": "coder",
+                            "title": f"Create {path}",
+                            "description": f"Create a file named {path} with appropriate content.",
+                        }
+                    ]
+                else:
+                    plan = [
+                        {
+                            "agent": "coder",
+                            "title": f"Create {path}",
+                            "description": f"Create a file named {path} with appropriate content.",
+                        }
+                    ]
                 yield {"type": "token", "text": json.dumps(plan)}
                 yield {"type": "result", "plan": plan}
                 yield {"type": "done", "full_text": json.dumps(plan)}
@@ -247,7 +262,7 @@ class BaseAgent(ABC):
                     import re
 
                     last_msg = untaint_str(messages[-1]["content"].lower()[-500:])
-                    path_match = re.search(r"([\w\-]+\.(?:py|md|ts))", last_msg)
+                    path_match = re.search(r"([\w\-]+\.(?:py|md|ts|js|jsx|tsx|css|html|json|yaml|yml|toml|sh|txt|rs|go|java|rb|c|cpp|h))", last_msg)
                     if path_match:
                         path = path_match.group(1)
                         yield {
@@ -372,6 +387,29 @@ class BaseAgent(ABC):
         requester = f"agent:{self.agent_type}"
         if name in mutation_tools:
             path = args.get("path") or args.get("TargetFile")
+
+            # Suggest enabling consensus if a file exists and consensus is OFF
+            if path:
+                try:
+                    from core.settings.manager import settings_manager
+                    if not settings_manager.get("consensus_enabled"):
+                        from core.mcp.tools.filesystem import get_workspace_root
+                        ws_root = get_workspace_root()
+                        resolved_path = (ws_root / path).resolve()
+                        if resolved_path.exists() and resolved_path.is_file():
+                            from core.collaboration.presence import presence_manager
+                            await presence_manager.broadcast(
+                                conversation_id,
+                                {
+                                    "event": "suggest_consensus",
+                                    "data": {
+                                        "path": path,
+                                        "message": f"Agent is about to modify the existing file '{path}'. Consider enabling Swarm Consensus for additional security."
+                                    }
+                                }
+                            )
+                except Exception as e:
+                    log.warning("dispatch_tool.suggest_consensus_failed", error=str(e))
 
             # 1. Collaboration Lock (Phase 44)
             if path and os.getenv("NEUREX_MOCK_LLM") != "true":

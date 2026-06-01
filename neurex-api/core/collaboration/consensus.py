@@ -39,6 +39,9 @@ class ConsensusManager:
 
     def is_protected(self, path: str) -> bool:
         """Checks if a file requires swarm consensus for mutation."""
+        from core.settings.manager import settings_manager
+        if not settings_manager.get("consensus_enabled"):
+            return False
         return any(path.endswith(p) or p in path for p in self.protected_paths)
 
     async def submit_proposal(self, path: str, content: str, requester: str) -> str:
