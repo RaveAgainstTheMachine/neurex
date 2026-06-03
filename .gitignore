@@ -1,0 +1,37 @@
+# ── Environment ───────────────────────────────────────────────────────────────
+.env
+.env.local
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+
+# ── Databases & Logs ──────────────────────────────────────────────────────────
+*.db
+neurex-api/*.db
+neurex-api/*.db-shm
+neurex-api/*.db-wal
+neurex-api/*.log
+neurex-web/vite.log
+
+# ── Keys & Secrets ────────────────────────────────────────────────────────────
+neurex-api/*.pem
+neurex-api/scratch/
+neurex-api/skills/*/
+
+# ── Local Storage ─────────────────────────────────────────────────────────────
+.models/
+chroma_db/
+.neurex/
+workspace/
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+*.log
+neurex-web/dist/
+node_modules/
