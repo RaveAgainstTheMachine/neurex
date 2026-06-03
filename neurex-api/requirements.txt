@@ -24,7 +24,7 @@ tiktoken==0.7.0
 
 # Async file I/O
 aiofiles==24.1.0
-aiohttp==3.13.4
+aiohttp==3.14.0
 
 # State & persistence
 sqlmodel==0.0.21
