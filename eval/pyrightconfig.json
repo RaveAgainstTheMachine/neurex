@@ -1,0 +1,6 @@
+{
+  "venvPath": "/games/CodeProjects/AntiGravity/Neurex/neurex/neurex-api",
+  "venv": ".venv",
+  "pythonVersion": "3.14",
+  "reportMissingImports": true
+}
