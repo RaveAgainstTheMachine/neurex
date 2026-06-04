@@ -1,0 +1,473 @@
+/* src/components/Editor/EditorPane.css */
+.editor-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-app);
+  overflow: hidden;
+  position: relative;
+}
+
+.editor-pane__header {
+  height: 35px;
+  background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.editor-tabs {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  overflow-x: auto;
+  gap: 1px;
+}
+
+.editor-tab {
+  height: 100%;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  border-right: 1px solid var(--border);
+  white-space: nowrap;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.editor-tab:hover { background: var(--bg-hover); color: var(--text-primary); }
+.editor-tab.active { background: var(--bg-app); color: var(--text-primary); }
+
+.editor-tab.active::after {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 1px;
+  background: var(--accent-primary);
+  box-shadow: 0 0 8px var(--accent-primary);
+  z-index: 2;
+}
+
+/* VS Code style bottom border for active tab to blend with breadcrumbs */
+.editor-tab.active::before {
+  content: "";
+  position: absolute;
+  bottom: -1px; left: 0; right: 0; height: 1px;
+  background: var(--bg-app);
+  z-index: 3;
+}
+
+.editor-tab__icon { opacity: 0.7; }
+.editor-tab__close {
+  width: 18px; height: 18px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 4px;
+  font-size: 14px;
+  opacity: 0; /* Hidden by default like VS Code */
+  color: var(--text-muted);
+  margin-left: 4px;
+  transition: all 0.1s;
+}
+
+.editor-tab:hover .editor-tab__close,
+.editor-tab.active .editor-tab__close {
+  opacity: 1;
+}
+
+.editor-tab.is-dirty .editor-tab__close {
+  opacity: 0; /* Show dot instead */
+}
+
+.editor-tab.is-dirty:hover .editor-tab__close {
+  opacity: 1; /* Show X on hover even if dirty */
+}
+
+.editor-tab.is-dirty:hover .dirty-dot {
+  display: none;
+}
+
+.editor-tab.pinned {
+  flex-grow: 0;
+  min-width: fit-content;
+  background: var(--bg-active);
+  border-right: 1px solid var(--border);
+}
+
+.pin-icon {
+  margin-left: 4px;
+  opacity: 0.8;
+  color: var(--accent-primary);
+}
+
+.editor-tab.pinned .editor-tab__name {
+  max-width: 100px;
+}
+
+.editor-tab__close:hover { 
+  background: var(--bg-active); 
+  color: var(--text-primary); 
+}
+
+.dirty-dot {
+  width: 6px; height: 6px;
+  background: var(--accent-purple);
+  border-radius: 50%;
+  box-shadow: 0 0 5px var(--accent-purple);
+}
+
+.editor-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 8px;
+}
+
+.editor-control-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.editor-control-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+.save-btn { color: var(--accent-purple); font-weight: 600; }
+
+.editor-group-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 4px;
+  padding-left: 4px;
+  border-left: 1px solid var(--border);
+}
+
+.rotate-90 { transform: rotate(90deg); }
+
+.editor-monaco {
+  flex: 1;
+  position: relative;
+  min-height: 0;
+}
+
+/* ── Breadcrumbs ────────────────────────────────────────────────── */
+.editor-breadcrumbs {
+  height: 22px;
+  background: var(--bg-app);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.breadcrumb-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 4px;
+  height: 22px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background 0.1s;
+  position: relative;
+}
+
+.breadcrumb-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.breadcrumb-picker {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  z-index: 1000;
+  min-width: 180px;
+  padding: 4px 0;
+  border-radius: 4px;
+}
+
+.breadcrumb-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.breadcrumb-picker-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.breadcrumb-item.file {
+  color: var(--text-secondary);
+}
+
+.breadcrumb-separator {
+  opacity: 0.4;
+  font-size: 10px;
+}
+
+/* ── Editor Watermark ───────────────────────────────────────────── */
+.editor-watermark {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  opacity: 0.3;
+  user-select: none;
+}
+
+.watermark-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 40px;
+}
+
+.watermark-label {
+  font-size: 13px;
+}
+
+.watermark-shortcut {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* ── Inline AI Prompt ────────────────────────────────────────────── */
+.inline-ai-prompt {
+  position: absolute;
+  z-index: 1000;
+  width: 320px;
+  background: rgba(15, 15, 20, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--accent-purple);
+  border-radius: 8px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.8), 0 0 20px rgba(100, 50, 255, 0.2);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inline-ai-prompt__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.inline-ai-prompt__header .close-btn {
+  margin-left: auto;
+  opacity: 0.5;
+}
+
+.inline-ai-prompt__input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-app);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 8px;
+}
+
+.inline-ai-prompt__input-wrapper input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 13px;
+  padding: 4px 0;
+}
+
+.inline-ai-prompt__input-wrapper .submit-btn {
+  color: var(--accent-purple);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.inline-ai-prompt__input-wrapper .submit-btn:hover {
+  transform: translateX(2px);
+  filter: drop-shadow(0 0 5px var(--accent-purple));
+}
+
+/* ── Remote Cursors ─────────────────────────────────────────────── */
+.remote-cursor {
+  width: 2px !important;
+  z-index: 50;
+  position: relative;
+}
+
+@keyframes cursor-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.7); }
+  70% { box-shadow: 0 0 0 6px rgba(168, 85, 247, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0); }
+}
+
+.remote-cursor--agent {
+  color: var(--accent-purple) !important;
+}
+
+.remote-cursor--agent::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -2px;
+  width: 6px;
+  height: 100%;
+  border: 1px solid var(--accent-purple);
+  border-radius: 2px;
+  animation: cursor-pulse 1.5s infinite;
+  pointer-events: none;
+  box-shadow: 0 0 10px var(--accent-purple);
+}
+
+.remote-cursor--agent::before {
+  content: "[Neurex Coder]";
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  transform: translateY(-4px);
+  background: var(--bg-surface);
+  border: 1px solid var(--accent-purple);
+  color: var(--text-primary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5), 0 0 8px var(--glow-purple);
+  opacity: 0.95;
+  transition: opacity 0.2s;
+  z-index: 100;
+}
+
+.remote-cursor--user {
+  color: var(--accent-cyan);
+}
+
+.remote-cursor--user::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  box-shadow: 0 0 10px currentColor;
+}
+
+/* ── Neural Lens Styles ────────────────────────────────────────── */
+.error-lens-error, .error-lens-warning {
+  font-style: italic;
+  font-size: 11px;
+  opacity: 0.7;
+  margin-left: 20px;
+  pointer-events: none;
+}
+
+.error-lens-error {
+  color: var(--accent-red);
+  text-shadow: 0 0 5px rgba(239, 68, 68, 0.4);
+}
+
+.error-lens-warning {
+  color: var(--accent-amber);
+}
+
+.git-blame-ghost {
+  color: var(--text-muted);
+  font-size: 11px;
+  opacity: 0.4;
+  font-style: italic;
+  margin-left: 20px;
+  pointer-events: none;
+}
+
+/* ── Autopilot Banner ─────────────────────────────────────────── */
+.autopilot-banner {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--accent-cyan);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 20px rgba(0, 255, 255, 0.1);
+  min-width: 400px;
+  justify-content: space-between;
+}
+
+.autopilot-banner__info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translate(-50%, -20px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.animate-slide-down {
+  animation: slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.editor-tab.is-preview .editor-tab__name {
+  font-style: italic;
+  opacity: 0.8;
+}
+
+.editor-tab__label {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.editor-tab__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.editor-tab__root {
+  font-size: 9px;
+  opacity: 0.4;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: -2px;
+}

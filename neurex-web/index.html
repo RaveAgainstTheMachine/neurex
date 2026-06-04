@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en" style="height:100%">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Neurex IDE</title>
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <style>
+      :root {
+        --accent-pre: #9c6fff;
+        --glow-pre: rgba(156, 111, 255, 0.5);
+      }
+      body, #root { height: 100%; margin: 0; overflow: hidden; background: #09090b; color: #e8e8f0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+      
+      /* Pre-JS Loading Screen */
+      #preloader {
+        position: fixed; inset: 0; background: #050508; z-index: 99999;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        transition: opacity 0.5s ease-out, visibility 0.5s;
+        gap: 30px;
+      }
+      #preloader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+      
+      .preloader-logo {
+        position: relative;
+        font-size: 50px;
+        color: var(--accent-pre);
+        filter: drop-shadow(0 0 20px var(--glow-pre));
+        animation: logo-pulse 2s infinite ease-in-out;
+      }
+      
+      .preloader-title {
+        font-size: 24px; font-weight: 900; letter-spacing: 0.5em; color: #fff;
+        background: linear-gradient(90deg, #fff, var(--accent-pre), #fff);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        background-size: 200% auto; animation: shimmer 3s infinite linear;
+      }
+      
+      .preloader-bar { width: 180px; height: 2px; background: rgba(255,255,255,0.05); border-radius: 1px; overflow: hidden; }
+      .preloader-progress {
+        height: 100%; width: 20%; background: var(--accent-pre);
+        box-shadow: 0 0 20px var(--glow-pre);
+        animation: loader-ramp 4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      }
+
+      @keyframes shimmer { to { background-position: 200% center; } }
+      @keyframes loader-ramp { 0% { width: 5%; } 100% { width: 85%; } }
+      @keyframes logo-pulse {
+        0%, 100% { transform: scale(1); filter: drop-shadow(0 0 15px var(--glow-pre)); }
+        50% { transform: scale(1.1); filter: drop-shadow(0 0 25px var(--glow-pre)); }
+      }
+    </style>
+    <script>
+      // Self-healing localStorage fallback for restricted/sandboxed browser environments
+      (function() {
+        const store = {};
+        const mockStorage = {
+          getItem: function(key) { return key in store ? store[key] : null; },
+          setItem: function(key, val) { store[key] = String(val); },
+          removeItem: function(key) { delete store[key]; },
+          clear: function() { for (var k in store) delete store[k]; },
+          key: function(i) { return Object.keys(store)[i] || null; },
+          length: 0
+        };
+        Object.defineProperty(mockStorage, 'length', {
+          get: function() { return Object.keys(store).length; }
+        });
+
+        let useMock = false;
+        try {
+          window.localStorage.setItem('__neurex_storage_test__', '1');
+          window.localStorage.removeItem('__neurex_storage_test__');
+        } catch (e) {
+          console.warn("Storage restricted. Initializing in-memory fallback.");
+          useMock = true;
+        }
+
+        window.safeLocalStorage = new Proxy({}, {
+          get: function(target, prop) {
+            if (useMock) {
+              if (prop === 'length') return mockStorage.length;
+              return mockStorage[prop];
+            }
+            try {
+              const val = window.localStorage[prop];
+              if (typeof val === 'function') {
+                return val.bind(window.localStorage);
+              }
+              return val;
+            } catch (e) {
+              useMock = true;
+              if (prop === 'length') return mockStorage.length;
+              return mockStorage[prop];
+            }
+          },
+          set: function(target, prop, value) {
+            if (useMock) {
+              if (typeof mockStorage[prop] === 'function') {
+                mockStorage[prop](value);
+              } else {
+                mockStorage.setItem(prop, value);
+              }
+              return true;
+            }
+            try {
+              window.localStorage[prop] = value;
+              return true;
+            } catch (e) {
+              useMock = true;
+              mockStorage.setItem(prop, value);
+              return true;
+            }
+          }
+        });
+
+        // Attempt instance redefinition
+        try {
+          Object.defineProperty(window, 'localStorage', {
+            value: window.safeLocalStorage,
+            configurable: true,
+            enumerable: true,
+            writable: true
+          });
+        } catch (err) {
+          // Attempt prototype redefinition
+          try {
+            Object.defineProperty(Window.prototype, 'localStorage', {
+              get: function() { return window.safeLocalStorage; },
+              configurable: true,
+              enumerable: true
+            });
+          } catch (err2) {
+            console.error("Could not redefine localStorage prototype:", err2);
+          }
+        }
+      })();
+
+      // Apply theme before render
+      try {
+        const theme = JSON.parse(localStorage.getItem('neurex_theme') || '{}');
+        if (theme.accent_color) {
+          document.documentElement.style.setProperty('--accent-pre', theme.accent_color);
+          document.documentElement.style.setProperty('--glow-pre', theme.glow_color || theme.accent_color + '66');
+        }
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="preloader">
+      <div class="preloader-logo">⬡</div>
+      <div class="preloader-title">NEUREX</div>
+      <div class="preloader-bar">
+        <div class="preloader-progress" id="preloader-progress"></div>
+      </div>
+    </div>
+
+    <script>
+      window.process = { env: { NODE_ENV: 'development' } };
+      // Function to hide preloader - called by React
+      window.hidePreloader = function() {
+        const p = document.getElementById('preloader');
+        if (p) p.classList.add('hidden');
+      };
+    </script>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
