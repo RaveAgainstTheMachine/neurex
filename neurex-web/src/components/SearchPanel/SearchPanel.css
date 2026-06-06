@@ -1,0 +1,281 @@
+.search-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-sidebar);
+  user-select: none;
+}
+
+.search-panel__inputs {
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+}
+
+.search-panel__row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.replace-toggle {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.replace-toggle:hover {
+  background: var(--bg-hover);
+}
+
+.search-input-container {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: #3c3c3c;
+  border: 1px solid transparent;
+  border-radius: 2px;
+}
+
+.search-input-container:focus-within {
+  border-color: #007acc;
+}
+
+.search-input {
+  width: 100%;
+  height: 24px;
+  background: transparent;
+  border: none;
+  color: #cccccc;
+  font-size: 12px;
+  padding: 0 8px;
+  padding-right: 60px;
+  outline: none;
+}
+
+.search-input-actions {
+  position: absolute;
+  right: 2px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.input-action {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #cccccc;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.input-action:hover {
+  background: #454545;
+}
+
+.input-action.active {
+  background: #007acc;
+  color: white;
+}
+
+.replace-spacer {
+  width: 16px;
+}
+
+.replace-row {
+  margin-top: 2px;
+}
+
+.search-details-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  cursor: pointer;
+}
+
+.search-details-toggle:hover {
+  color: var(--text-primary);
+}
+
+.search-advanced {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  padding-left: 20px;
+}
+
+.advanced-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.advanced-row label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.advanced-row input {
+  height: 24px;
+  background: #3c3c3c;
+  border: 1px solid transparent;
+  color: #cccccc;
+  font-size: 12px;
+  padding: 0 8px;
+  border-radius: 2px;
+}
+
+.advanced-row input:focus {
+  border-color: #007acc;
+  outline: none;
+}
+
+.search-panel__results {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.results-header {
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  font-size: 11px;
+  color: var(--text-muted);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.clear-btn {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+}
+
+.clear-btn:hover {
+  background: var(--bg-hover);
+}
+
+.search-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.search-result-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.search-result-file {
+  height: 22px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.search-result-file:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.file-icon {
+  color: #cccccc;
+}
+
+.file-path {
+  font-size: 11px;
+  opacity: 0.5;
+  margin-left: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.match-count {
+  margin-left: auto;
+  font-size: 10px;
+  background: var(--bg-active);
+  padding: 1px 6px;
+  border-radius: 10px;
+}
+
+.search-result-matches {
+  display: flex;
+  flex-direction: column;
+}
+
+.search-match {
+  height: 22px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px 0 32px;
+  gap: 12px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.search-match:hover {
+  background: var(--bg-active);
+  color: var(--text-primary);
+}
+
+.match-line {
+  color: #519aba;
+  min-width: 20px;
+  text-align: right;
+}
+
+.match-content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-highlight {
+  background: rgba(234, 173, 0, 0.4);
+  color: white;
+  border-radius: 1px;
+}
+
+.file-info {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.root-tag {
+  color: var(--accent-primary);
+  font-size: 9px;
+  font-weight: bold;
+  opacity: 0.7;
+}
