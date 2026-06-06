@@ -1,0 +1,97 @@
+/* src/components/MobileView/MobileView.css */
+.mobile-view {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  width: 100vw;
+  background: var(--bg-app);
+  overflow: hidden;
+  color: var(--text-primary);
+}
+
+.mobile-view__header {
+  height: 56px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-sidebar);
+  flex-shrink: 0;
+}
+
+.mobile-view__logo {
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  font-size: 14px;
+}
+
+.mobile-view__content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Fix for nested components in mobile */
+.mobile-view__content > div {
+  height: 100%;
+  width: 100%;
+}
+
+.mobile-terminal-wrapper {
+  background: #050507;
+  height: 100%;
+}
+
+/* Navigation Bar */
+.mobile-nav {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: var(--bg-sidebar);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom);
+  flex-shrink: 0;
+}
+
+.mobile-nav__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 500;
+  transition: all 0.2s;
+  padding: 8px 0;
+  min-width: 60px;
+}
+
+.mobile-nav__item.active {
+  color: var(--accent-purple);
+}
+
+.mobile-nav__item.active svg {
+  filter: drop-shadow(0 0 8px var(--glow-purple));
+}
+
+/* Adjustments for existing panels when viewed on mobile */
+.mobile-view .ai-panel {
+  border: none;
+}
+
+.mobile-view .file-explorer {
+  border: none;
+}
+
+.mobile-view .settings-panel {
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.mobile-view .infra-panel {
+  padding: 16px;
+}

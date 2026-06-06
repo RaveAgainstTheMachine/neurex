@@ -1,0 +1,25 @@
+{
+  "timestamp": "20260511_012648",
+  "model": "default",
+  "score": "0/2",
+  "results": [
+    {
+      "id": "smoke-hello",
+      "tag": "smoke",
+      "prompt": "Create a file called hello.py that prints 'Hello, Neurex!'",
+      "passed": false,
+      "details": "WS error: {'message': \"Critical planning failure: 'ContextManager' object has no attribute 'explorer'\"}",
+      "duration_s": 0.0,
+      "output": ""
+    },
+    {
+      "id": "smoke-readme",
+      "tag": "smoke",
+      "prompt": "Create a README.md with a one-sentence description of the project.",
+      "passed": false,
+      "details": "WS error: {'message': \"Critical planning failure: 'ContextManager' object has no attribute 'explorer'\"}",
+      "duration_s": 0.0,
+      "output": ""
+    }
+  ]
+}
