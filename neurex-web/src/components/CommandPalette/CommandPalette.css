@@ -1,0 +1,111 @@
+/* src/components/CommandPalette/CommandPalette.css */
+.palette-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 5000;
+  display: flex;
+  justify-content: center;
+  padding-top: 4px; /* Small gap from top like VS Code */
+}
+
+.palette-container {
+  width: 100%;
+  max-width: 600px;
+  max-height: 450px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.palette-header {
+  padding: 4px;
+}
+
+.palette-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-input);
+  padding: 4px 8px;
+  border-radius: 2px;
+  border: 1px solid var(--border-active);
+}
+
+.palette-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-app);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  transition: border-color 0.2s;
+}
+
+.palette-search:focus-within {
+  border-color: var(--accent-purple);
+}
+
+.palette-search input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+}
+
+.palette-results {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.palette-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 12px;
+  border-radius: 2px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  transition: none;
+  text-align: left;
+}
+
+.palette-item.active {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.palette-item__cat {
+  font-size: 10px;
+  opacity: 0.6;
+  text-transform: uppercase;
+}
+
+.palette-empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.palette-footer {
+  padding: 8px 12px;
+  background: var(--bg-app);
+  border-top: 1px solid var(--border);
+}
+
+.palette-tip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
