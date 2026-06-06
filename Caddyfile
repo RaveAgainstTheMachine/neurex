@@ -1,0 +1,44 @@
+# Caddyfile for Neurex Ultra-Secure Mobile Mode
+
+# Replace with your actual domain name
+{$NEUREX_DOMAIN:neurex.local} {
+    # Automatic HTTPS via Let's Encrypt
+    # Caddy will automatically provision and renew certificates
+    
+    # Enable HTTP/2 and HTTP/3
+    
+    # Security Headers
+    header {
+        Strict-Transport-Security "max-age=31536000;"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+
+    # ──────────────────────────────────────────────
+    # Zero-Trust Security: Mutual TLS (mTLS)
+    # Requires clients (browsers) to present a valid certificate
+    # signed by the Neurex internal CA to even connect.
+    # ──────────────────────────────────────────────
+    tls {
+        client_auth {
+            mode require_and_verify
+            trusted_ca_certs /etc/caddy/neurex-internal-ca.crt
+        }
+    }
+
+    # Route /api/* to the FastAPI backend
+    handle /api/* {
+        reverse_proxy neurex-api:8000
+    }
+
+    # Route WebSocket connections
+    handle /ws/* {
+        reverse_proxy neurex-api:8000
+    }
+
+    # Route everything else to the Vite frontend
+    handle {
+        reverse_proxy neurex-web:3000
+    }
+}
