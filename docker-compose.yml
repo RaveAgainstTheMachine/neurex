@@ -1,0 +1,141 @@
+version: "3.9"
+
+services:
+  # ──────────────────────────────────────────────
+  # Ollama — local model server
+  # ──────────────────────────────────────────────
+  ollama:
+    image: ollama/ollama:latest
+    container_name: neurex-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - /games/AI/ollama_models:/root/.ollama
+      - ./ollama-entrypoint.sh:/entrypoint.sh:ro
+
+    entrypoint: ["/bin/bash", "/entrypoint.sh"]
+    environment:
+      - OLLAMA_KEEP_ALIVE=${OLLAMA_KEEP_ALIVE:-24h}
+      - OLLAMA_NUM_PARALLEL=${OLLAMA_NUM_PARALLEL:-2}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  # ──────────────────────────────────────────────
+  # ChromaDB — vector store
+  # ──────────────────────────────────────────────
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: neurex-chromadb
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    volumes:
+      - /games/AI/chroma_db:/chroma/chroma
+
+    environment:
+      - CHROMA_SERVER_AUTH_CREDENTIALS=${CHROMA_TOKEN:-neurex-secret}
+      - CHROMA_SERVER_AUTH_PROVIDER=chromadb.auth.token.TokenAuthServerProvider
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ──────────────────────────────────────────────
+  # Neurex API — FastAPI backend
+  # ──────────────────────────────────────────────
+  neurex-api:
+    build:
+      context: ./neurex-api
+      dockerfile: Dockerfile
+    container_name: neurex-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./neurex-api:/app
+      - ${WORKSPACE_PATH:-./workspace}:/workspace
+      - /var/run/docker.sock:/var/run/docker.sock  # for sandboxed exec
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - CHROMA_TOKEN=${CHROMA_TOKEN:-neurex-secret}
+      - WORKSPACE_PATH=/workspace
+      - API_TOKEN=${API_TOKEN:-neurex-dev-token}
+      - DEFAULT_MODEL=${DEFAULT_MODEL:-qwen2.5-coder:14b}
+      - EMBED_MODEL=${EMBED_MODEL:-nomic-embed-text}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    depends_on:
+      ollama:
+        condition: service_healthy
+      chromadb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ──────────────────────────────────────────────
+  # Neurex Web — Next.js frontend
+  # ──────────────────────────────────────────────
+  neurex-web:
+    build:
+      context: ./neurex-web
+      dockerfile: Dockerfile
+      target: ${NODE_ENV:-development}
+    container_name: neurex-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./neurex-web/src:/app/src   # hot-reload in dev
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_WS_URL=ws://localhost:8000
+      - NEXT_PUBLIC_API_TOKEN=${API_TOKEN:-neurex-dev-token}
+    depends_on:
+      neurex-api:
+        condition: service_healthy
+
+  # ──────────────────────────────────────────────
+  # Caddy — Reverse Proxy & Automated SSL
+  # ──────────────────────────────────────────────
+  caddy:
+    image: caddy:latest
+    container_name: neurex-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - NEUREX_DOMAIN=${NEUREX_DOMAIN:-neurex.local}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - neurex-api
+      - neurex-web
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+
+networks:
+  default:
+    name: neurex-net
