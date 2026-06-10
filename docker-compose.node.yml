@@ -1,0 +1,73 @@
+# docker-compose.node.yml
+# Neurex RPC Worker Node — Lean deployment for swarm GPU contribution.
+#
+# This compose file is generated for NODES only.
+# It does NOT run: the API, the Web UI, ChromaDB, or the Auth stack.
+# Its sole job is to expose GPU VRAM via llama-rpc-server and
+# broadcast a heartbeat to the Master so it can be discovered automatically.
+#
+# Usage: docker-compose -f docker-compose.node.yml up -d
+
+version: "3.9"
+
+services:
+
+  # ─────────────────────────────────────────────────────
+  # llama-rpc-server — GPU tensor offload over RPC
+  # Slices of the model tensor are sent here by the Master
+  # during distributed inference.
+  # ─────────────────────────────────────────────────────
+  neurex-rpc:
+    image: ghcr.io/ggerganov/llama.cpp:server
+    container_name: neurex-rpc-worker
+    restart: unless-stopped
+    command: >
+      llama-rpc-server
+      --host 0.0.0.0
+      --port ${RPC_PORT:-50051}
+    ports:
+      - "${RPC_PORT:-50051}:${RPC_PORT:-50051}"
+    environment:
+      - CUDA_VISIBLE_DEVICES=all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost ${RPC_PORT:-50051} || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ─────────────────────────────────────────────────────
+  # neurex-heartbeat — Presence agent
+  # Registers this node with the Master and broadcasts
+  # VRAM/RAM/CPU stats every 15 seconds via the Swarm Heartbeat.
+  # The Master's MeshRouter uses this data for load-balanced routing.
+  # ─────────────────────────────────────────────────────
+  neurex-heartbeat:
+    build:
+      context: ./neurex-api
+      dockerfile: Dockerfile
+    container_name: neurex-node-heartbeat
+    restart: unless-stopped
+    command: python -m core.infrastructure.heartbeat_agent
+    environment:
+      - NODE_ROLE=node
+      - NODE_NAME=${NODE_NAME:-neurex-node}
+      - MASTER_URL=${MASTER_URL}
+      - MASTER_TOKEN=${MASTER_TOKEN}
+      - BIND_IP=${BIND_IP:-0.0.0.0}
+      - RPC_PORT=${RPC_PORT:-50051}
+      - VRAM_LIMIT_GB=${VRAM_LIMIT_GB:-0}
+    depends_on:
+      neurex-rpc:
+        condition: service_healthy
+
+networks:
+  default:
+    name: neurex-node-net

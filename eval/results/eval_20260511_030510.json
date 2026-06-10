@@ -1,0 +1,25 @@
+{
+  "timestamp": "20260511_030510",
+  "model": "mock",
+  "score": "0/2",
+  "results": [
+    {
+      "id": "smoke-hello",
+      "tag": "smoke",
+      "prompt": "Create a file called hello.py that prints 'Hello, Neurex!'",
+      "passed": false,
+      "details": "Exception: received 1012 (service restart); then sent 1012 (service restart)",
+      "duration_s": 25.46,
+      "output": ""
+    },
+    {
+      "id": "smoke-readme",
+      "tag": "smoke",
+      "prompt": "Create a README.md with a one-sentence description of the project.",
+      "passed": false,
+      "details": "Exception: Multiple exceptions: [Errno 111] Connect call failed ('::1', 8000, 0, 0), [Errno 111] Connect call failed ('127.0.0.1', 8000)",
+      "duration_s": 0.0,
+      "output": ""
+    }
+  ]
+}
