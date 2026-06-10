@@ -1,0 +1,71 @@
+.title-bar {
+  position: relative;
+  height: 30px;
+  background: var(--bg-sidebar);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  user-select: none;
+  flex-shrink: 0;
+  z-index: 100;
+}
+
+.title-bar__left {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  z-index: 2;
+}
+
+.title-bar__logo {
+  padding: 0 12px;
+  color: var(--accent-purple);
+  font-size: 16px;
+  filter: drop-shadow(0 0 4px var(--glow-purple));
+}
+
+.title-bar__center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.title-bar__right {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  z-index: 2;
+}
+
+.window-controls {
+  display: flex;
+  height: 100%;
+}
+
+.window-control {
+  width: 45px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.window-control:hover {
+  background: var(--bg-hover);
+}
+
+.window-control--close:hover {
+  background: #e81123;
+  color: white;
+}
