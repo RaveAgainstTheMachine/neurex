@@ -1,0 +1,89 @@
+#!/bin/bash
+
+# ⬡ NEUREX MASTER LAUNCHER
+# The entry point for the Agentic Operating System.
+
+set -e
+
+# Colors for professional output
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+echo -e "${PURPLE}Starting Neurex Mesh Hub...${NC}"
+
+# Check for Docker
+if ! [ -x "$(command -v docker)" ]; then
+  echo -e "${RED}Error: Docker is not installed.${NC}" >&2
+  exit 1
+fi
+
+# Hardware Acceleration Detection
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    if sysctl -n machdep.cpu.brand_string | grep -q "Apple"; then
+        echo -e "${GREEN}Apple Silicon detected. Metal acceleration enabled.${NC}"
+    else
+        echo -e "${CYAN}Intel Mac detected. OpenCL/CPU mode active.${NC}"
+    fi
+elif command -v nvidia-smi &> /dev/null; then
+    echo -e "${GREEN}NVIDIA GPU detected. CUDA acceleration enabled.${NC}"
+elif command -v rocm-smi &> /dev/null; then
+    echo -e "${GREEN}AMD GPU detected. ROCm acceleration enabled.${NC}"
+elif command -v xpu-smi &> /dev/null || clinfo &> /dev/null; then
+    echo -e "${GREEN}Intel/OpenCL GPU detected. SYCL/OpenCL acceleration enabled.${NC}"
+else
+    echo -e "${CYAN}Note: No dedicated GPU detected via standard drivers. Defaulting to optimized CPU mode.${NC}"
+fi
+
+# Health Check / Setup
+echo -e "${CYAN}Performing System Health Check...${NC}"
+
+    docker compose logs -f --tail 100
+    exit 0
+fi
+
+# Determine Docker Compose command
+if docker compose version > /dev/null 2>&1; then
+    DOCKER_COMPOSE="docker compose"
+else
+    DOCKER_COMPOSE="docker-compose"
+fi
+
+echo -e "${YELLOW}Starting Neurex API & Worker...${NC}"
+# Use the virtualenv if it exists, otherwise system python
+if [ -d "./neurex-api/venv" ]; then
+    PYTHON="./neurex-api/venv/bin/python"
+else
+    PYTHON="python3"
+fi
+
+cd neurex-api
+$PYTHON -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload &
+API_PID=$!
+cd ..
+if docker compose version &> /dev/null; then
+    DOCKER_COMPOSE="docker compose"
+elif docker-compose --version &> /dev/null; then
+    DOCKER_COMPOSE="docker-compose"
+else
+    echo -e "${RED}Error: Docker Compose is not installed.${NC}" >&2
+    exit 1
+fi
+
+# Launch
+echo -e "${PURPLE}Deploying Local Swarm...${NC}"
+$DOCKER_COMPOSE up -d
+
+echo -e ""
+echo -e "  ⬡ ${GREEN}NEUREX IS ONLINE${NC}"
+echo -e "  --------------------------------"
+echo -e "  Frontend:  ${CYAN}http://localhost:3000${NC}"
+echo -e "  API:       ${CYAN}http://localhost:8000${NC}"
+echo -e "  Mesh Port: ${CYAN}http://localhost:5000 (RPC)${NC}"
+echo -e "  --------------------------------"
+echo -e ""
+
+# Tail logs
+$DOCKER_COMPOSE logs -f --tail 50

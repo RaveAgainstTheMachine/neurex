@@ -1,0 +1,40 @@
+[package]
+name = "neurex-cli"
+version = "0.14.9"
+edition = "2024"
+repository = "https://github.com/RaveAgainstTheMachine/neurex"
+homepage = "https://github.com/RaveAgainstTheMachine/neurex"
+description = "The first autonomous engineering workspace for the neural era."
+
+[dependencies]
+axum = { version = "0.8.9", features = ["ws", "http2"] }
+axum-server = { version = "0.7.2", features = ["tls-rustls"] }
+bollard = "0.21"
+clap = { version = "4.6.1", features = ["derive"] }
+colored = "3.1.1"
+dirs = "6.0.0"
+flate2 = "1.1.9"
+mime_guess = "2.0.5"
+reqwest = { version = "0.13.4", default-features = false, features = ["blocking", "json", "stream", "rustls"] }
+rust-embed = "8.11.0"
+sysinfo = "0.39.3"
+tar = "0.4.46"
+tokio-tungstenite = "0.29.0"
+tungstenite = "0.29.0"
+futures-util = "0.3"
+tokio = { version = "1.52.3", features = ["full"] }
+zip = "8.6.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+anyhow = "1.0"
+tower-http = { version = "0.6.11", features = ["fs", "trace"] }
+wasmtime = { version = "45.0.0", features = ["wat"] }
+wasmtime-wasi = "45.0.0"
+
+cap-std = "4.0.2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0.150"
+axum-server-dual-protocol = "0.7.0"
+
+[dev-dependencies]
+rcgen = "0.14"
