@@ -1,0 +1,171 @@
+/* src/components/MenuBar/MenuBar.css */
+.menu-bar {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  position: relative;
+}
+
+.burger-trigger {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-purple);
+  filter: drop-shadow(0 0 4px var(--glow-purple));
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.burger-trigger:hover, .burger-trigger.active {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  filter: drop-shadow(0 0 8px var(--glow-purple));
+}
+
+/* ── Vertical Drawer ────────────────────────────────────────────── */
+.menu-drawer {
+  position: fixed;
+  top: 0;
+  left: 56px;
+  bottom: 0;
+  width: 280px;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  z-index: 5000;
+  box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+  backdrop-filter: var(--glass-blur);
+}
+
+.menu-drawer__header {
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: var(--accent-purple);
+}
+
+.menu-drawer__content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+/* ── Horizontal Bar ─────────────────────────────────────────────── */
+.menu-horizontal-bar {
+  position: fixed;
+  top: 0;
+  left: 56px;
+  right: 0;
+  height: 42px;
+  background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  display: flex;
+  height: 100%;
+}
+
+.menu-item {
+  position: relative;
+  height: 100%;
+}
+
+.menu-btn {
+  height: 100%;
+  padding: 0 10px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+
+.menu-btn:hover, .menu-btn.active {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.menu-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  z-index: 1000;
+  min-width: 220px;
+  padding: 4px 0;
+}
+
+.menu-options {
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-option-wrapper {
+  position: relative;
+}
+
+.menu-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 12px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.menu-option:hover {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.menu-option__left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.check-placeholder {
+  width: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-shortcut {
+  font-size: 11px;
+  opacity: 0.6;
+  margin-left: 20px;
+}
+
+.menu-separator {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 10px;
+}
+
+.menu-submenu {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  background: var(--bg-sidebar);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  min-width: 180px;
+  padding: 4px 0;
+}
+.animate-fade-in { animation: fadeIn 0.15s ease-out; }
