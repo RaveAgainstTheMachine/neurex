@@ -1,0 +1,244 @@
+/* src/index.css — Neurex IDE Design System */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* Core palette */
+  --bg-app:       hsl(240, 10%, 3%);
+  --bg-sidebar:   hsl(240, 10%, 5%);
+  --bg-surface:   hsl(240, 10%, 8%);
+  --bg-elevated:  hsl(240, 10%, 11%);
+  --bg-hover:     color-mix(in srgb, var(--accent-purple), transparent 88%);
+  --bg-active:    color-mix(in srgb, var(--accent-purple), transparent 82%);
+  --bg-input:     hsl(240, 10%, 6%);
+
+  /* Borders */
+  --border:       hsla(240, 10%, 20%, 0.5);
+  --border-active: color-mix(in srgb, var(--accent-purple), transparent 70%);
+  --border-focus:  var(--accent-purple);
+
+  /* Text */
+  --text-primary:   hsl(240, 10%, 94%);
+  --text-secondary: hsl(240, 8%, 75%);
+  --text-muted:     hsl(240, 6%, 48%);
+  --text-inverse:   hsl(240, 10%, 4%);
+
+  /* Accents */
+  --accent-primary:      var(--accent-purple); /* Default, can be overridden */
+  --accent-primary-glow: var(--glow-purple);
+  --accent-blue:   hsl(210, 100%, 65%);
+  --accent-purple: hsl(265, 85%, 68%);
+  --purple-main:   hsl(265, 85%, 68%);
+  --purple-light:  hsl(265, 90%, 80%);
+  --glow-purple:   hsla(265, 85%, 68%, 0.4);
+  --accent-amber:  hsl(35, 95%, 58%);
+  --accent-green:  hsl(150, 80%, 52%);
+  --accent-red:    hsl(355, 85%, 65%);
+  --accent-yellow: hsl(45, 95%, 62%);
+  --accent-cyan:   hsl(180, 85%, 58%);
+
+  /* Layout */
+  --sidebar-width:    260px;
+  --titlebar-height:  40px;
+  --tabbar-height:    36px;
+  --statusbar-height: 26px;
+
+  /* Shapes */
+  --radius:           10px;
+  --radius-sm:        6px;
+
+  /* Glassmorphism */
+  --glass-bg: hsla(240, 10%, 6%, 0.8);
+  --glass-border: hsla(0, 0%, 100%, 0.08);
+  --glass-blur: blur(12px);
+
+  /* Typography */
+  --font-ui:   'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --font-size-xs:  11px;
+  --font-size-sm:  12px;
+  --font-size-md:  13px;
+  --font-size-base: 14px;
+
+  /* Compatibility Aliases */
+  --bg-panel:     var(--bg-surface);
+  --border-color: var(--border);
+  --text-main:    var(--text-primary);
+  --neurex-purple: var(--accent-purple);
+  --shadow-lg:    0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+html, body, #root {
+  height: 100vh;
+  height: -webkit-fill-available;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--bg-app);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom Selection */
+::selection {
+  background: hsla(265, 85%, 68%, 0.3);
+  color: #fff;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { 
+  background: hsla(0, 0%, 100%, 0.05); 
+  border-radius: 10px;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background: hsla(0, 0%, 100%, 0.1); border: 3px solid transparent; background-clip: padding-box; }
+::-webkit-scrollbar-corner { background: transparent; }
+
+button { 
+  font-family: var(--font-ui); 
+  cursor: pointer; 
+  border: none;
+  background: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+input, textarea, select { 
+  font-family: var(--font-ui); 
+  border: 1px solid var(--border);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+select option {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+input:focus { border-color: var(--border-focus); }
+
+/* Animations */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.animate-slide-up { animation: slide-up 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+.animate-scale { animation: scale-in 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+.animate-spin { animation: spin 1s linear infinite; }
+
+/* Status Text Colors */
+.text-green { color: var(--accent-green); }
+.text-accent { color: var(--accent-primary); }
+.text-purple { color: var(--accent-primary); }
+.text-orange { color: var(--accent-amber); }
+.text-red { color: var(--accent-red); }
+.text-cyan { color: var(--accent-cyan); }
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--text-secondary);
+}
+
+.btn--accent, .btn--purple {
+  background: color-mix(in srgb, var(--accent-primary), transparent 95%);
+  border-color: color-mix(in srgb, var(--accent-primary), transparent 80%);
+  color: var(--accent-primary);
+}
+
+.btn--accent:hover, .btn--purple:hover {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: white;
+  box-shadow: 0 0 20px var(--accent-primary-glow);
+}
+
+.btn--green {
+  background: rgba(16, 185, 129, 0.05);
+  border-color: rgba(16, 185, 129, 0.2);
+  color: var(--accent-green);
+}
+
+.btn--green:hover {
+  background: var(--accent-green);
+  border-color: var(--accent-green);
+  color: var(--bg-app);
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+}
+
+.btn--red {
+  background: rgba(239, 68, 68, 0.05);
+  border-color: rgba(239, 68, 68, 0.2);
+  color: var(--accent-red);
+}
+
+.btn--red:hover {
+  background: var(--accent-red);
+  border-color: var(--accent-red);
+  color: white;
+}
+
+.btn--secondary {
+  background: rgba(255, 255, 255, 0.01);
+  border-color: var(--border);
+  color: var(--text-muted);
+}
+
+.btn--secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.btn--sm { padding: 6px 12px; font-size: 10px; }
+.btn--full { width: 100%; }
+
+/* Global Fix for white dropdowns in modals */
+select, 
+select option,
+.settings-select,
+.settings-select option {
+  background-color: #0d0d12 !important;
+  color: #ffffff !important;
+}
+
+.infra-modal-overlay select,
+.modal-overlay select,
+.infra-modal select {
+  background-color: #0d0d12 !important;
+  color: #ffffff !important;
+  border: 1px solid var(--border);
+}

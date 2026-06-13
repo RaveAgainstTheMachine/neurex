@@ -1,0 +1,25 @@
+{
+  "timestamp": "20260511_014712",
+  "model": "default",
+  "score": "0/2",
+  "results": [
+    {
+      "id": "smoke-hello",
+      "tag": "smoke",
+      "prompt": "Create a file called hello.py that prints 'Hello, Neurex!'",
+      "passed": false,
+      "details": "Missing: ['Hello, Neurex']",
+      "duration_s": 65.75,
+      "output": "[{\"agent\": \"coder\", \"title\": \"Create hello.py\", \"description\": \"Create a file named hello.py with appropriate content.\"}]Executing task..."
+    },
+    {
+      "id": "smoke-readme",
+      "tag": "smoke",
+      "prompt": "Create a README.md with a one-sentence description of the project.",
+      "passed": false,
+      "details": "Exception: received 1012 (service restart); then sent 1012 (service restart)",
+      "duration_s": 11.83,
+      "output": ""
+    }
+  ]
+}

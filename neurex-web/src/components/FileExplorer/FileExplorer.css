@@ -1,0 +1,240 @@
+.file-explorer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-sidebar);
+  user-select: none;
+}
+
+.sidebar-section {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-top: 1px solid var(--border);
+}
+
+.sidebar-section:first-child {
+  border-top: none;
+}
+
+.sidebar-resize-handle {
+  height: 2px;
+  position: relative;
+  z-index: 10;
+  cursor: row-resize;
+  background: var(--border);
+}
+
+.sidebar-resize-handle:hover,
+.sidebar-resize-handle[data-resize-handle-state="drag"] {
+  background: var(--accent-purple);
+}
+
+.sidebar-section__header {
+  height: 24px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}
+
+.sidebar-section__header:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.sidebar-section__header span {
+  flex: 1;
+  margin-left: 4px;
+}
+
+.explorer-header {
+  justify-content: space-between;
+}
+
+.sidebar-section__header-left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.explorer-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+}
+
+.sidebar-section__header:hover .explorer-actions {
+  opacity: 1;
+}
+
+.sidebar-section__content {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* Open Editors List */
+.open-editors-list {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+.open-editor-item {
+  height: 22px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px 0 20px;
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+  position: relative;
+}
+
+.open-editor-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.open-editor-item.active {
+  background: var(--bg-active);
+  color: var(--text-primary);
+}
+
+.open-editor-item .close-icon {
+  opacity: 0;
+  position: absolute;
+  right: 12px;
+}
+
+.open-editor-item:hover .close-icon {
+  opacity: 1;
+}
+
+/* File Tree Nodes */
+.file-tree-node {
+  display: flex;
+  flex-direction: column;
+}
+
+.file-item {
+  height: 22px;
+  display: flex;
+  align-items: center;
+  padding-right: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+  position: relative;
+}
+
+.file-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.file-item--active {
+  background: var(--bg-active);
+  color: var(--text-primary);
+}
+
+.file-item--root {
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.file-item--root:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.file-item__main {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.file-item__icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.file-item__name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.indent-guide {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.icon-btn {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  border-radius: 4px;
+}
+
+.icon-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.explorer-empty-state {
+  padding: 20px;
+  text-align: center;
+}
+
+/* Outline View */
+.outline-list {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+.outline-item {
+  height: 22px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px 0 20px;
+  font-size: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.outline-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.outline-line {
+  margin-left: auto;
+  font-size: 11px;
+  opacity: 0.4;
+}
+
+.text-purple { color: #c586c0; }
+.text-cyan { color: #4ec9b0; }

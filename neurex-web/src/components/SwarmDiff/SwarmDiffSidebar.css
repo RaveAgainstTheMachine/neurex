@@ -1,0 +1,285 @@
+.swarm-diff-sidebar {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-panel, rgba(30, 30, 30, 0.4));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-right: 1px solid var(--border-color, rgba(255, 255, 255, 0.05));
+  overflow: hidden;
+  color: var(--text-main, #e0e0e0);
+}
+
+.swarm-diff-sidebar__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.05));
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.swarm-diff-sidebar__header .title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.swarm-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: rgba(0, 184, 212, 0.15);
+  color: var(--accent-glow, #00b8d4);
+  border: 1px solid rgba(0, 184, 212, 0.3);
+  border-radius: 12px;
+  font-weight: 500;
+}
+
+.swarm-diff-sidebar__content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.swarm-actions-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.05));
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid transparent;
+}
+
+.action-btn.accept-all {
+  background: rgba(0, 230, 118, 0.15);
+  color: #00e676;
+  border-color: rgba(0, 230, 118, 0.3);
+}
+
+.action-btn.accept-all:hover:not(:disabled) {
+  background: #00e676;
+  color: #000;
+  box-shadow: 0 0 10px rgba(0, 230, 118, 0.4);
+}
+
+.action-btn.discard-all {
+  background: rgba(255, 23, 68, 0.1);
+  color: #ff1744;
+  border-color: rgba(255, 23, 68, 0.3);
+}
+
+.action-btn.discard-all:hover:not(:disabled) {
+  background: #ff1744;
+  color: #fff;
+  box-shadow: 0 0 10px rgba(255, 23, 68, 0.4);
+}
+
+.action-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted, #888);
+  border-color: transparent;
+}
+
+.swarm-file-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.swarm-file-item {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: var(--bg-card, rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.swarm-file-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(0, 184, 212, 0.2);
+  transform: translateX(2px);
+}
+
+.swarm-file-item.current {
+  border-color: var(--accent-glow, #00b8d4);
+  background: rgba(0, 184, 212, 0.05);
+  box-shadow: inset 2px 0 0 var(--accent-glow, #00b8d4);
+}
+
+.swarm-file-item.accepted {
+  border-color: rgba(0, 230, 118, 0.2);
+  background: rgba(0, 230, 118, 0.02);
+  opacity: 0.75;
+}
+
+.swarm-file-item.discarded {
+  border-color: rgba(255, 23, 68, 0.2);
+  background: rgba(255, 23, 68, 0.02);
+  opacity: 0.5;
+}
+
+.file-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.file-name-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+}
+
+.file-status-badge {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+}
+
+.file-item-path {
+  font-size: 12px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-item-sub {
+  font-size: 10px;
+  color: var(--text-muted, #777);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-left: 2px;
+}
+
+.file-item-actions {
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.swarm-file-item:hover .file-item-actions {
+  opacity: 1;
+}
+
+.item-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  transition: all 0.15s ease;
+}
+
+.item-btn.btn-accept:hover {
+  background: #00e676;
+  color: #000;
+}
+
+.item-btn.btn-discard:hover {
+  background: #ff1744;
+  color: #fff;
+}
+
+.status-badge-final {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.status-badge-final.accepted {
+  color: #00e676;
+  background: rgba(0, 230, 118, 0.1);
+}
+
+.status-badge-final.discarded {
+  color: #ff1744;
+  background: rgba(255, 23, 68, 0.1);
+}
+
+.swarm-footer-actions {
+  padding: 12px;
+  border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.05));
+  display: flex;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.clear-swarm-btn {
+  font-size: 11px;
+  color: var(--text-muted, #888);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.clear-swarm-btn:hover {
+  color: var(--accent-glow, #00b8d4);
+}
+
+.swarm-diff-sidebar__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  text-align: center;
+  height: 100%;
+  gap: 12px;
+  color: var(--text-muted, #666);
+}
+
+.swarm-diff-sidebar__empty p {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-main, #999);
+  margin: 0;
+}
+
+.swarm-diff-sidebar__empty span {
+  font-size: 10px;
+  line-height: 1.4;
+  max-width: 180px;
+}
