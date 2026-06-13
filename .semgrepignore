@@ -1,0 +1,17 @@
+# .semgrepignore — Ignore boundaries for security scanner engines
+# Instructs semgrep/securecoder to completely skip third-party libraries and build folders
+
+node_modules/
+**/node_modules/**
+neurex-web/node_modules/
+neurex-landing/node_modules/
+neurex-api/.venv/
+neurex-api/venv/
+neurex-cli/target/
+dist/
+**/dist/**
+target/
+**/target/**
+.git/
+**/temp/**
+scratch/

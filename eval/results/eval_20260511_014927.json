@@ -1,0 +1,25 @@
+{
+  "timestamp": "20260511_014927",
+  "model": "default",
+  "score": "0/2",
+  "results": [
+    {
+      "id": "smoke-hello",
+      "tag": "smoke",
+      "prompt": "Create a file called hello.py that prints 'Hello, Neurex!'",
+      "passed": false,
+      "details": "WS error: {'message': \"Critical resume failure: 'str' object has no attribute 'get'\"}",
+      "duration_s": 0.0,
+      "output": ""
+    },
+    {
+      "id": "smoke-readme",
+      "tag": "smoke",
+      "prompt": "Create a README.md with a one-sentence description of the project.",
+      "passed": false,
+      "details": "WS error: {'message': \"Critical resume failure: 'str' object has no attribute 'get'\"}",
+      "duration_s": 0.0,
+      "output": ""
+    }
+  ]
+}

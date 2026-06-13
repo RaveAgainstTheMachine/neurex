@@ -1,0 +1,549 @@
+"""
+core/infrastructure/mesh.py
+Manages the decentralized Neurex Mesh Federation.
+Handles peer discovery, health checks, and LLM load balancing across nodes.
+"""
+
+import asyncio
+import hashlib
+import json
+import os
+from pathlib import Path
+from typing import Any
+
+import httpx
+import structlog
+
+log = structlog.get_logger()
+
+PEERS_FILE = Path.home() / ".neurex" / "mesh_peers.json"
+
+
+def get_workspace_root() -> Path:
+    env_path = os.getenv("WORKSPACE_PATH")
+    if env_path:
+        return Path(env_path).resolve()
+    config_path = Path.home() / ".neurex_last_workspace"
+    if config_path.exists():
+        try:
+            saved = config_path.read_text().strip()
+            if saved and saved != "NONE" and Path(saved).exists():
+                return Path(saved).resolve()
+        except Exception:
+            pass
+    return Path(os.getcwd()).resolve()
+
+
+def calculate_sha256(p: Path) -> str:
+    h = hashlib.sha256()
+    try:
+        with open(p, "rb") as f:
+            for chunk in iter(lambda: f.read(65536), b""):
+                h.update(chunk)
+        return h.hexdigest()
+    except Exception:
+        return ""
+
+
+def generate_local_manifest() -> dict:
+    workspace = get_workspace_root()
+    manifest = {}
+    ignored_dirs = {".git", "node_modules", "__pycache__", ".neurex_trash", ".venv", "venv"}
+
+    for root, dirs, files in os.walk(workspace):
+        dirs[:] = [d for d in dirs if d not in ignored_dirs and not d.startswith(".")]
+
+        for file in files:
+            if file.startswith("."):
+                continue
+            abs_path = Path(root) / file
+            try:
+                rel_path = str(abs_path.relative_to(workspace))
+                stat = abs_path.stat()
+                manifest[rel_path] = {
+                    "hash": calculate_sha256(abs_path),
+                    "mtime": stat.st_mtime,
+                    "size": stat.st_size,
+                }
+            except Exception:
+                continue
+    return manifest
+
+
+class PeerNode:
+    def __init__(self, url: str, token: str, name: str = "Unknown"):
+        self.url = url.rstrip("/")
+        self.token = token
+        self.name = name
+        self.status = "offline"
+        self.vram_gb = 0.0
+        self.ram_total_gb = 0.0
+        self.cpu_percent = 0.0
+        self.models = []
+        self.latency_ms = 0
+        self.queue_depth = 0
+        self.tps = 0.0
+        self.rpc_endpoint = None
+        self.distributed_status = {}
+        self.storage_health = {}
+        self.specs = {}
+        # Predictive State
+        self.history: list[dict[str, Any]] = []
+        self.predicted_load = 0.0
+
+    def record_telemetry(self, metrics: dict[str, Any]):
+        """Append a metric snapshot and prune history."""
+        import time
+
+        snapshot = {
+            "timestamp": time.time(),
+            "cpu": metrics.get("cpu_percent", 0.0),
+            "vram": metrics.get("vram_gb", 0.0),
+            "queue": metrics.get("queue_depth", 0),
+        }
+        self.history.append(snapshot)
+        # Keep last 1 hour of history (assuming 60s checks)
+        if len(self.history) > 60:
+            self.history.pop(0)
+
+    def to_dict(self):
+        return {
+            "url": self.url,
+            "token": self.token,
+            "name": self.name,
+            "status": self.status,
+            "vram_gb": self.vram_gb,
+            "ram_total_gb": self.ram_total_gb,
+            "cpu_percent": self.cpu_percent,
+            "models": self.models,
+            "latency_ms": self.latency_ms,
+            "queue_depth": self.queue_depth,
+            "tps": self.tps,
+            "rpc_endpoint": self.rpc_endpoint,
+            "distributed": self.distributed_status,
+            "predicted_load": self.predicted_load,
+            "storage_health": self.storage_health,
+            "specs": self.specs,
+        }
+
+
+class ResourcePredictor:
+    """Analyzes historical telemetry to predict upcoming resource bottlenecks."""
+
+    @staticmethod
+    def predict_future_load(history: list[dict[str, Any]]) -> float:
+        """
+        Calculates a trend-aware load prediction score.
+        Uses a weighted moving average of the last 5 snapshots.
+        """
+        if len(history) < 3:
+            return 0.0
+
+        recent = history[-5:]
+        # Weights: more recent = more important
+        weights = [0.1, 0.15, 0.2, 0.25, 0.3]
+        weights = weights[-len(recent) :]  # adjust if < 5
+
+        # Normalize weights
+        total_w = sum(weights)
+        norm_weights = [w / total_w for w in weights]
+
+        prediction = 0.0
+        for i, snap in enumerate(recent):
+            # Combined load metric: CPU + (Queue * 10)
+            load = snap["cpu"] + (snap["queue"] * 10)
+            prediction += load * norm_weights[i]
+
+        return round(prediction, 2)
+
+
+class MeshRouter:
+    def __init__(self):
+        self.peers: dict[str, PeerNode] = {}
+        # Load local mTLS certs if present
+        cert_dir = Path.home() / ".neurex" / "certs"
+        cert_path = cert_dir / "cert.pem"
+        key_path = cert_dir / "key.pem"
+        if cert_path.exists() and key_path.exists():
+            self._client: httpx.AsyncClient = httpx.AsyncClient(
+                timeout=10, cert=(str(cert_path), str(key_path)), verify=False
+            )
+        else:
+            self._client: httpx.AsyncClient = httpx.AsyncClient(timeout=10)
+        self.peers: dict[str, PeerNode] = {} # re-declare to be safe
+        self._recommended_upgrades: set[tuple[str, str]] = set()
+        self._load_peers()
+
+    def _load_peers(self):
+        PEERS_FILE.parent.mkdir(parents=True, exist_ok=True)
+        if PEERS_FILE.exists():
+            try:
+                with open(PEERS_FILE) as f:
+                    data = json.load(f)
+                    for peer_data in data:
+                        peer = PeerNode(peer_data["url"], peer_data.get("token", ""))
+                        peer.name = peer_data.get("name", "Unknown")
+                        self.peers[peer.url] = peer
+            except Exception as e:
+                log.error("mesh.load_failed", error=str(e))
+
+    def _save_peers(self):
+        with open(PEERS_FILE, "w") as f:
+            json.dump([p.to_dict() for p in self.peers.values()], f, indent=2)
+
+    def add_peer(self, url: str, token: str, name: str) -> bool:
+        url = url.rstrip("/")
+        if url in self.peers:
+            return False
+        self.peers[url] = PeerNode(url, token, name)
+        self._save_peers()
+        asyncio.create_task(self.check_health(url))
+        return True
+
+    def remove_peer(self, url: str):
+        if url in self.peers:
+            del self.peers[url]
+            self._save_peers()
+
+    async def check_health(self, url: str):
+        """Ping a peer to update its status via persistent client."""
+        peer = self.peers.get(url)
+        if not peer:
+            return
+
+        import time
+
+        start = time.time()
+        try:
+            resp = await self._client.get(
+                f"{peer.url}/api/infra/status", headers={"Authorization": f"Bearer {peer.token}"}
+            )
+            resp.raise_for_status()
+            data = resp.json()
+
+            peer.status = "online"
+            metrics = data.get("metrics", {})
+            peer.vram_gb = metrics.get("vram_gb", 0.0)
+            peer.ram_total_gb = metrics.get("ram_total_gb", 0.0)
+            peer.cpu_percent = metrics.get("cpu_percent", 0.0)
+            peer.models = data.get("local_models", [])
+            peer.queue_depth = data.get("queue_depth", 0)
+            peer.tps = metrics.get("benchmarks", {}).get("tps", 0.0)
+            peer.latency_ms = int((time.time() - start) * 1000)
+            peer.storage_health = metrics.get("storage_health", {})
+            peer.specs = metrics.get("specs", {})
+
+            # RPC Info
+            dist = data.get("distributed", {})
+            peer.rpc_endpoint = dist.get("rpc_endpoint")
+            peer.distributed_status = dist
+
+            # Update Predictive Analytics
+            peer.record_telemetry(metrics)
+            peer.predicted_load = ResourcePredictor.predict_future_load(peer.history)
+
+            self._save_peers()
+            log.debug(
+                "mesh.peer_healthy",
+                url=url,
+                latency=peer.latency_ms,
+                predicted_load=peer.predicted_load,
+            )
+        except Exception as e:
+            peer.status = "offline"
+            self._save_peers()
+            log.warning("mesh.peer_offline", url=url, error=str(e))
+
+    async def get_best_inference_node(self, model_name: str | None = None) -> str:
+        """
+        Returns the Ollama base URL to use.
+        Uses a Weighted-Load algorithm to calculate node capability scores.
+        If model_name is provided, filters for nodes that already have the model.
+        """
+        import random
+
+        from core.infrastructure.benchmarker import hardware_benchmarker as benchmarker
+        from core.infrastructure.manager import infrastructure_manager
+
+        candidates = []
+
+        # 1. Evaluate Local Node
+        local_metrics = infrastructure_manager.get_system_metrics()
+        local_vram = local_metrics.get("vram_gb", 8.0)
+        local_cpu = local_metrics.get("cpu_percent", 0.0)
+        local_models = await infrastructure_manager.get_installed_models("ollama")
+        has_model_locally = not model_name or any(
+            model_name in (m["name"] if isinstance(m, dict) else m) for m in local_models
+        )
+
+        local_tps = benchmarker.last_results.get("tps", 0.0)
+        local_tps_boost = 1 + (local_tps / 10.0)
+        local_multiplier = 2.0 if has_model_locally else 0.1
+
+        # Local node has 0 latency and usually 0 queue depth if we just started,
+        # but we should ideally track it. For now, assume 0 latency.
+        local_load = (local_cpu / 2) + 0  # queue_depth not tracked locally yet
+        local_score = (local_vram * local_multiplier * local_tps_boost) / (max(0.1, local_load))
+
+        candidates.append(
+            {
+                "url": os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+                "score": local_score,
+                "name": "Local Node",
+            }
+        )
+
+        # 2. Evaluate Peer Nodes
+        for peer in self.peers.values():
+            if peer.status != "online":
+                continue
+
+            has_model_on_peer = not model_name or any(
+                model_name in (m["name"] if isinstance(m, dict) else m) for m in peer.models
+            )
+            peer_multiplier = 2.0 if has_model_on_peer else 0.1
+            tps_boost = 1 + (peer.tps / 10.0)
+
+            # Penalize by latency, CPU load, current task queue, and PREDICTED load
+            # queue_depth weight is high (25), predicted_load adds trend-awareness
+            load_factor = (
+                (peer.cpu_percent / 2)
+                + (peer.latency_ms / 20)
+                + (peer.queue_depth * 25)
+                + (peer.predicted_load * 0.5)
+            )
+            score = (peer.vram_gb * peer_multiplier * tps_boost) / (max(0.1, load_factor))
+
+            candidates.append(
+                {"url": f"{peer.url}/api/infra/ollama_proxy", "score": score, "name": peer.name}
+            )
+
+        if not candidates:
+            return os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+
+        # 3. Selection Logic (Balanced)
+        # Sort by score descending
+        candidates.sort(key=lambda x: x["score"], reverse=True)
+
+        # To prevent 'dogpiling', if the top few nodes have scores within 5% of each other,
+        # pick randomly among them.
+        best_score = candidates[0]["score"]
+        top_tier = [c for c in candidates if c["score"] >= best_score * 0.95]
+
+        selected = random.choice(top_tier)
+
+        log.info(
+            "mesh.routing_decided",
+            target=selected["url"],
+            node=selected["name"],
+            model=model_name,
+            score=round(selected["score"], 2),
+            tier_size=len(top_tier),
+        )
+
+        return selected["url"]
+
+    async def resolve_model_and_node(self, model_name: str, task_role: str) -> tuple[str, str, str | None]:
+        """
+        Resolve best node + model to prevent 404, and suggest upgrade if better model available.
+        """
+        from core.infrastructure.manager import infrastructure_manager
+        
+        local_models = await infrastructure_manager.get_installed_models("ollama")
+        local_model_names = [m["name"] if isinstance(m, dict) else m for m in local_models]
+        
+        all_online_nodes = []
+        all_online_nodes.append({
+            "url": os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+            "models": local_model_names,
+            "is_local": True,
+            "name": "Local Node"
+        })
+        
+        for peer in self.peers.values():
+            if peer.status == "online":
+                peer_model_names = [m["name"] if isinstance(m, dict) else m for m in peer.models]
+                all_online_nodes.append({
+                    "url": f"{peer.url}/api/infra/ollama_proxy",
+                    "models": peer_model_names,
+                    "is_local": False,
+                    "name": peer.name
+                })
+        
+        exact_match_node = None
+        for node in all_online_nodes:
+            if any(model_name == m or model_name in m for m in node["models"]):
+                exact_match_node = node
+                break
+                
+        resolved_model = model_name
+        warning = None
+        
+        if not exact_match_node:
+            base_family = model_name.split(":")[0] if ":" in model_name else model_name
+            fallback_candidates = []
+            for node in all_online_nodes:
+                for m in node["models"]:
+                    if base_family in m or m.startswith(base_family):
+                        fallback_candidates.append((node, m))
+            
+            if fallback_candidates:
+                def get_param_size(name: str) -> float:
+                    import re
+                    match = re.search(r"([0-9.]+)[bB]", name)
+                    if match:
+                        try:
+                            return float(match.group(1))
+                        except ValueError:
+                            pass
+                    return 0.0
+                
+                fallback_candidates.sort(key=lambda x: get_param_size(x[1]), reverse=True)
+                selected_node, resolved_model = fallback_candidates[0]
+                exact_match_node = selected_node
+            else:
+                default_m = os.getenv("DEFAULT_MODEL", "qwen2.5-coder:14b")
+                if default_m in local_model_names:
+                    resolved_model = default_m
+                elif local_model_names:
+                    resolved_model = local_model_names[0]
+                else:
+                    resolved_model = model_name
+                exact_match_node = all_online_nodes[0]
+                
+        node_url = await self.get_best_inference_node(resolved_model)
+        
+        from core.settings.manager import settings_manager
+        if settings_manager.get("enable_model_recommendations"):
+            try:
+                from core.infrastructure.registry import LLMRecommender
+                vram = infrastructure_manager.get_system_vram()
+                best_model_profile = await LLMRecommender.discover_best_in_class(task_role, vram)
+                
+                if best_model_profile:
+                    best_model_id = best_model_profile["id"]
+                    if best_model_id != resolved_model and best_model_id != model_name:
+                        if (task_role, best_model_id) not in self._recommended_upgrades:
+                            self._recommended_upgrades.add((task_role, best_model_id))
+                            engine = "ollama"
+                            if "gguf" in best_model_id.lower() or "/" in best_model_id:
+                                engine = "llama.cpp"
+                            
+                            warning = (
+                                f"⚠️ **Model Recommendation**: Neurex recommends `{best_model_id}` "
+                                f"(Benchmark: {best_model_profile['benchmark_score']:.1f}%) for `{task_role}`. "
+                                f"Currently routed to `{resolved_model}`.\n\n"
+                                f"Proposing upgrade to `{best_model_id}` via engine `{engine}`."
+                            )
+            except Exception as e:
+                log.warning("mesh.resolve_recommendation_failed", error=str(e))
+                    
+        return node_url, resolved_model, warning
+
+    async def sync_with_peer(self, url: str):
+        """Synchronizes workspace files bi-directionally with a peer node."""
+        peer = self.peers.get(url)
+        if not peer or peer.status != "online":
+            return
+
+        log.info("mesh.sync_start", peer=peer.name, url=url)
+        try:
+            # 1. Fetch remote manifest
+            resp = await self._client.get(
+                f"{peer.url}/api/infra/mesh/sync/manifest",
+                headers={"Authorization": f"Bearer {peer.token}"},
+            )
+            resp.raise_for_status()
+            remote_manifest = resp.json().get("manifest", {})
+
+            # 2. Build local manifest
+            local_manifest = generate_local_manifest()
+            workspace = get_workspace_root()
+
+            # 3. Synchronize
+            # A. Download newer/missing files from remote
+            for rel_path, remote_meta in remote_manifest.items():
+                local_meta = local_manifest.get(rel_path)
+
+                # Check if we should download
+                should_download = False
+                if not local_meta:
+                    should_download = True
+                elif (
+                    remote_meta["hash"] != local_meta["hash"]
+                    and remote_meta["mtime"] > local_meta["mtime"]
+                ):
+                    should_download = True
+
+                if should_download:
+                    log.info("mesh.sync_pulling", file=rel_path, peer=peer.name)
+                    # Download file
+                    dl_resp = await self._client.get(
+                        f"{peer.url}/api/infra/mesh/sync/download",
+                        params={"path": rel_path},
+                        headers={"Authorization": f"Bearer {peer.token}"},
+                    )
+                    dl_resp.raise_for_status()
+
+                    # Save locally safely
+                    local_path = workspace / rel_path
+                    local_path.parent.mkdir(parents=True, exist_ok=True)
+                    local_path.write_bytes(dl_resp.content)
+
+                    # Restore mtime
+                    os.utime(local_path, (remote_meta["mtime"], remote_meta["mtime"]))
+
+            # B. Upload newer/missing files to remote
+            for rel_path, local_meta in local_manifest.items():
+                remote_meta = remote_manifest.get(rel_path)
+
+                # Check if we should upload
+                should_upload = False
+                if not remote_meta:
+                    should_upload = True
+                elif (
+                    local_meta["hash"] != remote_meta["hash"]
+                    and local_meta["mtime"] > remote_meta["mtime"]
+                ):
+                    should_upload = True
+
+                if should_upload:
+                    log.info("mesh.sync_pushing", file=rel_path, peer=peer.name)
+                    local_path = workspace / rel_path
+                    content = local_path.read_bytes()
+
+                    # Upload file
+                    up_resp = await self._client.post(
+                        f"{peer.url}/api/infra/mesh/sync/upload",
+                        params={"path": rel_path, "mtime": local_meta["mtime"]},
+                        headers={"Authorization": f"Bearer {peer.token}"},
+                        content=content,
+                    )
+                    up_resp.raise_for_status()
+
+            log.info("mesh.sync_complete", peer=peer.name)
+        except Exception as e:
+            log.error("mesh.sync_failed", peer=peer.name, error=str(e))
+
+    async def start_monitoring(self, interval_seconds: int = 60):
+        """Background task to periodically refresh peer health and telemetry."""
+        log.info("mesh.monitor_started", interval=interval_seconds)
+        while True:
+            tasks = [self.check_health(url) for url in self.peers.keys()]
+            if tasks:
+                await asyncio.gather(*tasks, return_exceptions=True)
+
+            # Bidirectional peer-to-peer workspace synchronization
+            sync_tasks = [self.sync_with_peer(url) for url in self.peers.keys()]
+            if sync_tasks:
+                await asyncio.gather(*sync_tasks, return_exceptions=True)
+
+            # Phase 47: Sync Virtual VRAM Pool
+            from core.infrastructure.vram_pool import vram_pool
+
+            await vram_pool.synchronize_mesh_resources()
+
+            await asyncio.sleep(interval_seconds)
+
+
+mesh_router = MeshRouter()

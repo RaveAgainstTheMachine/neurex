@@ -1,0 +1,411 @@
+# neurex-api/api/routes/git.py
+import os
+import subprocess
+from pathlib import Path
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+
+from .auth import get_current_user
+from .files import get_workspace, untaint_path, untaint_str
+
+# subprocess-based git management
+
+router = APIRouter()
+
+
+def _validate_safe_path(path: str) -> Path:
+    workspace = get_workspace()
+    if not workspace:
+        raise ValueError("No workspace open")
+
+    safe_root = os.path.realpath(str(workspace))
+    target = os.path.realpath(os.path.join(safe_root, path))
+    safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
+
+    if target == safe_root:
+        pass
+    elif target.startswith(safe_prefix):
+        pass
+    else:
+        raise PermissionError("Path traversal blocked")
+
+    if os.path.commonpath([safe_root, target]) != safe_root:
+        raise PermissionError("Path traversal blocked")
+
+    return untaint_path(Path(target))
+
+
+def run_git(args: list[str], cwd: str | None = None):
+    workspace = get_workspace()
+    if not cwd:
+        cwd = str(workspace)
+
+    try:
+        # SECURITY: Subprocess is used with a list of arguments (shell=False), which is safe
+        # from shell injection. For parameter injection, callers should use '--' where needed.
+        safe_args = [untaint_str(arg) for arg in args]
+        res = subprocess.run(
+            ["git"] + safe_args, capture_output=True, text=True, check=True, cwd=cwd
+        )
+        return res.stdout.strip()
+    except subprocess.CalledProcessError as e:
+        raise HTTPException(status_code=500, detail=f"Git error: {e.stderr}")
+
+
+def get_all_git_roots(workspace: Path) -> list[Path]:
+    """Find all directories containing a .git folder within the workspace."""
+    workspace = untaint_path(workspace)
+    if not workspace:
+        return []
+    roots = []
+    # Check workspace itself
+    if (workspace / ".git").is_dir():  # lgtm [py/path-injection]
+        roots.append(workspace)
+
+    # Scan subdirectories (shallow scan for performance, but deep enough for common patterns)
+    try:
+        # We use a limited depth find to avoid performance issues in massive node_modules etc
+        res = subprocess.run(
+            ["find", ".", "-maxdepth", "4", "-name", ".git", "-type", "d"],
+            cwd=workspace,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        for line in res.stdout.splitlines():
+            if line:
+                # remove /.git and convert to absolute
+                root = (workspace / line).parent.resolve()  # lgtm [py/path-injection]
+                safe_prefix = (
+                    str(workspace) if str(workspace).endswith(os.sep) else str(workspace) + os.sep
+                )
+                if not str(root).startswith(safe_prefix) and str(root) != str(workspace):
+                    continue
+                if root not in roots:
+                    roots.append(root)
+    except (subprocess.SubprocessError, OSError):
+        pass
+    return roots
+
+
+@router.get("/status")
+async def get_status(user=Depends(get_current_user)):
+    try:
+        workspace = get_workspace()
+        git_roots = get_all_git_roots(workspace)
+
+        all_changes = []
+        main_branch = "unknown"
+
+        for root in git_roots:
+            try:
+                # Get branch for this root
+                branch = subprocess.run(
+                    ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                    cwd=root,
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                ).stdout.strip()
+
+                if root == workspace or main_branch == "unknown":
+                    main_branch = branch
+
+                # Get status for this root
+                status_raw = subprocess.run(
+                    ["git", "status", "--porcelain"],
+                    cwd=root,
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                ).stdout.strip()
+
+                if status_raw:
+                    for line in status_raw.split("\n"):
+                        if not line:
+                            continue
+                        status_codes = line[:2]
+                        path = line[3:].strip()
+
+                        # Handle renames (R  old -> new)
+                        if "R" in status_codes and " -> " in path:
+                            path = path.split(" -> ")[1].strip()
+
+                        # Resolve path relative to workspace root
+                        abs_path = (root / path).resolve()
+                        try:
+                            rel_to_workspace = str(abs_path.relative_to(workspace))
+                        except ValueError:
+                            rel_to_workspace = path  # Fallback
+
+                        # Simplified status mapping
+                        status = "modified"
+                        if "A" in status_codes:
+                            status = "added"
+                        if "D" in status_codes:
+                            status = "deleted"
+                        if "?" in status_codes:
+                            status = "untracked"
+
+                        # Staged if first char is not space
+                        staged = status_codes[0] != " " and status_codes[0] != "?"
+
+                        all_changes.append(
+                            {
+                                "path": rel_to_workspace,
+                                "status": status,
+                                "staged": staged,
+                                "repo_root": str(root),
+                            }
+                        )
+            except (subprocess.CalledProcessError, OSError):
+                continue
+
+        return {"branch": main_branch, "changes": all_changes}
+    except Exception:
+        return {"branch": "unknown", "changes": []}
+
+
+@router.post("/stage")
+async def stage_file(payload: dict, user=Depends(get_current_user)):
+    workspace = get_workspace()
+    if not workspace:
+        raise HTTPException(status_code=400, detail="No workspace open")
+    safe_root = os.path.realpath(str(workspace))
+    target = os.path.realpath(os.path.join(safe_root, payload["path"]))
+    safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
+
+    if target == safe_root:
+        pass
+    elif target.startswith(safe_prefix):
+        pass
+    else:
+        raise PermissionError("Path traversal blocked")
+
+    resolved = Path(target)
+    rel_path = str(resolved.relative_to(workspace))
+    run_git(["add", "--", rel_path])
+    return {"status": "ok"}
+
+
+@router.post("/unstage")
+async def unstage_file(payload: dict, user=Depends(get_current_user)):
+    workspace = get_workspace()
+    if not workspace:
+        raise HTTPException(status_code=400, detail="No workspace open")
+    safe_root = os.path.realpath(str(workspace))
+    target = os.path.realpath(os.path.join(safe_root, payload["path"]))
+    safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
+
+    if target == safe_root:
+        pass
+    elif target.startswith(safe_prefix):
+        pass
+    else:
+        raise PermissionError("Path traversal blocked")
+
+    resolved = Path(target)
+    rel_path = str(resolved.relative_to(workspace))
+    run_git(["reset", "HEAD", "--", rel_path])
+    return {"status": "ok"}
+
+
+@router.get("/diff")
+async def get_diff(path: str = Query(...), user=Depends(get_current_user)):
+    try:
+        workspace = get_workspace()
+        if not workspace:
+            raise HTTPException(status_code=400, detail="No workspace open")
+        safe_root = os.path.realpath(str(workspace))
+        target = os.path.realpath(os.path.join(safe_root, path))
+        safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
+
+        if target == safe_root:
+            pass
+        elif target.startswith(safe_prefix):
+            pass
+        else:
+            raise PermissionError("Path traversal blocked")
+
+        resolved = untaint_path(Path(target))
+        if not resolved:
+            raise HTTPException(status_code=400, detail="Invalid path")
+        rel_path = str(resolved.relative_to(workspace))
+
+        # Get original from HEAD
+        original = ""
+        try:
+            original = run_git(["show", f"HEAD:{rel_path}"])
+        except HTTPException:
+            pass  # File might be new
+
+        # Get current from disk
+        with open(resolved) as f:  # lgtm [py/path-injection]
+            modified = f.read()
+
+        return {"original": original, "modified": modified}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/commit")
+async def commit_changes(payload: dict, user=Depends(get_current_user)):
+    run_git(["commit", "-m", payload["message"]])
+    return {"status": "ok"}
+
+
+@router.post("/generate_commit_msg")
+async def generate_commit_msg(user=Depends(get_current_user)):
+    """Generate a Conventional Commits message from the staged diff via local LLM inference."""
+    import os
+
+    import httpx
+
+    # Prefer full unified diff for semantic understanding; fall back to stat summary
+    diff = ""
+    try:
+        diff = run_git(["diff", "--cached", "--unified=3"])
+    except Exception:
+        pass
+
+    if not diff:
+        # Nothing staged
+        return {"message": "chore: minor cleanups and documentation updates"}
+
+    # Truncate to a safe token budget (~6k chars ≈ ~1.5k tokens)
+    diff_snippet = diff[:6000]
+    if len(diff) > 6000:
+        diff_snippet += "\n... [truncated for brevity]"
+
+    prompt = f"""You are an expert software engineer. Generate a single Conventional Commits message for the following staged git diff.
+
+Rules:
+- First line: "<type>(<optional scope>): <imperative summary>" — max 72 chars.
+- Types: feat, fix, refactor, chore, docs, test, style, perf, ci.
+- If the change touches multiple concerns, pick the dominant one.
+- Add a blank line then a brief body (2-4 lines) describing the WHY and key changes.
+- Do NOT wrap in markdown code fences. Output ONLY the commit message text.
+
+Staged diff:
+{diff_snippet}
+
+Commit message:"""
+
+    try:
+        from core.infrastructure.mesh import mesh_router
+
+        model = os.getenv("COMMIT_MSG_MODEL", "qwen2.5-coder:7b")
+        ollama_url = await mesh_router.get_best_inference_node(model)
+        target_url = (
+            f"{ollama_url}/api/chat"
+            if "ollama_proxy" not in ollama_url
+            else ollama_url.replace("ollama_proxy", "ollama_proxy/api/chat")
+        )
+
+        payload = {
+            "model": model,
+            "messages": [{"role": "user", "content": prompt}],
+            "stream": False,
+            "options": {"temperature": 0.2, "num_predict": 300},
+        }
+
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.post(target_url, json=payload)
+            if resp.status_code == 200:
+                data = resp.json()
+                message = data.get("message", {}).get("content", "").strip()
+                if message:
+                    return {"message": message}
+    except Exception as e:
+        import structlog as _log
+
+        _log.get_logger().warning("generate_commit_msg.llm_failed", error=str(e))
+
+    # Graceful fallback: derive a heuristic message from the diff stat
+    try:
+        stat = run_git(["diff", "--cached", "--stat"])
+        files_changed = [line.strip().split()[0] for line in stat.splitlines() if "|" in line]
+        summary = ", ".join(files_changed[:3])
+        if len(files_changed) > 3:
+            summary += f" and {len(files_changed) - 3} more"
+        return {"message": f"chore: update {summary}"}
+    except Exception:
+        return {"message": "chore: update project files"}
+
+
+@router.get("/blame")
+async def get_blame(path: str = Query(...), user=Depends(get_current_user)):
+    try:
+        workspace = get_workspace()
+        if not workspace:
+            raise HTTPException(status_code=400, detail="No workspace open")
+        safe_root = os.path.realpath(str(workspace))
+        target = os.path.realpath(os.path.join(safe_root, path))
+        safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
+
+        if target == safe_root:
+            pass
+        elif target.startswith(safe_prefix):
+            pass
+        else:
+            raise PermissionError("Path traversal blocked")
+
+        resolved = Path(target)
+        rel_path = str(resolved.relative_to(workspace))
+        # Use line-porcelain for detailed, stable parsing
+        res = run_git(["blame", "--line-porcelain", "--", rel_path])
+        lines = []
+        current_blame = {}
+
+        for line in res.split("\n"):
+            if not line:
+                continue
+            if len(line) >= 40 and " " not in line[:40]:  # SHA line
+                current_blame = {"hash": line[:8]}
+            elif line.startswith("author "):
+                current_blame["author"] = line[7:]
+            elif line.startswith("author-time "):
+                current_blame["time"] = int(line[12:])
+            elif line.startswith("summary "):
+                current_blame["summary"] = line[8:]
+            elif line.startswith("\t"):
+                # Line content marks the end of a porcelain block
+                lines.append(current_blame.copy())
+        return {"blame": lines}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/history")
+async def get_history(path: str = Query(...), user=Depends(get_current_user)):
+    try:
+        workspace = get_workspace()
+        if not workspace:
+            raise HTTPException(status_code=400, detail="No workspace open")
+        safe_root = os.path.realpath(str(workspace))
+        target = os.path.realpath(os.path.join(safe_root, path))
+        safe_prefix = safe_root if safe_root.endswith(os.sep) else safe_root + os.sep
+
+        if target == safe_root:
+            pass
+        elif target.startswith(safe_prefix):
+            pass
+        else:
+            raise PermissionError("Path traversal blocked")
+
+        resolved = Path(target)
+        rel_path = str(resolved.relative_to(workspace))
+        # Get history with hash, author, time, and summary
+        res = run_git(["log", "--pretty=format:%h|%an|%at|%s", "--", rel_path])
+        history = []
+        if res:
+            for line in res.split("\n"):
+                if not line:
+                    continue
+                parts = line.split("|", 3)
+                if len(parts) == 4:
+                    h, a, t, s = parts
+                    history.append({"hash": h, "author": a, "time": int(t), "summary": s})
+        return {"history": history}
+    except Exception:
+        return {"history": []}

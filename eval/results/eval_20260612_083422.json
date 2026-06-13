@@ -1,0 +1,34 @@
+{
+  "timestamp": "20260612_083422",
+  "model": "default",
+  "score": "0/3",
+  "results": [
+    {
+      "id": "smoke-hello",
+      "tag": "smoke",
+      "prompt": "Create a file called hello.py that prints 'Hello, Neurex!'",
+      "passed": false,
+      "details": "Missing: ['hello.py', 'Hello, Neurex']",
+      "duration_s": 66.72,
+      "output": ""
+    },
+    {
+      "id": "smoke-readme",
+      "tag": "smoke",
+      "prompt": "Create a README.md with a one-sentence description of the project.",
+      "passed": false,
+      "details": "Exception: received 1012 (service restart); then sent 1012 (service restart)",
+      "duration_s": 21.53,
+      "output": ""
+    },
+    {
+      "id": "smoke-consensus-debate",
+      "tag": "smoke",
+      "prompt": "Create a brief summary doc debate_summary.md explaining the roles of Planner, Coder, and Reviewer in a swarm debate courtroom.",
+      "passed": false,
+      "details": "Exception: timed out during opening handshake",
+      "duration_s": 10.01,
+      "output": ""
+    }
+  ]
+}
