@@ -1,0 +1,85 @@
+"""
+core/context/global_memory.py
+Mesh-Wide Memory (Persistent Global State).
+Synchronizes 'Global Sticky Notes' and experience patterns across the Mesh.
+"""
+
+from __future__ import annotations
+
+import asyncio
+from typing import Any
+
+import httpx
+import structlog
+
+from core.infrastructure.mesh import mesh_router
+from core.observability.flight_recorder import record_decision
+
+log = structlog.get_logger()
+
+
+class GlobalMemory:
+    def __init__(self):
+        # Local cache of global memory pointers
+        # key: str, value: {"content": str, "source_node": str, "timestamp": str}
+        self.pointers: dict[str, dict[str, Any]] = {}
+        # Historical success patterns
+        self.patterns: list[dict[str, Any]] = []
+        # Phase 44.7: Persistent Sync Client
+        self._client: httpx.AsyncClient = httpx.AsyncClient(timeout=5)
+
+    async def add_pointer(self, key: str, content: str, node_id: str = "local"):
+        """Adds a local memory pointer and broadcasts the delta."""
+        log.info("memory.add_pointer", key=key, node=node_id)
+        pointer = {"content": content, "source_node": node_id, "timestamp": "2026-05-01T07:15:00Z"}
+        self.pointers[key] = pointer
+        await record_decision("global_memory", "pointer_added", key, content[:50])
+
+        # Phase 41.1: Optimized Delta Broadcast
+        asyncio.create_task(self.broadcast_delta(key, pointer))
+
+    async def broadcast_delta(self, key: str, pointer: dict[str, Any]):
+        """Broadcasts only the newly added pointer to peers."""
+        peers = list(mesh_router.peers.values())
+        if not peers:
+            return
+
+        payload = {"key": key, "pointer": pointer}
+        tasks = [
+            self._client.post(f"{peer.url}/api/memory/sync_delta", json=payload) for peer in peers
+        ]
+        await asyncio.gather(*tasks, return_exceptions=True)
+        log.info("memory.delta_broadcast_complete", peers=len(peers))
+
+    async def query_memory(self, query: str) -> str:
+        """Searches global memory for relevant context."""
+        # Simple keyword search (Caveman style)
+        matches = []
+        for key, val in self.pointers.items():
+            if query.lower() in key.lower() or query.lower() in val["content"].lower():
+                matches.append(f"[{val['source_node']}] {key}: {val['content']}")
+
+        return "\n".join(matches) if matches else "No matching global memory found."
+
+    async def broadcast_memory(self):
+        """Broadcasts local pointers to all Mesh peers."""
+        peers = list(mesh_router.peers.values())
+        if not peers:
+            return
+
+        payload = {"pointers": self.pointers}
+        tasks = [self._client.post(f"{peer.url}/api/memory/sync", json=payload) for peer in peers]
+
+        await asyncio.gather(*tasks, return_exceptions=True)
+        log.info("memory.broadcast_complete", peers=len(peers))
+
+    def sync_from_peer(self, peer_id: str, remote_pointers: dict[str, dict[str, Any]]):
+        """Merges remote pointers into local memory."""
+        log.info("memory.sync_from_peer", peer=peer_id, count=len(remote_pointers))
+        for key, val in remote_pointers.items():
+            # Basic conflict resolution: Source node priority or timestamps
+            if key not in self.pointers:
+                self.pointers[key] = val
+
+
+global_memory = GlobalMemory()

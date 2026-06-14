@@ -1,0 +1,163 @@
+name: Neurex Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Job 1: Build and Push Docker Images
+  # ─────────────────────────────────────────────────────────────────────────────
+  docker-release:
+    name: Docker Release (API, Web, Sandbox)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/neurex-api
+            ${{ secrets.DOCKERHUB_USERNAME }}/neurex-web
+            ${{ secrets.DOCKERHUB_USERNAME }}/neurex-sandbox
+
+      - name: Build and Push API
+        uses: docker/build-push-action@v7
+        with:
+          context: ./neurex-api
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/neurex-api:latest,${{ secrets.DOCKERHUB_USERNAME }}/neurex-api:${{ github.ref_name }}
+
+      - name: Build and Push Web
+        uses: docker/build-push-action@v7
+        with:
+          context: ./neurex-web
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/neurex-web:latest,${{ secrets.DOCKERHUB_USERNAME }}/neurex-web:${{ github.ref_name }}
+
+      - name: Build and Push Sandbox
+        uses: docker/build-push-action@v7
+        with:
+          context: ./neurex-sandbox
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/neurex-sandbox:latest,${{ secrets.DOCKERHUB_USERNAME }}/neurex-sandbox:${{ github.ref_name }}
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Job 2: Build and Release CLI Binaries
+  # ─────────────────────────────────────────────────────────────────────────────
+  cli-release:
+    name: CLI Release (Rust)
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            artifact_name: neurex-linux
+            asset_name: neurex-linux-x86_64
+          - os: macos-latest
+            artifact_name: neurex-macos
+            asset_name: neurex-macos-universal
+          - os: windows-latest
+            artifact_name: neurex-windows
+            asset_name: neurex-windows-x86_64.exe
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: neurex-cli
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build Frontend
+        run: |
+          cd neurex-web
+          npm install
+          npm run build
+
+      - name: Build CLI
+        run: |
+          cd neurex-cli
+          cargo build --release
+
+      - name: Rename binary (Unix)
+        if: matrix.os != 'windows-latest'
+        run: mv neurex-cli/target/release/neurex-cli neurex-cli/target/release/${{ matrix.asset_name }}
+
+      - name: Rename binary (Windows)
+        if: matrix.os == 'windows-latest'
+        run: mv neurex-cli/target/release/neurex-cli.exe neurex-cli/target/release/${{ matrix.asset_name }}
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: neurex-cli/target/release/${{ matrix.asset_name }}
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # Job 3: Create GitHub Release
+  # ─────────────────────────────────────────────────────────────────────────────
+  github-release:
+    name: Create GitHub Release
+    needs: [docker-release, cli-release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: artifacts
+
+      - name: Flatten artifacts
+        run: |
+          mkdir -p dist
+          find artifacts -type f -exec mv {} dist/ \;
+
+      - name: Extract release notes
+        run: |
+          # Extract only the current release section from CHANGELOG.md.
+          # Python is used for robust, warning-free regex handling.
+          VERSION=$(echo "${{ github.ref_name }}" | sed 's/^v//')
+          python3 - "$VERSION" CHANGELOG.md > release_notes.md <<'PYEOF'
+          import re, sys
+          version, path = sys.argv[1], sys.argv[2]
+          text = open(path).read()
+          pattern = rf"(^## \[{re.escape(version)}\].*?)(?=^## \[|\Z)"
+          m = re.search(pattern, text, re.M | re.S)
+          print(m.group(1).rstrip() if m else f"Release {version}")
+          PYEOF
+          # Fallback: if extraction produced nothing, use a minimal note
+          if [ ! -s release_notes.md ]; then
+            echo "Release ${{ github.ref_name }}" > release_notes.md
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: dist/*
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
