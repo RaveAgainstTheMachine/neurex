@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# Neurex Pre-Commit Hook
+# Enforces `make lint` before every commit to catch:
+#   - Ruff violations (Python)
+#   - ESLint violations (TypeScript/React)
+#   - Documentation integrity (verify-docs.py)
+#   - Version drift (verify-version.py)
+#
+# Install: git config core.hooksPath scripts/hooks
+# Bypass (emergency only): git commit --no-verify
+
+set -euo pipefail
+
+# Detect if we are inside the isolated GitHub sync worktree
+if [[ "$PWD" == *"__github_sync_worktree__"* ]]; then
+    echo "⏭️  Running inside sync worktree. Bypassing lint checks since virtual envs are excluded."
+    exit 0
+fi
+
+echo "🔒 Neurex pre-commit hook: running lint checks..."
+echo ""
+
+# Determine which files are staged
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
+
+if [ -z "$STAGED_FILES" ]; then
+    echo "  No staged files. Skipping."
+    exit 0
+fi
+
+# Check if any code files are staged (not just docs)
+CODE_FILES=$(echo "$STAGED_FILES" | grep -E '\.(py|ts|tsx|rs|toml|json|yml|yaml|css|js|jsx)$' || true)
+DOC_FILES=$(echo "$STAGED_FILES" | grep -E '\.(md)$' || true)
+
+# Always run lint (covers docs + version checks)
+echo "  Running: make lint"
+if ! make lint; then
+    echo ""
+    echo "❌ Pre-commit hook FAILED: make lint returned errors."
+    echo "   Fix the issues above, then stage and commit again."
+    echo "   Emergency bypass: git commit --no-verify"
+    exit 1
+fi
+
+# If code files were modified, also verify tests pass
+if [ -n "$CODE_FILES" ]; then
+    echo ""
+    echo "  Code files detected in commit:"
+    echo "$CODE_FILES" | sed 's/^/    /'
+    echo ""
+    echo "  ⚠️  REMINDER: Per .projectrules Scenario B, you should have run:"
+    echo "     make test && make typecheck"
+    echo "  The pre-commit hook does NOT run tests (too slow)."
+    echo "  If you haven't, abort with Ctrl+C and run them now."
+fi
+
+echo ""
+echo "✅ Pre-commit checks passed."
+exit 0

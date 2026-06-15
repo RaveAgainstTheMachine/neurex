@@ -1,0 +1,16 @@
+{
+  "timestamp": "20260602_063004",
+  "model": "default",
+  "score": "0/1",
+  "results": [
+    {
+      "id": "smoke-hello",
+      "tag": "smoke",
+      "prompt": "Create a file called hello.py that prints 'Hello, Neurex!'",
+      "passed": false,
+      "details": "Exception: timed out during opening handshake",
+      "duration_s": 10.02,
+      "output": ""
+    }
+  ]
+}
