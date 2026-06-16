@@ -1,0 +1,205 @@
+{
+  "timestamp": "20260614_161230",
+  "model": "default",
+  "score": "0/22",
+  "results": [
+    {
+      "id": "smoke-hello",
+      "tag": "smoke",
+      "prompt": "Create a file called hello.py that prints 'Hello, Neurex!'",
+      "passed": false,
+      "details": "Exception: Multiple exceptions: [Errno 111] Connect call failed ('::1', 8000, 0, 0), [Errno 111] Connect call failed ('127.0.0.1', 8000)",
+      "duration_s": 0.01,
+      "output": ""
+    },
+    {
+      "id": "smoke-readme",
+      "tag": "smoke",
+      "prompt": "Create a README.md with a one-sentence description of the project.",
+      "passed": false,
+      "details": "Exception: Multiple exceptions: [Errno 111] Connect call failed ('::1', 8000, 0, 0), [Errno 111] Connect call failed ('127.0.0.1', 8000)",
+      "duration_s": 0.0,
+      "output": ""
+    },
+    {
+      "id": "py-fibonacci",
+      "tag": "python",
+      "prompt": "Write a Python function fibonacci(n) that returns the nth Fibonacci number. Add a docstring and type hints. Save to fibonacci.py.",
+      "passed": false,
+      "details": "Exception: Multiple exceptions: [Errno 111] Connect call failed ('::1', 8000, 0, 0), [Errno 111] Connect call failed ('127.0.0.1', 8000)",
+      "duration_s": 0.0,
+      "output": ""
+    },
+    {
+      "id": "py-class",
+      "tag": "python",
+      "prompt": "Create a Python dataclass BankAccount with fields: owner (str), balance (float). Add deposit() and withdraw() methods that raise ValueError if balance goes negative. Save to bank.py.",
+      "passed": false,
+      "details": "Exception: Multiple exceptions: [Errno 111] Connect call failed ('::1', 8000, 0, 0), [Errno 111] Connect call failed ('127.0.0.1', 8000)",
+      "duration_s": 0.0,
+      "output": ""
+    },
+    {
+      "id": "py-async",
+      "tag": "python",
+      "prompt": "Write an async Python function fetch_json(url: str) -> dict that uses httpx to GET a URL and return parsed JSON. Handle HTTPError. Save to fetcher.py.",
+      "passed": false,
+      "details": "Exception: Multiple exceptions: [Errno 111] Connect call failed ('::1', 8000, 0, 0), [Errno 111] Connect call failed ('127.0.0.1', 8000)",
+      "duration_s": 0.0,
+      "output": ""
+    },
+    {
+      "id": "py-tests",
+      "tag": "python",
+      "prompt": "Write pytest tests for a function add(a, b) that returns a+b. Include at least 3 test cases including an edge case. Save to test_add.py.",
+      "passed": false,
+      "details": "Exception: Multiple exceptions: [Errno 111] Connect call failed ('::1', 8000, 0, 0), [Errno 111] Connect call failed ('127.0.0.1', 8000)",
+      "duration_s": 0.0,
+      "output": ""
+    },
+    {
+      "id": "ts-interface",
+      "tag": "typescript",
+      "prompt": "Create a TypeScript interface User with id, name, email fields. Export it from types.ts.",
+      "passed": false,
+      "details": "Exception: Multiple exceptions: [Errno 111] Connect call failed ('::1', 8000, 0, 0), [Errno 111] Connect call failed ('127.0.0.1', 8000)",
+      "duration_s": 0.0,
+      "output": ""
+    },
+    {
+      "id": "ts-function",
+      "tag": "typescript",
+      "prompt": "Write a TypeScript function groupBy<T>(arr: T[], key: keyof T): Record<string, T[]>. Add JSDoc. Save to utils.ts.",
+      "passed": false,
+      "details": "Exception: Multiple exceptions: [Errno 111] Connect call failed ('::1', 8000, 0, 0), [Errno 111] Connect call failed ('127.0.0.1', 8000)",
+      "duration_s": 0.0,
+      "output": ""
+    },
+    {
+      "id": "multi-module",
+      "tag": "multi",
+      "prompt": "Create a Python package called mathlib/ with an __init__.py that exports two modules: geometry.py (area_circle, area_rect) and stats.py (mean, median). Include type hints throughout.",
+      "passed": false,
+      "details": "Exception: Multiple exceptions: [Errno 111] Connect call failed ('::1', 8000, 0, 0), [Errno 111] Connect call failed ('127.0.0.1', 8000)",
+      "duration_s": 0.0,
+      "output": ""
+    },
+    {
+      "id": "multi-api",
+      "tag": "multi",
+      "prompt": "Create a minimal FastAPI app in app.py with a GET /health endpoint returning {status: ok} and a POST /echo endpoint that returns the request body.",
+      "passed": false,
+      "details": "Exception: Multiple exceptions: [Errno 111] Connect call failed ('::1', 8000, 0, 0), [Errno 111] Connect call failed ('127.0.0.1', 8000)",
+      "duration_s": 0.0,
+      "output": ""
+    },
+    {
+      "id": "refactor-extract",
+      "tag": "refactor",
+      "prompt": "Read the file refactor_input.py (if it exists, create a placeholder with a 60-line function). Extract the function into 3 smaller functions with clear names and docstrings.",
+      "passed": false,
+      "details": "Exception: Multiple exceptions: [Errno 111] Connect call failed ('::1', 8000, 0, 0), [Errno 111] Connect call failed ('127.0.0.1', 8000)",
+      "duration_s": 0.0,
+      "output": ""
+    },
+    {
+      "id": "rules-no-wildcard",
+      "tag": "rules",
+      "prompt": "Write a Python module config.py that imports os, sys, and pathlib. Make sure to use explicit imports only, no wildcards.",
+      "passed": false,
+      "details": "Exception: Multiple exceptions: [Errno 111] Connect call failed ('::1', 8000, 0, 0), [Errno 111] Connect call failed ('127.0.0.1', 8000)",
+      "duration_s": 0.0,
+      "output": ""
+    },
+    {
+      "id": "rules-type-hints",
+      "tag": "rules",
+      "prompt": "Write a Python function parse_config(path: str) -> dict that reads a JSON file and returns a dict. All arguments and return values must have type hints.",
+      "passed": false,
+      "details": "Exception: Multiple exceptions: [Errno 111] Connect call failed ('::1', 8000, 0, 0), [Errno 111] Connect call failed ('127.0.0.1', 8000)",
+      "duration_s": 0.0,
+      "output": ""
+    },
+    {
+      "id": "maint-hardening",
+      "tag": "maintenance",
+      "prompt": "Read the file unsafe.py which contains a shell=True subprocess call. Rewrite it to use a list of arguments and include the '--' separator for safety. Save to safe.py.",
+      "passed": false,
+      "details": "Exception: Multiple exceptions: [Errno 111] Connect call failed ('::1', 8000, 0, 0), [Errno 111] Connect call failed ('127.0.0.1', 8000)",
+      "duration_s": 0.0,
+      "output": ""
+    },
+    {
+      "id": "maint-types",
+      "tag": "maintenance",
+      "prompt": "Read the file untyped.py. Add Python 3.10+ type hints to all function signatures and return values. Save to typed.py.",
+      "passed": false,
+      "details": "Exception: Multiple exceptions: [Errno 111] Connect call failed ('::1', 8000, 0, 0), [Errno 111] Connect call failed ('127.0.0.1', 8000)",
+      "duration_s": 0.0,
+      "output": ""
+    },
+    {
+      "id": "research-library",
+      "tag": "research",
+      "prompt": "Research how to use the 'duckduckgo-search' Python library to get news results. Provide a code example.",
+      "passed": false,
+      "details": "Exception: Multiple exceptions: [Errno 111] Connect call failed ('::1', 8000, 0, 0), [Errno 111] Connect call failed ('127.0.0.1', 8000)",
+      "duration_s": 0.0,
+      "output": ""
+    },
+    {
+      "id": "refactor-complexity",
+      "tag": "refactor",
+      "prompt": "Create complex_calc.py with a 60-line function with multiple nested loops. Then refactor complex_calc.py to extract nested conditions into distinct helper functions. Save the result to refactored_calc.py.",
+      "passed": false,
+      "details": "Exception: Multiple exceptions: [Errno 111] Connect call failed ('::1', 8000, 0, 0), [Errno 111] Connect call failed ('127.0.0.1', 8000)",
+      "duration_s": 0.0,
+      "output": ""
+    },
+    {
+      "id": "delete-dead-code",
+      "tag": "maintenance",
+      "prompt": "Create calculations.py that imports legacy_math.py. Then delete the legacy_math.py file and remove all imports referencing it inside calculations.py.",
+      "passed": false,
+      "details": "Exception: Multiple exceptions: [Errno 111] Connect call failed ('::1', 8000, 0, 0), [Errno 111] Connect call failed ('127.0.0.1', 8000)",
+      "duration_s": 0.0,
+      "output": ""
+    },
+    {
+      "id": "multi-refactor",
+      "tag": "multi",
+      "prompt": "Create models.py and views.py. In models.py, add a method get_full_name() to the User class. In views.py, update the render_user function to call user.get_full_name() instead of format_name(user).",
+      "passed": false,
+      "details": "Exception: Multiple exceptions: [Errno 111] Connect call failed ('::1', 8000, 0, 0), [Errno 111] Connect call failed ('127.0.0.1', 8000)",
+      "duration_s": 0.0,
+      "output": ""
+    },
+    {
+      "id": "test-gen-edge",
+      "tag": "python",
+      "prompt": "Write a complete pytest test suite for a divide(a, b) function that handles ZeroDivisionError and TypeError. Save to test_divide.py.",
+      "passed": false,
+      "details": "Exception: Multiple exceptions: [Errno 111] Connect call failed ('::1', 8000, 0, 0), [Errno 111] Connect call failed ('127.0.0.1', 8000)",
+      "duration_s": 0.0,
+      "output": ""
+    },
+    {
+      "id": "error-recovery-syntax",
+      "tag": "maintenance",
+      "prompt": "Read broken.py (which has mismatched brackets/syntax error: 'def func(): print(\"hello\"'), fix the syntax error so that it compiles and runs correctly, and save to fixed.py.",
+      "passed": false,
+      "details": "Exception: Multiple exceptions: [Errno 111] Connect call failed ('::1', 8000, 0, 0), [Errno 111] Connect call failed ('127.0.0.1', 8000)",
+      "duration_s": 0.0,
+      "output": ""
+    },
+    {
+      "id": "smoke-consensus-debate",
+      "tag": "smoke",
+      "prompt": "Create a brief summary doc debate_summary.md explaining the roles of Planner, Coder, and Reviewer in a swarm debate courtroom.",
+      "passed": false,
+      "details": "Exception: Multiple exceptions: [Errno 111] Connect call failed ('::1', 8000, 0, 0), [Errno 111] Connect call failed ('127.0.0.1', 8000)",
+      "duration_s": 0.0,
+      "output": ""
+    }
+  ]
+}
