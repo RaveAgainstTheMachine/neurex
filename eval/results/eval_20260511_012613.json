@@ -1,0 +1,25 @@
+{
+  "timestamp": "20260511_012613",
+  "model": "default",
+  "score": "0/2",
+  "results": [
+    {
+      "id": "smoke-hello",
+      "tag": "smoke",
+      "prompt": "Create a file called hello.py that prints 'Hello, Neurex!'",
+      "passed": false,
+      "details": "Exception: received 1008 (policy violation); then sent 1008 (policy violation)",
+      "duration_s": 0.09,
+      "output": ""
+    },
+    {
+      "id": "smoke-readme",
+      "tag": "smoke",
+      "prompt": "Create a README.md with a one-sentence description of the project.",
+      "passed": false,
+      "details": "Exception: received 1008 (policy violation); then sent 1008 (policy violation)",
+      "duration_s": 0.0,
+      "output": ""
+    }
+  ]
+}

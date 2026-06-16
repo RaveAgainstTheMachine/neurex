@@ -1,0 +1,280 @@
+/* src/App.css */
+.app {
+  display: flex;
+  height: 100dvh;
+  width: 100vw;
+  overflow: hidden;
+  background: var(--bg-app);
+}
+
+.app__root {
+  display: flex;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.app__root.with-horizontal-menu {
+  flex-direction: column;
+}
+
+.app__main-layout {
+  display: flex;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* ── Activity Bar ────────────────────────────────────────────────── */
+.activity-bar {
+  width: 56px;
+  flex-shrink: 0;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 10px 0;
+  z-index: 100;
+}
+
+.activity-bar__top, .activity-bar__bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo-trigger {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: var(--accent-purple);
+  margin-bottom: 8px;
+  filter: drop-shadow(0 0 8px var(--glow-purple));
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.logo-trigger:hover { transform: scale(1.1) rotate(15deg); }
+
+.activity-btn {
+  width: 42px; height: 42px;
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.activity-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+.activity-btn.active { color: var(--accent-purple); background: var(--bg-active); }
+
+.activity-indicator {
+  position: absolute; left: -10px; width: 3px; height: 24px;
+  background: var(--accent-purple); box-shadow: 0 0 10px var(--accent-purple);
+  border-radius: 0 4px 4px 0;
+}
+
+/* ── Panels ──────────────────────────────────────────────────────── */
+.app__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+}
+
+.app__panels {
+  flex: 1;
+  width: 100% !important; /* Force fill width */
+  height: 100%;
+}
+
+.app__sidebar {
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app__main-content {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+
+.app__v-panels { height: 100%; }
+
+.app__editor-wrapper {
+  background: var(--bg-app);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.app__bottom-wrapper {
+  background: #08080a; /* Deep matte black for terminal */
+  border-top: 1px solid var(--border);
+}
+
+.app__ai-wrapper {
+  background: var(--bg-sidebar);
+  border-left: 1px solid var(--border);
+  overflow: hidden;
+}
+
+/* ── Bottom Panel (Terminal) ─────────────────────────────────────── */
+.bottom-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.bottom-panel__header {
+  height: 32px;
+  background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+}
+
+.bottom-panel__tabs { display: flex; gap: 16px; margin-right: 24px; }
+
+.terminal-session-switcher {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  overflow-x: auto;
+  flex: 1;
+}
+
+.terminal-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  background: var(--bg-app);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.1s;
+}
+
+.terminal-tab:hover { background: var(--bg-hover); color: var(--text-primary); }
+.terminal-tab.active { 
+  background: var(--bg-active); 
+  color: var(--text-primary); 
+  border-color: var(--accent-purple);
+}
+
+.terminal-tab__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  opacity: 1;
+  color: var(--text-primary);
+}
+
+.terminal-tab__close:hover { background: var(--bg-red); color: white; opacity: 1; }
+
+.terminal-add-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  border-radius: 4px;
+}
+
+.terminal-add-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+.bottom-tab {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+  padding: 4px 0;
+  border-bottom: 2px solid transparent;
+}
+
+.bottom-tab.active {
+  color: var(--text-primary);
+  border-bottom-color: var(--accent-purple);
+}
+
+.bottom-panel__content {
+  flex: 1;
+  overflow: hidden;
+  background: #050507;
+  position: relative;
+}
+
+.bottom-panel__tab-content {
+  height: 100%;
+  width: 100%;
+}
+
+/* ── Resize Handles ──────────────────────────────────────────────── */
+.resize-handle {
+  position: relative;
+  transition: background 0.1s;
+  z-index: 50;
+  background: transparent;
+}
+
+.resize-handle--horizontal {
+  width: 4px; /* Hit area */
+  margin: 0 -2px;
+  cursor: col-resize;
+  background: transparent;
+}
+
+.resize-handle--vertical {
+  height: 4px; /* Hit area */
+  margin: -2px 0;
+  width: 100%;
+  cursor: row-resize;
+  background: transparent;
+}
+
+.resize-handle__highlight {
+  position: absolute;
+  background: transparent;
+  transition: background 0.1s;
+}
+
+.resize-handle--horizontal .resize-handle__highlight {
+  top: 0; bottom: 0; left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+}
+
+.resize-handle--vertical .resize-handle__highlight {
+  left: 0; right: 0; top: 50%;
+  height: 1px;
+  transform: translateY(-50%);
+}
+
+.resize-handle:hover .resize-handle__highlight,
+.resize-handle[data-resize-handle-state="drag"] .resize-handle__highlight {
+  background: #007acc;
+}
+
+.resize-handle[data-resize-handle-state="drag"] {
+  z-index: 1000;
+}
