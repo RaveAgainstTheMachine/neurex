@@ -1,0 +1,10 @@
+{
+  "venvPath": "neurex-api",
+  "venv": ".venv",
+  "pythonVersion": "3.14",
+  "reportMissingImports": true,
+  "exclude": [
+    "install.py",
+    "scratch/**"
+  ]
+}

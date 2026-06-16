@@ -1,0 +1,25 @@
+{
+  "timestamp": "20260511_015510",
+  "model": "default",
+  "score": "0/2",
+  "results": [
+    {
+      "id": "smoke-hello",
+      "tag": "smoke",
+      "prompt": "Create a file called hello.py that prints 'Hello, Neurex!'",
+      "passed": false,
+      "details": "WS error: {'message': \"Critical resume failure: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)\"}",
+      "duration_s": 0.0,
+      "output": ""
+    },
+    {
+      "id": "smoke-readme",
+      "tag": "smoke",
+      "prompt": "Create a README.md with a one-sentence description of the project.",
+      "passed": false,
+      "details": "WS error: {'message': \"Critical resume failure: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)\"}",
+      "duration_s": 0.0,
+      "output": ""
+    }
+  ]
+}
