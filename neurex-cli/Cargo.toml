@@ -28,7 +28,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 anyhow = "1.0"
 tower-http = { version = "0.6.11", features = ["fs", "trace"] }
-wasmtime = { version = "45.0.0", features = ["wat"] }
+wasmtime = { version = "46.0.0", features = ["wat"] }
 wasmtime-wasi = "45.0.0"
 
 cap-std = "4.0.2"
